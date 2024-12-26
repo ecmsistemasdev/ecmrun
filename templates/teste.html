@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocultar e Exibir Formulário</title>
+    <style>
+        .frm_enviar_email_gc {
+            display: none; /* Inicialmente oculto */
+            border: 2px solid #0E69A9;
+            padding: 10px;
+            background-color: #F7FAFC;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="menu_propaganda_guia_comercial">
+    <ul>
+        <li><a href="#" id="toggleForm">Enviar e-mail</a></li>
+    </ul>
+</nav>
+
+<form class="frm_enviar_email_gc" id="emailForm" action="#" method="post">
+    <h3>Solicitar Orçamento:</h3>
+    <input type="text" id="solicitacao_nome" placeholder="Nome" required>
+    <input type="email" id="solicitacao_email" placeholder="Email" required>
+    <input type="text" id="solicitacao_telefone" placeholder="Telefone" required>
+    <textarea id="solicitacao_msg" placeholder="Mensagem"></textarea>
+    <button type="submit">Enviar sua solicitação</button>
+</form>
+
+<script>
+    document.getElementById('toggleForm').addEventListener('click', function(event) {
+        event.preventDefault(); // Impede o comportamento padrão do link
+        var form = document.getElementById('emailForm');
+        if (form.style.display === 'none' || form.style.display === '') {
+            form.style.display = 'block'; // Exibe o formulário
+        } else {
+            form.style.display = 'none'; // Oculta o formulário
+        }
+    });
+</script>
+
+</body>
+</html>

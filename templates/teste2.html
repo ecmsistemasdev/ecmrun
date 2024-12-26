@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imagem Responsiva com Formulário</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-masker/1.1.0/vanilla-masker.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .image-section {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            margin-right: 20px;
+        }
+
+        .responsive-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            min-width: 200px;
+            aspect-ratio: 1 / 1;
+        }
+
+        .text-below {
+            margin-top: 15px;
+            font-size: 14px;
+            color: blue;
+            text-align: center;
+        }
+
+        .form-section {
+            width: 40%;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-title {
+            background-color: blue;
+            color: white;
+            text-align: center;
+            margin: -20px -20px 20px -20px;
+            padding: 15px;
+            font-size: 24px;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        form {
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="email"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        input[type="email"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: blue;
+            box-shadow: 0 0 5px rgba(0,0,255,0.2);
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: hwb(138 0% 0%);
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button[type="submit"]:hover {
+            opacity: 0.9;
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .image-section {
+                margin-right: 0;
+                margin-bottom: 20px;
+                width: 100%;
+            }
+
+            .form-section {
+                width: 100%;
+                margin: 20px auto;
+            }
+            
+            .responsive-image {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>3º Desafio 200k - Porto Velho-Humaitá</h>
+    <div class="container">
+        <div class="image-section">
+            <img src="/static/img/logo01.png" alt="Imagem responsiva" class="responsive-image">
+        </div>
+        <div class="form-section">
+            <h2 class="form-title">Inscrição</h2>
+            <form>
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" placeholder="Digite seu email">
+                </div>
+                <div class="form-group">
+                    <label for="cpf">CPF</label>
+                    <input type="text" id="cpf" name="cpf" placeholder="CPF">
+                </div>
+                <button type="submit">Fazer Inscrição</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Máscara para o CPF
+        function maskCPF(element) {
+            VMasker(element).maskPattern("999.999.999-99");
+        }
+
+        // Aplica a máscara ao campo CPF
+        window.onload = function() {
+            var cpfInput = document.getElementById("cpf");
+            maskCPF(cpfInput);
+        }
+    </script>
+</body>
+</html>

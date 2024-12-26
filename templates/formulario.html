@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/css/formulario.css"/>
+    <title>Document</title>
+</head>
+<body>
+
+    <div class="demo-page">
+        <main class="demo-page-content">
+      
+          <section>  
+            <form action="/confirmar" method="post">
+            
+            <!-- <form action="link_pagamemto" method="post">  -->   
+                <h1>Macaxeira Backyard Ultra</h1>
+
+                <div class="href-target" id="input-types"></div>
+                <h1>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-align-justify">
+                    <line x1="21" y1="10" x2="3" y2="10" />
+                    <line x1="21" y1="6" x2="3" y2="6" />
+                    <line x1="21" y1="14" x2="3" y2="14" />
+                    <line x1="21" y1="18" x2="3" y2="18" />
+                </svg>
+                Formulário de Inscrição
+                </h1>
+                <p>Os campos com  <font color="red"><b>*</b></font> são obrigatórios</p>
+        
+                <div class="nice-form-group">
+                <label>Nome <font color="red"><b>*</b></font></label>
+                <input type="text" name="nome" placeholder="Primeiro Nome" value="{{ dados[2] }}" required />
+                </div>
+        
+                <div class="nice-form-group">
+                    <label>Sobrenome <font color="red"><b>*</b></font></label>
+                    <input type="text" name="sobrenome" placeholder="Sobrenome" value="{{ dados[3] }}" required/>
+                </div>
+    
+                <div class="nice-form-group">
+                <label>Data de Nascimento <font color="red"><b>*</b></font></label>
+                <input type="date" name="datanascimento" value="{{ datanasc }}" required/>
+                </div>
+        
+                <div class="nice-form-group">
+                <label>Telefone <font color="red"><b>*</b></font></label>
+                <input type="tel" name="telefone" maxlength="16" OnKeyPress="formatar('(##) #####-#####',this)" value="{{ celular1 }}" required/>
+                </div>
+
+                <fieldset class="nice-form-group" aria-required="true">
+                    <legend>Sexo <font color="red"><b>*</b></font></legend>
+                    <div class="nice-form-group">
+          
+                      <input type="radio" name="sexo" id="masculino" value="M" {% if dados[6] == "M" %}checked{% endif %}>                    
+                      <label for="masculino">Masculino</label>
+                    
+                    </div>
+                
+                    <div class="nice-form-group">
+                    
+                      <input type="radio" name="sexo" id="feminino" value="F" {% if dados[6] == "F" %}checked{% endif %}>
+                      <label for="feminino">Feminono</label>
+                    
+                    </div>
+                </fieldset>
+
+                <fieldset class="nice-form-group" aria-required="true">
+                    <legend>Camiseta <font color="red"><b>*</b></font></legend>
+                    <div class="nice-form-group">
+                    <input type="radio" name="camiseta" id="pp" value="PP" checked/>
+                    <label for="pp">PP</label>
+                    </div>
+
+                    <div class="nice-form-group">
+                    <input type="radio" name="camiseta" id="p" value="P"/>
+                    <label for="p">P</label>
+                    </div>
+
+                    <div class="nice-form-group">
+                    <input type="radio" name="camiseta" id="m" value="M" />
+                    <label for="m">M</label>
+                    </div>
+
+                    <div class="nice-form-group">
+                    <input type="radio" name="camiseta" id="g" value="G" />
+                    <label for="g">G</label>
+                    </div>
+
+                    <div class="nice-form-group">
+                    <input type="radio" name="camiseta" id="gg" value="GG"/>
+                    <label for="gg">GG</label>
+                    </div>
+                
+                </fieldset>
+
+                <div class="nice-form-group">
+                    <label>Cidade <font color="red"><b>*</b></font></label>
+                    <input type="text" name="cidade" placeholder="Cidade" required value="{{ dados[7] }}" />
+                </div>
+
+                <div class="nice-form-group">
+                  <label>Estado <font color="red"><b>*</b></font></label>
+                  <select name="estado" id="estado">
+                      <option value="" disabled>Selecione o estado</option>
+                      {% for sigla, nome in estados.items() %}
+                          <option value="{{ sigla }}" {% if sigla == estado_selecionado %}selected{% endif %}>
+                              {{ nome }}
+                          </option>
+                      {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="nice-form-group">
+                    <label>Equipe</label>
+                    <input type="text" name="equipe" placeholder="Equipe/Grupo/Academia" value="{{ dados[9] }}" />
+                </div>
+
+                <div class="nice-form-group">
+                  <label>Forma de Pagamento: <font color="red"><b>*</b></font></label>
+                  <select name="formapagamento" id="formapagamento">
+                      <option value="" disabled>Selecione o estado</option>
+                      {% for formapgto in formapgtos %}
+                          <option value="{{ formapgto }}" {% if formapgto == formapgto %}selected{% endif %}>
+                              {{ formapgto }}
+                          </option>
+                      {% endfor %}
+                  </select>
+                </div>
+                
+                <details>
+                    <summary >
+                        <!--  <a href="link_pagamemto" class="nice-form-group">Seguir para Pagamento</a> -->
+                        <input type="submit" class="toggle-code" name="submit" value="Finalizar">
+                        
+                    </summary>
+                </details>
+            </form>
+          </section>
+      
+          <footer class="main_footer_copy">
+
+            <p class="m-b-footer"> ECM Run - 2024, todos os direitos reservados.</p> 
+            <p class="by"><i class="icon icon-heart-3"></i> Desenvolvido por: ECM Sistemas Developer</p>
+
+          </footer>
+        </main>
+    </div>
+
+    <script>
+        var close = document.getElementsByClassName("closebtn");
+        var i;
+        
+        for (i = 0; i < close.length; i++) {
+          close[i].onclick = function(){
+            var div = this.parentElement;
+            div.style.opacity = "0";
+            setTimeout(function(){ div.style.display = "none"; }, 600);
+          }
+        }
+
+        function formatar(mascara, documento) {
+          let i = documento.value.length;
+          let saida = '#';
+          let texto = mascara.substring(i);
+          while (texto.substring(0, 1) != saida && texto.length ) {
+            documento.value += texto.substring(0, 1);
+            i++;
+            texto = mascara.substring(i);
+          }
+        }
+
+    </script>
+    
+
+</body>
+
+</html>

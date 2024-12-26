@@ -1,0 +1,29 @@
+/* IMPORTANT THIS STYLES MUST BE ON FINAL EMAIL */
+.rollover:hover .rollover-first {
+    max-height: 0px !important;
+    display: none !important;
+  }
+  /* END OF IMPORTANT */
+  @media only screen and (max-width: 600px) {
+    .es-text-8358 .es-text-mobile-size-20,
+  .es-text-8358 .es-text-mobile-size-20 * {
+      font-size: 20px !important;
+      line-height: 150% !important;
+    }
+    .es-text-8358 .es-text-mobile-size-18,
+  .es-text-8358 .es-text-mobile-size-18 * {
+      font-size: 18px !important;
+      line-height: 150% !important;
+    }
+    .es-text-3963 .es-text-mobile-size-18,
+  .es-text-3963 .es-text-mobile-size-18 * {
+      font-size: 18px !important;
+      line-height: 150% !important;
+    }
+    .es-text-1412 .es-text-mobile-size-28,
+  .es-text-1412 .es-text-mobile-size-28 * {
+      font-size: 28px !important;
+      line-height: 150% !important;
+    }
+  }
+  

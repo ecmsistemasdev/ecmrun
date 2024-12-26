@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/css/mbu.css"/>
+    <title>Macaxeira Backyard Ultra</title>
+</head>
+<body>
+
+    {% block conteudo %}
+
+        <table width="100%" cellspacing="0" cellpadding="0" class="es-wrapper">
+
+            <header>
+                <div class="box">        
+                    
+                    <img src="/static/img/logo01.png" alt="03.png" title="ecmrun"/>
+            
+                </div>
+            </header>
+        </table>
+            
+        <h1 class="titulo">Macaxeira Backyard Ultra</h1>
+        <div class="informativo">
+            <h2>2ª Edição - 2025</h2>
+        </div>
+<div class="container">
+
+            <form class="inf"  method="dialog" name="informativo">
+
+                <div>
+                    <br>
+                    <p><b>Informativo</b></p> 
+                    <p>📅 Dia 22 de fevereiro de 2025</p>
+                    <p>🏃🏻 Largada às 08hs 🕗</p>
+                    <p>🚩 Local: Sítio Don Enrique, localizada na Estrada do Santo Antônio, 1252, Triângulo, Porto Velho - RO, Brasil.</p>
+                    <p>💲 Valor da Inscrição: R$ 279,00 reais para prova Principal; R$ 179,00 para prova de três voltas</p>
+                    <p>💲 Atletas com idade de 60+ paga 50% do valor da inscrição conforme Art. 23 da Lei Federal nº 10.741/2003</p>
+                    <br>
+                    <p>Forma de Pagamento:</p>
+                    <p>Pix, Boleto Bancário, Cartão de Débito ou Crédito (com acrescimo)</p> 
+                    <!--   <p>Pix kelioesteves@hotmail.com - Kélio Esteves Xavier - Mercado pago.</p>
+                    <p>Cartão de Débito ou Crédito (com acrescimo)</p>
+                    -->
+                    <p>📱Mais informações: (69) 99925-9005</p>
+                    <br>
+                    <p>INSCRIÇÕES:</p>
+                    <p>✍️ Período de inscrição:</p>
+                    <p>Início: 10 de novembro de 2024</p>
+                    <p>Término: 20 de dezembro 2024 ou até o limite das vagas</p>    
+            
+                </div>
+                            
+            </form>
+
+            <form class="insc" action="/mbu" method="post">
+                <h3>Inscrição</h2>
+    
+                <div class="padding">
+        
+                    {% set mensagens = get_flashed_messages()  %}
+                    {% if  mensagens %}
+
+                        <div class="alert">
+                            <span class="closebtn">&times;</span>
+                            <strong>Atenção!</strong>{{ mensagens[0]}}.
+                        </div>
+            
+                    {% endif %}
+
+
+                    <span class="legenda">Selecione a categoria:</span>
+                                            
+                        <div class="radio-btn">
+                            <input type="radio" class="form_new_input" id="principal" name="prova" required value="Principal">
+                            <label for="principal" class="radio_label form_label"> <span class="radio_new_btn"></span> Principal</label>
+                            <br>
+                            <label class="sublabel">R$ 279,00</label>
+                            <br>
+                            <label class="sublabel">R$ 139,50<b>(60+)</b></label>
+                        </div>
+                
+                        <div class="radio-btn">
+                            <input type="radio" class="form_new_input" id="3voltas" name="prova" required value="Três Voltas">
+                            <label for="3voltas" class="radio_label form_label"> <span class="radio_new_btn"></span> Três Voltas</label>
+                            <br>
+                            <label class="sublabel">R$ 179,00</label>
+                            <br>
+                            <label class="sublabel">R$ 89,50<b>(60+)</b></label>
+                        </div>
+                
+                        <input type="email" name="email" placeholder="Email" class="campo1" required id="email" />
+                
+                        <input type="text" name="cpf" placeholder="CPF" class="campo1" OnKeyPress="formatar('###.###.###-##',this)" maxlength="14" required id="cpf" />
+                
+                        <input type="submit" class="btn" name="continua" value="Continuar">    
+                        
+                </div>
+                
+            </form>
+
+        </div>
+
+        <div class="container_reg">
+
+            <form class="reg"  method="dialog" name="regulamento">
+
+                <div>
+
+                    <p><b>REGULAMENTO</b></p>
+                    <br>
+                    <p><b>LOCAL E DATA</b></p>
+                    <br>
+                    <p>A <b>MACAXEIRA BACKYARD ULTRA PORTO VELHO</b> será realizada no Sítio Don Enrique, localizada na Estrada do Santo Antônio, 1252, Triângulo, Porto Velho - RO, Brasil.</p>
+                    <p>O evento iniciará às 08h00 do dia 22 de fevereiro de 2025 e não tem prazo para encerrar.</p>
+                    <p>A corrida somente será dada como encerrada quando a "última pessoa em pé" finalizar sua volta solo.</p>
+                    <br>
+                    <p><b>SOBRE A PROVA</b></p>
+                    <br>
+                    <p>A Macaxeira Backyard Ultra Porto Velho - RO, é uma forma de ultramaratona de corrida ao estilo resta 1 que consiste em percorrer 6,7 km em menos de 1 hora.</p>
+                    <p>A cada hora cheia é dada uma nova largada, onde o corredor que não chegar a tempo ou que não sair ao sinal do sino será considerado DNF (did not finish) e estará automaticamente desclassificado sendo impedido de entrar novamente no percurso.</p>
+                    <p>A corrida iniciará pontualmente às 08hs e a cada hora cheia será dada uma nova largada, com avisos faltando 5, 3 e 1 min até o toque do sino às 08hs/09hs/10hs e assim por diante até restar somente um atleta no percurso e este realizar a volta completa dentro do tempo limite de 59'59" para se consagrar campeão da prova.</p>
+                    <p>Caso este não chegue antes da hora virar, estará desclassificado e a prova acabará sem campeão. (Isso já aconteceu em alguns países). Macaxeira Backyard Ultra Porto Velho - RO, faz parte do calendário mundial da franquia Backyard Ultra, uma forma de ultramaratona criada pelo grande Lazarus Lake (mesmo criador da famosa e temida Barkley Marathons).</p>
+                    <p>Nossa prova seguirá fielmente o padrão internacional e qualquer atitude que fuja às regras ocasionará a desclassificação do corredor, levando em consideração que a "permissão" de certas atividades consideradas "ilegais" podem vir a causar a desqualificação da Macaxeira Backyard Ultra Porto Velho - RO a fim de classificar um atleta para a final.</p>
+                    <br>
+                    <p><b>REGRAS</b></p>
+                    <br>
+                    <p>Os atletas devem percorrer 6,7km no tempo máximo de 59 minutos e 59 segundos.</p>
+                    <p>Independente do tempo que se leve para realizar a volta, todos devem aguardar a próxima largada.</p>
+                    <p>O tempo de espera até a próxima hora deve ser utilizado para descanso, alimentação, banheiro, troca de roupas entre outras necessidades, pois a prova não tem intervalos! Ela começará às 08h00 de sábado e só terminará quando todos desistirem, sobrando apenas 1 atleta. Isto deverá levar muitas horas! Na verdade, a torcida é para que leve alguns dias. O recorde atual é no Tennessee - EUA, com 108 voltas (108 horas). No Brasil, o recorde é 50 voltas (50 horas) na prova Valença RJ Backyard Ultra 2023.</p>
+                    <p>Para avisar sobre a proximidade da próxima volta serão dados cinco apitos quando faltar 5min para a largada, três apitos faltando 3min e um apito no último minuto. É muito importante e obrigatório que neste momento todos que desejam seguir na prova estejam no brete de largada, pois ao soar do sino todos devem largar do brete! O corredor que esperar o sino tocar para então sair de sua tenda, por exemplo, estará desclassificado. A única exceção é ao corredor que ainda esteja no percurso neste momento, já que ele se mantém na prova chegando até 1 segundo antes da relargada. Porém, este deverá largar junto com seus colegas, sem tempo para descanso e reabastecimento.</p>
+                    <p>Na arena da prova estará tudo o que vocês possam precisar pelos próximos dias! Não há como sair da área da prova, exceto para repetir o percurso de 6,7km o qual o atleta não poderá desviar a menos que seja para utilizar o "banheiro". Na arena teremos tendas, cadeiras, barraca, poucos colchões, banheiro, pias, tomadas, alimentação, hidratação etc., Mas recomendamos que os atletas que puderem e quiserem tragam itens como colchão inflável, cobertor, barraca, cadeira e seus alimentos de preferência pessoal. É permitido apoio particular SOMENTE na arena, no intervalo entre a sua chegada e a hora da relargada.</p>
+                    <p>Podem trazer seus familiares, treinador, fisioterapeuta, nutricionista, massagista… mas deixe claro que qualquer tipo de apoio no trajeto da prova é totalmente proibido! Eles e nós só poderemos te auxiliar na arena, após o término da volta.</p>
+                    <p>É obrigatório o uso de lanterna durante a noite! Quem vier com o desejo de ultrapassar as 24hs não pode esquecer deste item. A prova será realizada com a maior parte em estrada de terra batida e o único ponto com luz será na arena da prova. Aos participantes que desejam apenas se desafiar um pouco mais ou utilizar a prova para um treino bem longo, mas que não pretendem entrar no período noturno estão dispensados deste equipamento. Sim, esta prova é para todos! Não há distinção entre gêneros, nem limites de idade e muito menos de condicionamento (Inclusive, é bem comum estas provas serem vencidas pelas mulheres e também há bastante pré-adolescentes fazendo várias voltas pelas Backyards do mundo).</p>
+                    <p>Há quem corra visando a tão almejada moeda de prata e a vaga para o campeonato nacional, disposto a correr por 24hs/30hs/48hs ou mais e há também aqueles que desejam apenas testar seus limites num desafio pessoal com toda infraestrutura, segurança e torcida, mesmo que para duas, três, cinco ou dez voltas! Lembrando que a partir das 18hs já estará escuro.</p>
+                    <p>Somente os atletas em prova podem circular no percurso durante a execução de sua volta! O atleta que finalizar a volta não poderá retornar ao trecho para buscar um colega. Os atletas desistentes ou DNF não podem entrar no percurso novamente. Ninguém pode circular no percurso da prova! Somente pessoal da organização para fiscalização e estes não podem auxiliar os atletas!</p>
+                    <p>Qualquer tipo de auxílio durante o percurso é proibido! Inclusive o uso de BASTÕES e pacers! Os atletas não podem receber nenhum apoio externo entre a abertura da volta até cruzar a chegada. Apenas os próprios competidores podem auxiliar um colega necessitado com algum alimento/bebida.</p>
+                    <p>Os atletas mais lentos, seja por necessidade ou por estratégia de prova, devem facilitar a ultrapassagem!</p>
+                    <p>Mas pedimos que os atletas que desejarem ultrapassar, o façam com atenção.</p>
+                    <br>
+                    <p><b>PERCURSO</b></p>
+                    <br>
+                    <p>Percurso diurno (a partir das 08h00 até às 17h00): será de 6,7km que é o exigido por esta modalidade. A altimetria está com 123m de ganho de elevação por volta. O percurso será de terra batida na sua maior parte.</p>
+                    <p>Percurso noturno (a partir das 18h00 até às 06h00): será de 6,7km que é o exigido por esta modalidade. A altimetria está com 123m de ganho de elevação por volta. Todo o percurso será na estrada do Santo Antônio, com largada dentro do sítio, seguindo pela estrada Santo Antônio lado direito, bate volta.</p>
+                    <br>
+                    <p><b>PREMIAÇÃO</b></p>
+                    <br>
+                    <p>Seguindo a tradição do modelo de prova, todos os atletas que realizarem pelo menos uma volta completa dentro do tempo limite receberão uma medalha de participação e, somente o "último atleta em pé" receberá o troféu, se conseguir realizar sua volta solo dentro do tempo limite.</p>
+                    <br>
+                    <p><b>EQUIPAMENTOS OBRIGATÓRIOS</b></p>
+                    <br>
+                    <p>Lanterna em condições de uso em todo o período noturno!</p>
+                    <br>
+                    <p><b>ITENS RECOMENDADOS</b></p>
+                    <br>
+                    <p>Roupas, tênis e meias extras, chinelo… Boné/viseira, bandanas, óculos de sol; Barraca, colchão inflável, isolante térmico cobertor, colete de sinalização;</p>
+                    <p>Cobertor de emergência aluminizado, Antiatrito, protetor solar, repelente, itens de higiene pessoal;</p> 
+                    <p>Roupas de frio, corta vento, impermeável, luvas, itens de Primeiros Socorros (agulhas para bolhas, antisséptico, atadura, gaze, esparadrapo…);</p>    
+                    <p>edicamentos pessoais e spray para dores musculares, Alimentos, suplementos e bebidas específicos de sua dieta e gosto.</p>
+                    <br>
+                    <p><b>INSCRIÇÕES</b></p>
+                    <br>     
+                    <p>As inscrições deverão ser realizadas somente através do link que será disponibilizado, 10/11/2024 a 20/12/2024, ou até o limite das vagas.</p>    
+                    <p>O valor da inscrição é R$279,00 para a prova Principal e nela estão inclusos:</p>      
+                    <li>Número de peito;</li>
+                    <li>Camiseta personalizada da prova;</li>
+                    <li>Utilização da infraestrutura local durante o evento;</li>
+                    <li>Medalha de participação;</li>
+                    <li>Troféu apenas para o último atleta a ficar em pé;</li>
+                    <li>Apoio alimentar e de hidratação durante a competição, sendo:</li>
+                    <li>Alimentos: frutas, biscoitos salgados e doces, bolos, pão, paçoca, amendoim, batata frita, balas de goma e outros;</li>
+                    <li>Alimentação diurna: Almoço (frango, carne bovina, peixe, arroz, macarrão, farofa, salada);</li>
+                    <li>Alimentação noturna / madrugada: caldo quente, pizzas e massas;</li>
+                    <li>Hidratação: água, sucos, café, refrigerantes, e bebida isotônica.</li>
+                    <p>Haverá opção de inscrição para até três voltas. O objetivo é fomentar a modalidade a atletas mais iniciantes ou que ainda não se aventuraram em distâncias maiores e também proporcionar uma participação mais ativa aos amigos, familiares e apoios dos atletas que passaram longas horas correndo em nosso quintal.</p>
+                    <p>Acreditamos que essa opção, além de ajudar os apoios a entenderem o que seus atletas irão enfrentar, irá desmistificar um pouco desta ainda nova modalidade estimulando os corredores a se desafiarem por "só mais uma volta".</p>
+                    <p>O valor será R$179,00 e incluirá os mesmo itens mencionados acima, com exceção dos troféus "last one standing".</p>
+                    <p>Atletas com idade de 60 anos ou mais na data da prova, paga 50% do valor da inscrição conforme Art. 23 da Lei Federal nº 10.741/2003</p>   
+                    <br>
+                    <p><b>OBSERVAÇÕES</b></p>
+                    <br>
+                    <p>No ato da inscrição, ao concordar com o regulamento, o (a) participante aceita todos os termos do regulamento e assume total responsabilidade por sua participação no evento de acordo com o TERMO DE RESPONSABILIDADE, parte integrante deste regulamento.</p>
+                    <br>
+                    <p><b>TERMO DE RESPONSABILIDADE</b></p>
+                    <br>
+                    <p>Eu, atleta no cadastramento da inscrição da MACAXEIRA BACKYARD ULTRA PORTO VELHO - RO, BRASIL, no perfeito uso de minhas faculdades, DECLARO para os devidos fins de direito que:</p>
+                    <p>1 - Estou ciente de que se trata de uma corrida de longas distâncias.</p>
+                    <p>2 - Atesto que estou em plenas condições físicas e psicológicas de participar desta CORRIDA e estou ciente que não existe nenhuma recomendação médica que me impeça de praticar atividades físicas.</p>
+                    <p>3 - Assumo, por minha livre e espontânea vontade, todos os riscos envolvidos e suas consequências pela participação nesta PROVA (que incluem possibilidade de invalidez e morte), isentando a organização, colaboradores e patrocinadores de TODA E QUALQUER RESPONSABILIDADE por quaisquer danos materiais, morais ou físicos, que porventura venha a sofrer, advindos da participação nesta PROVA.</p>
+                    <p>4 - Em caso de participação neste evento, representando equipes de atletas ou prestadores de serviços e/ou qualquer mídia ou veículo, declaro ter pleno conhecimento, e que aceito o regulamento da corrida, bem como, a respeitar as áreas da organização destinadas as mesmas, e que está vedada minha participação nas estruturas de apoio a equipes montadas em locais inadequados, ou que interfiram no andamento do evento, e também locais sem autorização por escrito da organização, podendo ser retirado da CORRIDA e do local do evento em qualquer tempo.</p>
+                    <p>5 - Estou ciente das penalidades e possível desclassificação que posso sofrer caso descumpra o regulamento ou cometa falta grave. Excluo meu direito de reclamação sobre tais aspectos da corrida.</p>
+                    <p>6 - Autorizo o uso de minha imagem, assim como familiares e amigos, para fins de divulgação do evento, por fotos, vídeos e entrevistas em qualquer meio de comunicação, sem geração de ônus para a organizadora, mídia e patrocinadores.</p>
+                    <p>7 - Estou ciente que na hipótese de suspensão da prova por questões de segurança pública ou força maior, todos os eventuais custos referentes à locomoção, preparação, estadia, inscrição, entre outros gastos despendidos pelo atleta será suportados única e exclusivamente por mim, isentando a Comissão Organizadora pelo ressarcimento de qualquer destes custos.</p>
+                    <p>8 - Assumo todas as despesas de hospedagem, traslados, seguros, assistência médica e quaisquer outras despesas necessárias sob minha responsabilidade nesta corrida; antes, durante ou depois da mesma.</p>
+                    <p>9 - Compreendi e estou de acordo com todos os itens deste TERMO DE RESPONSABILIDADE, isentando quem quer que seja, de toda e qualquer responsabilidade legal de tudo o que vier a ocorrer com o (a) atleta sob minha responsabilidade por consequência da sua participação nesta corrida.</p>
+                    <p>10 - Li, conheço, aceito e me submeto integralmente a todos os termos do regulamento da MACAXEIRA BACKYARD ULTRA PORTO VELHO - RO.</p>
+                    <p>A Comissão Organizadora poderá, a seu critério ou conforme as necessidades do evento, alterar ou revogar este regulamento, total ou parcialmente, informando as mudanças.
+                    <p>Os casos omissos deste regulamento serão dirimidos pela Comissão Organizadora de forma soberana, não cabendo recurso a estas decisões.</p>
+                    <br>
+                    <p><b>CONTATOS</b></p>
+                    <br>
+                    <p>@backyardmacaxeira</p>
+                    <p>Kélio Esteves Xavier - (69) 99925-9005</p>
+                    <p>Organizador da Macaxeira Backyard Ultra Porto Velho - RO.</p>
+            
+
+                </div>
+            </form>
+        </div>
+
+        <footer class="main_footer_copy">
+
+            <p class="m-b-footer"> ECM Run - 2024, todos os direitos reservados.</p> 
+            <p class="by"><i class="icon icon-heart-3"></i> Desenvolvido por: ECM Sistemas developer</p>
+        
+        </footer>
+
+    {% endblock %}
+
+    <script>
+        var close = document.getElementsByClassName("closebtn");
+        var i;
+        
+        for (i = 0; i < close.length; i++) {
+          close[i].onclick = function(){
+            var div = this.parentElement;
+            div.style.opacity = "0";
+            setTimeout(function(){ div.style.display = "none"; }, 600);
+          }
+        }
+
+        function formatar(mascara, documento) {
+          let i = documento.value.length;
+          let saida = '#';
+          let texto = mascara.substring(i);
+          while (texto.substring(0, 1) != saida && texto.length ) {
+            documento.value += texto.substring(0, 1);
+            i++;
+            texto = mascara.substring(i);
+          }
+        }
+
+    </script>
+    
+
+</body>
+
+</html>
+
