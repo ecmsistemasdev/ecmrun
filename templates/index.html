@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECM RUN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .header-form {
+            width: 70%;
+            height: 200px;
+            background-image: url('/static/img/001.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .title {
+            color: white;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: center;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .logo {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            position: absolute;
+            right: 20px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.8em;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .race-form {
+            width: 70%;
+            height: 200px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .race-image {
+            width: 160px;
+            height: 160px;
+            object-fit: cover;
+        }
+
+        .race-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .race-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .race-date, .race-location {
+            color: #666;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .race-price {
+            font-weight: bold;
+            color: #444;
+        }
+
+        .subscribe-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2em;
+            max-width: 170px;
+        }
+
+        .subscribe-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 0;
+            }
+
+            .header-form {
+                width: 100%;
+                margin-top: 0;
+            }
+
+            .title {
+                display: none;
+            }
+
+            .logo {
+                position: static;
+                right: auto;
+            }
+
+            .race-form {
+                width: 90%;
+                height: auto;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .race-image {
+                width: 200px;
+                height: 200px;
+            }
+
+            .race-info {
+                text-align: center;
+                gap: 10px;
+            }
+
+            .subscribe-btn {
+                margin: 10px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <form class="header-form">
+            <h1 class="title">ECM RUN</h1>
+            <img src="/static/img/ecmrunlogo1.png" alt="Logo ECM RUN" class="logo">
+        </form>
+    </div>
+
+    <h2 class="subtitle">Corridas em Andamento</h2>
+
+    <form class="race-form">
+        <img src="/static/img/img_200k.jpg" alt="Imagem da corrida" class="race-image">
+        <div class="race-info">
+            <h3 class="race-title">4º Desafio 200k - Porto Velho-Humaitá</h3>
+            <p class="race-date">Data: 05, 06 e 07/07/2025</p>
+            <p class="race-location">Porto Velho/RO</p>
+            <p class="race-price">R$ 400,00 - R$ 500,00</p>
+            <button type="button" class="subscribe-btn">Inscreva-se</button>
+        </div>
+    </form>
+
+    <footer class="footer">
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+</body>
+</html>
