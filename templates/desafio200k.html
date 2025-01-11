@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4º Desafio 200k Porto Velho-Humaitá</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Calibri, Arial, sans-serif;
+        }
+
+        .header {
+            width: 70%;
+            height: 200px;
+            margin: 10px auto 0;
+            padding: 0;
+            position: relative;
+            background-image: url('/static/img/001.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .center-image {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .main-title {
+            text-align: center;
+            margin: 20px auto;
+            font-size: 24px;
+            width: 70%;
+        }
+
+        .container {
+            width: 70%;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .main-content {
+            text-align: left;
+        }
+
+        .event-info {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .registration-form {
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 15px;
+            width: 320px;
+            float: right;
+            margin-left: 20px;
+            background-color: white;
+            box-sizing: border-box;
+            font-family: Calibri, Arial, sans-serif;
+        }
+
+        .registration-form .title {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            margin: -15px -15px 15px -15px;
+            border-radius: 7px 7px 0 0;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .radio-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .radio-option {
+            margin: 5px 0;
+        }
+
+        .submit-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .text-content {
+            text-align: justify;
+            margin-top: 20px;
+            clear: both;
+            padding-top: 10px;
+            font-family: Calibri, Arial, sans-serif;
+        }
+
+        .regulation-title {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .inscription-highlight {
+            font-weight: bold;
+        }
+
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }
+        
+        @media (max-width: 1024px) {
+            .container, .main-title {
+                width: 90%;
+            }
+
+            .header {
+                width: 100%;
+                margin: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .registration-form {
+                float: none;
+                margin: 0 auto 20px;
+                min-width: 300px;
+                width: 320px;
+            }
+            
+            .main-content {
+                clear: both;
+                padding-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="/static/img/img_200k.jpg" alt="Logo" class="center-image">
+    </div>
+    
+    <h1 class="main-title">4º Desafio 200k Porto Velho-Humaitá</h1>
+
+    <div class="container">
+        <form class="registration-form" method="POST" action="/autenticar">
+            <div class="title">Inscrição</div>
+            
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" required>
+            </div>
+            
+            <div class="radio-group">
+                <label>Categoria:</label>
+                <div class="radio-option">
+                    <input type="radio" id="solo" name="categoria" value="solo" required>
+                    <label for="solo">Solo 200km</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="dupla" name="categoria" value="dupla">
+                    <label for="dupla">Dupla - 100km cada</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="quarteto" name="categoria" value="quarteto">
+                    <label for="quarteto">Quarteto 50km cada</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="octeto" name="categoria" value="octeto">
+                    <label for="octeto">Octeto 25km</label>
+                </div>
+                
+            </div>
+                
+            <button type="submit" class="submit-btn">Continuar</button>
+        </form>
+
+        <div class="main-content">
+            <div class="event-info">
+
+                <h3 class="main-title">Informativo</h3>
+                <div id="info-content">
+                    <!-- O conteúdo será carregado do arquivo regulamento.txt -->
+                </div>
+
+
+                <!--
+
+                <h3 class="main-title">Informativo</h3> 
+                <br>
+                📅 Dias 05, 06 e 07 de Julho de 2025<br>
+                🏃🏻 Largada às 16hs 🕗<br>
+                📍 Saída: Início do Espaço Alternativo - Av. Jorge Teixeira (Praia)
+                <br><br>
+                💲 Valor da Inscrição: 500,00 reais Solo e 400,00 reais se for em equipe (valor da inscrição é individual)
+                <br><br>
+                Forma de Pagamento:<br>
+                  Pix e Cartão de Crédito diretamente na pagina de inscrição<br>
+                <br>
+                🏆 Os atletas receberão camiseta, viseira, sacolinha, medalha e um troféu por equipe ou solo.<br>
+                🚙 Os apoio devem fazer a inscrição para receber camisa e medalha do evento. Em breve link para inscrição do apoio
+                <br><br>
+                ✍️ Período de inscrição:<br>
+                  Início: 13 de janeiro de 2025<br>
+                  Término: 31 de maio 2024 ou até o limite das vagas
+                📱 Mais informações: (69) 99925-9005/ (69) 99308-8323 / (69) 99958-3207
+                -->
+            </div>
+
+            <div class="text-content">
+                <h3 class="regulation-title">Regulamento</h3>
+                <div id="regulamento-content">
+                    <!-- O conteúdo será carregado do arquivo regulamento.txt -->
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <footer class="footer">
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+
+    <script>
+        $(document).ready(function(){
+            $('#cpf').mask('000.000.000-00');
+
+            // Carrega o conteúdo do arquivo info.txt
+            $.get('/static/info.txt', function(data) {
+                $('#info-content').html(data.replace(/\n/g, '<br>'));
+            });
+            
+            // Carrega o conteúdo do arquivo regulamento.txt
+            $.get('/static/regulamento.txt', function(data) {
+                $('#regulamento-content').html(data.replace(/\n/g, '<br>'));
+            });
+        });
+
+        function validateForm(event) {
+            event.preventDefault();
+            
+            // Esconde a mensagem de erro anterior
+            $('#categoriaError').hide();
+            
+            // Verifica se alguma categoria foi selecionada
+            const categoriaSelected = $('input[name="categoria"]:checked').length > 0;
+            
+            if (!categoriaSelected) {
+                // Mostra a mensagem de erro se nenhuma categoria foi selecionada
+                $('#categoriaError').show();
+                return false;
+            }
+            
+            // Se chegou aqui, o formulário está válido
+            // Aqui você pode adicionar o código para enviar o formulário
+            $('#inscricaoForm')[0].submit();
+            return true;
+        }
+    </script>
+</body>
+</html>

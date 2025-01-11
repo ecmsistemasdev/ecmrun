@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autenticação - Desafio 200k</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Calibri, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .main-title {
+            text-align: center;
+            margin: 20px auto;
+            font-size: 24px;
+            width: 70%;
+        }
+
+        .auth-form {
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            width: 320px;
+            background-color: white;
+            box-sizing: border-box;
+            margin: 20px auto;
+        }
+
+        .auth-form h5 {
+            text-align: center;
+            margin: 0 0 20px 0;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .form-group input {
+            width: 120px; /* Reduced width for 4 characters */
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 24px;
+            letter-spacing: 8px;
+            font-family: monospace; /* Better for fixed-width characters */
+        }
+
+        .submit-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .resend-link {
+            display: block;
+            text-align: center;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .resend-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 5px;
+            width: 300px;
+            text-align: center;
+        }
+
+        .modal-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .modal-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        function formatar(mascara, documento) {
+            var i = documento.value.length;
+            var saida = mascara.substring(0,1);
+            var texto = mascara.substring(i);
+
+            if (texto.substring(0,1) != saida) {
+                documento.value += texto.substring(0,1);
+            }
+        }
+
+        function validateCode(event) {
+            event.preventDefault();
+            var codigo = document.getElementById('codigo').value;
+            
+            if (codigo !== '1234') {
+                showModal();
+                return false;
+            }
+            // If code is correct, submit the form
+            document.querySelector('.auth-form').submit();
+        }
+
+        function showModal() {
+            document.getElementById('errorModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('errorModal').style.display = 'none';
+            document.getElementById('codigo').value = '';
+            document.getElementById('codigo').focus();
+        }
+    </script>
+</head>
+<body>
+    <h3 class="main-title">4º Desafio 200k Porto Velho-Humaitá</h3>
+    
+    <form class="auth-form" method="POST" action="/verificar-codigo" onsubmit="validateCode(event)">
+        <h5>Digite o código que foi enviado pro E-mail informado</h5>
+        
+        <div class="form-group">
+            <input type="text" id="codigo" name="codigo" 
+                   onkeypress="formatar('####',this)" 
+                   maxlength="4" 
+                   required="required" 
+                   pattern="[0-9]+$">
+        </div>
+        
+        <button type="submit" class="submit-btn">Continuar</button>
+        
+        <a href="#" class="resend-link">Não recebeu? Enviar código novamente</a>
+    </form>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <p>Código incorreto!</p>
+            <button class="modal-button" onclick="closeModal()">Ok</button>
+        </div>
+    </div>
+</body>
+</html>

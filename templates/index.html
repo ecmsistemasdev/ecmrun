@@ -22,7 +22,7 @@
             width: 100%;
             display: flex;
             justify-content: center;
-            padding: 20px;
+            padding: 0px;
         }
 
         .header-form {
@@ -36,7 +36,7 @@
             align-items: center;
             padding: 20px;
             position: relative;
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         .title {
@@ -92,6 +92,7 @@
         .race-title {
             font-size: 1.2em;
             font-weight: bold;
+            color: #0056b3;;
         }
 
         .race-date, .race-location {
@@ -120,6 +121,25 @@
         .subscribe-btn:hover {
             background-color: #0056b3;
         }
+
+
+        .subscribe-link {
+            display: inline-block;
+            background-color: #007bff;
+            color: #ffffff;  /* Mudado para branco */
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            max-width: 150px;
+            text-align: center;
+        }
+    
+        .subscribe-link:hover {
+            background-color: #0056b3;
+            color: #ffffff;  /* Mantém branco também no hover */
+        }
+
 
         .footer {
             background-color: white;
@@ -193,13 +213,14 @@
     <h2 class="subtitle">Corridas em Andamento</h2>
 
     <form class="race-form">
+
         <img src="/static/img/img_200k.jpg" alt="Imagem da corrida" class="race-image">
         <div class="race-info">
             <h3 class="race-title">4º Desafio 200k - Porto Velho-Humaitá</h3>
             <p class="race-date">Data: 05, 06 e 07/07/2025</p>
             <p class="race-location">Porto Velho/RO</p>
             <p class="race-price">R$ 400,00 - R$ 500,00</p>
-            <button type="button" class="subscribe-btn">Inscreva-se</button>
+            <button onclick="window.location.href='/desafio200k'" type="button" class="subscribe-btn">Inscreva-se</button>
         </div>
     </form>
 
