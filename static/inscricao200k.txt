@@ -1,0 +1,24 @@
+criar backend inscricao200k.html com um form com largura 70% da tela com bordas arredondadas cor azul, conforme reduzir a tela o form se ajusta à tela ficando com a margem de 5px pra todos os lados. incluir dentro do form os campos (inputs):
+E-mail; 
+Primeiro Nome; 
+Sobrenome; 
+CPF (adicionar mascada); 
+Data de Nascimento; 
+Telefone (adicionar mascada (99) 99999-9999); 
+Radio "Sexo" com duas opções: "Masculino", "Feminino" required; 
+Radio "Camiseta" com as opções: "PP","P","M","G","GG";
+Select option "Estado" que trara a lista de estado do arquivo "estados.json" required;
+Select option "Cidade" que trara a lista de municiops do arquivo "municipios.json" required;
+Equipe;
+adicionar uma linha divisora;
+adicionar mais dos campos:
+Nome da Equipe 200k;
+Integrantes;
+adicionar uma linha divisora;
+adicionar Radio "Forma de pagamento:" com as opções: "PIX","Cartão de Crédito" required
+Adicionar botão submit "Confirmar e Seguir pra pagamento".
+implementações: a lista do Select option "Cidade" trará filtrado apenas os municipios do arquivo "municipios.json", conforme o estado selecionado no Select option "Estado";
+Os captions ficam acima dos campos;
+Os campos menores como: CPF, Data de Nascimento, Telefone, Sexo, Camiseta se ajustam lado a lado conforme tamanho da tela se ajustam pra baixo.
+
+

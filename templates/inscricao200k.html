@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4º Desafio 200k</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .form-title {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 7px 7px 0 0;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        form {
+            width: 50%;
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #007bff;
+            min-width: 300px;
+        }
+
+        @media (max-width: 768px) {
+            form {
+                width: calc(100% - 20px);
+                margin: 5px;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px; /* Aumentado o espaçamento vertical */
+            padding-top: 5px;
+        }
+
+        .form-row {
+            display: flex;
+            padding-top: 5px;
+            flex-wrap: wrap;
+            gap: 20px; /* Aumentado o espaçamento vertical */
+            margin-bottom: 20px; /* Aumentado o espaçamento vertical */
+        }
+
+        .form-field {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 3px; /* Aumentado o espaçamento */
+            color: #333;
+            font-size: 14px; /* Aumentado em 1px */
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 10px; /* Aumentado o padding */
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px; /* Aumentado em 1px */
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 14px; /* Aumentado em 1px */
+            margin-top: 5px;
+        }
+
+        .radio-group label {
+            font-size: 14px; /* Aumentado em 1px */
+            margin-bottom: 0;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #007bff;
+            margin: 25px 0; /* Aumentado o espaçamento */
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            margin-top: 25px; /* Aumentado o espaçamento */
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: auto;
+            display: inline-block;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>4º Desafio 200k - Porto Velho-Humaitá</h1>
+    <form id="inscricaoForm">
+        <div class="form-title">Formulário de Inscrição - Atleta</div>
+
+        <div class="form-group">
+            <label for="email">E-mail:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-field">
+                <label for="primeiro_nome">Primeiro Nome:</label>
+                <input type="text" id="primeiro_nome" name="primeiro_nome" class="uppercase" required>
+            </div>
+            <div class="form-field">
+                <label for="sobrenome">Sobrenome:</label>
+                <input type="text" id="sobrenome" name="sobrenome" class="uppercase" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-field">
+                <label for="cpf">CPF:</label>
+                <input type="text" id="cpf" name="cpf" required>
+            </div>
+            <div class="form-field">
+                <label for="data_nascimento">Data de Nascimento:</label>
+                <input type="date" id="data_nascimento" name="data_nascimento" required>
+            </div>
+            <div class="form-field">
+                <label for="telefone">Nº Celular:</label>
+                <input type="tel" id="telefone" name="telefone" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-field">
+                <label>Sexo:</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="sexo" value="masculino" required> Masculino
+                    </label>
+                    <label>
+                        <input type="radio" name="sexo" value="feminino"> Feminino
+                    </label>
+                </div>
+            </div>
+            <div class="form-field">
+                <label>Camiseta:</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="camiseta" value="PP"> PP</label>
+                    <label><input type="radio" name="camiseta" value="P"> P</label>
+                    <label><input type="radio" name="camiseta" value="M"> M</label>
+                    <label><input type="radio" name="camiseta" value="G"> G</label>
+                    <label><input type="radio" name="camiseta" value="GG"> GG</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-field">
+                <label for="estado">Estado:</label>
+                <select id="estado" name="estado" required></select>
+            </div>
+            <div class="form-field">
+                <label for="cidade">Cidade:</label>
+                <select id="cidade" name="cidade" required></select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="equipe">Equipe:</label>
+            <input type="text" id="equipe" name="equipe">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-group">
+            <label for="nome_equipe">Nome da Equipe 200k</label>
+            <input type="text" id="nome_equipe" name="nome_equipe", placeholder="Somente em caso de categoria em Equipe">
+        </div>
+
+        <div class="form-group">
+            <label for="integrantes">Integrantes</label>
+            <input type="text" id="integrantes" name="integrantes", placeholder="Em caso de Equipe informe os nomes dos integrantes">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-group">
+            <label>Forma de pagamento:</label>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="pagamento" value="pix" required> PIX
+                </label>
+                <label>
+                    <input type="radio" name="pagamento" value="cartao"> Cartão de Crédito
+                </label>
+            </div>
+        </div>
+
+        <button type="submit">Confirmar</button>
+    </form>
+
+    <footer class="footer">
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+
+    <script>
+        $(document).ready(function() {
+            // Máscaras para CPF e telefone
+            $('#cpf').mask('000.000.000-00');
+            $('#telefone').mask('(00) 00000-0000');
+
+            // Converter para maiúsculo os campos de nome
+            $('#primeiro_nome, #sobrenome').on('input', function() {
+                $(this).val($(this).val().toUpperCase());
+            });
+
+            // Carrega estados
+            fetch('/estados')
+                .then(response => response.json())
+                .then(data => {
+                    const estadoSelect = $('#estado');
+                    estadoSelect.empty();
+                    estadoSelect.append('<option value="">Selecione um estado</option>');
+                    data.data.sort((a, b) => a.Nome.localeCompare(b.Nome, 'pt-BR')).forEach(estado => {
+                        estadoSelect.append(`<option value="${estado.Uf}">${estado.Nome}</option>`);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar estados:', error);
+                });
+
+            // Carrega cidades baseado no estado selecionado
+            $('#estado').change(function() {
+                const estadoSelecionado = $(this).val();
+                const cidadeSelect = $('#cidade');
+                cidadeSelect.empty();
+                cidadeSelect.append('<option value="">Selecione uma cidade</option>');
+
+                if (estadoSelecionado) {
+                    fetch('/municipios')
+                        .then(response => response.json())
+                        .then(data => {
+                            data.data
+                                .filter(cidade => cidade.Uf === estadoSelecionado)
+                                .sort((a, b) => a.Nome.localeCompare(b.Nome, 'pt-BR'))
+                                .forEach(cidade => {
+                                    cidadeSelect.append(`<option value="${cidade.Id}">${cidade.Nome}</option>`);
+                                });
+                        })
+                        .catch(error => {
+                            console.error('Erro ao carregar cidades:', error);
+                        });
+                }
+            });
+
+            // Submit do formulário
+            $('#inscricaoForm').submit(function(e) {
+                e.preventDefault();
+                console.log('Formulário enviado');
+            });
+        });
+    </script>
+</body>
+</html>
