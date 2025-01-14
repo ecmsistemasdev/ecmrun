@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <style>
+        :root {
+            --page-padding: 2cm;
+        }
+
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        @media print {
+            body {
+                width: 21cm;
+                height: 29.7cm;
+                margin: 0;
+                padding: 1cm;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 21cm;
+            margin: 0 auto;
+            padding: var(--page-padding);
+            box-sizing: border-box;
+            background-color: white;
+        }
+
+        .header {
+            margin-bottom: 3em;
+            border-bottom: 2px solid #333;
+            position: relative;
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 1em;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            left: 0;
+        }
+
+        .header h1 {
+            font-size: 20pt;
+            margin: 0;
+            color: #333;
+        }
+
+        .header p {
+            font-size: 10pt;
+            color: #666;
+            margin: 0.5em 0 1em 0;
+            text-align: right;
+        }
+
+        .content {
+            margin-bottom: 3em;
+            padding: 1.5em;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: rgb(203, 216, 226);
+        }
+
+        .event-info {
+            margin: 0.5em 0;
+            padding: 0.5em 1em;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .event-name {
+            font-weight: bold;
+            font-size: 14pt;
+        }
+
+        .event-address {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 0 em;
+        }
+
+        .info-row {
+            margin: 1.5em 0;
+            padding: 0.5em 1em;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .compact-row {
+            display: flex;
+            justify-content: flex-start;
+            gap: 4em;
+        }
+
+        .compact-field {
+            display: flex;
+            gap: 1em;
+            align-items: center;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #444;
+            white-space: nowrap;
+        }
+
+        .info-value {
+            color: #666;
+            text-align: left;
+        }
+
+        .observations {
+            margin-top: 2em;
+        }
+
+        .observations-label {
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 0.5em;
+        }
+
+        .observations-content {
+            color: #666;
+            padding: 1em;
+            background-color: white;
+            border-radius: 4px;
+            min-height: 50px;
+        }
+
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }
+
+        /* Ajustes responsivos para mobile */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 1cm 0.5cm 1px 0.5cm; /* top right bottom left */
+                font-size: 14px;
+            }
+
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .header h1 {
+                font-size: 16pt;
+                margin-left: 70px;
+            }
+
+            .content {
+                padding: 1em;
+            }
+
+            .compact-row {
+                flex-direction: column;
+                gap: 1em;
+            }
+
+            .event-name {
+                font-size: 12pt;
+            }
+
+            .event-address {
+                font-size: 9pt;
+            }
+
+            .footer-logo {
+                height: 40px;
+            }
+
+            .info-row, .event-info {
+                padding: 0.5em;
+            }
+
+            .observations-content {
+                padding: 0.5em;
+            }
+        }
+
+        /* Ajustes para telas muito pequenas */
+        @media screen and (max-width: 320px) {
+            .header h1 {
+                font-size: 14pt;
+            }
+
+            .logo {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Resto do HTML permanece igual -->
+    <div class="header">
+        <div class="logo-title">
+            <img src="/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+            <h1>{{ titulo }}</h1>
+        </div>
+        <p>{{ data }}</p>
+    </div>
+
+    <div class="content">
+        <div class="observations-label">Evento:</div>
+        <div class="event-info">
+            <div class="event-name">{{ nome }}</div>
+            <div class="event-address">{{ endereco }}</div>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Participante:</span>
+            <span class="info-value">{{ participante }}</span>
+        </div>
+
+        <div class="info-row">
+            <div class="compact-row">
+                <div class="compact-field">
+                    <span class="info-label">Distância:</span>
+                    <span class="info-value">{{ km }} km</span>
+                </div>
+                <div class="compact-field">
+                    <span class="info-label">Valor:</span>
+                    <span class="info-value">{{ valor }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Inscrição:</span>
+            <span class="info-value">{{ inscricao }}</span>
+        </div>
+
+        <div class="observations">
+            <div class="observations-label">Observações:</div>
+            <div class="observations-content">{{ obs }}</div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+</body>
+</html>

@@ -6,9 +6,26 @@ from flask import Flask, render_template, redirect, request, jsonify, flash, ses
 app = Flask(__name__)
 app.secret_key = 'EM1QW765QNNDK9'
 
+# Global variables for the receipt
+receipt_data = {
+    'titulo': 'Comprovante de Inscrição',
+    'data': '14/01/2025',
+    'endereco': 'AV. Jorge Teixeira, Espaço Alternativo - Porto Velho/RO',
+    'inscricao': '123455456456',
+    'km': '200',
+    'valor': 'R$ 500,00',
+    'participante': 'ELIENAI CARVALHO MOMTEIRO DA SILVA MONTEIRO',
+    'nome': '4º DESAFIO 200K PORTO VELHO-HUMAITÁ - 2025',
+    'obs': 'Observações importantes sobre o evento vão aqui.'
+}
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route('/comprovante')
+def comprovante():
+    return render_template('comprovante_insc.html', **receipt_data)
 
 @app.route('/desafio200k')
 def desafio200k():

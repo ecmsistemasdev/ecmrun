@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <style>
         body {
             margin: 0;
@@ -75,6 +76,7 @@
             margin: -15px -15px 15px -15px;
             border-radius: 7px 7px 0 0;
             font-size: 20px;
+            font-weight: bold;
             text-align: center;
         }
 
@@ -202,7 +204,7 @@
             
             <div class="form-group">
                 <label for="cpf">CPF</label>
-                <input type="text" id="cpf" required>
+                <input type="text" id="cpf" maxlength="14" inputmode="numeric" placeholder="Digite seu CPF" required>
             </div>
             
             <div class="radio-group">
@@ -232,42 +234,36 @@
         <div class="main-content">
             <div class="event-info">
 
-                <h3 class="main-title">Informativo</h3>
-                <div id="info-content">
-                    <!-- O conteúdo será carregado do arquivo regulamento.txt -->
-                </div>
-
-
-                <!--
-
                 <h3 class="main-title">Informativo</h3> 
                 <br>
-                📅 Dias 05, 06 e 07 de Julho de 2025<br>
+                📅 Data: 05, 06 e 07 de Julho de 2025<br>
                 🏃🏻 Largada às 16hs 🕗<br>
                 📍 Saída: Início do Espaço Alternativo - Av. Jorge Teixeira (Praia)
                 <br><br>
                 💲 Valor da Inscrição: 500,00 reais Solo e 400,00 reais se for em equipe (valor da inscrição é individual)
                 <br><br>
-                Forma de Pagamento:<br>
-                  Pix e Cartão de Crédito diretamente na pagina de inscrição<br>
+                ✍️ <b>Período de Inscrição:</b><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                Início: 13 de janeiro de 2025<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                Término: 31 de maio 2025 ou até o limite das vagas<br><br>
+                💰 <b>Forma de Pagamento:</b><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                Pix e Cartão de Crédito<br>
                 <br>
                 🏆 Os atletas receberão camiseta, viseira, sacolinha, medalha e um troféu por equipe ou solo.<br>
                 🚙 Os apoio devem fazer a inscrição para receber camisa e medalha do evento. Em breve link para inscrição do apoio
                 <br><br>
-                ✍️ Período de inscrição:<br>
-                  Início: 13 de janeiro de 2025<br>
-                  Término: 31 de maio 2024 ou até o limite das vagas
                 📱 Mais informações: (69) 99925-9005/ (69) 99308-8323 / (69) 99958-3207
-                -->
             </div>
 
             <div class="text-content">
                 <h3 class="regulation-title">Regulamento</h3>
                 <div id="regulamento-content">
-                    <!-- O conteúdo será carregado do arquivo regulamento.txt -->
+                    <pre id="regulamento"></pre>
                 </div>
             </div>
-            
+
         </div>
     </div>
 
@@ -278,19 +274,6 @@
     </footer>
 
     <script>
-        $(document).ready(function(){
-            $('#cpf').mask('000.000.000-00');
-
-            // Carrega o conteúdo do arquivo info.txt
-            $.get('/static/info.txt', function(data) {
-                $('#info-content').html(data.replace(/\n/g, '<br>'));
-            });
-            
-            // Carrega o conteúdo do arquivo regulamento.txt
-            $.get('/static/regulamento.txt', function(data) {
-                $('#regulamento-content').html(data.replace(/\n/g, '<br>'));
-            });
-        });
 
         function validateForm(event) {
             event.preventDefault();

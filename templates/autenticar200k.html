@@ -157,8 +157,12 @@
 </head>
 <body>
     <h3 class="main-title">4º Desafio 200k Porto Velho-Humaitá</h3>
-    
+    <br>
+    <h4>Autenticação e validação de E-mail</h4>
+    <!--
     <form class="auth-form" method="POST" action="/verificar-codigo" onsubmit="validateCode(event)">
+    -->
+    <form class="auth-form">
         <h5>Digite o código que foi enviado pro E-mail informado</h5>
         
         <div class="form-group">
@@ -169,7 +173,10 @@
                    pattern="[0-9]+$">
         </div>
         
+        <!--
         <button type="submit" class="submit-btn">Continuar</button>
+        -->
+        <button onclick="window.location.href='/inscricao200k'" type="button" class="submit-btn">Continuar</button>
         
         <a href="#" class="resend-link">Não recebeu? Enviar código novamente</a>
     </form>
