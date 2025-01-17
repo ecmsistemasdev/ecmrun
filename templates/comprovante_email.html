@@ -27,27 +27,14 @@
             }
         }
 
-        /* Wrapper principal para controlar a largura */
-        .email-wrapper {
-            max-width: 800px;
-            width: 60%;
-            min-width: 600px;
-            margin: 0 auto;
-            background-color: white;
-        }
-
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
-
-        /* Container interno para o conteúdo */
-        .inner-container {
+            max-width: 60%; /* 21cm; */
+            margin: 0 auto;
             padding: var(--page-padding);
             box-sizing: border-box;
+            background-color: white;
         }
 
         .header {
@@ -98,8 +85,9 @@
         .content {
             margin-bottom: 3em;
             padding: 1.5em;
-            border: 2px solid rgb(149, 163, 173);
+            border: 2px solid rgb(149, 163, 173);;  /* var(--content-border-color); */
             border-radius: 8px;
+            /*background-color: var(--content-bg-color); */
             background-color: rgb(203, 216, 226);
         }
 
@@ -210,14 +198,9 @@
         }
 
         @media screen and (max-width: 768px) {
-            .email-wrapper {
-                width: 100% !important;
-                min-width: unset !important;
-                padding: 10px;
-            }
-
-            .inner-container {
-                padding: 1cm 0.5cm;
+            body {
+                padding: 1cm 0.5cm 1px 0.5cm;
+                font-size: 14px;
             }
 
             .logo-title {
@@ -283,69 +266,65 @@
     </style>
 </head>
 <body>
-    <div class="email-wrapper">
-        <div class="inner-container">
-            <div class="header">
-                <div class="logo-title">
-                    <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
-                    <div class="title-container">
-                        <h1>{{ titulo }}</h1>
-                        <p>{{ data }}</p>
-                    </div>
-                </div>
+    <div class="header">
+        <div class="logo-title">
+            <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+            <div class="title-container">
+                <h1>{{ titulo }}</h1>
+                <p>{{ data }}</p>
             </div>
-
-            <div class="content">
-                <div class="content-section">
-                    <div class="observations-label">Evento:</div>
-                    <div class="event-info">
-                        <div class="event-name">{{ evento }}</div>
-                        <div class="event-address">{{ endereco }}</div>
-                        <div class="event-date">Data: {{ dataevento }}</div>
-                    </div>
-                </div>
-
-                <div class="content-section">
-                    <div class="info-box full-width-box">
-                        <span class="info-label">Participante:</span>
-                        <span class="info-value">{{ participante }}</span>
-                    </div>
-                </div>
-
-                <div class="content-section">
-                    <div class="distance-value-row">
-                        <div class="info-box">
-                            <span class="info-label">Distância /<br>Modalidade:</span>
-                            <span class="info-value">{{ km }}</span>
-                        </div>
-                        <div class="info-box">
-                            <span class="info-label">Valor:</span>
-                            <span class="info-value">{{ valor }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="content-section">
-                    <div class="info-box full-width-box">
-                        <span class="info-label">Inscrição:</span>
-                        <span class="info-value">{{ inscricao }}</span>
-                    </div>
-                </div>
-
-                <div class="content-section">
-                    <div class="observations">
-                        <div class="observations-label">Observações:</div>
-                        <div class="observations-content">{{ obs }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <footer class="footer">
-                <img src="https://ecmrun.com.br/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
-                <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
-                <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
-            </footer>
         </div>
     </div>
+
+    <div class="content">
+        <div class="content-section">
+            <div class="observations-label">Evento:</div>
+            <div class="event-info">
+                <div class="event-name">{{ evento }}</div>
+                <div class="event-address">{{ endereco }}</div>
+                <div class="event-date">Data: {{ dataevento }}</div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="info-box full-width-box">
+                <span class="info-label">Participante:</span>
+                <span class="info-value">{{ participante }}</span>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="distance-value-row">
+                <div class="info-box">
+                    <span class="info-label">Distância/Modalidade:</span>
+                    <span class="info-value">{{ km }}</span>
+                </div>
+                <div class="info-box">
+                    <span class="info-label">Valor:</span>
+                    <span class="info-value">{{ valor }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="info-box full-width-box">
+                <span class="info-label">Inscrição:</span>
+                <span class="info-value">{{ inscricao }}</span>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="observations">
+                <div class="observations-label">Observações:</div>
+                <div class="observations-content">{{ obs }}</div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <img src="https://ecmrun.com.br/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
 </body>
 </html>

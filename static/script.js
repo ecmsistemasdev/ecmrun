@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const cpfInput = document.getElementById('cpf');
     const phoneInput = document.getElementById('celular');
+    const cepInput = document.getElementById('cep');
     const infoDisplay = document.getElementById('info');
     const regulamentoDisplay = document.getElementById('regulamento');
     
@@ -33,6 +34,20 @@ document.addEventListener('DOMContentLoaded', function () {
             inputValue = inputValue.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
         } else if (inputValue.length > 2) {
             inputValue = inputValue.replace(/(\d{2})(\d+)/, '($1) $2');
+        }
+
+        event.target.value = inputValue;
+    });
+
+    // Máscara para CEP
+    cepInput.addEventListener('input', function (event) {
+        let inputValue = event.target.value.replace(/\D/g, '');
+        inputValue = inputValue.substring(0, 8);
+
+        if (inputValue.length > 5) {
+            inputValue = inputValue.replace(/(\d{5})(\d{3})/, '$1-$2');
+        } else if (inputValue.length > 0) {
+            inputValue = inputValue.replace(/(\d{5})/, '$1');
         }
 
         event.target.value = inputValue;

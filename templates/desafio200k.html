@@ -8,11 +8,45 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <script>
+        function sendEmail() {
+            // Faz uma requisição POST para enviar o email
+            fetch('/send-email2', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url; // Redireciona para a página inicial após o envio
+                }
+            });
+        }
+    </script>
+
     <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: Calibri, Arial, sans-serif;
+            font-family: Arial, sans-serif;
+        }
+
+        .logo-container {
+            width: 100%;
+            height: 70px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
         }
 
         .header {
@@ -55,10 +89,11 @@
         .event-info {
             margin-bottom: 20px;
             line-height: 1.6;
+            font-size: 0.9em;
         }
 
         .registration-form {
-            border: 2px solid #007bff;
+            border: 2px solid #4de228;
             border-radius: 10px;
             padding: 15px;
             width: 320px;
@@ -66,16 +101,16 @@
             margin-left: 20px;
             background-color: white;
             box-sizing: border-box;
-            font-family: Calibri, Arial, sans-serif;
+            font-family: Arial, sans-serif;
         }
 
         .registration-form .title {
-            background-color: #007bff;
+            background-color: #4de228;
             color: white;
             padding: 10px;
             margin: -15px -15px 15px -15px;
             border-radius: 7px 7px 0 0;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             text-align: center;
         }
@@ -101,20 +136,22 @@
 
         .radio-group {
             text-align: left;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .radio-option {
             margin: 5px 0;
+            padding: 3px;
         }
 
         .submit-btn {
-            background-color: #007bff;
+            background-color: #1d72cc;
             color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 1em;
             width: 100%;
             font-weight: bold;
         }
@@ -141,6 +178,62 @@
             font-weight: bold;
         }
 
+        .form-title {
+            background-color: #647e99;
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+/**/
+
+        .termo {
+            text-align: justify;
+            margin: 0px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .info {
+            text-align: justify;
+            margin: 0;
+            margin-bottom: 30px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .info-title {
+            text-align: center;
+            margin: 0;
+            font-size: 24px;
+            width: 90%;
+        }
+
+        form {
+            width: 100%;
+            background: white;
+            padding-top: 20px;
+            border-radius: 5px;
+            min-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            form {
+                width: calc(100% - 10px);
+                margin: 5px 5px 5px 5px;
+            }
+        }
+/**/
         .footer {
             background-color: white;
             padding: 20px 0;
@@ -187,6 +280,10 @@
     </style>
 </head>
 <body>
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    </div>
+
     <div class="header">
         <img src="/static/img/img_200k.jpg" alt="Logo" class="center-image">
     </div>
@@ -194,13 +291,13 @@
     <h1 class="main-title">4º Desafio 200k Porto Velho-Humaitá</h1>
 
     <div class="container">
-        <form class="registration-form" method="POST" action="/autenticar">
+        <form class="registration-form">
             <div class="title">Inscrição</div>
-            
+                        
             <div class="radio-group">
-                <label>Categoria:</label>
+                <label><b>Escolha uma Categoria:</b></label>
                 <div class="radio-option">
-                    <input type="radio" id="solo" name="categoria" value="solo" required>
+                    <input type="radio" id="solo" name="categoria" value="solo" checked required>
                     <label for="solo">Solo 200km</label>
                 </div>
                 <div class="radio-option">
@@ -217,42 +314,306 @@
                 </div>
                 
             </div>
-                
-            <button type="submit" class="submit-btn" disabled="true">Continuar</button>
+<!--                
+            <button type="submit" class="submit-btn">Continuar</button>
+        -->            
+            <button onclick="window.location.href='/login'" type="button" class="submit-btn">Continuar</button>
+
+<!--
+            <a href="#" onclick="sendEmail()">Enviar Email</a>
+            <a href="send_email2">Enviar Email 2</a>
+-->        
         </form>
-
+        
         <div class="main-content">
-            <div class="event-info">
-
-                <h3 class="main-title">Informativo</h3> 
-                <br>
-                📅 Data: 04, 05 e 06 de Julho de 2025<br>
-                🏃🏻 Largada às 16hs 🕗<br>
-                📍 Saída: Início do Espaço Alternativo - Av. Jorge Teixeira (Praia)
-                <br><br>
-                💲 Valor da Inscrição: 500,00 reais Solo e 400,00 reais se for em equipe (valor da inscrição é individual)
-                <br><br>
-                ✍️ <b>Período de Inscrição:</b><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                Início: 13 de janeiro de 2025<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                Término: 31 de maio 2025 ou até o limite das vagas<br><br>
-                💰 <b>Forma de Pagamento:</b><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                Pix e Cartão de Crédito<br>
-                <br>
-                🏆 Os atletas receberão camiseta, viseira, sacolinha, medalha e um troféu por equipe ou solo.<br>
-                🚙 Os apoio devem fazer a inscrição para receber camisa e medalha do evento. Em breve link para inscrição do apoio
-                <br><br>
-                📱 Mais informações: (69) 99925-9005/ (69) 99308-8323 / (69) 99958-3207
-            </div>
-
-            <div class="text-content">
-                <h3 class="regulation-title">Regulamento</h3>
-                <div id="regulamento-content">
-                    <pre id="regulamento"></pre>
+            <form>
+                <div class="info">
+                
+                    <h3 class="info-title">Informativo</h3> 
+                    <br>
+                    📅 Data: 05, 06 e 07 de Julho de 2025<br>
+                    🏃🏻 Largada às 16hs 🕗<br>
+                    📍 Saída: Início do Espaço Alternativo - Av. Jorge Teixeira (Praia)
+                    <br><br>
+                    💲 Valor da Inscrição: 500,00 reais Solo e 400,00 reais se for em equipe (valor da inscrição é individual)
+                    <br><br>
+                    ✍️ <b>Período de Inscrição:</b><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    Início: 13 de janeiro de 2025<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    Término: 31 de maio 2025 ou até o limite das vagas<br><br>
+                    💰 <b>Forma de Pagamento:</b><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    Pix e Cartão de Crédito<br>
+                    <br>
+                    🏆 Os atletas receberão camiseta, viseira, sacolinha, medalha e um troféu por equipe ou solo.<br>
+                    🚙 Os apoio devem fazer a inscrição para receber camisa e medalha do evento. Em breve link para inscrição do apoio
+                    <br><br>
+                    📱 Mais informações: (69) 99925-9005/ (69) 99308-8323 / (69) 99958-3207
+                
                 </div>
-            </div>
+            </form>
+
+            
+            <form id="termoForm">
+                <div class="form-title">Regulamento</div>
+                <div class="termo">
+                    Em 2025 teremos a 4ª edição do Desafio Porto Velho Humaitá. Haverá participação de equipes e solo, não se trata de competição, mas um desafio pessoal, em que cada um será responsável por sua segurança e segurança de todos na coletividade.
+                    <br><br>
+                    O Desafio é um evento de 200km, denominado evento AUTOSSUFICIENTE, no qual o atleta se responsabiliza por sua orientação de percurso, sua alimentação, hidratação, segurança e tudo que o atleta necessitará durante o trajeto junto com a sua equipe de apoio, com largadas em horários e locais descrito a seguir. 
+                    <br><br>
+                    O Desafio é uma prova de autossuficiência, com isso, entenderemos, nos solidarizamos e lamentamos todos os problemas que cada um possa ter, mas NÃO HAVERÁ CONCESSÃO nenhuma a essa regra, para garantirmos a segurança de todos.
+                    <br><br>
+                    1 - <b>MODALIDADES DO DESAFIO</b>
+                    <br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • PROVAS PRINCIPAIS EM 2025 PARA OS 200KM:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        1 - SOLO - 200 km;<br> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        2 - DUPLA - 100 km cada atleta;<br> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        3 - QUARTETO - 50 km cada atleta;<br> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        4 - OCTETO - 25 km cada atleta.<br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        A participação na prova só poderá ser COM CARRO DE APOIO, cada atleta ou equipe será responsável por seu veículo e todos os gastos.
+                    <br><br>
+                    2 - <b>DIA, HORA, LOCAL, TIPO DE LARGADA</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        A prova largará na seguinte data e horário:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Dia: 04 de Julho de 2025 - Sexta Feira ÀS 16 horas<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Local da Largada e chegada: Av. Jorge Teixeira, início do Espaço Alternativo (Praia)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Largada preferencialmente todos juntos.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <b>O Atleta da modalidade solo que largar atrasado será automaticamente desclassificado.</b>
+                    <br><br>
+                    3 - <b>DURAÇÃO, DATA DE TÉRMINO DAS PROVAS</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Duração máxima da prova será de 50 horas, chegada até às 18 horas de domingo de 06/07/2025 no mesmo local da largada.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Dia 06/07/2025 (domingo) 18h (tarde) - Encerramento oficial da prova.
+                    <br><br>
+                    4 - <b>Nº DE PEITO</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Será fornecido número de peito para todos os atletas.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Os Atletas deverão permanecer com o nº de peito por todo percurso.
+                    <br><br>
+                    5 - <b>CONGRESSO TÉCNICO</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        O Congresso técnico será em dia e local a ser definido e informado pela organização.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • É OBRIGATÓRIO A PARTICIPAÇÃO DO ATLETA E/OU APOIO NO CONGRESSO TÉCNICO, SENDO A AUSÊNCIA SEM JUSTIFICATIVA MOTIVO DE DESCLASSIFICAÇÃO.
+                    <br><br>
+                    6 - <B>PONTOS DE COMUNICAÇÃO ENTRE ATLETAS E ORGANIZAÇÃO</B>
+                    <br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Carro de Apoio da organização e pontos de apoios fixos no decorrer do percurso nos kms 25, 50, 75, 100, 125, 150, 175.
+                    <br><br>
+                    7 - <b>CRITÉRIOS PARA PARTICIPAÇÃO</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Para o atleta poder participar do desafio será necessário:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Ter 18 anos completos no dia da prova;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Está em plenas condições físicas;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Ter realizado a inscrição do desafio;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Estar de ACORDO e ACEITAR os termos deste Regulamento, do Termo de Liberação de Imagem, do Termo de Responsabilidade Civil e do Termos de Responsabilidade Médica.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Será de total responsabilidade do atleta qualquer eventualidade sofrida, isentando de qualquer tipo de responsabilidade o organizador e apoiadores do desafio. 
+                    <br><br>
+                    8 - <b>PERIODO DE INSCRIÇÕES DE ATLETAS E APOIOS E OS RESPECTIVOS VALORES</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        9.1 - INSCRIÇÕES DOS ATLETAS E APOIO<br>
+                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                             • Início: 13 de janeiro de 2025<br>
+                              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                             • Término: 31 de maio 2025<br> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        9.2 - O VALOR DA inscrição será de R$ 500,00 reais para atletas solo e R$ 400,00 para cada atleta da equipe, mais taxa administrativa da plataforma.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        9.3 - Os apoios não pagam inscrição
+                    <br><br>
+                    9 - <b>NÚMERO MÁXIMO DE ATLETAS</b><br><br> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O número máximo de atletas será de 150.<br> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Para os atletas SOLO, será permitido 4 apoios inscritos<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Para os atletas que percorrerão o desafio em grupo, será permitido apenas 02 apoios inscritos.
+                    <br><br>
+                    10 - <b>REGRAS PARA O CANCELAMENTO DA PROVA</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        •  Considerando-se que não haverá nenhum tipo de concentração pública durante o evento 2025 só será cancelada em uma das seguintes condições:<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            1 - Por força de Lei do Estado de Rondônia, Estado do Amazonas ou Municipais.<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            2 - Impedimento da passagem do Atleta devido a existência de Barreiras Sanitárias entre as cidades que fazem parte do percurso do desafio.<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            3 - Caso a BR 319 esteja fechado por qualquer motivo.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Em caso de largada em atraso o término da prova se prorrogará pelo tempo em atraso da largada.
+                    <br><br>
+                    11 - <b>QUESTÕES TÉCNICAS DAS PROVAS</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Estas regras estão sendo feitas considerando-se as condições e os fatores existentes neste momento em que vivemos. Modificações poderão ser feitas caso a realidade futura seja diferente da realidade de hoje.
+                    <br><br>
+                    12 - <b>OBRIGAÇÕES E DEVERES</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Os Atletas deverão transportar consigo, o número de peito.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • É obrigatório cumprir as distâncias a pé.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • É obrigatório às equipes de apoio a utilização de veículos (carros, moto e/ou bicicletas).<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Veículos (carros, moto e/ou bicicletas) poderão ser compartilhados por atletas participando.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Atletas e membros das equipes devem ser cordiais, gentis, esportistas e discretos.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Nenhum lixo poderá ser deixado no trajeto da Br durante o caminho.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Os atletas, seus familiares, seus patrocinadores e demais interessados, se comprometem a divulgar os resultados pessoais e das equipes, dentro das suas MODALIDADES.<br> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Os carros de apoio podem seguir os atletas durante todo o caminho, seguindo sempre as leis de trânsito e obedecendo as regras de segurança.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Os Atletas SOLO, parados poderão ter todo tipo de contato FÍSICO durante toda a corrida.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Atletas de uma mesma EQUIPES DE REVEZAMENTO podem dar todo tipo de ajuda e ter contato físico durante a corrida inclusive, andar-de-mãos-dadas, entretanto, o atleta não poderá ser puxado, carregado ou empurrado.
+                        <br><br>             
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        É OBRIGATÓRIO:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O carro de apoio está SEMPRE próximo ao atleta, não podendo se distanciar mais que 03 kms.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O atleta ter todos os materiais necessário para uso durante o trajeto.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Uso de lanterna LUZ BRANCA de cabeça (com pilhas ou baterias adicionais) para o percurso no período noturno.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Uso de vestimenta com material refletivo, pelo atleta e equipe de apoio.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O Carro de apoio deverá prestar assistência, caso seja necessário, a qualquer atleta e ou participante do Desafio.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O carro de apoio deverá estar em dia com os itens de segurança, tanque cheio e pneus revisados para evitar maiores transtornos.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Caso o pneu do carro de apoio fure, é obrigatório que o atleta aguarde a troca de pneu para depois sair.<br>
+                    <br><br>
+                    13 - <b>ATENÇÃO - REGRAS NOVAS - QUESTÕES DE SEGURANÇA</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O Revezamento deverá ser realizado a cada trecho do percurso, não sendo possível outro atleta, mesmo que da mesma equipe percorrer quilometragem diferente da estabelecida para cada membro.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Todos os atletas da equipe, deverão preferencialmente largar juntos e cruzar a linha de chegada juntos. Durante o percurso, podendo cada um fazer a distância estabelecida para cada atleta.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Nenhum atleta de equipe, pode chegar antes na linha de chegada, separado dos outros atletas da equipe.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Caso algum atleta da equipe se machuque durante a prova, outro membro da equipe poderá substituir o atleta lesionado, porém o substituto deverá percorrer toda a distância do atleta lesionado.
+                    <br><br>
+                    14 - <b>TROCA DE MODALIDADE</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        O Atleta que desejar mudar a modalidade, para solo ou grupo, poderá fazer migração, mas não será garantido medalha, troféu e camiseta para todos que fizerem a mudança depois da data de inscrição.
+                    <br><br>
+                    15 - <b>QUESTÕES BUROCRÁTICAS E LEGAIS</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Todos os ATLETAS e membros das equipes de APOIO já aceitaram no ato da inscrição:<br> 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Termo de Isenção de Responsabilidade Civil;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Termo de Isenção de Responsabilidade Médica;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Termo de liberação de Imagem e dados;
+                    <br><br>
+                    16 - <b>SEGURANÇA E QUESTÕES MÉDICAS</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Nenhum atleta ou participante da equipe de apoio poderá ser deixado para trás sem um acompanhante da equipe.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Lembre-se o tempo todo, que segurança é o mais importante durante toda o desafio. Isto significa a segurança do atleta, da equipe, de apoios, da organização da prova. A Rodovia estará abertas para todos e de fato nessa época do ano, há muitas queimadas e pode haver trânsito intenso.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O Atleta poderá receber auxílio médico/fisioterapêutico ou assistência hospitalar externa, em qualquer lugar ao longo da corrida. O atleta deve estar PARADO para receber auxílio médico/fisioterapêutico e todo tipo de massagens ou qualquer outro tipo de ajuda.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Atletas e acompanhantes noturnos deverão utilizar roupa refletiva ou coletes refletores, bem como LEDs de mão ou cabeça durante a noite (19:00 até 6:00).<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O atleta é responsável pela sua equipe e por suas ações e vice-versa.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Sempre olhe em todas as direções antes de atravessar a estrada. Recomendamos ao atleta só atravessar a rodovia em caso de extrema necessidade e aos membros da equipe o máximo de cuidado ao atravessar a rodovia.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Todos os centímetros do percurso deverão ser corridos pelo atleta. Caso ele erre o caminho ele deverá ser trazido para o ponto onde errou e retomar a corrida.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Não poderá o atleta fazer uso de nenhum tipo de medicação injetável durante a prova.
+                    <br><br>
+                    17 - <b>Saindo da Corrida Temporariamente ou Desistindo da Prova</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Em caso de desistência o atleta deverá informar ao apoio geral do desafio ou a qualquer atleta ou participante da sua desistência.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Todos os custos de assistência médica ou qualquer outro tipo de emergência médica correrão por conta do atleta e/ou sua equipe.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Toda e qualquer intercorrência deverá ser informada imediatamente à equipe de organização ou à equipe dos pontos de apoio.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Caso o atleta saia temporariamente da prova, este deverá informar a organização, e com a anuência dos organizadores, marcar o local exato que deixou a prova, para retornar. 
+                    <br><br>
+                    18 - <b>ATENÇÃO: ATESTADO MÉDICO</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Todo Atleta deve realizar os seus exames periódicos e se manter em dia com sua saúde. Fazer exames de rotina evitam problemas durantes as corridas.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Faça seus exames sempre, já que você vai correr o desafio e outras provas ao longo do ano. O IMPORTANTE é a sua saúde. Você é a melhor pessoa para cuidar da sua saúde.
+                    <br><br>
+                    19 - <b>PREMIAÇÃO DOS ATLETAS</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        Todos os atletas que finalizarem o percurso receberão Medalha, exceto nos casos em que se enqudre em no Item 15 deste Regulamento. 
+                    <br><br>
+                    20 - <b>PREMIAÇÃO DOS APOIOS</b> 
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Somente Apoios inscritos receberão a Medalha;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Dia 06/07/2026 (domingo) às 19:00h - Premiação de troféus e logo após encerramento do evento.
+                    <br><br>
+                    21 - <b>TEMPO DE CORTE</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O Atleta solo que chegar no km 100 após 27 horas de prova estará desclassificado;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O Atleta solo que chegar no km 150 após 45 horas de prova será desclassificado;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O Atleta solo que chegar no km 175 após 47 horas de prova será desclassificado.<br> 
+                    <br><br>
+                    22 - <b>CUMPRIMENTO DO REGULAMENTO E PENALIDADES</b>
+                    <br><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Todas as infrações relacionadas com desonestidade, agressão ou estupidez entre atletas ou de atletas para os membros do Staff da corrida, desclassificarão o atleta ou equipe imediatamente.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • O descumprimento de qualquer uma das regras deste regulamento implica na desclassificação direta do atleta.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Todos os atletas e membros das equipes, ao participarem da prova, aceitam essas condições integralmente. Este regulamento é soberano e deverá ser acatado por todos os participantes do Desafio, atletas, e equipes de apoio.<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • As regras deste regulamento existem para valorizar, respeitar e dar igualdade a todos<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        • Em todas e quaisquer circunstâncias o que vale nessas regras é o espírito esportivo que as regem, e a intenção do organizador do desafio é fazer com que você se desafie a ser melhor em todos os sentidos depois de participar da prova, com igualdade de condições independente da forma e das modalidades de participação.
+                    <br><br>                
+                    <b>Nosso lema é: desafie-se!!! </b>
+                </div>
+            </form>
+
 
         </div>
     </div>
@@ -263,28 +624,5 @@
         <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
     </footer>
 
-    <script>
-
-        function validateForm(event) {
-            event.preventDefault();
-            
-            // Esconde a mensagem de erro anterior
-            $('#categoriaError').hide();
-            
-            // Verifica se alguma categoria foi selecionada
-            const categoriaSelected = $('input[name="categoria"]:checked').length > 0;
-            
-            if (!categoriaSelected) {
-                // Mostra a mensagem de erro se nenhuma categoria foi selecionada
-                $('#categoriaError').show();
-                return false;
-            }
-            
-            // Se chegou aqui, o formulário está válido
-            // Aqui você pode adicionar o código para enviar o formulário
-            $('#inscricaoForm')[0].submit();
-            return true;
-        }
-    </script>
 </body>
 </html>
