@@ -6,6 +6,13 @@
     <title>Cadastro de Atleta</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script>
+        if (window.jQuery) {
+            console.log('jQuery carregado com sucesso');
+        } else {
+            console.error('jQuery não foi carregado');
+        }
+    </script>    
     <style>
         /* Previous styles remain the same until form-row */
         body {
@@ -407,17 +414,17 @@
             </div>
         </div>
 
-        <!-- Updated CPF and birth date fields -->
+        <!-- Updated CPF and birth date fields  -->
         <div class="form-row">
             <div class="form-field">
                 <label for="cpf">CPF:</label>
-                <input type="text" id="cpf" name="cpf" required>
+                <input type="text" id="cpf" name="cpf" maxlength="14" inputmode="numeric" required>
             </div>
             
             <div class="form-field">
                 <label for="data_nascimento">Data de Nascimento:</label>
                 <div class="birth-date-container">
-                    <input type="text" id="ano-nasc" name="ano-nasc" placeholder="Ano" maxlength="4" class="birth-date-field" required>
+                    <input type="text" id="ano-nasc" name="ano-nasc" placeholder="Ano" maxlength="4" inputmode="numeric" class="birth-date-field" required>
                     <select id="mes-nasc" name="mes-nasc" class="birth-date-field" required>
                         <option value="" disabled selected>Mês</option>
                         <option value="1">Janeiro</option>
@@ -475,7 +482,7 @@
         <div class="form-row">
             <div class="form-field">
                 <label for="numero">Número:</label>
-                <input type="text" id="numero" name="numero">
+                <input type="text" id="numero" maxlength="10" name="numero">
             </div>
             <div class="form-field">
                 <label for="complemento">Complemento:</label>
@@ -580,6 +587,24 @@
 
     <script>
         $(document).ready(function() {
+            // Adicionar este log para verificar se o jQuery está carregando
+            console.log('Document ready');
+            
+            // Opcionalmente, definir a URL base para as requisições
+            const BASE_URL = window.location.origin; // Isso pegará a URL base correta tanto em desenvolvimento quanto em produção
+            
+            // Função helper para fazer requisições
+            function makeRequest(endpoint, data) {
+                console.log('Fazendo requisição para:', BASE_URL + endpoint);
+                return fetch(BASE_URL + endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+            }
+
             // Máscaras para campos
             $('#cpf').mask('000.000.000-00');
             $('#celular').mask('(00) 00000-0000');
@@ -737,20 +762,20 @@
                             $('#rua').val(data.data.descricao_sem_numero);
                             $('#bairro').val(data.data.descricao_bairro);
                             $('#cidade').val(data.data.descricao_cidade);
-                            $('#estado').val(data.data.uf);
+                            $('#estado').val(data.data.estado);
+                            // Store the id_logradouro
+                            window.idLogradouro = data.data.id_logradouro;
                         } else {
-                            showModal('⚠ CEP não encontrado.');
+                            showModal('CEP não encontrado.');
                             $('#rua, #bairro, #cidade, #estado').val('');
+                            window.idLogradouro = null;
                         }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao pesquisar CEP:', error);
-                        showModal('Erro ao pesquisar CEP. Tente novamente.');
                     })
                     .finally(() => {
                         // Reabilita o botão e remove o loading
                         $('#buscarCep').prop('disabled', false).text('Buscar');
                     });
+
             });
 
             // Permitir busca de CEP ao pressionar Enter no campo
@@ -772,18 +797,6 @@
                     return;
                 }
 
-                // Verificar se as senhas conferem
-                //const senha = $('#senha').val();
-                //const confirmarSenha = $('#confirmar_senha').val();
-                
-                //if (senha !== confirmarSenha) {
-                //    showModal('As senhas não conferem. Por favor, verifique.');
-                //    return;
-                //}
-
-                // Aqui você pode adicionar o código para enviar o formulário
-                // Por exemplo:
-                // this.submit();
             });
 
             // Máscara para o código de verificação (apenas números)
@@ -791,106 +804,202 @@
                 this.value = this.value.replace(/\D/g, '');
             });
 
+
             // Quando clicar no botão Continuar
             $('#submitBtn').click(function() {
+                console.log('Botão Continuar clicado');
+                
                 // Verificar se os formulários são válidos
                 if ($('#cadastroForm')[0].checkValidity() && $('#concordar').is(':checked')) {
-                    // Pegar o email digitado
                     const emailDigitado = $('#email').val();
+                    console.log('Formulário válido, email:', emailDigitado);
                     
-                    // Mostrar o email no formulário de verificação
-                    $('#emailMostrado').text(emailDigitado);
+                    // Adicionar loading ao botão
+                    $(this).prop('disabled', true).html('<div class="loading"></div>');
                     
-                    // Ocultar os formulários anteriores
-                    $('#cadastroForm, #termoForm').hide();
+                    console.log('Iniciando requisição para /enviar-codigo-verificacao');
                     
-                    // Mostrar o formulário de verificação
-                    $('#verificacaoForm').show();
+                    // Enviar requisição para gerar e enviar código
+                    fetch('/enviar-codigo-verificacao', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            email: emailDigitado
+                        })
+                    })
+                    .then(response => {
+                        console.log('Resposta recebida:', response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Dados recebidos:', data);
+                        if (data.success) {
+                            // Mostrar o email no formulário de verificação
+                            $('#emailMostrado').text(emailDigitado);
+                            
+                            // Ocultar os formulários anteriores
+                            $('#cadastroForm, #termoForm').hide();
+                            
+                            // Mostrar o formulário de verificação
+                            $('#verificacaoForm').show();
+                        } else {
+                            showModal(data.message || 'Erro ao enviar código de verificação');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro na requisição:', error);
+                        showModal('Erro ao enviar código de verificação. Tente novamente.');
+                    })
+                    .finally(() => {
+                        // Restaurar o botão
+                        $('#submitBtn').prop('disabled', false).text('Continuar');
+                    });
                 } else {
+                    console.log('Formulário inválido');
                     showModal('Por favor, preencha todos os campos obrigatórios.');
                 }
             });
 
-            // Validação do formulário de verificação
+            // Verificar se o formulário existe
+            if ($('#verificacaoForm').length) {
+                console.log('Formulário de verificação encontrado');
+            } else {
+                console.error('Formulário de verificação não encontrado');
+            }
+
+
+            // Atualizar a validação do formulário de verificação
             $('#verificacaoForm').on('submit', function(e) {
                 e.preventDefault();
+                console.log('Formulário de verificação submetido');
                 
                 const codigo = $('#codigoVerificacao').val();
                 const senha = $('#senha').val();
                 const confirmarSenha = $('#confirmar_senha').val();
                 
-                // Validar código
+                console.log('Código:', codigo);
+                console.log('Dados do formulário:', {
+                    codigo: codigo,
+                    senha: senha.length, // Não logar a senha real
+                    confirmarSenha: confirmarSenha.length // Não logar a senha real
+                });
+
+                // Validações básicas
                 if (codigo.length !== 4) {
                     showModal('O código deve ter 4 dígitos');
                     return;
                 }
                 
-                // Validar senha
                 if (senha.length < 6) {
                     showModal('A senha deve ter pelo menos 6 caracteres');
                     return;
                 }
                 
-                // Validar se as senhas conferem
                 if (senha !== confirmarSenha) {
-                    showModal('As senhas não conferem. Por favor, verifique.');
+                    showModal('As senhas não conferem');
                     return;
                 }
-                
 
-                //const codigo = $('#codigoVerificacao').val();
-                //const novaSenha = $('#novaSenha').val();
-                //const confirmarNovaSenha = $('#confirmarNovaSenha').val();
-                
-                // Validar código
-                //if (codigo.length !== 4) {
-                //    showModal('O código deve ter 4 dígitos');
-                //    return;
-                //}
-                
-                // Validar senha
-                //if (novaSenha.length < 6) {
-                //    showModal('A senha deve ter pelo menos 6 caracteres');
-                //    return;
-                //}
-                
-                // Validar se as senhas conferem
-                //if (novaSenha !== confirmarNovaSenha) {
-                //    showModal('As senhas não conferem. Por favor, verifique.');
-                //    return;
-                //}
+                // Desabilita o botão e mostra loading
+                const submitButton = $(this).find('button[type="submit"]');
+                submitButton.prop('disabled', true).html('<div class="loading"></div>');
+
+                // Primeiro verifica o código
+                fetch('/verificar-codigo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        codigo: codigo,
+                        senha: senha,
+                        email: $('#email').val()
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Se o código estiver correto, envia os dados do formulário
+                        const formData = {
+                            primeiro_nome: $('#primeiro_nome').val(),
+                            sobrenome: $('#sobrenome').val(),
+                            cpf: $('#cpf').val(),
+                            dia_nasc: $('#dia-nasc').val(),
+                            mes_nasc: $('#mes-nasc').val(),
+                            ano_nasc: $('#ano-nasc').val(),
+                            sexo: $('input[name="sexo"]:checked').val(),
+                            celular: $('#celular').val(),
+                            telefone_emergencia: $('#telefone_emergencia').val(),
+                            contato_emergencia: $('#contato_emergencia').val(),
+                            email: $('#email').val(),
+                            senha: senha,
+                            equipe: $('#equipe').val(),
+                            id_logradouro: window.idLogradouro, // Precisamos armazenar isso quando buscarmos o CEP
+                        };
+
+                        return fetch('/salvar-cadastro', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                    } else {
+                        throw new Error(data.message || 'Código inválido');
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showModal('Cadastro realizado com sucesso!');
+                        // Redireciona após o cadastro
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 2000);
+                    } else {
+                        throw new Error(data.message || 'Erro ao salvar cadastro');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    showModal(error.message || 'Erro ao processar cadastro. Tente novamente.');
+                    // Limpa o campo do código para nova tentativa
+                    $('#codigoVerificacao').val('').focus();
+                })
+                .finally(() => {
+                    // Restaura o botão
+                    submitButton.prop('disabled', false).text('Confirmar');
+                });
+            });
 
 
+            // Adicione também um contador de tentativas
+            let tentativas = 0;
+            const MAX_TENTATIVAS = 5;
 
-                // Verificar se as senhas conferem
-                //const senha = $('#senha').val();
-                //const confirmarSenha = $('#confirmar_senha').val();
-                
-                //if (senha !== confirmarSenha) {
-                //    showModal('As senhas não conferem. Por favor, verifique.');
-                //    return;
-                //
-
-
-
-
-
+            $('#codigoVerificacao').on('input', function() {
+                // Limita a 4 dígitos
+                if (this.value.length > 4) {
+                    this.value = this.value.slice(0, 4);
+                }
+                // Remove caracteres não numéricos
+                this.value = this.value.replace(/\D/g, '');
+            });
 
 
+            function showLoading(button) {
+                button.prop('disabled', true).html('<div class="loading"></div>');
+            }
 
-                // Aqui você pode adicionar o código para enviar os dados para o servidor
-                // Por exemplo:
-                // $.post('/verificar-codigo', {
-                //     codigo: codigo,
-                //     senha: novaSenha,
-                //     email: $('#email').val()
-                // }).then(response => {
-                //     if (response.success) {
-                //         window.location.href = '/sucesso';
-                //     } else {
-                //         showModal('Código inválido');
-                //     }
-                // });
+            function hideLoading(button, text) {
+                button.prop('disabled', false).text(text);
+            }
+
+            // E modifique o botão Confirmar para mostrar feedback visual:
+            $('#verificacaoForm button[type="submit"]').on('click', function() {
+                console.log('Botão Confirmar clicado');
             });
 
 
