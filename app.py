@@ -2,6 +2,8 @@ from flask import Flask, render_template, redirect, request, make_response, json
 from flask_mail import Mail, Message
 from flask_mysqldb import MySQL
 from dotenv import load_dotenv
+from datetime import datetime
+import hashlib
 import pdfkit
 import os
 import re
@@ -11,24 +13,17 @@ import json
 load_dotenv()  # Carrega as variáveis do arquivo .env
 
 app = Flask(__name__)
-app.secret_key = 'EM1QW765QNNDK9'
+app.secret_key = os.getenv('SECRET_KEY')
 
-#mysql = mysql.connector.connect(
-#    host=os.getenv('MYSQL_HOST'),
-#    port=3306,
-#    user=os.getenv('MYSQL_USER'),
-#    password=os.getenv('MYSQL_PASSWORD'),
-#    database=os.getenv('MYSQL_DB')
-#)
 
 # Configuração do Flask-Mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Substitua pelo seu servidor SMTP
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = 'ecmsistemasdeveloper@gmail.com'
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')  # Substitua pelo seu servidor SMTP
+app.config['MAIL_PORT'] = os.getenv('SMTP_PORT') 
+app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') 
+app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASSWORD') 
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('EMAIL_USER')
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 
 mail = Mail(app)
 
@@ -82,16 +77,173 @@ def autenticar():
     
     return render_template('autenticar200k.html', verification_code=verification_code)
 
+@app.route('/salvar-cadastro', methods=['POST'])
+def salvar_cadastro():
+    try:
+        data = request.get_json()
+        
+        # Formatar a data de nascimento
+        dia = str(data.get('dia_nasc')).zfill(2)  # Adiciona zero à esquerda se necessário
+        mes = str(data.get('mes_nasc')).zfill(2)  # Converte o mês para número com dois dígitos
+        ano = data.get('ano_nasc')
+        data_nascimento = f"{dia}/{mes}/{ano}"
+        
+        # Gerar data e hora atual no formato requerido
+        data_cadastro = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        
+        # Criptografar a senha usando SHA-256
+        senha = data.get('senha')
+        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+        
+        # Preparar query e parâmetros
+        query = """
+        INSERT INTO ecmrun.ATLETA_TT (
+            CPF, NOME, SOBRENOME, DTNASCIMENTO, NRCELULAR, SEXO, 
+            EMAIL, ID_ENDERECO, EQUIPE, TEL_EMERGENCIA, 
+            CONT_EMERGENCIA, SENHA, ATIVO, DTCADASTRO
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        """
+        
+        # Remover caracteres não numéricos do CPF e telefones
+        cpf_limpo = re.sub(r'\D', '', data.get('cpf'))
+        celular_limpo = re.sub(r'\D', '', data.get('celular'))
+        tel_emergencia_limpo = re.sub(r'\D', '', data.get('telefone_emergencia')) if data.get('telefone_emergencia') else None
+        
+        params = (
+            cpf_limpo,
+            data.get('primeiro_nome').upper(),
+            data.get('sobrenome').upper(),
+            data_nascimento,
+            celular_limpo,
+            data.get('sexo'),
+            data.get('email'),
+            data.get('id_logradouro'),  # ID obtido na pesquisa do CEP
+            data.get('equipe').upper() if data.get('equipe') else None,
+            tel_emergencia_limpo,
+            data.get('contato_emergencia').upper() if data.get('contato_emergencia') else None,
+            senha_hash,
+            'S',  # ATIVO
+            data_cadastro
+        )
+        
+        # Executar a query
+        cur = mysql.connection.cursor()
+        cur.execute(query, params)
+        mysql.connection.commit()
+        cur.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Cadastro realizado com sucesso!'
+        })
+        
+    except Exception as e:
+        print(f"Erro ao salvar cadastro: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao realizar cadastro. Por favor, tente novamente.'
+        }), 500
+
+
+@app.route('/enviar-codigo-verificacao', methods=['POST'])
+def enviar_codigo_verificacao():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'success': False, 'message': 'Email não fornecido'}), 400
+
+        # Gerar código de verificação de 4 dígitos
+        verification_code = str(random.randint(1000, 9999))
+        
+        # Armazenar o código na sessão
+        session['verification_code'] = verification_code
+        session['verification_email'] = email
+        
+        # Definir o nome do remetente
+        sender_name = "ECM RUN <adm@ecmrun.com.br>"
+
+        # Criar mensagem de email
+        msg = Message(
+            subject='Código de Verificação - ECM Run',
+            sender=sender_name,
+            recipients=[email]
+        )        
+
+        # Template HTML do email
+        msg.html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
+            <p>Olá,</p>
+            <p>Seu código de verificação é:</p>
+            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{verification_code}</h1>
+            <p>Este código é válido por 10 minutos.</p>
+            <p>Se você não solicitou este código, por favor ignore este email.</p>
+            <br>
+            <p>Atenciosamente,<br>Equipe ECM Run</p>
+        </div>
+        """
+        
+        mail.send(msg)
+        
+        print(f' Codigo Veirificador: {verification_code}')
+
+        return jsonify({
+            'success': True,
+            'message': 'Código de verificação enviado com sucesso'
+        })
+        
+    except Exception as e:
+        print(f"Erro ao enviar email: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao enviar código de verificação'
+        }), 500
+
 @app.route('/verificar-codigo', methods=['POST'])
 def verificar_codigo():
-    codigo = request.form.get('codigo')
-    stored_code = session.get('verification_code')
-    
-    if codigo == stored_code:
+    try:
+        data = request.get_json()
+        codigo_informado = data.get('codigo')
+        senha = data.get('senha')
+        
+        codigo_correto = session.get('verification_code')
+        email = session.get('verification_email')
+        
+        if not codigo_correto or not email:
+            return jsonify({
+                'success': False,
+                'message': 'Sessão expirada. Por favor, solicite um novo código.'
+            }), 400
+        
+        if codigo_informado != codigo_correto:
+            return jsonify({
+                'success': False,
+                'message': 'Código inválido'
+            }), 400
+            
+        # Aqui você pode adicionar o código para salvar o usuário no banco de dados
+        # com a senha criptografada
+        
+        # Limpar dados da sessão
         session.pop('verification_code', None)
-        return redirect('/success')
-    else:
-        return redirect('/autenticar')
+        session.pop('verification_email', None)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Código verificado com sucesso'
+        })
+        
+    except Exception as e:
+        print(f"Erro ao verificar código: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao verificar código'
+        }), 500
+
 
 @app.route('/estados')
 def estados():
@@ -158,7 +310,6 @@ def verificar_cpf_existente():
 
     try:
         cur = mysql.connection.cursor()
-        #cur = mysql.cursor()
         cur.execute('SELECT IDATLETA FROM ecmrun.ATLETA_TT WHERE CPF = %s', (cpf,))
         result = cur.fetchone()
         cur.close()
@@ -211,7 +362,7 @@ def send_email2():
 
     # Criação da mensagem de e-mail
     msg = Message(subject='Comprovante PDF',
-                  sender='ecmsistemasdeveloper@gmail.com',
+                  sender='adm@ecmrun.com.br',
                   recipients=['naicm12@gmail.com'])
 
     # Define o corpo do e-mail como HTML
@@ -235,12 +386,13 @@ def pesquisar_cep():
             return jsonify({'error': 'CEP inválido'}), 400
             
         cur = mysql.connection.cursor()
-        #cur = mysql.cursor()
         cur.execute("""
-            SELECT id_logradouro, CEP, descricao, UF, complemento, 
-                   descricao_sem_numero, descricao_cidade, descricao_bairro 
-            FROM ecmrun.logradouro
-            WHERE CEP = %s
+            SELECT l.id_logradouro, l.CEP, upper(l.descricao) as descricao, l.UF, l.complemento, 
+                   upper(l.descricao_sem_numero) as descricao_sem_numero, 
+                   upper(l.descricao_cidade) as descricao_cidade,
+                   upper(l.descricao_bairro) as descricao_bairro, upper(e.nome) as estado
+            FROM ecmrun.logradouro l, ecmrun.estado e
+            WHERE e.uf = l.UF AND l.CEP =  %s
         """, (cep,))
         
         result = cur.fetchone()
@@ -257,7 +409,8 @@ def pesquisar_cep():
                     'complemento': result[4],
                     'descricao_sem_numero': result[5],
                     'descricao_cidade': result[6],
-                    'descricao_bairro': result[7]
+                    'descricao_bairro': result[7],
+                    'estado': result[8]
                 }
             })
         else:
