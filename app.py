@@ -223,7 +223,8 @@ def enviar_codigo_verificacao():
         session['verification_email'] = email
         
         # Simplificar o remetente
-        sender = 'adm@ecmrun.com.br'
+        #sender = 'adm@ecmrun.com.br'
+        sender = "ECM RUN <adm@ecmrun.com.br>"
 
         # Criar mensagem com configuração mais simples
         msg = Message(
@@ -232,16 +233,20 @@ def enviar_codigo_verificacao():
             recipients=[email]
         )
 
-        # Template HTML mais simples para teste
+        # Template HTML do email
         msg.html = f"""
-        <div style="font-family: Arial, sans-serif;">
-            <h2>Verificação de Cadastro - ECM Run</h2>
-            <p>Seu código de verificação é: {verification_code}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
+            <p>Olá,</p>
+            <p>Seu código de verificação é:</p>
+            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{verification_code}</h1>
             <p>Este código é válido por 10 minutos.</p>
+            <p>Se você não solicitou este código, por favor ignore este email.</p>
+            <br>
             <p>Atenciosamente,<br>Equipe ECM Run</p>
         </div>
         """
-        
+
         # Adicionar logs para debug
         print(f'Tentando enviar email para: {email}')
         print(f'Código de verificação: {verification_code}')
