@@ -21,9 +21,11 @@ app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')  # Substitua pelo seu servi
 app.config['MAIL_PORT'] = os.getenv('SMTP_PORT') 
 app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') 
 app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASSWORD') 
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('EMAIL_USER')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_MAX_EMAILS'] = None
+app.config['MAIL_TIMEOUT'] = 10  # segundos
 
 mail = Mail(app)
 
@@ -147,6 +149,63 @@ def salvar_cadastro():
         }), 500
 
 
+# @app.route('/enviar-codigo-verificacao', methods=['POST'])
+# def enviar_codigo_verificacao():
+#     try:
+#         data = request.get_json()
+#         email = data.get('email')
+        
+#         if not email:
+#             return jsonify({'success': False, 'message': 'Email não fornecido'}), 400
+
+#         # Gerar código de verificação de 4 dígitos
+#         verification_code = str(random.randint(1000, 9999))
+        
+#         # Armazenar o código na sessão
+#         session['verification_code'] = verification_code
+#         session['verification_email'] = email
+        
+#         # Definir o nome do remetente
+#         sender_name = "ECM RUN <adm@ecmrun.com.br>"
+
+#         # Criar mensagem de email
+#         msg = Message(
+#             subject='Código de Verificação - ECM Run',
+#             sender=sender_name,
+#             recipients=[email]
+#         )        
+
+#         # Template HTML do email
+#         msg.html = f"""
+#         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+#             <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
+#             <p>Olá,</p>
+#             <p>Seu código de verificação é:</p>
+#             <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{verification_code}</h1>
+#             <p>Este código é válido por 10 minutos.</p>
+#             <p>Se você não solicitou este código, por favor ignore este email.</p>
+#             <br>
+#             <p>Atenciosamente,<br>Equipe ECM Run</p>
+#         </div>
+#         """
+        
+#         mail.send(msg)
+
+
+#         print(f' Codigo Veirificador: {verification_code}')
+
+#         return jsonify({
+#             'success': True,
+#             'message': 'Código de verificação enviado com sucesso'
+#         })
+        
+#     except Exception as e:
+#         print(f"Erro ao enviar email: {str(e)}")
+#         return jsonify({
+#             'success': False,
+#             'message': 'Erro ao enviar código de verificação'
+#         }), 500
+
 @app.route('/enviar-codigo-verificacao', methods=['POST'])
 def enviar_codigo_verificacao():
     try:
@@ -156,40 +215,47 @@ def enviar_codigo_verificacao():
         if not email:
             return jsonify({'success': False, 'message': 'Email não fornecido'}), 400
 
-        # Gerar código de verificação de 4 dígitos
+        # Gerar código de verificação
         verification_code = str(random.randint(1000, 9999))
         
-        # Armazenar o código na sessão
+        # Armazenar na sessão
         session['verification_code'] = verification_code
         session['verification_email'] = email
         
-        # Definir o nome do remetente
-        sender_name = "ECM RUN <adm@ecmrun.com.br>"
+        # Simplificar o remetente
+        sender = 'adm@ecmrun.com.br'
 
-        # Criar mensagem de email
+        # Criar mensagem com configuração mais simples
         msg = Message(
-            subject='Código de Verificação - ECM Run',
-            sender=sender_name,
+            'Código de Verificação - ECM Run',
+            sender=sender,
             recipients=[email]
-        )        
+        )
 
-        # Template HTML do email
+        # Template HTML mais simples para teste
         msg.html = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
-            <p>Olá,</p>
-            <p>Seu código de verificação é:</p>
-            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{verification_code}</h1>
+        <div style="font-family: Arial, sans-serif;">
+            <h2>Verificação de Cadastro - ECM Run</h2>
+            <p>Seu código de verificação é: {verification_code}</p>
             <p>Este código é válido por 10 minutos.</p>
-            <p>Se você não solicitou este código, por favor ignore este email.</p>
-            <br>
             <p>Atenciosamente,<br>Equipe ECM Run</p>
         </div>
         """
         
-        mail.send(msg)
+        # Adicionar logs para debug
+        print(f'Tentando enviar email para: {email}')
+        print(f'Código de verificação: {verification_code}')
         
-        print(f' Codigo Veirificador: {verification_code}')
+        # Enviar email com tratamento de erro específico
+        try:
+            mail.send(msg)
+            print('Email enviado com sucesso')
+        except Exception as mail_error:
+            print(f'Erro ao enviar email: {str(mail_error)}')
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao enviar email: {str(mail_error)}'
+            }), 500
 
         return jsonify({
             'success': True,
@@ -197,11 +263,12 @@ def enviar_codigo_verificacao():
         })
         
     except Exception as e:
-        print(f"Erro ao enviar email: {str(e)}")
+        print(f"Erro geral na rota: {str(e)}")
         return jsonify({
             'success': False,
-            'message': 'Erro ao enviar código de verificação'
+            'message': f'Erro ao processar requisição: {str(e)}'
         }), 500
+    
 
 @app.route('/verificar-codigo', methods=['POST'])
 def verificar_codigo():
