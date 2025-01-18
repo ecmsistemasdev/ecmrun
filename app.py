@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, request, make_response, json
 from flask_mail import Mail, Message
 from flask_mysqldb import MySQL
 from dotenv import load_dotenv
+import mysql.connector
 import pdfkit
 import os
 import re
@@ -12,6 +13,16 @@ load_dotenv()  # Carrega as variáveis do arquivo .env
 
 app = Flask(__name__)
 app.secret_key = 'EM1QW765QNNDK9'
+
+
+mysql = mysql.connector.connect(
+    host=os.getenv('MYSQL_HOST'),
+    port=3306,
+    user=os.getenv('MYSQL_USER'),
+    password=os.getenv('MYSQL_PASSWORD'),
+    database=os.getenv('MYSQL_DB')
+)
+
 
 # Configuração do Flask-Mail
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Substitua pelo seu servidor SMTP
@@ -25,12 +36,12 @@ app.config['MAIL_USE_SSL'] = False
 mail = Mail(app)
 
 # Configuração MySQL
-app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
-app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
+#app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
+#app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
+#app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
+#app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
-mysql = MySQL(app)
+#mysql = MySQL(app)
 
 
 # Global variables for the receipt
@@ -147,8 +158,10 @@ def verificar_cpf_existente():
     # Remove caracteres não numéricos
     cpf = ''.join(filter(str.isdigit, cpf))
     
+
     try:
-        cur = mysql.connection.cursor()
+        #cur = mysql.connection.cursor()
+        cur = mysql.cursor()
         cur.execute('SELECT IDATLETA FROM ecmrun.ATLETA_TT WHERE CPF = %s', (cpf,))
         result = cur.fetchone()
         cur.close()
@@ -224,7 +237,8 @@ def pesquisar_cep():
         if not cep or len(cep) != 8:
             return jsonify({'error': 'CEP inválido'}), 400
             
-        cur = mysql.connection.cursor()
+        #cur = mysql.connection.cursor()
+        cur = mysql.cursor()
         cur.execute("""
             SELECT id_logradouro, CEP, descricao, UF, complemento, 
                    descricao_sem_numero, descricao_cidade, descricao_bairro 
