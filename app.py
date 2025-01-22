@@ -3,6 +3,7 @@ from flask_mail import Mail, Message
 from flask_mysqldb import MySQL
 from dotenv import load_dotenv
 from datetime import datetime
+import mercadopago
 import hashlib
 import pdfkit
 import os
@@ -26,6 +27,7 @@ app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_MAX_EMAILS'] = None
 app.config['MAIL_TIMEOUT'] = 10  # segundos
+app.config['MP_ACCESS_TOKEN'] = os.getenv('MP_ACCESS_TOKEN')
 
 mail = Mail(app)
 
@@ -37,6 +39,7 @@ app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
 mysql = MySQL(app)
 
+sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN'))
 
 # Global variables for the receipt
 receipt_data = {
@@ -46,7 +49,7 @@ receipt_data = {
     'endereco': 'AV. Jorge Teixeira, Espaço Alternativo - Porto Velho/RO',
     'dataevento': '04, 05 e 06/07/2025',
     'participante': 'ELIENAI CARVALHO MOMTEIRO',
-    'km': 'Quarteto - 50 km',
+    'km': 'Solo - 200 km',
     'valor': 'R$ 500,00',
     'inscricao': '123455456456',    
     'obs': 'Observações importantes sobre o evento vão aqui.'
@@ -60,9 +63,143 @@ def index():
 def comprovante():
     return render_template('comprovante_insc.html', **receipt_data)
 
+##########################################
+
+@app.route('/get_evento_data')
+def get_evento_data():
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute('''
+            SELECT E.IDEVENTO, E.DESCRICAO, E.DTINICIO, E.DTFIM, E.HRINICIO,
+                E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
+                M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
+                M.VLINSCRICAO, M.VLMEIA, M.VLTAXA
+            FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+            WHERE M.IDEVENTO = E.IDEVENTO
+                AND E.IDEVENTO = 1
+        ''')
+        
+        results = cur.fetchall()
+        cur.close()
+        
+        if not results:
+            return jsonify({'error': 'Evento não encontrado'}), 404
+            
+        # Estruturar os dados
+        evento_data = {
+            'idevento': results[0][0],
+            'descricao': results[0][1],
+            'dtinicio': results[0][2],
+            'dtfim': results[0][3],
+            'hrinicio': results[0][4],
+            'local': results[0][5],
+            'cidadeuf': results[0][6],
+            'inicio_inscricao': results[0][7],
+            'fim_inscricao': results[0][8],
+            'iditem': results[0][9],
+            'modalidades': []
+        }
+        
+        # Adicionar todas as modalidades
+        for row in results:
+            modalidade = {
+                'iditem': row[9],
+                'descricao': row[10],
+                'distancia': row[11],
+                'km': row[12],
+                'vlinscricao': float(row[13]) if row[13] else 0,
+                'vlmeia': float(row[14]) if row[14] else 0,
+                'vltaxa': float(row[15]) if row[15] else 0
+            }
+            evento_data['modalidades'].append(modalidade)
+            
+        return jsonify(evento_data)
+        
+    except Exception as e:
+        print(f"Erro ao buscar dados do evento: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/desafio200k')
 def desafio200k():
-    return render_template('desafio200k.html')
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute('''
+            SELECT E.IDEVENTO, E.DESCRICAO, E.DTINICIO, E.DTFIM, E.HRINICIO,
+                E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
+                M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
+                M.VLINSCRICAO, M.VLMEIA, M.VLTAXA
+            FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+            WHERE M.IDEVENTO = E.IDEVENTO
+                AND E.IDEVENTO = 1
+        ''')
+        
+        results = cur.fetchall()
+        cur.close()
+        
+        if not results:
+            return render_template('desafio200k.html', titulo="Evento não encontrado", modalidades=[])
+            
+        evento_titulo = results[0][1]  # DESCRICAO do evento
+        modalidades = [{'id': row[9], 'descricao': row[10]} for row in results]
+            
+        return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades)
+        
+    except Exception as e:
+        print(f"Erro ao carregar página: {str(e)}")
+        return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
+
+@app.route('/get_modalidade_valores/<int:iditem>')
+def get_modalidade_valores(iditem):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute('''
+            SELECT VLINSCRICAO, VLTAXA 
+            FROM ecmrun.EVENTO_MODALIDADE 
+            WHERE IDITEM = %s
+        ''', (iditem,))
+        
+        result = cur.fetchone()
+        cur.close()
+        
+#        if not result:
+#            return jsonify({'error': 'Modalidade não encontrada'}), 404
+#            
+#        return jsonify({
+#            'vlinscricao': float(result[0]) if result[0] else 0,
+#            'vltaxa': float(result[1]) if result[1] else 0
+#
+#        })
+        
+
+        if result:
+            vlinscricao = float(result[0]) if result[0] else 0
+            vltaxa = float(result[1]) if result[1] else 0
+
+            # Store in session
+            session['cat_vlinscricao'] = vlinscricao
+            session['cat_vltaxa'] = vltaxa
+            session['cat_iditem'] = iditem
+            
+            return jsonify({
+                'vlinscricao': vlinscricao,
+                'vltaxa': vltaxa,
+                'iditem': iditem
+            })
+
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Usuário ou senha inválidos'
+            }), 401
+
+
+    except Exception as e:
+        print(f"Erro ao buscar valores da modalidade: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+################
+
 
 @app.route('/cadastro_atleta')
 def cadastro_atleta():
@@ -148,63 +285,6 @@ def salvar_cadastro():
             'message': 'Erro ao realizar cadastro. Por favor, tente novamente.'
         }), 500
 
-
-# @app.route('/enviar-codigo-verificacao', methods=['POST'])
-# def enviar_codigo_verificacao():
-#     try:
-#         data = request.get_json()
-#         email = data.get('email')
-        
-#         if not email:
-#             return jsonify({'success': False, 'message': 'Email não fornecido'}), 400
-
-#         # Gerar código de verificação de 4 dígitos
-#         verification_code = str(random.randint(1000, 9999))
-        
-#         # Armazenar o código na sessão
-#         session['verification_code'] = verification_code
-#         session['verification_email'] = email
-        
-#         # Definir o nome do remetente
-#         sender_name = "ECM RUN <adm@ecmrun.com.br>"
-
-#         # Criar mensagem de email
-#         msg = Message(
-#             subject='Código de Verificação - ECM Run',
-#             sender=sender_name,
-#             recipients=[email]
-#         )        
-
-#         # Template HTML do email
-#         msg.html = f"""
-#         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-#             <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
-#             <p>Olá,</p>
-#             <p>Seu código de verificação é:</p>
-#             <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{verification_code}</h1>
-#             <p>Este código é válido por 10 minutos.</p>
-#             <p>Se você não solicitou este código, por favor ignore este email.</p>
-#             <br>
-#             <p>Atenciosamente,<br>Equipe ECM Run</p>
-#         </div>
-#         """
-        
-#         mail.send(msg)
-
-
-#         print(f' Codigo Veirificador: {verification_code}')
-
-#         return jsonify({
-#             'success': True,
-#             'message': 'Código de verificação enviado com sucesso'
-#         })
-        
-#     except Exception as e:
-#         print(f"Erro ao enviar email: {str(e)}")
-#         return jsonify({
-#             'success': False,
-#             'message': 'Erro ao enviar código de verificação'
-#         }), 500
 
 @app.route('/enviar-codigo-verificacao', methods=['POST'])
 def enviar_codigo_verificacao():
@@ -391,9 +471,6 @@ def verificar_cpf_existente():
         return jsonify({'error': str(e)}), 500
 
 
-#### ADD 14/01/2025 13H ####################################
-
-
 @app.route('/generate-pdf', methods=['POST'])
 def generate_pdf():
     # Renderiza o template HTML
@@ -491,6 +568,244 @@ def pesquisar_cep():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/autenticar-login', methods=['POST'])
+def autenticar_login():
+    try:
+        data = request.get_json()
+        cpf_email = data.get('cpf_email')
+        senha = data.get('senha')
+        
+        # Hash the password for comparison
+        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+        
+        cur = mysql.connection.cursor()
+        
+        # Verifique se a entrada é e-mail ou CPF e consulte adequadamente
+        if '@' in cpf_email:
+            # Query for email
+            cur.execute("""
+                SELECT NOME, SOBRENOME, EMAIL, CPF, DTNASCIMENTO, NRCELULAR, SEXO, IDATLETA 
+                FROM ecmrun.ATLETA_TT 
+                WHERE EMAIL = %s AND SENHA = %s AND ATIVO = 'S'
+            """, (cpf_email, senha_hash))
+        else:
+            # Remove non-numeric characters from CPF
+            cpf = ''.join(filter(str.isdigit, cpf_email))
+            cur.execute("""
+                SELECT NOME, SOBRENOME, EMAIL, CPF, DTNASCIMENTO, NRCELULAR, SEXO, IDATLETA 
+                FROM ecmrun.ATLETA_TT 
+                WHERE CPF = %s AND SENHA = %s AND ATIVO = 'S'
+            """, (cpf, senha_hash))
+        
+        result = cur.fetchone()
+        cur.close()
+        
+        if result:
+            nome_completo = f"{result[0]} {result[1]}"
+            email = result[2]
+            vcpf = result[3]
+            dtnascimento = result[4]
+            celular = result[5]
+            sexo = result[6]
+            idatleta = result[7]
+
+            # Store in session
+            session['user_name'] = nome_completo
+            session['user_email'] = email
+            session['user_cpf'] = vcpf
+            session['user_dtnascimento'] = dtnascimento
+            session['user_celular'] = celular
+            session['user_sexo'] = sexo
+            session['user_idatleta'] = idatleta
+            
+            return jsonify({
+                'success': True,
+                'nome': nome_completo,
+                'email': email,
+                'cpf': vcpf,
+                'dtnascimento': dtnascimento,
+                'celular': celular,
+                'sexo': sexo,
+                'idatleta': idatleta
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Usuário ou senha inválidos'
+            }), 401
+            
+    except Exception as e:
+        print(f"Erro na autenticação: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao realizar autenticação'
+        }), 500
+    
+
+@app.route('/pagamento')
+def pagamento():
+    # Get values from session
+    vlinscricao = session.get('cat_vlinscricao', 0)
+    vltaxa = session.get('cat_vltaxa', 0)
+    valor_total = float(vlinscricao) + float(vltaxa)
+    
+    return render_template('pagamento.html', 
+                         valor_inscricao=vlinscricao,
+                         valor_taxa=vltaxa,
+                         valor_total=valor_total)
+
+
+@app.route('/processar-pagamento', methods=['POST'])
+def processar_pagamento():
+    try:
+        payment_method = request.form.get('pagamento')
+        if payment_method == 'pix':
+            # Get values from session
+            vlinscricao = float(session.get('cat_vlinscricao', 0))
+            vltaxa = float(session.get('cat_vltaxa', 0))
+            valor_total = vlinscricao + vltaxa
+            
+            payment_data = {
+                "transaction_amount": valor_total,
+                "description": "Inscrição 4º Desafio 200k",
+                "payment_method_id": "pix",
+                "payer": {
+                    "email": session.get('user_email'),
+                    "first_name": session.get('user_name').split()[0],
+                    "last_name": " ".join(session.get('user_name').split()[1:]),
+                    "identification": {
+                        "type": "CPF",
+                        "number": session.get('user_cpf')
+                    }
+                }
+            }
+            
+            payment_response = sdk.payment().create(payment_data)
+            payment = payment_response["response"]
+            
+            if payment:
+                return jsonify({
+                    'success': True,
+                    'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
+                    'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
+                    'payment_id': payment['id']
+                })
+        
+        return jsonify({'success': False, 'message': 'Método de pagamento inválido'}), 400
+        
+    except Exception as e:
+        print(f"Erro ao processar pagamento: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/gerar-pix', methods=['POST'])
+def gerar_pix():
+    try:
+        data = request.get_json()
+        valor_total = float(data.get('valor_total'))
+        
+        payment_data = {
+            "transaction_amount": valor_total,
+            "description": "Inscrição 4º Desafio 200k",
+            "payment_method_id": "pix",
+            "payer": {
+                "email": session.get('user_email'),
+                "first_name": session.get('user_name').split()[0],
+                "last_name": " ".join(session.get('user_name').split()[1:]),
+                "identification": {
+                    "type": "CPF",
+                    "number": session.get('user_cpf')
+                }
+            }
+        }
+        
+        payment_response = sdk.payment().create(payment_data)
+        payment = payment_response["response"]
+        
+        if payment:
+            return jsonify({
+                'success': True,
+                'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
+                'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
+                'payment_id': payment['id']
+            })
+            
+        return jsonify({'success': False, 'message': 'Erro ao gerar PIX'}), 400
+        
+    except Exception as e:
+        print(f"Erro ao gerar PIX: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/verificar-pagamento/<payment_id>')
+def verificar_pagamento(payment_id):
+    try:
+        payment_response = sdk.payment().get(payment_id)
+        payment = payment_response["response"]
+        
+        if payment["status"] == "approved":
+            # Atualizar o banco de dados
+            cur = mysql.connection.cursor()
+            
+            # Calculate valor_pgto (total payment)
+            valor = float(session.get('cat_vlinscricao', 0))
+            taxa = float(session.get('cat_vltaxa', 0))
+            valor_pgto = valor + taxa
+            
+            # Format current date as dd/mm/yyyy
+            data_pagamento = datetime.now().strftime("%d/%m/%Y")
+            
+            # Get additional data from session
+            idatleta = session.get('user_idatleta')
+            cpf = session.get('user_cpf')
+            
+            # Insert payment record
+            query = """
+            INSERT INTO ecmrun.INSCRICAO_TT (
+                IDATLETA, CPF, IDEVENTO, IDITEM, APOIO, 
+                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, 
+                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                IDPAGAMENO
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            """
+            
+            params = (
+                idatleta,                            # IDATLETA
+                cpf,                                 # CPF
+                1,                                   # IDEVENTO (hardcoded as 1 for this event)
+                session.get('categoria_id'),         # IDITEM
+                None,                                # APOIO
+                session.get('equipe_evento'),        # EQUIPE_EVENTO
+                session.get('integrantes'),          # INTEGRANTES
+                valor,                               # VALOR
+                taxa,                                # TAXA
+                valor_pgto,                          # VALOR_PGTO
+                data_pagamento,                      # DTPAGAMENTO
+                'CONFIRMADO',                        # STATUS
+                'PIX',                               # FORMAPGTO
+                payment_id                           # IDPAGAMENO
+            )
+            
+            cur.execute(query, params)
+            mysql.connection.commit()
+            cur.close()
+            
+            return jsonify({
+                'success': True,
+                'status': 'approved'
+            })
+            
+        return jsonify({
+            'success': True,
+            'status': payment["status"]
+        })
+        
+    except Exception as e:
+        print(f"Erro ao verificar pagamento: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
