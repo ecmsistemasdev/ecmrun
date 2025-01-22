@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento - 4º Desafio 200k</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 15px;
+            background-color: #f0f0f0;
+            min-height: 100vh;
+        }
+
+        .logo-container {
+            width: 100%;
+            height: 70px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+        }
+
+        .payment-container {
+            width: 90%;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 0 auto; /* Centraliza o container */
+            box-sizing: border-box; /* Inclui padding e border no width */
+        }
+
+        .pix-key-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 15px auto;
+            position: relative;
+        }
+        
+        .pix-key {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+            word-break: break-all; /* Quebra palavras longas */
+            white-space: normal; /* Permite quebra de linha */
+            box-sizing: border-box; /* Inclui padding e border no width */
+        }
+
+        /* Correção para container duplicado */
+        #pixForm .payment-container {
+            width: 100%;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .form-title {
+            background-color: #647e99;
+            color: white;
+            padding: 15px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .payment-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .total-amount {
+            font-size: 24px;
+            color: #0056b3;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .pix-key-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 15px auto;
+            position: relative;
+        }
+
+        .pix-key {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .button {
+            background-color: #4376ac;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .button.secondary {
+            background-color: #6c757d;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .qr-code {
+                width: 180px;
+                height: 180px;
+            }
+
+            .payment-container {
+                width: 95%;
+                padding: 15px;
+            }
+
+            .button {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #4376ac;
+            margin-bottom: 20px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4376ac;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px 0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }        
+
+    </style>
+</head>
+<body>
+
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    </div>
+
+    <div class="payment-container" id="pixForm">
+        <div class="form-title">Pagamento via PIX</div>
+        
+        <div class="payment-info">
+            <div>Valor total a pagar:</div>
+            <div class="total-amount" id="totalAmount">Carregando...</div>
+        </div>
+
+        <div id="loadingContainer" class="qr-container">
+            <div class="spinner"></div>
+            <p>Gerando QR Code PIX...</p>
+        </div>
+
+        <div id="qrContainer" class="qr-container hidden">
+            <h3>QR Code PIX</h3>
+            <img alt="QR Code PIX" class="qr-code" id="qrCode">
+            
+            <div class="pix-key-container">
+                <div>Chave PIX:</div>
+                <div class="pix-key" id="pixKey"></div>
+                <button class="button" onclick="copyPixKey()">Copiar Chave PIX</button>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button class="button secondary" onclick="window.history.back()">Voltar</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let paymentId = null;
+            let checkInterval = null;
+
+            // Função para formatar valores monetários
+            function formatCurrency(value) {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(value);
+            }
+
+            // Função para inicializar a página de pagamento
+            async function initializePagamento() {
+                try {
+                    // Recuperar valores do localStorage
+                    const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
+                    const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
+                    const totalValue = vlinscricao + vltaxa;
+                    
+                    console.log('Valor total:', totalValue);
+
+                    // Exibir valor total
+                    document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
+                    
+                    // Gerar PIX
+                    await generatePixPayment(totalValue);
+                } catch (error) {
+                    console.error('Erro na inicialização:', error);
+                    alert('Erro ao inicializar o pagamento. Por favor, tente novamente.');
+                }
+            }
+
+            // Função para gerar o pagamento PIX
+            async function generatePixPayment(totalValue) {
+                try {
+                    const userData = {
+                        nome: localStorage.getItem('user_name'),
+                        email: localStorage.getItem('user_email'),
+                        cpf: localStorage.getItem('user_cpf'),
+                        categoria: localStorage.getItem('categoria'),
+                        camiseta: localStorage.getItem('camiseta'),
+                        nome_equipe: localStorage.getItem('nome_equipe'),
+                        integrantes: localStorage.getItem('integrantes')
+                    };
+
+                    console.log('Enviando dados:', { totalValue, ...userData });
+
+                    const response = await fetch('/gerar-pix', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            valor_total: totalValue,
+                            ...userData
+                        })
+                    });
+
+                    const responseData = await response.json();
+                    console.log('Resposta do servidor:', responseData);
+
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+
+                    if (responseData.success) {
+                        // Esconder loading e mostrar QR code
+                        document.getElementById('loadingContainer').classList.add('hidden');
+                        document.getElementById('qrContainer').classList.remove('hidden');
+                        
+                        // Atualizar QR Code e chave PIX
+                        const qrCodeElement = document.getElementById('qrCode');
+                        const pixKeyElement = document.getElementById('pixKey');
+                        
+                        if (responseData.qr_code_base64) {
+                            qrCodeElement.src = `data:image/png;base64,${responseData.qr_code_base64}`;
+                        } else {
+                            console.error('QR Code base64 não encontrado na resposta');
+                        }
+
+                        // Usar o campo qr_code para a chave PIX
+                        if (responseData.qr_code) {
+                            pixKeyElement.textContent = responseData.qr_code;
+                        } else {
+                            console.error('Nenhuma chave PIX encontrada na resposta');
+                        }
+                        
+                        if (responseData.payment_id) {
+                            paymentId = responseData.payment_id;
+                            startPaymentCheck();
+                        }
+                    } else {
+                        throw new Error(responseData.message || 'Erro ao gerar PIX');
+                    }
+                } catch (error) {
+                    console.error('Erro ao gerar PIX:', error);
+                    document.getElementById('loadingContainer').innerHTML = `
+                        <p>Erro ao gerar QR Code PIX. <button class="button" onclick="window.location.reload()">Tentar novamente</button></p>
+                    `;
+                }
+            }
+
+            // Função para verificar status do pagamento
+            async function checkPaymentStatus() {
+                if (!paymentId) return;
+
+                try {
+                    const response = await fetch(`/verificar-pagamento/${paymentId}`);
+                    const data = await response.json();
+
+                    if (data.success && data.status === 'approved') {
+                        clearInterval(checkInterval);
+                        document.getElementById('successModal').style.display = 'flex';
+                        document.getElementById('qrContainer').classList.add('hidden');
+                        
+                        // Limpar dados do localStorage após pagamento confirmado
+                        clearPaymentData();
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar pagamento:', error);
+                }
+            }
+
+            function startPaymentCheck() {
+                if (checkInterval) {
+                    clearInterval(checkInterval);
+                }
+                checkInterval = setInterval(checkPaymentStatus, 5000);
+            }
+
+            // Função para copiar chave PIX
+            window.copyPixKey = function() {
+                const pixKey = document.getElementById('pixKey').textContent;
+                if (!pixKey) {
+                    console.error('Chave PIX não encontrada');
+                    alert('Chave PIX não disponível no momento. Por favor, aguarde o carregamento ou recarregue a página.');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(pixKey)
+                    .then(() => {
+                        alert('Chave PIX copiada com sucesso!');
+                    })
+                    .catch(err => {
+                        console.error('Erro ao copiar chave PIX:', err);
+                        alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
+                    });
+            };
+ 
+ 
+            // Função para limpar dados após pagamento
+            function clearPaymentData() {
+                const keysToKeep = ['user_name', 'user_email', 'user_cpf'];
+                Object.keys(localStorage).forEach(key => {
+                    if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+        
+ 
+            // Função para limpar dados após pagamento
+            function clearPaymentData() {    async function checkPaymentStatus() {
+                if (!paymentId) return;
+
+                try {
+                    const response = await fetch(`/verificar-pagamento/${paymentId}`);
+                    const data = await response.json();
+                    console.log('Status do pagamento:', data);
+
+                    if (data.success && data.status === 'approved') {
+                        clearInterval(checkInterval);
+                        document.getElementById('successModal').style.display = 'flex';
+                        document.getElementById('qrContainer').classList.add('hidden');
+                        
+                        // Limpar dados do localStorage após pagamento confirmado
+                        clearPaymentData();
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar pagamento:', error);
+                }
+            }
+                        
+            const keysToKeep = ['user_name', 'user_email', 'user_cpf'];
+                Object.keys(localStorage).forEach(key => {
+                    if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+
+            // Inicializar a página
+            initializePagamento();
+        });
+
+    </script>
+</body>
+</html>

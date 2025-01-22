@@ -318,147 +318,58 @@
     </footer>
 
     <script>
+        // Update the script section in login.html
         $(document).ready(function() {
-            // Máscaras para campos
-            $('#cpf').mask('000.000.000-00');
-            $('#celular').mask('(00) 00000-0000');
-            $('#telefone_emergencia').mask('(00) 00000-0000');
-            $('#cep').mask('00000-000');
-
-            // Converter para maiúsculo os campos com classe uppercase
-            $('.uppercase').on('input', function() {
-                $(this).val($(this).val().toUpperCase());
-            });
-
-            // Função para mostrar modal
-            function showModal(message) {
-                $('#modalMessage').text(message);
-                $('#cepModal').css('display', 'flex');
-            }
-
-            // Função para fechar modal
-            window.closeModal = function() {
-                $('#cepModal').css('display', 'none');
-            }
-
-            // Validação do CPF ao sair do campo
-            $('#cpf').on('blur', function() {
-                const cpf = $(this).val().replace(/\D/g, '');
-                
-                if (cpf.length !== 11) {
-                    return;
-                }
-
-                // Primeira chamada para validar o formato do CPF
-                fetch(`/validar-cpf?cpf=${cpf}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data.valid) {
-                            showModal('CPF inválido');
-                            $(this).val('');
-                            setTimeout(() => {
-                                $(this).focus();
-                            }, 100);
-                            return Promise.reject('CPF inválido');
-                        }
-                        // Se o CPF for válido, verifica se já existe
-                        return fetch(`/verificar-cpf?cpf=${cpf}`);
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.exists) {
-                            showModal('CPF já cadastrado, caso tenha esquecido a senha, retorne e clique na opção "recuperar senha".');
-                            $(this).val('');
-                            setTimeout(() => {
-                                $(this).focus();
-                            }, 100);
-                        }
-                    })
-                    .catch(error => {
-                        if (error !== 'CPF inválido') {
-                            console.error('Erro na validação do CPF:', error);
-                            showModal('Erro ao validar CPF. Tente novamente.');
-                        }
-                    });
-            });
-
-            // Habilitar/desabilitar botão de submit baseado no checkbox
-            $('#concordar').on('change', function() {
-                if (this.checked) {
-                    $('#submitBtn').prop('disabled', false).addClass('active');
-                } else {
-                    $('#submitBtn').prop('disabled', true).removeClass('active');
-                }
-            });
-
-            // Função para buscar CEP
-            $('#buscarCep').click(function() {
-                const cep = $('#cep').val().replace(/\D/g, '');
-                
-                if (cep.length !== 8) {
-                    showModal('CEP inválido. Por favor, digite um CEP válido.');
-                    return;
-                }
-
-                // Adiciona loading spinner ao botão
-                $(this).prop('disabled', true).html('<div class="loading"></div>');
-
-                fetch(`/pesquisarCEP?cep=${cep}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            $('#rua').val(data.data.descricao_sem_numero);
-                            $('#bairro').val(data.data.descricao_bairro);
-                            $('#cidade').val(data.data.descricao_cidade);
-                            $('#estado').val(data.data.uf);
-                        } else {
-                            showModal('⚠ CEP não encontrado.');
-                            $('#rua, #bairro, #cidade, #estado').val('');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao pesquisar CEP:', error);
-                        showModal('Erro ao pesquisar CEP. Tente novamente.');
-                    })
-                    .finally(() => {
-                        // Reabilita o botão e remove o loading
-                        $('#buscarCep').prop('disabled', false).text('Buscar');
-                    });
-            });
-
-            // Permitir busca de CEP ao pressionar Enter no campo
-            $('#cep').keypress(function(e) {
-                if (e.which === 13) {
-                    e.preventDefault();
-                    $('#buscarCep').click();
-                }
-            });
-
-            // Validação do formulário antes de enviar
-            $('#termoForm').on('submit', function(e) {
+            $('#cadastroForm').on('submit', function(e) {
                 e.preventDefault();
                 
-                // Verificar se todos os campos obrigatórios estão preenchidos
-                const cadastroForm = $('#cadastroForm')[0];
-                if (!cadastroForm.checkValidity()) {
-                    showModal('Por favor, preencha todos os campos obrigatórios.');
-                    return;
-                }
-
-                // Verificar se as senhas conferem
+                const cpf_email = $('#cpf_email').val();
                 const senha = $('#senha').val();
-                const confirmarSenha = $('#confirmar_senha').val();
                 
-                if (senha !== confirmarSenha) {
-                    showModal('As senhas não conferem. Por favor, verifique.');
-                    return;
-                }
+                // Disable submit button and show loading
+                const submitBtn = $('.entrar-button');
+                const originalText = submitBtn.text();
+                submitBtn.prop('disabled', true).html('<div class="loading"></div>');
+                
+                fetch('/autenticar-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        cpf_email: cpf_email,
+                        senha: senha
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Store user data in localStorage
+                        localStorage.setItem('user_name', data.nome);
+                        localStorage.setItem('user_email', data.email);
+                        localStorage.setItem('user_cpf', data.cpf);
+                        localStorage.setItem('user_dtnascimento', data.dtnascimento);
+                        localStorage.setItem('user_celular', data.celular);
+                        localStorage.setItem('user_sexo', data.sexo);
+                        localStorage.setItem('user_idatleta', data.idatleta);
 
-                // Aqui você pode adicionar o código para enviar o formulário
-                // Por exemplo:
-                // this.submit();
+                        // Redirect to inscription page
+                        window.location.href = '/inscricao200k';
+                    } else {
+                        showModal('Usuário ou senha inválidos');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    showModal('Erro ao realizar login. Tente novamente.');
+                })
+                .finally(() => {
+                    // Re-enable submit button and restore text
+                    submitBtn.prop('disabled', false).text(originalText);
+                });
             });
         });
+
     </script>
 </body>
 </html>

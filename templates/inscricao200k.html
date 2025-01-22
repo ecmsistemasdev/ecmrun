@@ -6,7 +6,6 @@
     <title>4º Desafio 200k</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,8 +13,35 @@
             flex-direction: column;
             align-items: center;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            min-height: 100vh;
+        }
+        /*
+        .logo-container {
+            width: 100%;
+            height: 70px;
             background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        */
+        .logo-container {
+            width: 100%;
+            height: 70px;
+            background-color: white;
+            display: flex;
+            justify-content: flex-start; /* Changed from center to flex-start */
+            padding-left: 20px; /* Added padding to the left */
+            align-items: center;
+            margin-bottom: 20px;
+        }        
+
+        .logo {
+            width: 70px;
+            height: 70px;
         }
 
         h1 {
@@ -26,7 +52,7 @@
         }
 
         .form-title {
-            background-color: #007bff;
+            background-color: #647e99;
             color: white;
             padding: 10px;
             margin: -20px -20px 20px -20px;
@@ -38,22 +64,22 @@
 
         form {
             width: 50%;
-            background: #f0f0f0;
+            background: white;
             padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #007bff;
+            border-radius: 7px;
             min-width: 300px;
+            margin-bottom: 20px;
         }
 
         @media (max-width: 768px) {
             form {
-                width: calc(100% - 20px);
-                margin: 5px;
+                width: calc(100% - 35px);
+                margin: 0px 20px 20px 20px;
             }
         }
 
         .form-group {
-            margin-bottom: 20px; /* Aumentado o espaçamento vertical */
+            margin-bottom: 20px;
             padding-top: 5px;
         }
 
@@ -61,58 +87,85 @@
             display: flex;
             padding-top: 5px;
             flex-wrap: wrap;
-            gap: 20px; /* Aumentado o espaçamento vertical */
-            margin-bottom: 20px; /* Aumentado o espaçamento vertical */
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
-        .form-field {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 3px; /* Aumentado o espaçamento */
-            color: #333;
-            font-size: 14px; /* Aumentado em 1px */
+        .field-group {
+            border-color: #647e99;
+            border-radius: 5px;
+            border-width: 1px;
+            font-size: 14px;
+            padding: 15px;
+            margin-bottom: 20px;
         }
 
         input[type="text"],
         input[type="email"],
         input[type="tel"],
         input[type="date"],
+        input[type="password"],
         select {
             width: 100%;
-            padding: 10px; /* Aumentado o padding */
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
-            font-size: 14px; /* Aumentado em 1px */
+            font-size: 14px;
+            height: 40px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 3px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .info-label {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .value-label {
+            background-color: #e8f4ff;
+            padding: 10px;
+            border-radius: 4px;
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #0056b3;
+            font-weight: bold;
         }
 
         .radio-group {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
-            font-size: 14px; /* Aumentado em 1px */
+            font-size: 14px;
             margin-top: 5px;
         }
 
         .radio-group label {
-            font-size: 14px; /* Aumentado em 1px */
+            font-size: 14px;
             margin-bottom: 0;
         }
 
         .divider {
             height: 1px;
-            background-color: #007bff;
-            margin: 25px 0; /* Aumentado o espaçamento */
+            background-color: #4376ac;
+            margin: 25px 0;
         }
 
         button {
-            background-color: #007bff;
+            background-color: #4376ac;
             color: white;
-            margin-top: 25px; /* Aumentado o espaçamento */
+            margin-top: 25px;
             padding: 12px 30px;
             border: none;
             border-radius: 8px;
@@ -147,108 +200,128 @@
     </style>
 </head>
 <body>
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    </div>
+
     <h1>4º Desafio 200k - Porto Velho-Humaitá</h1>
+    
     <form id="inscricaoForm">
         <div class="form-title">Formulário de Inscrição - Atleta</div>
+    
+        <fieldset class="field-group">
+            <legend>Dados do Atleta/Inscrição:</legend>
+            <div class="form-group">
+                <label>Nome Completo:</label>
+                <div id="nome_completo" class="info-label"></div>
+            </div>
+    
+            <div class="form-group">
+                <label>CPF:</label>
+                <div id="cpf" class="info-label"></div>
+            </div>
 
-        <div class="form-group">
-            <label for="email">E-mail:</label>
-            <input type="email" id="email" name="email" required>
-        </div>
+            <div>
+                <div class="form-group">
+                    <label>Celular:</label>
+                    <div id="celular" class="info-label"></div>
+                </div>
 
-        <div class="form-row">
-            <div class="form-field">
-                <label for="primeiro_nome">Primeiro Nome:</label>
-                <input type="text" id="primeiro_nome" name="primeiro_nome" class="uppercase" required>
-            </div>
-            <div class="form-field">
-                <label for="sobrenome">Sobrenome:</label>
-                <input type="text" id="sobrenome" name="sobrenome" class="uppercase" required>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-field">
-                <label for="cpf">CPF:</label>
-                <input type="text" id="cpf" name="cpf" maxlength="14" inputmode="numeric" required>
-            </div>
-            <div class="form-field">
-                <label for="data_nascimento">Data de Nascimento:</label>
-                <input type="date" id="data_nascimento" name="data_nascimento" required>
-            </div>
-            <div class="form-field">
-                <label for="celular">Nº Celular:</label>
-                <input type="tel" id="celular" name="celular" required>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-field">
-                <label>Sexo:</label>
-                <div class="radio-group">
-                    <label>
-                        <input type="radio" name="sexo" value="masculino" required> Masculino
-                    </label>
-                    <label>
-                        <input type="radio" name="sexo" value="feminino"> Feminino
-                    </label>
+                <div class="form-group">
+                    <label>Data Nascimento:</label>
+                    <div id="dtnascimento" class="info-label"></div>
                 </div>
             </div>
-            <div class="form-field">
-                <label>Camiseta:</label>
-                <div class="radio-group">
-                    <label><input type="radio" name="camiseta" value="PP"> PP</label>
-                    <label><input type="radio" name="camiseta" value="P"> P</label>
-                    <label><input type="radio" name="camiseta" value="M"> M</label>
-                    <label><input type="radio" name="camiseta" value="G"> G</label>
-                    <label><input type="radio" name="camiseta" value="GG"> GG</label>
-                </div>
+
+            <div class="form-group">
+                <label>E-mail:</label>
+                <div id="email" class="info-label"></div>
             </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-field">
-                <label for="estado">Estado:</label>
-                <select id="estado" name="estado" required></select>
+    
+            <div class="form-group">
+                <label>Categoria Selecionada:</label>
+                <div id="categoria" class="value-label"></div>
             </div>
-            <div class="form-field">
-                <label for="cidade">Cidade:</label>
-                <select id="cidade" name="cidade" required></select>
+
+            <div class="form-group">
+                <label>Valor da Inscrição:</label>
+                <div id="valor" class="value-label"></div>
             </div>
-        </div>
-
+        </fieldset>
+    
         <div class="form-group">
-            <label for="equipe">Equipe:</label>
-            <input type="text" id="equipe" name="equipe">
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="form-group">
-            <label for="nome_equipe">Nome da Equipe 200k</label>
-            <input type="text" id="nome_equipe" name="nome_equipe", placeholder="Somente em caso de categoria em Equipe">
-        </div>
-
-        <div class="form-group">
-            <label for="integrantes">Integrantes</label>
-            <input type="text" id="integrantes" name="integrantes", placeholder="Em caso de Equipe informe os nomes dos integrantes">
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="form-group">
-            <label>Forma de pagamento:</label>
+            <label>Camiseta:</label>
             <div class="radio-group">
-                <label>
-                    <input type="radio" name="pagamento" value="pix" required> PIX
-                </label>
-                <label>
-                    <input type="radio" name="pagamento" value="cartao"> Cartão de Crédito
-                </label>
+                <label><input type="radio" name="camiseta" value="PP"> PP</label>
+                <label><input type="radio" name="camiseta" value="P"> P</label>
+                <label><input type="radio" name="camiseta" value="M"> M</label>
+                <label><input type="radio" name="camiseta" value="G"> G</label>
+                <label><input type="radio" name="camiseta" value="GG"> GG</label>
             </div>
         </div>
 
-        <button type="submit">Confirmar</button>
+        <div class="form-group">
+            <label for="apoio">Nome do Apoio (se tiver):</label>
+            <input type="text" id="apoio" name="apoio" placeholder="">
+        </div>
+
+        <div class="form-group">
+            <label for="nome_equipe">Nome da Equipe 200k:</label>
+            <input type="text" id="nome_equipe" name="nome_equipe" placeholder="Somente em caso de categoria em Equipe">
+        </div>
+
+        <div class="form-group">
+            <label for="integrantes">Integrantes:</label>
+            <input type="text" id="integrantes" name="integrantes" placeholder="Em caso de Equipe informe os nomes dos integrantes">
+        </div>    
+
+        <div class="divider"></div>
+
+        <form id="inscricaoForm">
+            <!-- Previous form content remains the same until payment section -->
+        
+            <div class="form-group">
+                <label>Forma de pagamento:</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="pagamento" value="pix" required> PIX
+                    </label>
+                    <label>
+                        <input type="radio" name="pagamento" value="cartao"> Cartão de Crédito (acres. de 4,5% do valor da inscrição)
+                    </label>
+                </div>
+            </div>
+        
+            <div class="form-group">
+                <label>Termo de Responsabilidade:</label>
+                <div style="height: 200px; overflow-y: auto; font-size: 13px; text-align: justify; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;">
+                    <div id="termoContent">
+                        Eu, *NameCompleto*, declaro que estou ciente e concordo com os termos e condições estabelecidos no Regulamento para a participação neste Desafio, a ser realizada nos dias 04, 05 e 06/07/2025 em Porto Velho/RO.<br><br>
+                        1. Declaração de Saúde <br><br>
+                        Declaro que estou em plenas condições de saúde para participar deste evento e que não possuo restrições médicas que impeçam minha participação. Estou ciente de que é recomendável realizar uma avaliação médica antes de participar de atividades físicas.<br><br>
+                        2. Responsabilidade Pessoal<br><br>
+                        Entendo que a participação na corrida envolve riscos, incluindo, mas não se limitando a, lesões físicas, acidentes e outras eventualidades. Ao me inscrever, assumo total responsabilidade por minha participação e isento os organizadores, patrocinadores e colaboradores de qualquer responsabilidade por danos ou lesões que possam ocorrer antes, durante ou após o evento.<br><br>
+                        3. Uso de Imagem<br><br>
+                        Autorizo a utilização da minha imagem em fotografias e filmagens realizadas durante o evento para fins promocionais e publicitários, sem qualquer ônus para os organizadores.<br><br>
+                        4. Cancelamento e Reembolso<br><br>            
+                        Em caso de desistência o reembolso em até 7 dias corridos será o valor pago deduzido das taxas, sendo até 30 dias antes da prova, o valor do reembolso será de 50% do valor da inscrição. Restando menos de 30 dias não heverá reembolso. Em casos de cancelamento do evento por parte dos organizadores o reembolso será de 100% do valor pago.<br><br>
+                        5. Aceitação dos Termos<br><br>    
+                        Ao finalizar minha inscrição, confirmo que li, entendi e concordo com todos os termos deste documento.
+        
+                    </div>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="aceitoTermos" name="aceitoTermos" required>
+                        <span>Confirmo que li e aceito o Termo de Responsabilidade</span>
+                    </label>
+                </div>
+            </div>
+        
+            <button type="submit" id="submitButton" disabled>Seguir pra Pagamento</button>
+        </form>        
+
     </form>
 
     <footer class="footer">
@@ -258,61 +331,125 @@
     </footer>
 
     <script>
-        $(document).ready(function() {
-            // Máscaras para CPF e telefone
-            $('#cpf').mask('000.000.000-00');
-            $('#telefone').mask('(00) 00000-0000');
+     
+     $(document).ready(function() {
+        // Get user data from localStorage
+        const userName = localStorage.getItem('user_name');
+        const userEmail = localStorage.getItem('user_email');
+        const cpf = localStorage.getItem('user_cpf');
+        const dataNascimento = localStorage.getItem('user_dtnascimento');
+        const celular = localStorage.getItem('user_celular');
+        const sexo = localStorage.getItem('user_sexo');
+        const idatleta = localStorage.getItem('user_idatleta');
+        const categoria = localStorage.getItem('categoria');
+        const valor = localStorage.getItem('valor');
+        const categoriaId = localStorage.getItem('categoria_id');
 
-            // Converter para maiúsculo os campos de nome
-            $('#primeiro_nome, #sobrenome').on('input', function() {
-                $(this).val($(this).val().toUpperCase());
-            });
+        // Function to format currency values
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        };
 
-            // Carrega estados
-            fetch('/estados')
-                .then(response => response.json())
-                .then(data => {
-                    const estadoSelect = $('#estado');
-                    estadoSelect.empty();
-                    estadoSelect.append('<option value="">Selecione um estado</option>');
-                    data.data.sort((a, b) => a.Nome.localeCompare(b.Nome, 'pt-BR')).forEach(estado => {
-                        estadoSelect.append(`<option value="${estado.Uf}">${estado.Nome}</option>`);
-                    });
-                })
-                .catch(error => {
-                    console.error('Erro ao carregar estados:', error);
-                });
+        // Function to handle team fields visibility
+        const handleTeamFields = (categoriaId) => {
+            const nomeEquipeField = document.getElementById('nome_equipe');
+            const integrantesField = document.getElementById('integrantes');
 
-            // Carrega cidades baseado no estado selecionado
-            $('#estado').change(function() {
-                const estadoSelecionado = $(this).val();
-                const cidadeSelect = $('#cidade');
-                cidadeSelect.empty();
-                cidadeSelect.append('<option value="">Selecione uma cidade</option>');
-
-                if (estadoSelecionado) {
-                    fetch('/municipios')
-                        .then(response => response.json())
-                        .then(data => {
-                            data.data
-                                .filter(cidade => cidade.Uf === estadoSelecionado)
-                                .sort((a, b) => a.Nome.localeCompare(b.Nome, 'pt-BR'))
-                                .forEach(cidade => {
-                                    cidadeSelect.append(`<option value="${cidade.Id}">${cidade.Nome}</option>`);
-                                });
-                        })
-                        .catch(error => {
-                            console.error('Erro ao carregar cidades:', error);
-                        });
+            if (categoriaId === '1' || categoriaId === 1) {
+                if (nomeEquipeField && integrantesField) {
+                    nomeEquipeField.disabled = true;
+                    integrantesField.disabled = true;
+                    nomeEquipeField.value = '';
+                    integrantesField.value = '';
+                    nomeEquipeField.style.backgroundColor = '#f0f0f0';
+                    integrantesField.style.backgroundColor = '#f0f0f0';
+                    nomeEquipeField.placeholder = 'Não aplicável para categoria Solo';
+                    integrantesField.placeholder = 'Não aplicável para categoria Solo';
                 }
-            });
+            } else {
+                if (nomeEquipeField && integrantesField) {
+                    nomeEquipeField.disabled = false;
+                    integrantesField.disabled = false;
+                    nomeEquipeField.style.backgroundColor = '';
+                    integrantesField.style.backgroundColor = '';
+                    nomeEquipeField.placeholder = 'Somente em caso de categoria em Equipe';
+                    integrantesField.placeholder = 'Em caso de Equipe informe os nomes dos integrantes';
+                }
+            }
+        };
 
-            // Submit do formulário
-            $('#inscricaoForm').submit(function(e) {
-                e.preventDefault();
-                console.log('Formulário enviado');
-            });
+        // Form submission handler
+        $('#inscricaoForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const paymentMethod = $('input[name="pagamento"]:checked').val();
+            localStorage.setItem('payment_method', paymentMethod);
+            
+            // Get the values from session
+            const vlinscricao = parseFloat('{{ session.get("cat_vlinscricao", 0) }}');
+            const vltaxa = parseFloat('{{ session.get("cat_vltaxa", 0) }}');            
+            
+            // Get form values
+            const camiseta = $('input[name="camiseta"]:checked').val();
+            const apoio = $('#apoio').val();
+            const nomeEquipe = $('#nome_equipe').val();
+            const integrantes = $('#integrantes').val();
+            
+            // Store form values
+            localStorage.setItem('camiseta', camiseta);
+            localStorage.setItem('apoio', apoio);
+            localStorage.setItem('nome_equipe', nomeEquipe);
+            localStorage.setItem('integrantes', integrantes);
+            
+            localStorage.setItem('vlinscricao', vlinscricao);
+            localStorage.setItem('vltaxa', vltaxa);
+                        
+            // Redirect to payment page
+            window.location.href = '/pagamento';
         });
+
+        // Handle terms acceptance and submit button
+        $('#aceitoTermos').on('change', function() {
+            $('#submitButton').prop('disabled', !$(this).is(':checked'));
+        });
+
+        // Update terms content with user name
+        if (userName) {
+            const termoContent = document.getElementById('termoContent');
+            if (termoContent) {
+                let termoText = termoContent.innerHTML;
+                termoText = termoText.replace('*NameCompleto*', userName);
+                termoContent.innerHTML = termoText;
+            }
+        }
+
+        // Fill in user information
+        if (userName && userEmail) {
+            $('#nome_completo').text(userName);
+            $('#email').text(userEmail);
+            $('#cpf').text(cpf);
+            $('#dtnascimento').text(dataNascimento);
+            $('#celular').text(celular);
+            $('#categoria').text(categoria || 'Não selecionada');
+            $('#valor').text(valor || 'A definir');
+
+            // Handle team fields based on category
+            handleTeamFields(categoriaId);
+        } else {
+            // Redirect to login if no user data
+            window.location.href = '/login';
+        }
+
+        // Initial state of submit button
+        $('#submitButton').prop('disabled', true);
+        $('#aceitoTermos').prop('checked', false);
+    });
+
+
+
     </script>
 </body>
 </html>
