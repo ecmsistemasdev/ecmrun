@@ -655,148 +655,235 @@ def pagamento():
                          valor_total=valor_total)
 
 
-@app.route('/processar-pagamento', methods=['POST'])
-def processar_pagamento():
-    try:
-        payment_method = request.form.get('pagamento')
-        if payment_method == 'pix':
-            # Get values from session
-            vlinscricao = float(session.get('cat_vlinscricao', 0))
-            vltaxa = float(session.get('cat_vltaxa', 0))
-            valor_total = vlinscricao + vltaxa
+# @app.route('/processar-pagamento', methods=['POST'])
+# def processar_pagamento():
+#     try:
+#         print("Token MP:", os.getenv('MP_ACCESS_TOKEN'))
+#         print("Payment data:", payment_data)
+
+#         payment_method = request.form.get('pagamento')
+#         if payment_method == 'pix':
+#             # Get values from session
+#             vlinscricao = float(session.get('cat_vlinscricao', 0))
+#             vltaxa = float(session.get('cat_vltaxa', 0))
+#             valor_total = vlinscricao + vltaxa
             
-            payment_data = {
-                "transaction_amount": valor_total,
-                "description": "Inscrição 4º Desafio 200k",
-                "payment_method_id": "pix",
-                "payer": {
-                    "email": session.get('user_email'),
-                    "first_name": session.get('user_name').split()[0],
-                    "last_name": " ".join(session.get('user_name').split()[1:]),
-                    "identification": {
-                        "type": "CPF",
-                        "number": session.get('user_cpf')
-                    }
-                }
-            }
+#             payment_data = {
+#                 "transaction_amount": valor_total,
+#                 "description": "Inscrição 4º Desafio 200k",
+#                 "payment_method_id": "pix",
+#                 "payer": {
+#                     "email": session.get('user_email'),
+#                     "first_name": session.get('user_name').split()[0],
+#                     "last_name": " ".join(session.get('user_name').split()[1:]),
+#                     "identification": {
+#                         "type": "CPF",
+#                         "number": session.get('user_cpf')
+#                     }
+#                 }
+#             }
             
-            payment_response = sdk.payment().create(payment_data)
-            payment = payment_response["response"]
+#             payment_response = sdk.payment().create(payment_data)
+#             payment = payment_response["response"]
             
-            if payment:
-                return jsonify({
-                    'success': True,
-                    'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
-                    'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
-                    'payment_id': payment['id']
-                })
+#             if payment:
+#                 return jsonify({
+#                     'success': True,
+#                     'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
+#                     'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
+#                     'payment_id': payment['id']
+#                 })
         
-        return jsonify({'success': False, 'message': 'Método de pagamento inválido'}), 400
+#         print("Payment response:", payment_response)
+
+#         return jsonify({'success': False, 'message': 'Método de pagamento inválido'}), 400
         
-    except Exception as e:
-        print(f"Erro ao processar pagamento: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+#     except Exception as e:
+#         print(f"Erro ao processar pagamento: {str(e)}")
+#         return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @app.route('/gerar-pix', methods=['POST'])
 def gerar_pix():
     try:
         data = request.get_json()
-        valor_total = float(data.get('valor_total'))
+        # Round to 2 decimal places to avoid floating point precision issues
+        valor_total = round(float(data.get('valor_total', 0)), 2)
         
+        # Validate minimum transaction amount (Mercado Pago usually requires >= 1)
+        if valor_total < 1:
+            return jsonify({
+                'success': False,
+                'message': 'Valor mínimo da transação deve ser maior que R$ 1,00'
+            }), 400
+        
+        print("=== DEBUG: Iniciando geração do PIX ===")
+        print(f"Valor total recebido: {valor_total}")
+        print(f"Token MP configurado: {os.getenv('MP_ACCESS_TOKEN')[:10]}...")
+        
+        # Dados do pagador da sessão
+        email = session.get('user_email')
+        nome_completo = session.get('user_name', '').split()
+        cpf = session.get('user_cpf')
+        
+        print(f"Dados do pagador da sessão:")
+        print(f"- Email: {email}")
+        print(f"- Nome: {nome_completo}")
+        print(f"- CPF: {cpf}")
+
+        # Preparar dados do pagamento
         payment_data = {
             "transaction_amount": valor_total,
             "description": "Inscrição 4º Desafio 200k",
             "payment_method_id": "pix",
             "payer": {
-                "email": session.get('user_email'),
-                "first_name": session.get('user_name').split()[0],
-                "last_name": " ".join(session.get('user_name').split()[1:]),
+                "email": email,
+                "first_name": nome_completo[0] if nome_completo else "",
+                "last_name": " ".join(nome_completo[1:]) if len(nome_completo) > 1 else "",
                 "identification": {
                     "type": "CPF",
-                    "number": session.get('user_cpf')
+                    "number": re.sub(r'\D', '', cpf) if cpf else ""
                 }
             }
         }
-        
+
+        print("Dados do pagamento preparados:")
+        print(json.dumps(payment_data, indent=2))
+
+        # Criar pagamento no Mercado Pago
+        print("Enviando requisição para o Mercado Pago...")
         payment_response = sdk.payment().create(payment_data)
+        
+        print("Resposta do Mercado Pago:")
+        print(json.dumps(payment_response, indent=2))
+        
+        if not payment_response or "response" not in payment_response:
+            print("Erro: Resposta do Mercado Pago inválida")
+            return jsonify({
+                'success': False,
+                'message': 'Erro na resposta do Mercado Pago'
+            }), 500
+
         payment = payment_response["response"]
         
-        if payment:
-            return jsonify({
-                'success': True,
-                'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
-                'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
-                'payment_id': payment['id']
-            })
-            
-        return jsonify({'success': False, 'message': 'Erro ao gerar PIX'}), 400
+        # Verificar a estrutura completa da resposta
+        print("Estrutura da resposta payment:")
+        print(json.dumps(payment, indent=2))
         
+        # Verificar se há dados do PIX na resposta
+        if "point_of_interaction" not in payment:
+            print("Erro: point_of_interaction não encontrado na resposta")
+            return jsonify({
+                'success': False,
+                'message': 'Dados do PIX não disponíveis - point_of_interaction não encontrado'
+            }), 500
+            
+        if "transaction_data" not in payment["point_of_interaction"]:
+            print("Erro: transaction_data não encontrado em point_of_interaction")
+            return jsonify({
+                'success': False,
+                'message': 'Dados do PIX não disponíveis - transaction_data não encontrado'
+            }), 500
+
+        # Se chegou até aqui, retorna os dados do PIX
+        return jsonify({
+            'success': True,
+            'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
+            'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
+            'payment_id': payment['id']
+        })
+
     except Exception as e:
-        print(f"Erro ao gerar PIX: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        print(f"=== ERRO CRÍTICO: ===")
+        print(f"Tipo do erro: {type(e)}")
+        print(f"Mensagem de erro: {str(e)}")
+        print(f"Stack trace:")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao gerar PIX: {str(e)}'
+        }), 500
 
 
 @app.route('/verificar-pagamento/<payment_id>')
 def verificar_pagamento(payment_id):
     try:
+        # Buscar o status diretamente do Mercado Pago
         payment_response = sdk.payment().get(payment_id)
         payment = payment_response["response"]
         
+        print(f"Status do pagamento recebido: {payment['status']}")
+        
         if payment["status"] == "approved":
-            # Atualizar o banco de dados
+            # Verificar se já não foi processado antes
             cur = mysql.connection.cursor()
+            cur.execute("SELECT * FROM ecmrun.INSCRICAO_TT WHERE IDPAGAMENO = %s", (payment_id,))
+            existing_record = cur.fetchone()
             
-            # Calculate valor_pgto (total payment)
-            valor = float(session.get('cat_vlinscricao', 0))
-            taxa = float(session.get('cat_vltaxa', 0))
-            valor_pgto = valor + taxa
-            
-            # Format current date as dd/mm/yyyy
-            data_pagamento = datetime.now().strftime("%d/%m/%Y")
-            
-            # Get additional data from session
-            idatleta = session.get('user_idatleta')
-            cpf = session.get('user_cpf')
-            
-            # Insert payment record
-            query = """
-            INSERT INTO ecmrun.INSCRICAO_TT (
-                IDATLETA, CPF, IDEVENTO, IDITEM, APOIO, 
-                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, 
-                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
-                IDPAGAMENO
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-            )
-            """
-            
-            params = (
-                idatleta,                            # IDATLETA
-                cpf,                                 # CPF
-                1,                                   # IDEVENTO (hardcoded as 1 for this event)
-                session.get('categoria_id'),         # IDITEM
-                None,                                # APOIO
-                session.get('equipe_evento'),        # EQUIPE_EVENTO
-                session.get('integrantes'),          # INTEGRANTES
-                valor,                               # VALOR
-                taxa,                                # TAXA
-                valor_pgto,                          # VALOR_PGTO
-                data_pagamento,                      # DTPAGAMENTO
-                'CONFIRMADO',                        # STATUS
-                'PIX',                               # FORMAPGTO
-                payment_id                           # IDPAGAMENO
-            )
-            
-            cur.execute(query, params)
-            mysql.connection.commit()
-            cur.close()
-            
-            return jsonify({
-                'success': True,
-                'status': 'approved'
-            })
-            
+            if not existing_record:
+                # Calculate valor_pgto (total payment)
+                valor = float(session.get('cat_vlinscricao', 0))
+                taxa = float(session.get('cat_vltaxa', 0))
+                valor_pgto = valor + taxa
+                
+                # Format current date as dd/mm/yyyy
+                data_pagamento = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                
+                # Get additional data from session
+                idatleta = session.get('user_idatleta')
+                cpf = session.get('user_cpf')
+                
+                # Insert payment record
+                query = """
+                INSERT INTO ecmrun.INSCRICAO_TT (
+                    IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                    NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, 
+                    VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                    IDPAGAMENO
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                """
+                
+                params = (
+                    idatleta,                            # IDATLETA
+                    cpf,                                 # CPF
+                    1,                                   # IDEVENTO (hardcoded as 1 for this event)
+                    session.get('cat_iditem'),           # IDITEM
+                    session.get('camiseta'),             # CAMISETA
+                    session.get('apoio'),                # APOIO
+                    session.get('nome_equipe'),          # NOME_EQUIPE
+                    session.get('integrantes'),          # INTEGRANTES
+                    valor,                               # VALOR
+                    taxa,                                # TAXA
+                    valor_pgto,                          # VALOR_PGTO
+                    data_pagamento,                      # DTPAGAMENTO
+                    'CONFIRMADO',                        # STATUS
+                    'PIX',                               # FORMAPGTO
+                    payment_id                           # IDPAGAMENO
+                )
+                
+                cur.execute(query, params)
+                mysql.connection.commit()
+                cur.close()
+                
+                print("Registro de pagamento inserido com sucesso!")
+                
+                return jsonify({
+                    'success': True,
+                    'status': 'approved',
+                    'message': 'Pagamento processado e registrado'
+                })
+            else:
+                print("Pagamento já processado anteriormente")
+                return jsonify({
+                    'success': True,
+                    'status': 'approved',
+                    'message': 'Pagamento já processado'
+                })
+        
         return jsonify({
             'success': True,
             'status': payment["status"]
@@ -804,8 +891,15 @@ def verificar_pagamento(payment_id):
         
     except Exception as e:
         print(f"Erro ao verificar pagamento: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
-    
+        # Ensure JSON is returned even on error
+        return jsonify({
+            'success': False, 
+            'message': str(e),
+            'status': 'error'
+        }), 500
+
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
