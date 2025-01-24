@@ -355,6 +355,8 @@
 
         // Function to handle team fields visibility
         const handleTeamFields = (categoriaId) => {
+            const camisetaField = document.getElementById('camiseta');
+            const apoioField = document.getElementById('apoio');
             const nomeEquipeField = document.getElementById('nome_equipe');
             const integrantesField = document.getElementById('integrantes');
 
@@ -375,8 +377,8 @@
                     integrantesField.disabled = false;
                     nomeEquipeField.style.backgroundColor = '';
                     integrantesField.style.backgroundColor = '';
-                    nomeEquipeField.placeholder = 'Somente em caso de categoria em Equipe';
-                    integrantesField.placeholder = 'Em caso de Equipe informe os nomes dos integrantes';
+                    nomeEquipeField.placeholder = 'Se possível, dê um nome a sua Equipe para o Desafio';
+                    integrantesField.placeholder = 'Se possível, informe os nomes dos integrantes';
                 }
             }
         };
@@ -406,7 +408,7 @@
             
             localStorage.setItem('vlinscricao', vlinscricao);
             localStorage.setItem('vltaxa', vltaxa);
-                        
+
             // Redirect to payment page
             window.location.href = '/pagamento';
         });

@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pagamento - 4º Desafio 200k</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <div id="payment-modal-root"></div>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -192,6 +195,7 @@
             align-items: center;
         }
 
+
         .modal-content {
             background-color: white;
             padding: 30px;
@@ -201,11 +205,13 @@
             width: 90%;
         }
 
+
         .modal-title {
             font-size: 24px;
             color: #4376ac;
             margin-bottom: 20px;
         }
+
 
         .spinner {
             display: inline-block;
@@ -283,6 +289,45 @@
         </div>
     </div>
 
+    <div id="paymentModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Status do Pagamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <div id="loadingPayment">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Verificando pagamento...</span>
+                            </div>
+                            <p class="mt-2">Verificando o status do pagamento...</p>
+                        </div>
+                        <div id="paymentSuccess" style="display: none;">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                            <h4 class="mt-3">Pagamento Confirmado!</h4>
+                            <p>Sua inscrição foi realizada com sucesso.</p>
+                        </div>
+                        <div id="paymentPending" style="display: none;">
+                            <i class="bi bi-clock-fill text-warning" style="font-size: 3rem;"></i>
+                            <h4 class="mt-3">Pagamento Pendente</h4>
+                            <p>Aguardando a confirmação do seu pagamento...</p>
+                        </div>
+                        <div id="paymentError" style="display: none;">
+                            <i class="bi bi-x-circle-fill text-danger" style="font-size: 3rem;"></i>
+                            <h4 class="mt-3">Erro no Pagamento</h4>
+                            <p>Houve um problema ao processar seu pagamento.</p>
+                        </div>
+                    </div>
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+
     <footer class="footer">
         <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
         <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
@@ -295,7 +340,7 @@
             let paymentId = null;
             let checkInterval = null;
 
-            // Função para formatar valores monetários
+            // Function to format currency values
             function formatCurrency(value) {
                 return new Intl.NumberFormat('pt-BR', {
                     style: 'currency',
@@ -303,20 +348,37 @@
                 }).format(value);
             }
 
-            // Função para inicializar a página de pagamento
+            // Function to clear specific payment-related localStorage items
+            function clearPaymentRelatedLocalStorage() {
+                const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
+                
+                itemsToRemove.forEach(item => {
+                    localStorage.removeItem(item);
+                });
+            }
+
+            // Function to clear all non-essential localStorage items
+            function clearAllNonEssentialLocalStorage() {
+                const keysToKeep = ['user_name', 'user_email', 'user_cpf'];
+                
+                Object.keys(localStorage).forEach(key => {
+                    if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+
+            // Initialize payment page
             async function initializePagamento() {
                 try {
-                    // Recuperar valores do localStorage
                     const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
                     const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
                     const totalValue = vlinscricao + vltaxa;
                     
                     console.log('Valor total:', totalValue);
 
-                    // Exibir valor total
                     document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
                     
-                    // Gerar PIX
                     await generatePixPayment(totalValue);
                 } catch (error) {
                     console.error('Erro na inicialização:', error);
@@ -324,7 +386,7 @@
                 }
             }
 
-            // Função para gerar o pagamento PIX
+            // Generate PIX payment
             async function generatePixPayment(totalValue) {
                 try {
                     const userData = {
@@ -337,92 +399,100 @@
                         integrantes: localStorage.getItem('integrantes')
                     };
 
-                    console.log('Enviando dados:', { totalValue, ...userData });
+                    if (!userData.email || !userData.cpf || !totalValue) {
+                        throw new Error('Dados incompletos para geração do PIX');
+                    }
+
+                    const requestData = {
+                        valor_total: totalValue,
+                        ...userData
+                    };
+
+                    console.log('Dados sendo enviados para o servidor:', requestData);
 
                     const response = await fetch('/gerar-pix', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            valor_total: totalValue,
-                            ...userData
-                        })
+                        body: JSON.stringify(requestData)
                     });
 
                     const responseData = await response.json();
-                    console.log('Resposta do servidor:', responseData);
 
-                    if (!response.ok) {
-                        throw new Error(`Erro HTTP: ${response.status}`);
+                    if (!response.ok || !responseData.success) {
+                        throw new Error(responseData.message || `Erro HTTP: ${response.status}`);
                     }
 
-                    if (responseData.success) {
-                        // Esconder loading e mostrar QR code
-                        document.getElementById('loadingContainer').classList.add('hidden');
-                        document.getElementById('qrContainer').classList.remove('hidden');
-                        
-                        // Atualizar QR Code e chave PIX
-                        const qrCodeElement = document.getElementById('qrCode');
-                        const pixKeyElement = document.getElementById('pixKey');
-                        
-                        if (responseData.qr_code_base64) {
-                            qrCodeElement.src = `data:image/png;base64,${responseData.qr_code_base64}`;
-                        } else {
-                            console.error('QR Code base64 não encontrado na resposta');
-                        }
+                    const qrContainer = document.getElementById('qrContainer');
+                    const loadingContainer = document.getElementById('loadingContainer');
+                    const qrCode = document.getElementById('qrCode');
+                    const pixKey = document.getElementById('pixKey');
 
-                        // Usar o campo qr_code para a chave PIX
-                        if (responseData.qr_code) {
-                            pixKeyElement.textContent = responseData.qr_code;
-                        } else {
-                            console.error('Nenhuma chave PIX encontrada na resposta');
-                        }
+                    if (responseData.qr_code && responseData.qr_code_base64) {
+                        qrCode.src = `data:image/png;base64,${responseData.qr_code_base64}`;
+                        pixKey.textContent = responseData.qr_code;
                         
-                        if (responseData.payment_id) {
-                            paymentId = responseData.payment_id;
-                            startPaymentCheck();
-                        }
+                        loadingContainer.classList.add('hidden');
+                        qrContainer.classList.remove('hidden');
                     } else {
-                        throw new Error(responseData.message || 'Erro ao gerar PIX');
+                        throw new Error('Dados do PIX incompletos na resposta');
                     }
+                    
+                    if (responseData.success && responseData.payment_id) {
+                        startPaymentVerification(responseData.payment_id);
+                    }
+
                 } catch (error) {
-                    console.error('Erro ao gerar PIX:', error);
+                    console.error('Erro detalhado ao gerar PIX:', error);
                     document.getElementById('loadingContainer').innerHTML = `
-                        <p>Erro ao gerar QR Code PIX. <button class="button" onclick="window.location.reload()">Tentar novamente</button></p>
+                        <p>Erro ao gerar QR Code PIX: ${error.message}
+                        <button class="button" onclick="window.location.reload()">Tentar novamente</button></p>
                     `;
                 }
             }
 
-            // Função para verificar status do pagamento
-            async function checkPaymentStatus() {
-                if (!paymentId) return;
-
-                try {
-                    const response = await fetch(`/verificar-pagamento/${paymentId}`);
-                    const data = await response.json();
-
-                    if (data.success && data.status === 'approved') {
-                        clearInterval(checkInterval);
-                        document.getElementById('successModal').style.display = 'flex';
-                        document.getElementById('qrContainer').classList.add('hidden');
-                        
-                        // Limpar dados do localStorage após pagamento confirmado
-                        clearPaymentData();
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar pagamento:', error);
-                }
-            }
-
-            function startPaymentCheck() {
+            // Start payment verification process
+            async function startPaymentVerification(paymentId) {
                 if (checkInterval) {
                     clearInterval(checkInterval);
                 }
-                checkInterval = setInterval(checkPaymentStatus, 5000);
+
+                const checkPayment = async () => {
+                    try {
+                        const response = await fetch(`/verificar-pagamento/${paymentId}`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            if (data.status === 'approved') {
+                                clearInterval(checkInterval);
+                                
+                                const modal = document.getElementById('paymentModal');
+                                const loadingElem = document.getElementById('loadingPayment');
+                                const successElem = document.getElementById('paymentSuccess');
+                                
+                                loadingElem.style.display = 'none';
+                                successElem.style.display = 'block';
+                                
+                                // Clear all non-essential localStorage items
+                                clearAllNonEssentialLocalStorage();
+                                
+                                // Redirect after 3 seconds
+                                setTimeout(() => {
+                                    window.location.href = '/comprovante';
+                                }, 3000);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Erro ao verificar pagamento:', error);
+                    }
+                };
+
+                await checkPayment();
+                checkInterval = setInterval(checkPayment, 3000);
             }
 
-            // Função para copiar chave PIX
+            // Copy PIX key function
             window.copyPixKey = function() {
                 const pixKey = document.getElementById('pixKey').textContent;
                 if (!pixKey) {
@@ -440,50 +510,11 @@
                         alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
                     });
             };
- 
- 
-            // Função para limpar dados após pagamento
-            function clearPaymentData() {
-                const keysToKeep = ['user_name', 'user_email', 'user_cpf'];
-                Object.keys(localStorage).forEach(key => {
-                    if (!keysToKeep.includes(key)) {
-                        localStorage.removeItem(key);
-                    }
-                });
-            }
-        
- 
-            // Função para limpar dados após pagamento
-            function clearPaymentData() {    async function checkPaymentStatus() {
-                if (!paymentId) return;
 
-                try {
-                    const response = await fetch(`/verificar-pagamento/${paymentId}`);
-                    const data = await response.json();
-                    console.log('Status do pagamento:', data);
+            // Add event listener for 'Back' button to clear specific items
+            document.querySelector('button.button.secondary').addEventListener('click', clearPaymentRelatedLocalStorage);
 
-                    if (data.success && data.status === 'approved') {
-                        clearInterval(checkInterval);
-                        document.getElementById('successModal').style.display = 'flex';
-                        document.getElementById('qrContainer').classList.add('hidden');
-                        
-                        // Limpar dados do localStorage após pagamento confirmado
-                        clearPaymentData();
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar pagamento:', error);
-                }
-            }
-                        
-            const keysToKeep = ['user_name', 'user_email', 'user_cpf'];
-                Object.keys(localStorage).forEach(key => {
-                    if (!keysToKeep.includes(key)) {
-                        localStorage.removeItem(key);
-                    }
-                });
-            }
-
-            // Inicializar a página
+            // Initialize payment page on load
             initializePagamento();
         });
 

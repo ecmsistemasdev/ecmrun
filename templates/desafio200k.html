@@ -363,12 +363,11 @@
                         <option value="{{ modalidade.id }}">{{ modalidade.descricao }}</option>
                         {% endfor %}
                     </select>
-                    <!-- <div><a>Valor:</a></div> -->
+                    <div><a>Valor:</a></div> 
                 </div>
             </div>
-            <!--
-            <button type="button" class="submit-btn" disabled="true">Continuar</button>
-        --><div><a class="naoiniciado">Não Iniciado</a></div>
+            
+            <button type="button" class="submit-btn">Continuar</button>
 
         </form>
         
@@ -697,7 +696,18 @@
                 valor: '',
                 valorFormatted: ''
             };
-            
+            /// ADICIONADO POR MIM            
+            // Function to clear specific payment-related localStorage items
+            function clearPaymentRelatedLocalStorage() {
+                const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
+                
+                itemsToRemove.forEach(item => {
+                    localStorage.removeItem(item);
+                });
+            }
+
+            /// FIM >> ADICIONADO POR MIM
+
             modalidadeSelect.addEventListener('change', function() {
                 const iditem = this.value;
 
@@ -746,7 +756,10 @@
                         // 'add 1' - adicionado por mim
                         localStorage.setItem('cat_vlinscricao', data.vlinscricao);
                         localStorage.setItem('cat_vltaxa', data.vltaxa);
-                        localStorage.setItem('cat_iditem', data.iditem);    function startPaymentCheck() {
+                        localStorage.setItem('cat_iditem', data.iditem);    
+    
+                        function startPaymentCheck() {
+                            
         if (checkInterval) {
             clearInterval(checkInterval);
         }
