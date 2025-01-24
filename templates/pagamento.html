@@ -336,9 +336,29 @@
 
     <script>
 
+        const environments = {
+            development: {
+                baseURL: 'http://192.168.100.16:5000'
+            },
+            production: {
+                baseURL: 'https://ecmrun.com.br'  // Replace with actual production URL
+            }
+        };
+ 
+        // Determine environment 
+        const currentEnv = window.location.hostname === 'localhost' || 
+                        window.location.hostname.includes('192.168') ? 
+                        'development' : 'production';
+
+        const baseURL = environments[currentEnv].baseURL;        
+
         document.addEventListener('DOMContentLoaded', function() {
             let paymentId = null;
             let checkInterval = null;
+
+            const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
+            const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
+            const totalValue = vlinscricao + vltaxa;
 
             // Function to format currency values
             function formatCurrency(value) {
@@ -410,7 +430,9 @@
 
                     console.log('Dados sendo enviados para o servidor:', requestData);
 
-                    const response = await fetch('/gerar-pix', {
+                    //const response = await fetch(`${baseURL}/criar_pix`, {
+                    //const response = await fetch('http://192.168.100.16:5000/gerar-pix', {
+                    const response = await fetch(`${baseURL}/gerar-pix`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -460,7 +482,9 @@
 
                 const checkPayment = async () => {
                     try {
-                        const response = await fetch(`/verificar-pagamento/${paymentId}`);
+                        //const response = await fetch(`http://192.168.100.16:5000/verificar-pagamento/${paymentId}`);
+                        //const response = await fetch(`${baseURL}/verificar_pagamento/${paymentId}`);
+                        const response = await fetch(`${baseURL}/verificar-pagamento/${paymentId}`);
                         const data = await response.json();
                         
                         if (data.success) {
