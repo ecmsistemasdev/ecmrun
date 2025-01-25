@@ -17,6 +17,11 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
 
+camiseta = ""
+apoio = ""
+equipe = ""
+integrantes  =""
+
 # Configuração do Flask-Mail
 app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')  # Substitua pelo seu servidor SMTP
 app.config['MAIL_PORT'] = os.getenv('SMTP_PORT') 
@@ -54,6 +59,24 @@ receipt_data = {
     'inscricao': '123455456456',    
     'obs': 'Observações importantes sobre o evento vão aqui.'
 }
+
+
+def fn_camiseta(valor):
+    global camiseta
+    camiseta = valor
+
+def fn_apoio(valor):
+    global apoio
+    apoio = valor
+
+def fn_equipe(valor):
+    global equipe
+    equipe = valor
+
+def fn_integrantes(valor):
+    global integrantes
+    integrantes = valor
+
 
 @app.route("/")
 def index():
@@ -709,7 +732,12 @@ def gerar_pix():
         data = request.get_json()
         # Round to 2 decimal places to avoid floating point precision issues
         valor_total = round(float(data.get('valor_total', 0)), 2)
-        
+
+        fn_camiseta(data.get('camiseta'))
+        fn_apoio(data.get('apoio'))       
+        fn_equipe(data.get('nome_equipe'))
+        fn_integrantes(data.get('integrantes'))
+
         # Validate minimum transaction amount (Mercado Pago usually requires >= 1)
         if valor_total < 1:
             return jsonify({
@@ -730,6 +758,11 @@ def gerar_pix():
         print(f"- Email: {email}")
         print(f"- Nome: {nome_completo}")
         print(f"- CPF: {cpf}")
+        print(f"- Camiseta: {camiseta}")
+        print(f"- Apoio: {apoio}")
+        print(f"- Equipe: {equipe}")
+        print(f"- Integrantes: {integrantes}")
+                
 
         # Preparar dados do pagamento
         payment_data = {
@@ -815,7 +848,13 @@ def verificar_pagamento(payment_id):
         payment = payment_response["response"]
         
         print(f"Status do pagamento recebido: {payment['status']}")
+        print(f"Camisa: {camiseta}")
+        print(f"Apoio: {apoio}")
+        print(f"Equipe: {equipe}")
+        print(f"Integrantes: {integrantes}")
         
+        
+
         if payment["status"] == "approved":
             # Verificar se já não foi processado antes
             cur = mysql.connection.cursor()
@@ -852,10 +891,10 @@ def verificar_pagamento(payment_id):
                     cpf,                                 # CPF
                     1,                                   # IDEVENTO (hardcoded as 1 for this event)
                     session.get('cat_iditem'),           # IDITEM
-                    session.get('camiseta'),             # CAMISETA
-                    session.get('apoio'),                # APOIO
-                    session.get('nome_equipe'),          # NOME_EQUIPE
-                    session.get('integrantes'),          # INTEGRANTES
+                    camiseta,                            # CAMISETA
+                    apoio,                               # APOIO
+                    equipe,                              # NOME_EQUIPE
+                    integrantes,                         # INTEGRANTES
                     valor,                               # VALOR
                     taxa,                                # TAXA
                     valor_pgto,                          # VALOR_PGTO
