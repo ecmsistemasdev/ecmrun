@@ -370,7 +370,8 @@
 
             // Function to clear specific payment-related localStorage items
             function clearPaymentRelatedLocalStorage() {
-                const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
+                //const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
+                const itemsToRemove = ['vlinscricao', 'vltaxa'];
                 
                 itemsToRemove.forEach(item => {
                     localStorage.removeItem(item);
@@ -414,6 +415,7 @@
                         email: localStorage.getItem('user_email'),
                         cpf: localStorage.getItem('user_cpf'),
                         categoria: localStorage.getItem('categoria'),
+                        apoio: localStorage.getItem('apoio'),
                         camiseta: localStorage.getItem('camiseta'),
                         nome_equipe: localStorage.getItem('nome_equipe'),
                         integrantes: localStorage.getItem('integrantes')
