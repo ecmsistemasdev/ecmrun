@@ -44,7 +44,7 @@ app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
 mysql = MySQL(app)
 
-sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN'))
+sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN2'))
 
 # Global variables for the receipt
 receipt_data = {
@@ -87,6 +87,33 @@ def comprovante():
     return render_template('comprovante_insc.html', **receipt_data)
 
 ##########################################
+@app.route('checkout/')
+def checkout():
+    return render_template('checkout.html')
+
+@app.route('/process_payment', methods=['POST'])
+def process_payment():
+    payment_data = {
+        "transaction_amount": float(request.form['transaction_amount']),
+        "token": request.form['token'],
+        "description": request.form['description'],
+        "installments": int(request.form['installments']),
+        "payment_method_id": request.form['payment_method_id'],
+        "payer": {
+            "email": request.form['email'],
+            "identification": {
+                "type": request.form['doc_type'],
+                "number": request.form['doc_number']
+            }
+        }
+    }
+
+    payment_response = sdk.payment().create(payment_data)
+    
+    return jsonify(payment_response)
+
+######
+
 
 @app.route('/get_evento_data')
 def get_evento_data():
