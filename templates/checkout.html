@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mercado Pago Checkout</title>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <form id="payment-form">
+        <div class="form-group">
+            <label>Valor do Pagamento</label>
+            <input 
+                type="text" 
+                name="transaction_amount" 
+                id="transaction-amount" 
+                placeholder="Valor do pagamento" 
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Nome no Cartão</label>
+            <input type="text" name="card_holder_name" placeholder="Nome completo" required>
+        </div>
+
+        <div class="form-group">
+            <label>Número do Cartão</label>
+            <input 
+                type="text" 
+                id="card-number" 
+                placeholder="Número do cartão" 
+                maxlength="19" 
+                pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Data de Validade</label>
+            <input 
+                type="text" 
+                id="expiration-date" 
+                placeholder="MM/AA" 
+                maxlength="5" 
+                pattern="\d{2}/\d{2}"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Código de Segurança (CVV)</label>
+            <input 
+                type="text" 
+                id="security-code" 
+                placeholder="CVV" 
+                maxlength="4"
+                pattern="\d{3,4}"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Documento</label>
+            <select name="doc_type" required>
+                <option value="CPF">CPF</option>
+                <option value="CNPJ">CNPJ</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Número do Documento</label>
+            <input type="text" name="doc_number" placeholder="Somente números" required>
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="Seu email" required>
+        </div>
+
+        <div class="form-group">
+            <label>Número de Parcelas</label>
+            <select name="installments" required>
+                <option value="1">1x sem juros</option>
+                <option value="2">2x sem juros</option>
+                <option value="3">3x sem juros</option>
+            </select>
+        </div>
+
+        <button type="submit">Finalizar Pagamento</button>
+    </form>
+
+    <script>
+        // Máscara para valor
+        document.getElementById('transaction-amount').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = (value / 100).toFixed(2).replace('.', ',');
+            e.target.value = 'R$ ' + value;
+        });
+
+        // Máscara para número do cartão
+        document.getElementById('card-number').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+            e.target.value = value.substring(0, 19);
+        });
+
+
+
+        //const mp = new MercadoPago('YOUR_PUBLIC_KEY');
+        const mp = new MercadoPago('APP_USR-a6e4ee4d-cbc3-44b3-b782-234e74767bbb');
+
+
+        // Máscara para data de validade
+        document.getElementById('expiration-date').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value.substring(0, 5);
+        });
+
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const amountInput = document.getElementById('transaction-amount');
+                const amount = parseFloat(amountInput.value.replace('R$ ', '').replace(',', '.'));
+
+                const cardToken = await mp.createCardToken({
+                    cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
+                    cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
+                    cardExpirationYear: document.getElementById('expiration-date').value.split('/')[1],
+                    securityCode: document.getElementById('security-code').value,
+                    cardholderName: document.querySelector('[name="card_holder_name"]').value
+                });
+
+                const formData = new FormData(e.target);
+                formData.set('transaction_amount', amount);
+                formData.append('token', cardToken.id);
+
+                fetch('/process_payment', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    alert('Pagamento processado com sucesso!');
+                });
+            } catch (error) {
+                console.error('Erro ao processar pagamento:', error);
+                alert('Erro ao processar pagamento. Verifique os dados.');
+            }
+        });
+    </script>
+</body>
+</html>
