@@ -87,7 +87,7 @@ def comprovante():
     return render_template('comprovante_insc.html', **receipt_data)
 
 ##########################################
-@app.route('checkout/')
+@app.route('/checkout')
 def checkout():
     return render_template('checkout.html')
 
