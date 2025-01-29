@@ -45,7 +45,8 @@ app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 mysql = MySQL(app)
 
 #sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN2'))
-sdk = mercadopago.SDK("APP_USR-4064752143833964-012519-58b2a8dc21995e016c6fe024c3984958-96531112")
+#sdk = mercadopago.SDK("APP_USR-4064752143833964-012519-58b2a8dc21995e016c6fe024c3984958-96531112")
+sdk = mercadopago.SDK("APP_USR-8411725047566505-012912-505ab70a0a3263397e2d57790fc28ae8-96531112")
 
 # Global variables for the receipt
 receipt_data = {
