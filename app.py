@@ -126,8 +126,8 @@ def process_payment():
             "quantity": 1,
             "currency_id": "BRL",
             "unit_price": float(request.form['transaction_amount']),
-            "description": request.form['description'],
-            "category_id": "others"  # Você pode personalizar de acordo com sua categoria
+            "description": request.form['item_description'],
+            "category_id": "2"  # Você pode personalizar de acordo com sua categoria
         }],
         "notification_url": "https://ecmrun.com.br/webhook",
         "external_reference": external_reference
