@@ -122,27 +122,55 @@
     </form>
 
     <script>
+        // Inicializar o Mercado Pago com credenciais de teste
+        //const mp = new MercadoPago('APP_USR-a6e4ee4d-cbc3-44b3-b782-234e74767bbb');
+        //const mp = new MercadoPago('TEST-bfb1b3b9-1368-44a9-a283-14d91cc6e6a1');
+        const mp = new MercadoPago('APP_USR-93175be3-4b17-4b81-9c58-41cc29962a9f');
+
+        // Função para identificar a bandeira do cartão
+        function getCardType(cardNumber) {
+            const patterns = {
+                visa: /^4/,
+                mastercard: /^5[1-5]/,
+                amex: /^3[47]/,
+                elo: /^(401178|401179|431274|438935|451416|457393|457631|457632|504175|627780|636297|636368|636369|(506699|5067[0-6]\d|50677[0-8])|(50900\d|5090[1-9]\d|509[1-9]\d{2})|65003[1-3]|(65003[5-9]|65004\d|65005[0-1])|(65040[5-9]|6504[1-3]\d)|(65048[5-9]|65049\d|6505[0-2]\d|65053[0-8])|(65054[1-9]|6505[5-8]\d|65059[0-8])|(65070\d|65071[0-8])|65072[0-7]|(65090[1-9]|65091\d|650920)|(65165[2-9]|6516[6-7]\d)|(65500\d|65501\d)|(65502[1-9]|6550[3-4]\d|65505[0-8]))/,
+                hipercard: /^(606282\d{10}(\d{3})?)|(3841\d{15})/,
+                diners: /^3(?:0[0-5]|[68][0-9])[0-9]{11}/
+            };
+            
+            // Normalize os nomes das bandeiras conforme esperado pelo Mercado Pago
+            const mpBrandNames = {
+                visa: 'visa',
+                mastercard: 'master',
+                amex: 'amex',
+                elo: 'elo',
+                hipercard: 'hipercard',
+                diners: 'diners'
+            };
+            
+            for (let [brand, pattern] of Object.entries(patterns)) {
+                if (pattern.test(cardNumber)) {
+                    return mpBrandNames[brand];
+                }
+            }
+            
+            return null; // Melhor retornar null do que 'unknown'
+        }    
+        
         // Máscara para valor
         document.getElementById('transaction-amount').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             value = (value / 100).toFixed(2).replace('.', ',');
             e.target.value = 'R$ ' + value;
         });
-
+    
         // Máscara para número do cartão
         document.getElementById('card-number').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
             e.target.value = value.substring(0, 19);
         });
-
-
-
-        //const mp = new MercadoPago('YOUR_PUBLIC_KEY');
-        const mp = new MercadoPago('APP_USR-93175be3-4b17-4b81-9c58-41cc29962a9f');
-        //const mp = new MercadoPago('APP_USR-a6e4ee4d-cbc3-44b3-b782-234e74767bbb');
-        //const mp = new MercadoPago('TEST-73e13779-328a-4520-bb70-1a4aff3d3d8b');
-        
+    
         // Máscara para data de validade
         document.getElementById('expiration-date').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
@@ -151,50 +179,113 @@
             }
             e.target.value = value.substring(0, 5);
         });
+    
+        // Validação em tempo real do nome completo
+        document.querySelector('[name="card_holder_name"]').addEventListener('input', function(e) {
+            const fullName = e.target.value.trim();
+            const nameParts = fullName.split(' ').filter(part => part.length > 0);
+            
+            if (nameParts.length < 2) {
+                e.target.setCustomValidity('Por favor, insira nome e sobrenome completos');
+            } else {
+                e.target.setCustomValidity('');
+            }
+        });
 
         document.getElementById('payment-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             try {
+                // Validação do nome completo
+                const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
+                const nameParts = fullName.split(' ').filter(part => part.length > 0);
+                
+                if (nameParts.length < 2) {
+                    throw new Error('Por favor, insira nome e sobrenome completos');
+                }
+                
+                const firstName = nameParts[0];
+                const lastName = nameParts.slice(1).join(' ');
+                
+                // Validação e obtenção do número do cartão
+                const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+                const cardType = getCardType(cardNumber);
+                
+                // Validação do payment_method_id (cardType)
+                if (!cardType) {
+                    throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
+                }
+                
+                // Obter o valor limpo (sem R$ e vírgula)
                 const amountInput = document.getElementById('transaction-amount');
                 const amount = parseFloat(amountInput.value.replace('R$ ', '').replace(',', '.'));
 
-                const cardToken = await mp.createCardToken({
-                    cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
+                console.log('Criando token do cartão...');
+                const cardFormData = {
+                    cardNumber: cardNumber,
                     cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
-                    cardExpirationYear: document.getElementById('expiration-date').value.split('/')[1],
+                    cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
                     securityCode: document.getElementById('security-code').value,
-                    cardholderName: document.querySelector('[name="card_holder_name"]').value
-                });
+                    cardholderName: fullName
+                };
 
-                const formData = new FormData(e.target);
-                formData.set('transaction_amount', amount);
+                console.log('Dados do cartão:', cardFormData);
+                
+                const cardToken = await mp.createCardToken(cardFormData);
+                console.log('Token gerado:', cardToken);
+
+                if (!cardToken.id) {
+                    throw new Error('Não foi possível gerar o token do cartão');
+                }
+
+                const formData = new FormData();
+                formData.append('transaction_amount', amount);
                 formData.append('token', cardToken.id);
-                formData.append('payment_method_id', 'mastercard');
+                formData.append('description', 'Produto de teste');
+                formData.append('installments', document.querySelector('[name="installments"]').value);
+                formData.append('payment_method_id', cardType);
+                formData.append('doc_type', document.querySelector('[name="doc_type"]').value);
+                formData.append('doc_number', document.querySelector('[name="doc_number"]').value);
+                formData.append('email', document.querySelector('[name="email"]').value);
+                formData.append('first_name', firstName);
+                formData.append('last_name', lastName);
+                formData.append('card_holder_name', fullName);
 
-                fetch('/process_payment', {
+                console.log('Enviando dados para o servidor...');
+                console.log('Bandeira do cartão detectada:', cardType);
+                
+                const response = await fetch('/process_payment', {
                     method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log(data);
-                    alert('Pagamento processado com sucesso!');
-                })
-                .catch(error => {
-                    console.error('Erro ao processar pagamento:', error);
-                    alert('Erro ao processar pagamento. Verifique os dados.');
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Resposta do servidor:', data);
+
+                if (data.status === "approved") {
+                    alert('Pagamento processado com sucesso!');
+                } else {
+                    alert(`Status do pagamento: ${data.status}`);
+                }
             } catch (error) {
-                console.error('Erro ao processar pagamento:', error);
-                alert('Erro ao processar pagamento. Verifique os dados.');
+                console.error('Erro detalhado:', error);
+                // Melhorando a experiência do usuário com mensagens mais amigáveis
+                let errorMessage = error.message;
+                if (errorMessage.includes('token')) {
+                    errorMessage = 'Erro ao processar o cartão. Por favor, verifique os dados informados.';
+                }
+                alert(`Erro ao processar pagamento: ${errorMessage}`);
             }
-        }); // Fechamento do addEventListener
+        });
+
 
     </script>
 </body>
