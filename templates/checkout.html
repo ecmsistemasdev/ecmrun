@@ -115,7 +115,7 @@
                 <option value="3">3x sem juros</option>
             </select>
         </div>
-
+        <input type="hidden" name="description" value="Payment Description">
         <button type="submit">Finalizar Pagamento</button>
     </form>
 
@@ -138,7 +138,7 @@
 
         //const mp = new MercadoPago('YOUR_PUBLIC_KEY');
         const mp = new MercadoPago('APP_USR-a6e4ee4d-cbc3-44b3-b782-234e74767bbb');
-
+        //const mp = new MercadoPago('TEST-73e13779-328a-4520-bb70-1a4aff3d3d8b');
 
         // Máscara para data de validade
         document.getElementById('expiration-date').addEventListener('input', function(e) {
@@ -167,21 +167,32 @@
                 const formData = new FormData(e.target);
                 formData.set('transaction_amount', amount);
                 formData.append('token', cardToken.id);
+                formData.append('payment_method_id', 'mastercard');
 
                 fetch('/process_payment', {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     console.log(data);
                     alert('Pagamento processado com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao processar pagamento:', error);
+                    alert('Erro ao processar pagamento. Verifique os dados.');
                 });
             } catch (error) {
                 console.error('Erro ao processar pagamento:', error);
                 alert('Erro ao processar pagamento. Verifique os dados.');
             }
-        });
+        }); // Fechamento do addEventListener
+
     </script>
 </body>
 </html>
