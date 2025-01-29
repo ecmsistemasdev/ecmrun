@@ -16,13 +16,11 @@ import logging
 load_dotenv()  # Carrega as variáveis do arquivo .env
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.DEBUG)
+
+sdk = mercadopago.SDK("APP_USR-8411725047566505-012912-505ab70a0a3263397e2d57790fc28ae8-96531112")
+
 app.secret_key = os.getenv('SECRET_KEY')
-
-
-camiseta = ""
-apoio = ""
-equipe = ""
-integrantes  =""
 
 # Configuração do Flask-Mail
 app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')  # Substitua pelo seu servidor SMTP
@@ -46,9 +44,7 @@ app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
 mysql = MySQL(app)
 
-#sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN2'))
-#sdk = mercadopago.SDK("APP_USR-4064752143833964-012519-58b2a8dc21995e016c6fe024c3984958-96531112")
-sdk = mercadopago.SDK("APP_USR-8411725047566505-012912-505ab70a0a3263397e2d57790fc28ae8-96531112")
+sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN2'))
 
 # Global variables for the receipt
 receipt_data = {
@@ -64,24 +60,6 @@ receipt_data = {
     'obs': 'Observações importantes sobre o evento vão aqui.'
 }
 
-
-def fn_camiseta(valor):
-    global camiseta
-    camiseta = valor
-
-def fn_apoio(valor):
-    global apoio
-    apoio = valor
-
-def fn_equipe(valor):
-    global equipe
-    equipe = valor
-
-def fn_integrantes(valor):
-    global integrantes
-    integrantes = valor
-
-
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -90,9 +68,15 @@ def index():
 def comprovante():
     return render_template('comprovante_insc.html', **receipt_data)
 
-##########################################
+
+@app.route('/pagpix')
+def pagpix():
+    return render_template('pagpix.html')
+
+###############
+
 @app.route('/checkout')
-def checkout_page():
+def checkout():
     return render_template('checkout.html')
 
 @app.route('/webhook', methods=['POST'])
@@ -179,9 +163,34 @@ def process_payment():
     except Exception as e:
         app.logger.error(f"Erro no processamento: {str(e)}")
         return jsonify({"error": str(e)}), 400
-    
-######
 
+
+
+#  GUARDAR POR ESSA FOI A QEU FUNCIONOU 
+#
+# @app.route('/process_payment', methods=['POST'])
+# def process_payment():
+#     payment_data = {
+#         "transaction_amount": float(request.form['transaction_amount']),
+#         "token": request.form['token'],
+#         "description": request.form['description'],
+#         "installments": int(request.form['installments']),
+#         "payment_method_id": request.form['payment_method_id'],
+#         "payer": {
+#             "email": request.form['email'],
+#             "identification": {
+#                 "type": request.form['doc_type'],
+#                 "number": request.form['doc_number']
+#             }
+#         }
+#     }
+
+#     payment_response = sdk.payment().create(payment_data)
+    
+#     return jsonify(payment_response)
+
+
+##########################################
 
 @app.route('/get_evento_data')
 def get_evento_data():
@@ -827,12 +836,7 @@ def gerar_pix():
         data = request.get_json()
         # Round to 2 decimal places to avoid floating point precision issues
         valor_total = round(float(data.get('valor_total', 0)), 2)
-
-        fn_camiseta(data.get('camiseta'))
-        fn_apoio(data.get('apoio'))       
-        fn_equipe(data.get('nome_equipe'))
-        fn_integrantes(data.get('integrantes'))
-
+        
         # Validate minimum transaction amount (Mercado Pago usually requires >= 1)
         if valor_total < 1:
             return jsonify({
@@ -853,11 +857,6 @@ def gerar_pix():
         print(f"- Email: {email}")
         print(f"- Nome: {nome_completo}")
         print(f"- CPF: {cpf}")
-        print(f"- Camiseta: {camiseta}")
-        print(f"- Apoio: {apoio}")
-        print(f"- Equipe: {equipe}")
-        print(f"- Integrantes: {integrantes}")
-                
 
         # Preparar dados do pagamento
         payment_data = {
@@ -943,13 +942,7 @@ def verificar_pagamento(payment_id):
         payment = payment_response["response"]
         
         print(f"Status do pagamento recebido: {payment['status']}")
-        print(f"Camisa: {camiseta}")
-        print(f"Apoio: {apoio}")
-        print(f"Equipe: {equipe}")
-        print(f"Integrantes: {integrantes}")
         
-        
-
         if payment["status"] == "approved":
             # Verificar se já não foi processado antes
             cur = mysql.connection.cursor()
@@ -986,10 +979,10 @@ def verificar_pagamento(payment_id):
                     cpf,                                 # CPF
                     1,                                   # IDEVENTO (hardcoded as 1 for this event)
                     session.get('cat_iditem'),           # IDITEM
-                    camiseta,                            # CAMISETA
-                    apoio,                               # APOIO
-                    equipe,                              # NOME_EQUIPE
-                    integrantes,                         # INTEGRANTES
+                    session.get('camiseta'),             # CAMISETA
+                    session.get('apoio'),                # APOIO
+                    session.get('nome_equipe'),          # NOME_EQUIPE
+                    session.get('integrantes'),          # INTEGRANTES
                     valor,                               # VALOR
                     taxa,                                # TAXA
                     valor_pgto,                          # VALOR_PGTO
@@ -1031,7 +1024,81 @@ def verificar_pagamento(payment_id):
             'message': str(e),
             'status': 'error'
         }), 500
+    
 
+# @app.route('/create-mercado-pago-payment', methods=['POST'])
+# def create_mercado_pago_payment():
+#     data = request.get_json()
+    
+#     preference_data = {
+#         "items": data['items'],
+#         "payment_methods": {
+#             "excluded_payment_methods": [
+#                 {"id": "ticket"},
+#                 {"id": "bank_transfer"},
+#                 {"id": "digital_wallet"},
+#                 {"id": "prepaid_card"}
+#             ],
+#             "excluded_payment_types": [
+#                 {"id": "ticket"},
+#                 {"id": "bank_transfer"},
+#                 {"id": "digital_wallet"}
+#             ],
+#             "installments": 3  # Optional: limit to single installment
+#         },
+#         "back_urls": {
+#             "success": "http://192.168.1.21:5000/comprovante",
+#             "failure": "http://192.168.1.21:5000/payment-failure",
+#             "pending": "http://192.168.1.21:5000/payment-pending"
+#         }
+#     }
+#    
+#    preference_response = sdk.preference().create(preference_data)
+#    return jsonify({
+#        "init_point": preference_response["response"]["init_point"]
+#    })
+
+
+def gerar_link_pagamento():
+    #sdk = mercadopago.SDK("YOUR_ACCESS_TOKEN")  # Substitua pelo seu token de acesso
+    payment_data = {
+        "items": [
+            {"id": "1", "title": "Camisa", "quantity": 1, "currency_id": "BRL", "unit_price": 259.99}
+        ],
+        "back_urls": {
+            "success": "http://127.0.0.1:5000/compracerta",
+            "failure": "http://127.0.0.1:5000/compraerrada",
+            "pending": "http://127.0.0.1:5000/compraerrada",
+        },
+        "auto_return": "all"
+    }
+
+    result = sdk.preference().create(payment_data)
+    payment = result["response"]
+    link_iniciar_pagamento = payment["init_point"]
+    return link_iniciar_pagamento
+
+
+@app.route('/create-mercado-pago-payment', methods=['POST'])
+def create_mercado_pago_payment():
+    data = request.get_json()
+    
+    payment_data = {
+        "items": [
+            {"id": "1", "title": "Teste", "quantity": 1, "currency_id": "BRL", "unit_price": 1.00}
+        ],
+        "back_urls": {
+            "success": "http://192.168.100.16:5000/comprovante",
+            "failure": "http://192.168.100.16:5000/compraerrada",
+            "pending": "http://192.168.100.16:5000/compraerrada",
+        },
+        "auto_return": "all"
+    }
+    result = sdk.preference().create(payment_data)
+
+    return jsonify({
+        "init_point": result["response"]["init_point"]
+    })
 
 
 
