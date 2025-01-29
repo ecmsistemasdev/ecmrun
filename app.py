@@ -114,8 +114,6 @@ def checkout():
 #     return jsonify(payment_response)
 
 
-
-
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
     # Obtém o nome completo do campo de entrada
@@ -145,13 +143,13 @@ def process_payment():
         },
         "items": [
             {
-                "id": request.form['item_id'],  # ID do item
-                "title": request.form['item_title'],  # Título do item
-                "description": request.form['item_description'],  # Descrição do item
+                "id": "1",  # ID do item
+                "title": "Pagamento de inscrição",  # Título do item
+                "description": "Inscrição Desafio 200k",  # Descrição do item
                 "quantity": int(request.form['item_quantity']),  # Quantidade do item
                 "currency_id": 'BRL',  # Moeda (exemplo: BRL para reais)
-                "unit_price": float(request.form['item_price']),  # Preço unitário do item
-                "category_id": request.form['category_id']  # ID da categoria do item
+                "unit_price": float(request.form['transaction_amount']),  # Preço unitário do item
+                "category_id": "1"  # ID da categoria do item
             }
         ]
     }
