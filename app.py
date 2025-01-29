@@ -92,8 +92,42 @@ def comprovante():
 def checkout():
     return render_template('checkout.html')
 
+# @app.route('/process_payment', methods=['POST'])
+# def process_payment():
+#     payment_data = {
+#         "transaction_amount": float(request.form['transaction_amount']),
+#         "token": request.form['token'],
+#         "description": request.form['description'],
+#         "installments": int(request.form['installments']),
+#         "payment_method_id": request.form['payment_method_id'],
+#         "payer": {
+#             "email": request.form['email'],
+#             "identification": {
+#                 "type": request.form['doc_type'],
+#                 "number": request.form['doc_number']
+#             }
+#         }
+#     }
+
+#     payment_response = sdk.payment().create(payment_data)
+    
+#     return jsonify(payment_response)
+
+
+
+
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
+    # Obtém o nome completo do campo de entrada
+    full_name = request.form['name']  # Supondo que o campo se chama 'name'
+    
+    # Divide o nome completo em partes
+    name_parts = full_name.split()
+    
+    # Atribui o primeiro e último nome (ou apenas o primeiro, se não houver sobrenome)
+    first_name = name_parts[0]  # Primeiro nome
+    last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''  # Sobrenome (se existir)
+
     payment_data = {
         "transaction_amount": float(request.form['transaction_amount']),
         "token": request.form['token'],
@@ -102,11 +136,24 @@ def process_payment():
         "payment_method_id": request.form['payment_method_id'],
         "payer": {
             "email": request.form['email'],
+            "first_name": first_name,  # Primeiro nome extraído
+            "last_name": last_name,     # Sobrenome extraído
             "identification": {
                 "type": request.form['doc_type'],
                 "number": request.form['doc_number']
             }
-        }
+        },
+        "items": [
+            {
+                "id": request.form['item_id'],  # ID do item
+                "title": request.form['item_title'],  # Título do item
+                "description": request.form['item_description'],  # Descrição do item
+                "quantity": int(request.form['item_quantity']),  # Quantidade do item
+                "currency_id": 'BRL',  # Moeda (exemplo: BRL para reais)
+                "unit_price": float(request.form['item_price']),  # Preço unitário do item
+                "category_id": request.form['category_id']  # ID da categoria do item
+            }
+        ]
     }
 
     payment_response = sdk.payment().create(payment_data)
