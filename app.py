@@ -10,6 +10,8 @@ import os
 import re
 import random
 import json
+import uuid
+import logging
 
 load_dotenv()  # Carrega as variáveis do arquivo .env
 
@@ -95,72 +97,88 @@ def checkout_page():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    # Processar notificações do Mercado Pago
     data = request.json
+    app.logger.info(f"Webhook received: {data}")
     
     if data['type'] == 'payment':
         payment_info = sdk.payment().get(data['data']['id'])
-        # Aqui você pode implementar sua lógica para processar o pagamento
-        # Por exemplo, atualizar o status do pedido no seu sistema
+        app.logger.info(f"Payment info: {payment_info}")
     
     return jsonify({'status': 'ok'}), 200
 
+
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
-    # Obtém o nome completo do campo de entrada
-    full_name = request.form['name']  # Supondo que o campo se chama 'name'
+    try:
+        app.logger.info("Dados recebidos:")
+        app.logger.info(request.form)
+        
+        # Validar dados recebidos
+        required_fields = ['token', 'transaction_amount', 'email', 'doc_type', 'doc_number']
+        for field in required_fields:
+            if field not in request.form:
+                raise ValueError(f"Campo obrigatório ausente: {field}")
 
-    # Divide o nome completo em partes
-    name_parts = full_name.split()
-
-    # Atribui o primeiro e último nome (ou apenas o primeiro, se não houver sobrenome)
-    first_name = name_parts[0]  # Primeiro nome
-    last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''  # Sobrenome (se existir)
-
-    # Gerar referência externa única
-    external_reference = str(uuid.uuid4())
-    
-    # Criar preferência de pagamento
-    preference_data = {
-        "items": [{
-            "title": request.form['description'],
-            "quantity": 1,
-            "currency_id": "BRL",
-            "unit_price": float(request.form['transaction_amount']),
-            "description": request.form['item_description'],
-            "category_id": "2"  # Você pode personalizar de acordo com sua categoria
-        }],
-        "notification_url": "https://ecmrun.com.br/webhook",
-        "external_reference": external_reference
-    }
-    
-    # Criar preferência
-    preference_response = sdk.preference().create(preference_data)
-    preference_id = preference_response["response"]["id"]
-    
-    # Preparar dados do pagamento
-    payment_data = {
-        "transaction_amount": float(request.form['transaction_amount']),
-        "token": request.form['token'],
-        "description": request.form['description'],
-        "installments": int(request.form['installments']),
-        "payment_method_id": request.form['payment_method_id'],
-        "external_reference": external_reference,
-        "notification_url": "https://ecmrun.com.br/webhook",
-        "payer": {
-            "email": request.form['email'],
-            "first_name": first_name,   # Primeiro nome extraído
-            "last_name": last_name,     # Sobrenome extraído
-            "identification": {
-                "type": request.form['doc_type'],
-                "number": request.form['doc_number']
+        # Gerar referência externa única
+        external_reference = str(uuid.uuid4())
+        
+        # Criar preferência de pagamento
+        preference_data = {
+            "items": [{
+                "title": request.form['description'],
+                "quantity": 1,
+                "currency_id": "BRL",
+                "unit_price": float(request.form['transaction_amount']),
+                "description": request.form['description'],
+                "category_id": "others"
+            }],
+            "notification_url": "https://ecmrun.com.br/webhook",
+            "external_reference": external_reference
+        }
+        
+        # Criar preferência e obter o ID
+        preference_response = sdk.preference().create(preference_data)
+        preference_id = preference_response["response"]["id"]
+        
+        payment_data = {
+            "transaction_amount": float(request.form['transaction_amount']),
+            "token": request.form['token'],
+            "description": request.form['description'],
+            "installments": int(request.form['installments']),
+            "payment_method_id": request.form['payment_method_id'],
+            "external_reference": external_reference,
+            "notification_url": "https://ecmrun.com.br/webhook",
+            "payer": {
+                "email": request.form['email'],
+                "first_name": request.form['first_name'],
+                "last_name": request.form['last_name'],
+                "identification": {
+                    "type": request.form['doc_type'],
+                    "number": request.form['doc_number']
+                }
             }
-        },
-        "preference_id": preference_id
-    }
+            # Remover >> preference_id": preference_id
+        }
 
-    payment_response = sdk.payment().create(payment_data)
-    return jsonify(payment_response)
+        app.logger.info("Dados do pagamento:")
+        app.logger.info(payment_data)
+        
+        payment_response = sdk.payment().create(payment_data)
+        
+        app.logger.info("Resposta do pagamento:")
+        app.logger.info(payment_response)
+        
+        if "error" in payment_response:
+            return jsonify(payment_response), 400
+            
+        return jsonify(payment_response["response"]), 200
+        
+    except ValueError as e:
+        app.logger.error(f"Erro de validação: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        app.logger.error(f"Erro no processamento: {str(e)}")
+        return jsonify({"error": str(e)}), 400
     
 ######
 
