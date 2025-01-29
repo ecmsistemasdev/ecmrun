@@ -149,49 +149,94 @@
             e.target.value = value.substring(0, 5);
         });
 
-        document.getElementById('payment-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        //////////////
+        document.getElementById('payment-form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Previne o envio padrão do formulário
+
+            const formData = new FormData(e.target); // Coleta todos os dados do formulário
+
+            // Gera o token do cartão
+            mp.card.createToken({
+                cardNumber: document.getElementById('card-number').value,
+                cardExpirationMonth: document.getElementById('card-expiry').value.split('/')[0],
+                cardExpirationYear: document.getElementById('card-expiry').value.split('/')[1],
+                securityCode: document.getElementById('card-cvv').value,
+                cardholderName: document.getElementById('card-name').value,
+                identificationType: document.getElementById('doc-type').value,
+                identificationNumber: document.getElementById('doc-number').value
+            }).then(function (response) {
+                if (response.status === 200) {
+                    const cardToken = response.data.id; // Obtém o token gerado
+                    formData.append('token', cardToken); // Adiciona o token ao FormData
+
+                    // Envia os dados para o backend
+                    fetch('/process_payment', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        alert('Pagamento processado com sucesso!');
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        alert('Erro ao processar pagamento.');
+                    });
+                } else {
+                    alert('Erro ao gerar token: ' + response.message);
+                }
+            }).catch(function (error) {
+                console.error('Erro na geração do token:', error);
+                alert('Erro ao gerar token.');
+            });
+        });
+
+
+        //////////
+        // document.getElementById('payment-form').addEventListener('submit', async (e) => {
+        //     e.preventDefault();
             
-            try {
-                const amountInput = document.getElementById('transaction-amount');
-                const amount = parseFloat(amountInput.value.replace('R$ ', '').replace(',', '.'));
+        //     try {
+        //         const amountInput = document.getElementById('transaction-amount');
+        //         const amount = parseFloat(amountInput.value.replace('R$ ', '').replace(',', '.'));
 
-                const cardToken = await mp.createCardToken({
-                    cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
-                    cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
-                    cardExpirationYear: document.getElementById('expiration-date').value.split('/')[1],
-                    securityCode: document.getElementById('security-code').value,
-                    cardholderName: document.querySelector('[name="card_holder_name"]').value
-                });
+        //         const cardToken = await mp.createCardToken({
+        //             cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
+        //             cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
+        //             cardExpirationYear: document.getElementById('expiration-date').value.split('/')[1],
+        //             securityCode: document.getElementById('security-code').value,
+        //             cardholderName: document.querySelector('[name="card_holder_name"]').value
+        //         });
 
-                const formData = new FormData(e.target);
-                formData.set('transaction_amount', amount);
-                formData.append('token', cardToken.id);
-                formData.append('payment_method_id', 'mastercard');
+        //         const formData = new FormData(e.target);
+        //         formData.set('transaction_amount', amount);
+        //         formData.append('token', cardToken.id);
+        //         formData.append('payment_method_id', 'mastercard');
 
-                fetch('/process_payment', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log(data);
-                    alert('Pagamento processado com sucesso!');
-                })
-                .catch(error => {
-                    console.error('Erro ao processar pagamento:', error);
-                    alert('Erro ao processar pagamento. Verifique os dados.');
-                });
-            } catch (error) {
-                console.error('Erro ao processar pagamento:', error);
-                alert('Erro ao processar pagamento. Verifique os dados.');
-            }
-        }); // Fechamento do addEventListener
+        //         fetch('/process_payment', {
+        //             method: 'POST',
+        //             body: formData
+        //         })
+        //         .then(response => {
+        //             if (!response.ok) {
+        //                 throw new Error('Network response was not ok');
+        //             }
+        //             return response.json();
+        //         })
+        //         .then(data => {
+        //             console.log(data);
+        //             alert('Pagamento processado com sucesso!');
+        //         })
+        //         .catch(error => {
+        //             console.error('Erro ao processar pagamento:', error);
+        //             alert('Erro ao processar pagamento. Verifique os dados.');
+        //         });
+        //     } catch (error) {
+        //         console.error('Erro ao processar pagamento:', error);
+        //         alert('Erro ao processar pagamento. Verifique os dados.');
+        //     }
+        // }); // Fechamento do addEventListener
 
     </script>
 </body>
