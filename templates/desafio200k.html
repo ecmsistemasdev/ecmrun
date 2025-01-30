@@ -357,8 +357,8 @@
                 <div class="form-field">
                         
                     <label for="modalidade">Modalidade:</label>
-                    <select name="modalidade" id="modalidade" class="form-select" disabled="true"> 
-                    <!-- <select name="modalidade" id="modalidade" class="form-select"> -->
+                    <!-- <select name="modalidade" id="modalidade" class="form-select" disabled="true"> --> 
+                    <select name="modalidade" id="modalidade" class="form-select"> 
                         <option selected disabled value="">Selecione uma modalidade</option>
                         {% for modalidade in modalidades %}
                         <option value="{{ modalidade.id }}">{{ modalidade.descricao }}</option>
@@ -368,8 +368,8 @@
                 </div>
             </div>
             
-            <!-- <button type="button" class="submit-btn">Continuar</button> -->
-            <button type="button" class="submit-btn" disabled="true">Em Breve</button> 
+            <button type="button" class="submit-btn">Continuar</button>
+            <!-- <button type="button" class="submit-btn" disabled="true">Em Breve</button> --> 
             
         </form>
         
