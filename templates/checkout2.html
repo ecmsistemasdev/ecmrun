@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mercado Pago Checkout</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        form {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-control {
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px;
+            background-color: white;
+            font-size: 14px;
+            width: 100%;
+        }        
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-col {
+            flex: 1;
+            min-width: 0; /* Evita que os flex items ultrapassem o container */
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            height: 40px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Estilos específicos para os iframes do Mercado Pago */
+        #cardNumber {
+            background: white !important;
+        }
+        .card-fields-row {
+            display: flex;
+            gap: 5px;  /* Espaçamento reduzido entre os campos */
+            margin-bottom: 15px;
+        }
+
+        .card-field-col {
+            flex: 1;
+            min-width: 0; /* Previne overflow em containers flex */
+        }
+
+        .expiry-field {
+            flex: 3; /* Data de validade ocupa mais espaço */
+        }
+
+        .cvv-field {
+            flex: 2; /* CVV ocupa menos espaço */
+        }
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            form {
+                padding: 15px;
+            }
+
+            /* Em telas pequenas, empilha os campos que estavam lado a lado */
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .form-col {
+                width: 100%;
+            }
+
+            .card-fields-row {
+                flex-direction: row;
+                gap: 5px;
+            }
+                        
+            /* Ajusta o tamanho da fonte para melhor legibilidade em mobile */
+            .form-group label {
+                font-size: 16px;
+            }
+
+            .form-group input, 
+            .form-group select,
+            .form-control {
+                font-size: 16px; /* Evita zoom automático no iOS */
+                height: 44px; /* Altura maior para touch */
+            }
+
+            button {
+                padding: 14px;
+                font-size: 18px;
+            }
+        }
+
+        /* Estilo para campos inválidos */
+        .form-group input:invalid,
+        .form-group select:invalid {
+            border-color: #dc3545;
+        }
+
+        /* Estilo para o campo de documento quando estiver com erro */
+        .document-error {
+            border-color: #dc3545 !important;
+        }
+
+        /* Mensagem de erro */
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <form id="payment-form">
+        <div class="form-group">
+            <label>Valor do Pagamento</label>
+            <input 
+                type="text" 
+                name="transaction_amount" 
+                id="transaction-amount" 
+                placeholder="Valor do pagamento" 
+                required
+            >
+        </div>
+    
+        <div class="form-group">
+            <label>Nome no Cartão</label>
+            <input 
+                type="text" 
+                id="card_holder_name" 
+                name="card_holder_name" 
+                placeholder="Nome completo" 
+                required
+            >
+        </div>
+    
+        <div class="form-group">
+            <label>Número do Cartão</label>
+            <div id="cardNumber" class="form-control"></div>
+        </div>
+    
+        <!-- Campos data de validade e CVV lado a lado -->
+        <div class="form-row">
+            <div class="form-col">
+                <label>Data Validade</label>
+                <div id="expirationDate" class="form-control"></div>
+            </div>
+    
+            <div class="form-col">
+                <label>CVV</label>
+                <div id="securityCode" class="form-control"></div>
+            </div>
+        </div>
+    
+        <div class="form-group">
+            <label>Banco Emissor</label>
+            <select id="issuer" name="issuer" required></select>
+        </div>
+    
+        <div class="form-group">
+            <label>Parcelas</label>
+            <select id="installments" name="installments" required></select>
+        </div>
+    
+        <!-- Tipo de documento e número do documento lado a lado -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tipo de Doc.</label>
+                <select id="doc_type" name="doc_type" required>
+                    <option value="CPF">CPF</option>
+                    <option value="CNPJ">CNPJ</option>
+                </select>
+            </div>
+    
+            <div class="form-group">
+                <label>Nº Doc.</label>
+                <input type="text" id="doc_number" name="doc_number" placeholder="Somente números" required>
+            </div>
+        </div>
+    
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" name="email" placeholder="Seu email" required>
+        </div>
+    
+        <input type="hidden" name="payment_method_id" id="payment_method_id">
+        <input type="hidden" name="description" value="Inscrição Desafio 200k">
+        <input type="hidden" name="description_item" value="Categoria Solo 200k">
+        
+        <button type="submit">Finalizar Pagamento</button>
+    
+    </form>
+   
+    <script>
+
+        // Função para validar CPF
+        function validateCPF(cpf) {
+            cpf = cpf.replace(/[^\d]/g, '');
+            
+            if (cpf.length !== 11) return false;
+            
+            // Verifica se todos os dígitos são iguais
+            if (/^(\d)\1{10}$/.test(cpf)) return false;
+            
+            // Validação dos dígitos verificadores
+            let sum = 0;
+            let remainder;
+            
+            for (let i = 1; i <= 9; i++) {
+                sum += parseInt(cpf.substring(i-1, i)) * (11 - i);
+            }
+            
+            remainder = (sum * 10) % 11;
+            if (remainder === 10 || remainder === 11) remainder = 0;
+            if (remainder !== parseInt(cpf.substring(9, 10))) return false;
+            
+            sum = 0;
+            for (let i = 1; i <= 10; i++) {
+                sum += parseInt(cpf.substring(i-1, i)) * (12 - i);
+            }
+            
+            remainder = (sum * 10) % 11;
+            if (remainder === 10 || remainder === 11) remainder = 0;
+            if (remainder !== parseInt(cpf.substring(10, 11))) return false;
+            
+            return true;
+        }
+
+        // Função para validar CNPJ
+        function validateCNPJ(cnpj) {
+            cnpj = cnpj.replace(/[^\d]/g, '');
+            
+            if (cnpj.length !== 14) return false;
+            
+            // Verifica se todos os dígitos são iguais
+            if (/^(\d)\1{13}$/.test(cnpj)) return false;
+            
+            // Validação dos dígitos verificadores
+            let size = cnpj.length - 2;
+            let numbers = cnpj.substring(0, size);
+            let digits = cnpj.substring(size);
+            let sum = 0;
+            let pos = size - 7;
+            
+            for (let i = size; i >= 1; i--) {
+                sum += numbers.charAt(size - i) * pos--;
+                if (pos < 2) pos = 9;
+            }
+            
+            let result = sum % 11 < 2 ? 0 : 11 - sum % 11;
+            if (result !== parseInt(digits.charAt(0))) return false;
+            
+            size = size + 1;
+            numbers = cnpj.substring(0, size);
+            sum = 0;
+            pos = size - 7;
+            
+            for (let i = size; i >= 1; i--) {
+                sum += numbers.charAt(size - i) * pos--;
+                if (pos < 2) pos = 9;
+            }
+            
+            result = sum % 11 < 2 ? 0 : 11 - sum % 11;
+            if (result !== parseInt(digits.charAt(1))) return false;
+            
+            return true;
+        }
+
+        // Função para formatar CPF
+        function formatCPF(cpf) {
+            return cpf
+                .replace(/\D/g, '') // Remove tudo o que não é dígito
+                .replace(/(\d{3})(\d)/, '$1.$2') // Coloca ponto após os três primeiros dígitos
+                .replace(/(\d{3})(\d)/, '$1.$2') // Coloca ponto após os segundos três dígitos
+                .replace(/(\d{3})(\d{1,2})$/, '$1-$2'); // Coloca hífen antes dos dois últimos dígitos
+        }
+
+        // Função para formatar CNPJ
+        function formatCNPJ(cnpj) {
+            return cnpj
+                .replace(/\D/g, '') // Remove tudo o que não é dígito
+                .replace(/^(\d{2})(\d)/, '$1.$2') // Coloca ponto após os dois primeiros dígitos
+                .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3') // Coloca ponto após os próximos três dígitos
+                .replace(/\.(\d{3})(\d)/, '.$1/$2') // Coloca barra após os próximos três dígitos
+                .replace(/(\d{4})(\d)/, '$1-$2'); // Coloca hífen após os próximos quatro dígitos
+        }
+
+        // Adicionar event listeners para formatação e validação do documento
+        document.getElementById('doc_number').addEventListener('input', function(e) {
+            const docType = document.getElementById('doc_type').value;
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (docType === 'CPF') {
+                if (value.length <= 11) {
+                    e.target.value = formatCPF(value);
+                }
+            } else {
+                if (value.length <= 14) {
+                    e.target.value = formatCNPJ(value);
+                }
+            }
+        });
+
+        // Validar documento quando o campo perder o foco
+        document.getElementById('doc_number').addEventListener('blur', function(e) {
+            const docType = document.getElementById('doc_type').value;
+            const value = e.target.value.replace(/\D/g, '');
+            let isValid = false;
+            
+            if (docType === 'CPF') {
+                isValid = validateCPF(value);
+            } else {
+                isValid = validateCNPJ(value);
+            }
+            
+            if (!isValid) {
+                e.target.classList.add('document-error');
+                e.target.setCustomValidity(`${docType} inválido`);
+            } else {
+                e.target.classList.remove('document-error');
+                e.target.setCustomValidity('');
+            }
+        });
+
+        // Limpar campo de documento quando mudar o tipo
+        document.getElementById('doc_type').addEventListener('change', function() {
+            const docNumberInput = document.getElementById('doc_number');
+            docNumberInput.value = '';
+            docNumberInput.classList.remove('document-error');
+            docNumberInput.setCustomValidity('');
+        });
+
+        // Inicializar o Mercado Pago
+        const mp = new MercadoPago('APP_USR-93175be3-4b17-4b81-9c58-41cc29962a9f', {
+            locale: 'pt-BR'
+        });
+
+        // Função para formatar valor monetário
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
+        // Função para obter as parcelas
+        async function getInstallments(amount, paymentMethodId, issuerId) {
+            try {
+                const response = await mp.getInstallments({
+                    amount: String(amount),
+                    locale: 'pt-BR',
+                    payment_method_id: paymentMethodId,
+                    issuer_id: issuerId
+                });
+
+                if (response[0]) {
+                    const installmentSelect = document.getElementById('installments');
+                    installmentSelect.innerHTML = '';
+
+                    response[0].payer_costs.forEach((cost) => {
+                        const option = new Option(
+                            `${cost.recommended_message || `${cost.installments}x de ${formatCurrency(cost.installment_amount)}`}`,
+                            cost.installments
+                        );
+                        installmentSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao obter parcelas:', error);
+            }
+        }
+
+        // Máscara para valor
+        document.getElementById('transaction-amount').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = (value / 100).toFixed(2).replace('.', ',');
+            e.target.value = 'R$ ' + value;
+        });
+
+        // Validação em tempo real do nome completo
+        document.querySelector('[name="card_holder_name"]').addEventListener('input', function(e) {
+            const fullName = e.target.value.trim();
+            const nameParts = fullName.split(' ').filter(part => part.length > 0);
+            
+            if (nameParts.length < 2) {
+                e.target.setCustomValidity('Por favor, insira nome e sobrenome completos');
+            } else {
+                e.target.setCustomValidity('');
+            }
+        });
+
+        // Inicializar o formulário de cartão
+        const cardForm = mp.cardForm({
+            amount: "100.00",
+            iframe: true,
+            form: {
+                id: "payment-form",
+                cardholderName: {
+                    id: "card_holder_name",
+                    placeholder: "Titular do cartão",
+                },
+                cardholderEmail: {
+                    id: "email",
+                    placeholder: "E-mail"
+                },
+                cardNumber: {
+                    id: "cardNumber",
+                    placeholder: "Número do cartão"
+                },
+                securityCode: {
+                    id: "securityCode",
+                    placeholder: "CVV"
+                },
+                expirationDate: {
+                    id: "expirationDate",
+                    placeholder: "MM/YY"
+                },
+                installments: {
+                    id: "installments",
+                    placeholder: "Parcelas"
+                },
+                identificationType: {
+                    id: "doc_type",
+                    placeholder: "Tipo de documento"
+                },
+                identificationNumber: {
+                    id: "doc_number",
+                    placeholder: "Número do documento"
+                },
+                issuer: {
+                    id: "issuer",
+                    placeholder: "Banco emissor"
+                },
+            },
+            callbacks: {
+                onFormMounted: error => {
+                    if (error) {
+                        console.error("Erro na montagem do formulário:", error);
+                        return;
+                    }
+                    console.log("Formulário montado com sucesso");
+                },
+                onPaymentMethodsReceived: (error, paymentMethods) => {
+                    if (error) {
+                        console.error("Erro ao receber métodos de pagamento:", error);
+                        return;
+                    }
+                    if (paymentMethods.length) {
+                        const paymentMethodId = paymentMethods[0].id;
+                        document.getElementById('payment_method_id').value = paymentMethodId;
+                        
+                        // Obter valor atual
+                        const amountStr = document.getElementById('transaction-amount').value;
+                        const amount = parseFloat(amountStr.replace('R$ ', '').replace(',', '.'));
+                        
+                        // Atualizar parcelas quando receber o método de pagamento
+                        getInstallments(amount, paymentMethodId, document.getElementById('issuer').value);
+                    }
+                },
+                onIssuersReceived: (error, issuers) => {
+                    if (error) {
+                        console.error("Erro ao receber bancos:", error);
+                        return;
+                    }
+                    
+                    const issuerSelect = document.getElementById('issuer');
+                    issuerSelect.innerHTML = '';
+                    
+                    issuers.forEach(issuer => {
+                        const option = new Option(issuer.name, issuer.id);
+                        issuerSelect.appendChild(option);
+                    });
+                },
+                onCardTokenReceived: (error, token) => {
+                    if (error) {
+                        console.error("Erro ao receber token do cartão:", error);
+                        return;
+                    }
+                    console.log("Token do cartão:", token);
+                },
+                onSubmit: async (event) => {
+                    event.preventDefault();
+                    
+                    try {
+                        const formData = cardForm.getCardFormData();
+                        
+                        // Validar nome completo
+                        const fullName = formData.cardholderName.trim();
+                        const nameParts = fullName.split(' ').filter(part => part.length > 0);
+                        
+                        if (nameParts.length < 2) {
+                            throw new Error('Por favor, insira nome e sobrenome completos');
+                        }
+                        
+                        const firstName = nameParts[0];
+                        const lastName = nameParts.slice(1).join(' ');
+
+                        // Obter o valor limpo (sem R$ e vírgula)
+                        const amountInput = document.getElementById('transaction-amount');
+                        const amount = parseFloat(amountInput.value.replace('R$ ', '').replace(',', '.'));
+
+                        const paymentData = {
+                            token: formData.token,
+                            issuer_id: formData.issuerId,
+                            payment_method_id: formData.paymentMethodId,
+                            transaction_amount: amount,
+                            installments: Number(formData.installments),
+                            description: "Inscrição Desafio 200k",
+                            payer: {
+                                email: formData.cardholderEmail,
+                                first_name: firstName,
+                                last_name: lastName,
+                                identification: {
+                                    type: formData.identificationType,
+                                    number: formData.identificationNumber,
+                                },
+                            },
+                        };
+
+                        console.log('Enviando dados para o servidor:', paymentData);
+
+                        const response = await fetch("/process_payment", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(paymentData),
+                        });
+
+                        const responseData = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(responseData.error || 'Erro ao processar pagamento');
+                        }
+
+                        if (responseData.status === "approved") {
+                            alert('Pagamento processado com sucesso!');
+                        } else {
+                            alert(`Status do pagamento: ${responseData.status}`);
+                        }
+
+                    } catch (error) {
+                        console.error('Erro detalhado:', error);
+                        alert(`Erro ao processar pagamento: ${error.message}`);
+                    }
+                },
+                onFetching: (resource) => {
+                    console.log("Buscando recurso:", resource);
+                }
+            }
+        });
+
+        // Atualizar parcelas quando o valor mudar
+        document.getElementById('transaction-amount').addEventListener('change', function(e) {
+            const amount = parseFloat(e.target.value.replace('R$ ', '').replace(',', '.'));
+            const paymentMethodId = document.getElementById('payment_method_id').value;
+            const issuerId = document.getElementById('issuer').value;
+            
+            if (amount && paymentMethodId && issuerId) {
+                getInstallments(amount, paymentMethodId, issuerId);
+            }
+        });
+
+        // Atualizar parcelas quando o banco emissor mudar
+        document.getElementById('issuer').addEventListener('change', function(e) {
+            const amount = parseFloat(document.getElementById('transaction-amount').value.replace('R$ ', '').replace(',', '.'));
+            const paymentMethodId = document.getElementById('payment_method_id').value;
+            
+            if (amount && paymentMethodId && e.target.value) {
+                getInstallments(amount, paymentMethodId, e.target.value);
+            }
+        });
+    </script>
+</body>
+</html>
