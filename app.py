@@ -79,6 +79,10 @@ def pagpix():
 def checkout():
     return render_template('checkout.html')
 
+@app.route('/checkout2')
+def checkout2():
+    return render_template('checkout2.html')
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.json
