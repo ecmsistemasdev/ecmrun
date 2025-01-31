@@ -126,7 +126,7 @@ def comprovante(payment_id):
                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-                I.VALOR, I.VALOR_PGTO, I.IDPAGAMENTO
+                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
             FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
@@ -155,7 +155,8 @@ def comprovante(payment_id):
             'km': receipt_data[5],
             'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
             'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
-            'inscricao': str(receipt_data[8]),
+            'formapgto': receipt_data[8],
+            'inscricao': str(receipt_data[9]),
             'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, medalha e troféu.'
         }
         
@@ -188,7 +189,7 @@ def comprovanteemail(payment_id):
                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-                I.VALOR, I.VALOR_PGTO, I.IDPAGAMENTO
+                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
             FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
@@ -218,7 +219,8 @@ def comprovanteemail(payment_id):
             'km': receipt_data[5],
             'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
             'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
-            'inscricao': str(receipt_data[8]),
+            'formapgto': receipt_data[8],
+            'inscricao': str(receipt_data[9]),
             'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, medalha e troféu.'
         }
         
