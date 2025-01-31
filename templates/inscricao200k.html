@@ -332,123 +332,128 @@
 
     <script>
      
-     $(document).ready(function() {
-        // Get user data from localStorage
-        const userName = localStorage.getItem('user_name');
-        const userEmail = localStorage.getItem('user_email');
-        const cpf = localStorage.getItem('user_cpf');
-        const dataNascimento = localStorage.getItem('user_dtnascimento');
-        const celular = localStorage.getItem('user_celular');
-        const sexo = localStorage.getItem('user_sexo');
-        const idatleta = localStorage.getItem('user_idatleta');
-        const categoria = localStorage.getItem('categoria');
-        const valor = localStorage.getItem('valor');
-        const categoriaId = localStorage.getItem('categoria_id');
+        $(document).ready(function() {
+            // Get user data from localStorage
+            const userName = localStorage.getItem('user_name');
+            const userEmail = localStorage.getItem('user_email');
+            const cpf = localStorage.getItem('user_cpf');
+            const dataNascimento = localStorage.getItem('user_dtnascimento');
+            const celular = localStorage.getItem('user_celular');
+            const sexo = localStorage.getItem('user_sexo');
+            const idatleta = localStorage.getItem('user_idatleta');
+            const categoria = localStorage.getItem('categoria');
+            const valor = localStorage.getItem('valor');
+            const categoriaId = localStorage.getItem('categoria_id');
 
-        // Function to format currency values
-        const formatCurrency = (value) => {
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            }).format(value);
-        };
+            // Function to format currency values
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(value);
+            };
 
-        // Function to handle team fields visibility
-        const handleTeamFields = (categoriaId) => {
-            const camisetaField = document.getElementById('camiseta');
-            const apoioField = document.getElementById('apoio');
-            const nomeEquipeField = document.getElementById('nome_equipe');
-            const integrantesField = document.getElementById('integrantes');
+            // Function to handle team fields visibility
+            const handleTeamFields = (categoriaId) => {
+                const camisetaField = document.getElementById('camiseta');
+                const apoioField = document.getElementById('apoio');
+                const nomeEquipeField = document.getElementById('nome_equipe');
+                const integrantesField = document.getElementById('integrantes');
 
-            if (categoriaId === '1' || categoriaId === 1) {
-                if (nomeEquipeField && integrantesField) {
-                    nomeEquipeField.disabled = true;
-                    integrantesField.disabled = true;
-                    nomeEquipeField.value = '';
-                    integrantesField.value = '';
-                    nomeEquipeField.style.backgroundColor = '#f0f0f0';
-                    integrantesField.style.backgroundColor = '#f0f0f0';
-                    nomeEquipeField.placeholder = 'Não aplicável para categoria Solo';
-                    integrantesField.placeholder = 'Não aplicável para categoria Solo';
+                if (categoriaId === '1' || categoriaId === 1) {
+                    if (nomeEquipeField && integrantesField) {
+                        nomeEquipeField.disabled = true;
+                        integrantesField.disabled = true;
+                        nomeEquipeField.value = '';
+                        integrantesField.value = '';
+                        nomeEquipeField.style.backgroundColor = '#f0f0f0';
+                        integrantesField.style.backgroundColor = '#f0f0f0';
+                        nomeEquipeField.placeholder = 'Não aplicável para categoria Solo';
+                        integrantesField.placeholder = 'Não aplicável para categoria Solo';
+                    }
+                } else {
+                    if (nomeEquipeField && integrantesField) {
+                        nomeEquipeField.disabled = false;
+                        integrantesField.disabled = false;
+                        nomeEquipeField.style.backgroundColor = '';
+                        integrantesField.style.backgroundColor = '';
+                        nomeEquipeField.placeholder = 'Se possível, dê um nome a sua Equipe para o Desafio';
+                        integrantesField.placeholder = 'Se possível, informe os nomes dos integrantes';
+                    }
                 }
+            };
+
+            // Form submission handler
+            $('#inscricaoForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const paymentMethod = $('input[name="pagamento"]:checked').val();
+                localStorage.setItem('payment_method', paymentMethod);
+                
+                // Get the values from session
+                const vlinscricao = parseFloat('{{ session.get("cat_vlinscricao", 0) }}');
+                const vltaxa = parseFloat('{{ session.get("cat_vltaxa", 0) }}');            
+                
+                // Get form values
+                const camiseta = $('input[name="camiseta"]:checked').val();
+                const apoio = $('#apoio').val();
+                const nomeEquipe = $('#nome_equipe').val();
+                const integrantes = $('#integrantes').val();
+
+                console.error('Camisa:', camiseta);           
+                console.error('Apoio:', apoio);
+                console.error('Equipe:', nomeEquipe);
+                console.error('Integrantes:', integrantes);
+
+                // Store form values
+                localStorage.setItem('camiseta', camiseta);
+                localStorage.setItem('apoio', apoio);
+                localStorage.setItem('nome_equipe', nomeEquipe);
+                localStorage.setItem('integrantes', integrantes);
+                
+                localStorage.setItem('vlinscricao', vlinscricao);
+                localStorage.setItem('vltaxa', vltaxa);
+
+                // Redirect to payment page
+                window.location.href = '/pagamento';
+            });
+
+            // Handle terms acceptance and submit button
+            $('#aceitoTermos').on('change', function() {
+                $('#submitButton').prop('disabled', !$(this).is(':checked'));
+            });
+
+            // Update terms content with user name
+            if (userName) {
+                const termoContent = document.getElementById('termoContent');
+                if (termoContent) {
+                    let termoText = termoContent.innerHTML;
+                    termoText = termoText.replace('*NameCompleto*', userName);
+                    termoContent.innerHTML = termoText;
+                }
+            }
+
+            // Fill in user information
+            if (userName && userEmail) {
+                $('#nome_completo').text(userName);
+                $('#email').text(userEmail);
+                $('#cpf').text(cpf);
+                $('#dtnascimento').text(dataNascimento);
+                $('#celular').text(celular);
+                $('#categoria').text(categoria || 'Não selecionada');
+                $('#valor').text(valor || 'A definir');
+
+                // Handle team fields based on category
+                handleTeamFields(categoriaId);
             } else {
-                if (nomeEquipeField && integrantesField) {
-                    nomeEquipeField.disabled = false;
-                    integrantesField.disabled = false;
-                    nomeEquipeField.style.backgroundColor = '';
-                    integrantesField.style.backgroundColor = '';
-                    nomeEquipeField.placeholder = 'Se possível, dê um nome a sua Equipe para o Desafio';
-                    integrantesField.placeholder = 'Se possível, informe os nomes dos integrantes';
-                }
+                // Redirect to login if no user data
+                window.location.href = '/login';
             }
-        };
 
-        // Form submission handler
-        $('#inscricaoForm').on('submit', function(e) {
-            e.preventDefault();
-            
-            const paymentMethod = $('input[name="pagamento"]:checked').val();
-            localStorage.setItem('payment_method', paymentMethod);
-            
-            // Get the values from session
-            const vlinscricao = parseFloat('{{ session.get("cat_vlinscricao", 0) }}');
-            const vltaxa = parseFloat('{{ session.get("cat_vltaxa", 0) }}');            
-            
-            // Get form values
-            const camiseta = $('input[name="camiseta"]:checked').val();
-            const apoio = $('#apoio').val();
-            const nomeEquipe = $('#nome_equipe').val();
-            const integrantes = $('#integrantes').val();
-            
-            // Store form values
-            localStorage.setItem('camiseta', camiseta);
-            localStorage.setItem('apoio', apoio);
-            localStorage.setItem('nome_equipe', nomeEquipe);
-            localStorage.setItem('integrantes', integrantes);
-            
-            localStorage.setItem('vlinscricao', vlinscricao);
-            localStorage.setItem('vltaxa', vltaxa);
-
-            // Redirect to payment page
-            window.location.href = '/pagamento';
+            // Initial state of submit button
+            $('#submitButton').prop('disabled', true);
+            $('#aceitoTermos').prop('checked', false);
         });
-
-        // Handle terms acceptance and submit button
-        $('#aceitoTermos').on('change', function() {
-            $('#submitButton').prop('disabled', !$(this).is(':checked'));
-        });
-
-        // Update terms content with user name
-        if (userName) {
-            const termoContent = document.getElementById('termoContent');
-            if (termoContent) {
-                let termoText = termoContent.innerHTML;
-                termoText = termoText.replace('*NameCompleto*', userName);
-                termoContent.innerHTML = termoText;
-            }
-        }
-
-        // Fill in user information
-        if (userName && userEmail) {
-            $('#nome_completo').text(userName);
-            $('#email').text(userEmail);
-            $('#cpf').text(cpf);
-            $('#dtnascimento').text(dataNascimento);
-            $('#celular').text(celular);
-            $('#categoria').text(categoria || 'Não selecionada');
-            $('#valor').text(valor || 'A definir');
-
-            // Handle team fields based on category
-            handleTeamFields(categoriaId);
-        } else {
-            // Redirect to login if no user data
-            window.location.href = '/login';
-        }
-
-        // Initial state of submit button
-        $('#submitButton').prop('disabled', true);
-        $('#aceitoTermos').prop('checked', false);
-    });
 
 
 

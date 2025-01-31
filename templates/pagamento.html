@@ -359,6 +359,17 @@
             const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
             const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
             const totalValue = vlinscricao + vltaxa;
+        
+            const camiseta_ = (localStorage.getItem('camiseta') || '')
+            const apoio_ = (localStorage.getItem('apoio') || '')
+            const equipe_ = (localStorage.getItem('nome_equipe') || '')
+            const integrantes_ = (localStorage.getItem('integrantes') || '')
+            
+            console.error('Camisa:', camiseta_);           
+            console.error('Apoio:', apoio_);
+            console.error('Equipe:', equipe_);
+            console.error('Integrantes:', integrantes_);
+
 
             // Function to format currency values
             function formatCurrency(value) {
@@ -505,8 +516,8 @@
                                 
                                 // Redirect after 3 seconds
                                 setTimeout(() => {
-                                    window.location.href = '/comprovante';
-                                }, 3000);
+                                    window.location.href = `/comprovante/${paymentId}`;
+                                }, 3000); 
                             }
                         }
                     } catch (error) {
@@ -518,7 +529,7 @@
                 checkInterval = setInterval(checkPayment, 3000);
             }
 
-            // Copy PIX key function
+            ////// nova função copiar chave
             window.copyPixKey = function() {
                 const pixKey = document.getElementById('pixKey').textContent;
                 if (!pixKey) {
@@ -527,15 +538,71 @@
                     return;
                 }
                 
-                navigator.clipboard.writeText(pixKey)
-                    .then(() => {
-                        alert('Chave PIX copiada com sucesso!');
-                    })
-                    .catch(err => {
-                        console.error('Erro ao copiar chave PIX:', err);
-                        alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
-                    });
+                // Tenta primeiro o método moderno
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(pixKey)
+                        .then(() => {
+                            alert('Chave PIX copiada com sucesso!');
+                        })
+                        .catch(err => {
+                            fallbackCopyMethod(pixKey);
+                        });
+                } else {
+                    // Método alternativo para ambientes não seguros
+                    fallbackCopyMethod(pixKey);
+                }
             };
+
+            function fallbackCopyMethod(text) {
+                try {
+                    // Cria um elemento temporário
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    
+                    // Evita scrolling para o elemento
+                    textArea.style.top = '0';
+                    textArea.style.left = '0';
+                    textArea.style.position = 'fixed';
+                    textArea.style.opacity = '0';
+                    
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    // Tenta copiar o texto
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    if (successful) {
+                        alert('Chave PIX copiada com sucesso!');
+                    } else {
+                        alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
+                    }
+                } catch (err) {
+                    console.error('Erro ao copiar:', err);
+                    alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
+                }
+            }
+
+            // Essa função de Copiar estava funcionando somente em PRODUÇÂO
+            // Copy PIX key function
+            // window.copyPixKey = function() {
+            //     const pixKey = document.getElementById('pixKey').textContent;
+            //     if (!pixKey) {
+            //         console.error('Chave PIX não encontrada');
+            //         alert('Chave PIX não disponível no momento. Por favor, aguarde o carregamento ou recarregue a página.');
+            //         return;
+            //     }
+                
+            //     navigator.clipboard.writeText(pixKey)
+            //         .then(() => {
+            //             alert('Chave PIX copiada com sucesso!');
+            //         })
+            //         .catch(err => {
+            //             console.error('Erro ao copiar chave PIX:', err);
+            //             alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
+            //         });
+            // };
 
             // Add event listener for 'Back' button to clear specific items
             document.querySelector('button.button.secondary').addEventListener('click', clearPaymentRelatedLocalStorage);

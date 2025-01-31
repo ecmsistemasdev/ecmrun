@@ -27,14 +27,27 @@
             }
         }
 
+        /* Wrapper principal para controlar a largura */
+        .email-wrapper {
+            max-width: 800px;
+            width: 60%;
+            min-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+        }
+
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
-            max-width: 60%; /* 21cm; */
-            margin: 0 auto;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        /* Container interno para o conteúdo */
+        .inner-container {
             padding: var(--page-padding);
             box-sizing: border-box;
-            background-color: white;
         }
 
         .header {
@@ -85,9 +98,8 @@
         .content {
             margin-bottom: 3em;
             padding: 1.5em;
-            border: 2px solid rgb(149, 163, 173);;  /* var(--content-border-color); */
+            border: 2px solid rgb(149, 163, 173);
             border-radius: 8px;
-            /*background-color: var(--content-bg-color); */
             background-color: rgb(203, 216, 226);
         }
 
@@ -178,6 +190,11 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
+        .form-group {
+            margin-bottom: 20px;
+            padding-top: 5px;
+        }
+
         .footer {
             background-color: white;
             padding: 20px 0;
@@ -198,9 +215,14 @@
         }
 
         @media screen and (max-width: 768px) {
-            body {
-                padding: 1cm 0.5cm 1px 0.5cm;
-                font-size: 14px;
+            .email-wrapper {
+                width: 100% !important;
+                min-width: unset !important;
+                padding: 10px;
+            }
+
+            .inner-container {
+                padding: 1cm 0.5cm;
             }
 
             .logo-title {
@@ -266,65 +288,87 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo-title">
-            <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
-            <div class="title-container">
-                <h1>{{ titulo }}</h1>
-                <p>{{ data }}</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="content">
-        <div class="content-section">
-            <div class="observations-label">Evento:</div>
-            <div class="event-info">
-                <div class="event-name">{{ evento }}</div>
-                <div class="event-address">{{ endereco }}</div>
-                <div class="event-date">Data: {{ dataevento }}</div>
-            </div>
-        </div>
-
-        <div class="content-section">
-            <div class="info-box full-width-box">
-                <span class="info-label">Participante:</span>
-                <span class="info-value">{{ participante }}</span>
-            </div>
-        </div>
-
-        <div class="content-section">
-            <div class="distance-value-row">
-                <div class="info-box">
-                    <span class="info-label">Distância/Modalidade:</span>
-                    <span class="info-value">{{ km }}</span>
-                </div>
-                <div class="info-box">
-                    <span class="info-label">Valor:</span>
-                    <span class="info-value">{{ valor }}</span>
+    <div class="email-wrapper">
+        <div class="inner-container">
+            <div class="header">
+                <div class="logo-title">
+                    <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+                    <div class="title-container">
+                        <h1>Comprovante de Inscrição</h1>
+                        <p>{{ data }}</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="content-section">
-            <div class="info-box full-width-box">
-                <span class="info-label">Inscrição:</span>
-                <span class="info-value">{{ inscricao }}</span>
-            </div>
-        </div>
+            <div class="content">
+                <div class="content-section">
+                    <div class="observations-label">Evento:</div>
+                    <div class="event-info">
+                        <div class="event-name">{{ evento }}</div>
+                        <div class="event-address">{{ endereco }}</div>
+                        <div class="event-date">Data: {{ dataevento }}</div>
+                    </div>
+                </div>
 
-        <div class="content-section">
-            <div class="observations">
-                <div class="observations-label">Observações:</div>
-                <div class="observations-content">{{ obs }}</div>
+                <div class="content-section">
+                    <div class="info-box full-width-box">
+                        <span class="info-label">Participante:</span>
+                        <span class="info-value">{{ participante }}</span>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="distance-value-row">
+                        <div class="info-box">
+                            <span class="info-label">Distância /<br>Modalidade:</span>
+                            <span class="info-value">{{ km }}</span>
+                        </div>
+                        <div class="info-box">
+                            <span class="info-label">Valor:</span>
+                            <span class="info-value">{{ valor }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="info-box full-width-box">
+                        <span class="info-label">Inscrição:</span>
+                        <span class="info-value">{{ inscricao }}</span>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="observations">
+                        <div class="observations-label">Observações:</div>
+                        <div class="observations-content">{{ obs }}</div>
+                    </div>
+                </div>
             </div>
+            <div class="form-group">
+                <label>Termo de Responsabilidade:</label>
+                <div style="overflow-y: auto; font-size: 13px; text-align: justify; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;">
+                    <div id="termoContent">
+                        Eu, {{ participante }}, declaro que estou ciente e concordo com os termos e condições estabelecidos no Regulamento para a participação neste Desafio, a ser realizada nos dias 04, 05 e 06/07/2025 em Porto Velho/RO.<br><br>
+                        1. Declaração de Saúde <br><br>
+                        Declaro que estou em plenas condições de saúde para participar deste evento e que não possuo restrições médicas que impeçam minha participação. Estou ciente de que é recomendável realizar uma avaliação médica antes de participar de atividades físicas.<br><br>
+                        2. Responsabilidade Pessoal<br><br>
+                        Entendo que a participação na corrida envolve riscos, incluindo, mas não se limitando a, lesões físicas, acidentes e outras eventualidades. Ao me inscrever, assumo total responsabilidade por minha participação e isento os organizadores, patrocinadores e colaboradores de qualquer responsabilidade por danos ou lesões que possam ocorrer antes, durante ou após o evento.<br><br>
+                        3. Uso de Imagem<br><br>
+                        Autorizo a utilização da minha imagem em fotografias e filmagens realizadas durante o evento para fins promocionais e publicitários, sem qualquer ônus para os organizadores.<br><br>
+                        4. Cancelamento e Reembolso<br><br>            
+                        Em caso de desistência o reembolso em até 7 dias corridos será o valor pago deduzido das taxas, sendo até 30 dias antes da prova, o valor do reembolso será de 50% do valor da inscrição. Restando menos de 30 dias não heverá reembolso. Em casos de cancelamento do evento por parte dos organizadores o reembolso será de 100% do valor pago.<br><br>
+                        5. Aceitação dos Termos<br><br>    
+                        Ao finalizar minha inscrição, confirmo que li, entendi e concordo com todos os termos deste documento.
+        
+                    </div>
+                </div>
+            </div>
+            <footer class="footer">
+                <img src="https://ecmrun.com.br/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+                <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+                <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+            </footer>
         </div>
     </div>
-
-    <footer class="footer">
-        <img src="https://ecmrun.com.br/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
-        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
-        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
-    </footer>
 </body>
 </html>
