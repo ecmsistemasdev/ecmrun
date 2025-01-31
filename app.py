@@ -859,20 +859,38 @@ def generate_pdf():
 
 
 def send_email(receipt_data):
-    # Renderiza o template HTML com os dados do recibo
-    html_content = render_template('comprovante_email.html', **receipt_data)
+    try:
+        # Recuperar o email do atleta do banco de dados
+        cur = mysql.connection.cursor()
+        cur.execute('''
+            SELECT A.EMAIL
+            FROM ecmrun.ATLETA_TT A
+            JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA
+            WHERE I.IDPAGAMENTO = %s
+        ''', (receipt_data['inscricao'],))
+        
+        email_result = cur.fetchone()
+        cur.close()
 
-    # Criação da mensagem de e-mail
-    msg = Message(subject='Desafio 200k - Comprovante Inscrição',
-                  sender='adm@ecmrun.com.br',
-                  recipients=[var_email])  # Aqui você pode pegar o email do localStorage se estiver usando JS no frontend
+        if not email_result or not email_result[0]:
+            app.logger.error("Email do atleta não encontrado")
+            return False
 
-    # Define o corpo do e-mail como HTML
-    msg.html = html_content
-
-    # Envia o e-mail
-    mail.send(msg)
-    app.logger.info(f"Enviado Email para: {var_email}")
+        recipient_email = email_result[0]
+        
+        msg = Message(
+            'Comprovante de Inscrição',
+            sender=('ECM Run', 'adm@ecmrun.com.br'),
+            recipients=[recipient_email]
+        )
+        
+        msg.html = render_template('comprovante_email.html', **receipt_data)
+        mail.send(msg)
+        return True
+        
+    except Exception as e:
+        app.logger.error(f"Erro ao enviar email: {str(e)}")
+        return False
 
 
 # @app.route('/send-email', methods=['POST'])
