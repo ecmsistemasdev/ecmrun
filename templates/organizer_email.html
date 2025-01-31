@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .header {
+            margin-bottom: 3em;
+            border-bottom: 2px solid #333;
+            position: relative;
+            width: 100%;
+        }
+        .logo-title {
+            display: flex;
+            align-items: flex-start;
+            gap: 5px;
+            margin-bottom: 1em;
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+            background-color: #f5f5f5;
+            flex-shrink: 0;
+        }
+        .container {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .header {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .info-box {
+            border: 1px solid #4376ac;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-row {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #4376ac;
+        }
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }
+        @media screen and (max-width: 768px) {
+            .email-wrapper {
+                width: 100% !important;
+                min-width: unset !important;
+                padding: 10px;
+            }
+
+            .inner-container {
+                padding: 1cm 0.5cm;
+            }
+
+            .logo-title {
+                flex-direction: column;
+                align-items: start;
+            }
+
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .title-container {
+                width: 100%;
+                align-items: start;
+                padding-left: 0;
+            }
+
+            .header h1 {
+                font-size: 16pt;
+                text-align: left;
+                width: 100%;
+                margin-top: 5px;
+            }
+
+            .header p {
+                font-size: 10pt;
+                text-align: right;
+                width: 100%;
+            }
+
+            .content {
+                padding: 1em;
+            }
+
+            .event-name {
+                font-size: 12pt;
+            }
+
+            .event-address, .event-date {
+                font-size: 9pt;
+            }
+
+            .footer-logo {
+                height: 40px;
+            }
+
+        }
+
+        @media screen and (max-width: 320px) {
+            .header h1 {
+                font-size: 14pt;
+            }
+
+            .logo {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-title">
+                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+            </div>
+        </div>
+
+        <div class="header">
+            Inscrição Recebida para o <strong>4º Desafio 200k</strong>
+        </div>
+        
+        <div class="info-box">
+            <!--
+            <div class="info-row">
+                <span class="label">Evento:</span> 
+                <span>{{ evento }}</span>
+            </div>
+            -->
+            <div class="info-row">
+                <span class="label">Nome Completo:</span> 
+                <span>{{ participante }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Distância/Modalidade:</span> 
+                <span>{{ km }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Valor Inscrição:</span> 
+                <span>{{ valor }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">ID Pagamento:</span> 
+                <span>{{ inscricao }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Data Pagamento:</span> 
+                <span>{{ data }}</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>O valor referente à inscrição será enviado em até 24horas.</p>
+            <p>Atenciosamente,</p>
+            <p>Equipe ECM Run</p>
+        </div>
+        <footer class="footer">
+            <img src="https://ecmrun.com.br/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+            <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+            <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+        </footer>
+    </div>
+</body>
+</html>
