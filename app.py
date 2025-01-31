@@ -44,7 +44,7 @@ app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
 mysql = MySQL(app)
 
-sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN2'))
+#sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN2'))
 
 # Global variables for the receipt
 receipt_data = {
@@ -60,13 +60,153 @@ receipt_data = {
     'obs': 'Observações importantes sobre o evento vão aqui.'
 }
 
+var_camiseta = ""
+var_apoio = ""
+var_equipe = ""
+var_integrantes = ""
+var_email = ""
+
+def fn_camiseta(valor):
+    global var_camiseta
+    var_camiseta = valor
+
+def fn_apoio(valor):
+    global var_apoio
+    var_apoio = valor
+
+def fn_equipe(valor):
+    global var_equipe
+    var_equipe = valor
+
+def fn_integrantes(valor):
+    global var_integrantes
+    var_integrantes = valor
+
+def fn_email(valor):
+    global var_email
+    var_email = valor
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route('/comprovante')
-def comprovante():
-    return render_template('comprovante_insc.html', **receipt_data)
+#@app.route('/comprovante')
+#def comprovante():
+#    return render_template('comprovante_insc.html', **receipt_data)
+
+@app.route('/comprovante/<int:payment_id>')
+def comprovante(payment_id):
+    try:
+        
+        app.logger.info(f"Payment ID: {payment_id}")
+        
+        cur = mysql.connection.cursor()
+        # Execute a SQL com o payment_id
+        cur.execute('''
+            SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
+                CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
+                CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
+                CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
+                I.VALOR, I.IDPAGAMENTO
+            FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
+            ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+            WHERE M.IDITEM = I.IDITEM
+            AND E.IDEVENTO = I.IDEVENTO
+            AND A.IDATLETA = I.IDATLETA
+            AND I.IDPAGAMENTO = %s
+        ''', (payment_id,))
+        
+        receipt_data = cur.fetchone()
+        cur.close()
+
+        if not receipt_data:
+            app.logger.info("Dados não encontrados")
+            return "Dados não encontrados", 404
+        
+        # Converter a data de string para datetime
+        data_pagamento = datetime.strptime(receipt_data[0], '%d/%m/%Y %H:%M:%S')  # Formato correto
+
+        # Estruturar os dados do comprovante
+        receipt_data_dict = { 
+            'data': data_pagamento.strftime('%d/%m/%Y %H:%M'),  # Formatar data
+            'evento': receipt_data[1],
+            'endereco': receipt_data[2],
+            'dataevento': receipt_data[3],
+            'participante': receipt_data[4],
+            'km': receipt_data[5],
+            'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
+            'inscricao': str(receipt_data[7]),
+            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, medalha e troféu.'
+        }
+        
+        app.logger.info("Dados da Inscrição:")
+        app.logger.error(receipt_data)
+
+        # Enviar email com os dados do comprovante
+        send_email(receipt_data_dict)
+
+        return render_template('comprovante_insc.html', **receipt_data_dict)
+
+    except Exception as e:
+        app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
+        return "Erro ao buscar dados", 500
+
+
+@app.route('/comprovanteemail/<int:payment_id>')
+def comprovanteemail(payment_id):
+    try:
+        
+        app.logger.info(f"Payment ID: {payment_id}")
+        
+        cur = mysql.connection.cursor()
+        # Execute a SQL com o payment_id
+        cur.execute('''
+            SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
+                CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
+                CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
+                CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
+                I.VALOR, I.IDPAGAMENTO
+            FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
+            ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+            WHERE M.IDITEM = I.IDITEM
+            AND E.IDEVENTO = I.IDEVENTO
+            AND A.IDATLETA = I.IDATLETA
+            AND I.IDPAGAMENTO = %s
+        ''', (payment_id,))
+        
+        receipt_data = cur.fetchone()
+        cur.close()
+
+        if not receipt_data:
+            app.logger.info("Dados não encontrados")
+            return "Dados não encontrados", 404
+        
+
+        # Converter a data de string para datetime
+        data_pagamento = datetime.strptime(receipt_data[0], '%d/%m/%Y %H:%M:%S')  # Formato correto
+
+        # Estruturar os dados do comprovante
+        receipt_data_dict = { 
+            'data': data_pagamento.strftime('%d/%m/%Y %H:%M'),  # Formatar data
+            'evento': receipt_data[1],
+            'endereco': receipt_data[2],
+            'dataevento': receipt_data[3],
+            'participante': receipt_data[4],
+            'km': receipt_data[5],
+            'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
+            'inscricao': str(receipt_data[7]),
+            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, medalha e troféu.'
+        }
+        
+        app.logger.info("Dados da Inscrição:")
+        app.logger.error(receipt_data)
+
+        return render_template('comprovante_email.html', **receipt_data_dict)
+
+    except Exception as e:
+        app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
+        return "Erro ao buscar dados", 500
+
 
 
 @app.route('/pagpix')
@@ -695,40 +835,57 @@ def generate_pdf():
     
     return response
 
-@app.route('/send-email', methods=['POST'])
-def send_email():
-    #pdf = pdfkit.from_string(render_template('comprovante_insc.html', data=request.form), False)
+# @app.route('/send-email', methods=['POST'])
+# def send_email():
+#     #pdf = pdfkit.from_string(render_template('comprovante_insc.html', data=request.form), False)
     
-    msg = Message("Comprovante PDF", recipients=["naicm12@gmail.com"])
-    #msg.attach("comprovante001.pdf", "application/pdf", pdf)
+#     msg = Message("Comprovante PDF", recipients=["naicm12@gmail.com"])
+#     #msg.attach("comprovante001.pdf", "application/pdf", pdf)
     
-    mail.send(msg)
+#     mail.send(msg)
     
-    return "Email enviado com sucesso!"
+#     return "Email enviado com sucesso!"
 
 
-@app.route('/send-email-link')
-def send_email_link():
-    # Chama a função send_email() diretamente
-    return send_email()
+#@app.route('/send-email-link')
+#def send_email_link():
+#    # Chama a função send_email() diretamente
+#    return send_email()
 
 
-@app.route('/send-email2', methods=['POST'])
-def send_email2():
+def send_email(receipt_data):
     # Renderiza o template HTML com os dados do recibo
-    html_content = render_template('comprovante_insc.html', **receipt_data)
+    html_content = render_template('comprovante_email.html', **receipt_data)
 
     # Criação da mensagem de e-mail
-    msg = Message(subject='Comprovante PDF',
+    msg = Message(subject='Desafio 200k - Comprovante Inscrição',
                   sender='adm@ecmrun.com.br',
-                  recipients=['naicm12@gmail.com'])
+                  recipients=[var_email])  # Aqui você pode pegar o email do localStorage se estiver usando JS no frontend
 
     # Define o corpo do e-mail como HTML
     msg.html = html_content
 
     # Envia o e-mail
     mail.send(msg)
-    return "Email enviado com sucesso!"
+    app.logger.info(f"Enviado Email para: {var_email}")
+
+
+# @app.route('/send-email', methods=['POST'])
+# def send_email():
+#     # Renderiza o template HTML com os dados do recibo
+#     html_content = render_template('comprovante_email.html', **receipt_data)
+
+#     # Criação da mensagem de e-mail
+#     msg = Message(subject='Desafio 200k - Comprovante Inscrição',
+#                   sender='adm@ecmrun.com.br',
+#                   recipients=['naicm12@gmail.com'])
+
+#     # Define o corpo do e-mail como HTML
+#     msg.html = html_content
+
+#     # Envia o e-mail
+#     mail.send(msg)
+#     return "Email enviado com sucesso!"
 
 ###################
 
@@ -864,53 +1021,6 @@ def pagamento():
                          valor_total=valor_total)
 
 
-# @app.route('/processar-pagamento', methods=['POST'])
-# def processar_pagamento():
-#     try:
-#         print("Token MP:", os.getenv('MP_ACCESS_TOKEN'))
-#         print("Payment data:", payment_data)
-
-#         payment_method = request.form.get('pagamento')
-#         if payment_method == 'pix':
-#             # Get values from session
-#             vlinscricao = float(session.get('cat_vlinscricao', 0))
-#             vltaxa = float(session.get('cat_vltaxa', 0))
-#             valor_total = vlinscricao + vltaxa
-            
-#             payment_data = {
-#                 "transaction_amount": valor_total,
-#                 "description": "Inscrição 4º Desafio 200k",
-#                 "payment_method_id": "pix",
-#                 "payer": {
-#                     "email": session.get('user_email'),
-#                     "first_name": session.get('user_name').split()[0],
-#                     "last_name": " ".join(session.get('user_name').split()[1:]),
-#                     "identification": {
-#                         "type": "CPF",
-#                         "number": session.get('user_cpf')
-#                     }
-#                 }
-#             }
-            
-#             payment_response = sdk.payment().create(payment_data)
-#             payment = payment_response["response"]
-            
-#             if payment:
-#                 return jsonify({
-#                     'success': True,
-#                     'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
-#                     'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
-#                     'payment_id': payment['id']
-#                 })
-        
-#         print("Payment response:", payment_response)
-
-#         return jsonify({'success': False, 'message': 'Método de pagamento inválido'}), 400
-        
-#     except Exception as e:
-#         print(f"Erro ao processar pagamento: {str(e)}")
-#         return jsonify({'success': False, 'message': str(e)}), 500
-
 
 @app.route('/gerar-pix', methods=['POST'])
 def gerar_pix():
@@ -918,6 +1028,10 @@ def gerar_pix():
         data = request.get_json()
         # Round to 2 decimal places to avoid floating point precision issues
         valor_total = round(float(data.get('valor_total', 0)), 2)
+        fn_camiseta(data.get('camiseta'))
+        fn_apoio(data.get('apoio')) 
+        fn_equipe(data.get('nome_equipe'))
+        fn_integrantes(data.get('integrantes'))
         
         # Validate minimum transaction amount (Mercado Pago usually requires >= 1)
         if valor_total < 1:
@@ -929,16 +1043,26 @@ def gerar_pix():
         print("=== DEBUG: Iniciando geração do PIX ===")
         print(f"Valor total recebido: {valor_total}")
         print(f"Token MP configurado: {os.getenv('MP_ACCESS_TOKEN')[:10]}...")
+        print(f"CAMISA: {var_camiseta}")
+        print(f"APOIO: {var_apoio}")
+        print(f"EQUIPE: {var_equipe}")
+        print(f"INTEGRANTES: {var_integrantes}")
         
         # Dados do pagador da sessão
-        email = session.get('user_email')
+        email = session.get('user_email')        
         nome_completo = session.get('user_name', '').split()
         cpf = session.get('user_cpf')
+
+        #alimento essa variavel global var_email pra ser usada no evio do email 
+        fn_email(email)
         
         print(f"Dados do pagador da sessão:")
         print(f"- Email: {email}")
         print(f"- Nome: {nome_completo}")
         print(f"- CPF: {cpf}")
+
+        #Gerar referência externa única
+        external_reference = str(uuid.uuid4())
 
         # Preparar dados do pagamento
         payment_data = {
@@ -952,8 +1076,11 @@ def gerar_pix():
                 "identification": {
                     "type": "CPF",
                     "number": re.sub(r'\D', '', cpf) if cpf else ""
-                }
-            }
+                }   
+            },
+            "notification_url": "https://ecmrun.com.br/webhook",
+            "external_reference": external_reference
+
         }
 
         print("Dados do pagamento preparados:")
@@ -1028,7 +1155,7 @@ def verificar_pagamento(payment_id):
         if payment["status"] == "approved":
             # Verificar se já não foi processado antes
             cur = mysql.connection.cursor()
-            cur.execute("SELECT * FROM ecmrun.INSCRICAO_TT WHERE IDPAGAMENO = %s", (payment_id,))
+            cur.execute("SELECT * FROM ecmrun.INSCRICAO_TT WHERE IDPAGAMENTO = %s", (payment_id,))
             existing_record = cur.fetchone()
             
             if not existing_record:
@@ -1050,7 +1177,7 @@ def verificar_pagamento(payment_id):
                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                     NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, 
                     VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
-                    IDPAGAMENO
+                    IDPAGAMENTO
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
@@ -1061,17 +1188,17 @@ def verificar_pagamento(payment_id):
                     cpf,                                 # CPF
                     1,                                   # IDEVENTO (hardcoded as 1 for this event)
                     session.get('cat_iditem'),           # IDITEM
-                    session.get('camiseta'),             # CAMISETA
-                    session.get('apoio'),                # APOIO
-                    session.get('nome_equipe'),          # NOME_EQUIPE
-                    session.get('integrantes'),          # INTEGRANTES
+                    var_camiseta,                        # CAMISETA
+                    var_apoio,                           # APOIO
+                    var_equipe,                          # NOME_EQUIPE
+                    var_integrantes,                     # INTEGRANTES
                     valor,                               # VALOR
                     taxa,                                # TAXA
                     valor_pgto,                          # VALOR_PGTO
                     data_pagamento,                      # DTPAGAMENTO
                     'CONFIRMADO',                        # STATUS
                     'PIX',                               # FORMAPGTO
-                    payment_id                           # IDPAGAMENO
+                    payment_id                           # IDPAGAMENTO
                 )
                 
                 cur.execute(query, params)
