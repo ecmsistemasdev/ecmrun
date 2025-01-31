@@ -97,12 +97,12 @@ def index():
 @app.route('/comprovante/<int:payment_id>')
 def comprovante(payment_id):
     try:
-        
-        app.logger.info(f"Payment ID: {payment_id}")
+        app.logger.info(f"Iniciando busca para Payment ID: {payment_id}")
         
         cur = mysql.connection.cursor()
-        # Execute a SQL com o payment_id
-        cur.execute('''
+        
+        # Log da query
+        query = '''
             SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
@@ -114,15 +114,20 @@ def comprovante(payment_id):
             AND E.IDEVENTO = I.IDEVENTO
             AND A.IDATLETA = I.IDATLETA
             AND I.IDPAGAMENTO = %s
-        ''', (payment_id,))
+        '''
+        app.logger.info(f"Executando query: {query}")
         
+        cur.execute(query, (payment_id,))
         receipt_data = cur.fetchone()
+        
+        app.logger.info(f"Resultado da query: {receipt_data}")
+        
         cur.close()
 
         if not receipt_data:
-            app.logger.info("Dados não encontrados")
+            app.logger.warning(f"Dados não encontrados para payment_id: {payment_id}")
             return "Dados não encontrados", 404
-        
+
         # Converter a data de string para datetime
         data_pagamento = datetime.strptime(receipt_data[0], '%d/%m/%Y %H:%M:%S')  # Formato correto
 
@@ -149,8 +154,8 @@ def comprovante(payment_id):
 
     except Exception as e:
         app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
+        app.logger.error(f"Traceback completo:", exc_info=True)
         return "Erro ao buscar dados", 500
-
 
 @app.route('/comprovanteemail/<int:payment_id>')
 def comprovanteemail(payment_id):
