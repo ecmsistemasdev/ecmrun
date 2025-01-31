@@ -94,40 +94,54 @@ def index():
 #def comprovante():
 #    return render_template('comprovante_insc.html', **receipt_data)
 
+def send_organizer_notification(receipt_data):
+    try:
+        msg = Message(
+            'Nova Inscrição - 4º Desafio 200k',
+            sender=('ECM Run', 'adm@ecmrun.com.br'),
+            recipients=['kelioxavier@gmail.com']
+        )
+        
+        # Render the organizer notification template with receipt data
+        msg.html = render_template('organizer_email.html', **receipt_data)
+        mail.send(msg)
+        app.logger.info("Notificação enviada para o organizador")
+        return True
+        
+    except Exception as e:
+        app.logger.error(f"Erro ao enviar notificação para o organizador: {str(e)}")
+        return False
+
+
 @app.route('/comprovante/<int:payment_id>')
 def comprovante(payment_id):
     try:
-        app.logger.info(f"Iniciando busca para Payment ID: {payment_id}")
+        
+        app.logger.info(f"Payment ID: {payment_id}")
         
         cur = mysql.connection.cursor()
-        
-        # Log da query
-        query = '''
+        # Execute a SQL com o payment_id
+        cur.execute('''
             SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-                I.VALOR, I.IDPAGAMENTO
+                I.VALOR, I.VALOR_PGTO, I.IDPAGAMENTO
             FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
             AND E.IDEVENTO = I.IDEVENTO
             AND A.IDATLETA = I.IDATLETA
             AND I.IDPAGAMENTO = %s
-        '''
-        app.logger.info(f"Executando query: {query}")
+        ''', (payment_id,))
         
-        cur.execute(query, (payment_id,))
         receipt_data = cur.fetchone()
-        
-        app.logger.info(f"Resultado da query: {receipt_data}")
-        
         cur.close()
 
         if not receipt_data:
-            app.logger.warning(f"Dados não encontrados para payment_id: {payment_id}")
+            app.logger.info("Dados não encontrados")
             return "Dados não encontrados", 404
-
+        
         # Converter a data de string para datetime
         data_pagamento = datetime.strptime(receipt_data[0], '%d/%m/%Y %H:%M:%S')  # Formato correto
 
@@ -140,22 +154,26 @@ def comprovante(payment_id):
             'participante': receipt_data[4],
             'km': receipt_data[5],
             'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
-            'inscricao': str(receipt_data[7]),
+            'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
+            'inscricao': str(receipt_data[8]),
             'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, medalha e troféu.'
         }
         
         app.logger.info("Dados da Inscrição:")
-        app.logger.error(receipt_data)
+        app.logger.info(receipt_data)
 
         # Enviar email com os dados do comprovante
         send_email(receipt_data_dict)
+        
+        # Enviar notificação para o organizador
+        send_organizer_notification(receipt_data_dict)
 
         return render_template('comprovante_insc.html', **receipt_data_dict)
 
     except Exception as e:
         app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
-        app.logger.error(f"Traceback completo:", exc_info=True)
         return "Erro ao buscar dados", 500
+
 
 @app.route('/comprovanteemail/<int:payment_id>')
 def comprovanteemail(payment_id):
@@ -170,7 +188,7 @@ def comprovanteemail(payment_id):
                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-                I.VALOR, I.IDPAGAMENTO
+                I.VALOR, I.VALOR_PGTO, I.IDPAGAMENTO
             FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
@@ -199,7 +217,8 @@ def comprovanteemail(payment_id):
             'participante': receipt_data[4],
             'km': receipt_data[5],
             'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
-            'inscricao': str(receipt_data[7]),
+            'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
+            'inscricao': str(receipt_data[8]),
             'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, medalha e troféu.'
         }
         
@@ -211,7 +230,6 @@ def comprovanteemail(payment_id):
     except Exception as e:
         app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
         return "Erro ao buscar dados", 500
-
 
 
 @app.route('/pagpix')
