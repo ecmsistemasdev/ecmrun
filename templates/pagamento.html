@@ -160,6 +160,27 @@
             gap: 10px;
             margin-top: 20px;
         }
+        /* adicionado 01/02 */
+        .payment-status {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid #ffeeba;
+        }
+
+        .payment-status i {
+            margin-right: 8px;
+        }
+
+        /* Adicione estas classes para persistência de estado */
+        .persistent-data {
+            display: none;
+        }
+        /* FIM >>  adicionado 01/02 */
 
         @media (max-width: 480px) {
             .qr-code {
@@ -266,7 +287,14 @@
         <div class="payment-info">
             <div>Valor total a pagar:</div>
             <div class="total-amount" id="totalAmount">Carregando...</div>
+            <div class="payment-status">
+                <i class="bi bi-exclamation-circle"></i>
+                Aguarde na página após realizar o pagamento. A confirmação é automática.
+            </div>
         </div>
+
+        <!-- Adicione campos ocultos para persistência -->
+        <input type="hidden" id="persistentPaymentId" class="persistent-data">
 
         <div id="loadingContainer" class="qr-container">
             <div class="spinner"></div>
@@ -341,10 +369,10 @@
                 baseURL: 'http://192.168.100.16:5000'
             },
             production: {
-                baseURL: 'https://ecmrun.com.br'  // Replace with actual production URL
+                baseURL: 'https://ecmrun.com.br'
             }
         };
- 
+
         // Determine environment 
         const currentEnv = window.location.hostname === 'localhost' || 
                         window.location.hostname.includes('192.168') ? 
@@ -355,11 +383,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             let paymentId = null;
             let checkInterval = null;
+            const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutos em milissegundos
 
             const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
             const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
             const totalValue = vlinscricao + vltaxa;
-        
+
             const camiseta_ = (localStorage.getItem('camiseta') || '')
             const apoio_ = (localStorage.getItem('apoio') || '')
             const equipe_ = (localStorage.getItem('nome_equipe') || '')
@@ -370,6 +399,19 @@
             console.error('Equipe:', equipe_);
             console.error('Integrantes:', integrantes_);
 
+            // Função para persistir o paymentId
+            function persistPaymentId(id) {
+                paymentId = id;
+                sessionStorage.setItem('currentPaymentId', id);
+                console.log('PaymentId persistido:', id);
+            }
+
+            // Função para recuperar paymentId persistido
+            function getPersistedPaymentId() {
+                const id = sessionStorage.getItem('currentPaymentId');
+                console.log('PaymentId recuperado:', id);
+                return id;
+            }
 
             // Function to format currency values
             function formatCurrency(value) {
@@ -381,7 +423,6 @@
 
             // Function to clear specific payment-related localStorage items
             function clearPaymentRelatedLocalStorage() {
-                //const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
                 const itemsToRemove = ['vlinscricao', 'vltaxa'];
                 
                 itemsToRemove.forEach(item => {
@@ -411,7 +452,14 @@
 
                     document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
                     
-                    await generatePixPayment(totalValue);
+                    // Verifica se já existe um pagamento em andamento
+                    const persistedId = getPersistedPaymentId();
+                    if (persistedId) {
+                        console.log('Retomando verificação de pagamento existente');
+                        await startPaymentVerification(persistedId);
+                    } else {
+                        await generatePixPayment(totalValue);
+                    }
                 } catch (error) {
                     console.error('Erro na inicialização:', error);
                     alert('Erro ao inicializar o pagamento. Por favor, tente novamente.');
@@ -443,8 +491,6 @@
 
                     console.log('Dados sendo enviados para o servidor:', requestData);
 
-                    //const response = await fetch(`${baseURL}/criar_pix`, {
-                    //const response = await fetch('http://192.168.100.16:5000/gerar-pix', {
                     const response = await fetch(`${baseURL}/gerar-pix`, {
                         method: 'POST',
                         headers: {
@@ -475,6 +521,7 @@
                     }
                     
                     if (responseData.success && responseData.payment_id) {
+                        persistPaymentId(responseData.payment_id);
                         startPaymentVerification(responseData.payment_id);
                     }
 
@@ -493,32 +540,50 @@
                     clearInterval(checkInterval);
                 }
 
+                let startTime = Date.now();
+                let redirectInProgress = false; // Flag para controlar o redirecionamento
+                
                 const checkPayment = async () => {
+                    // Se já estiver redirecionando, não faz nada
+                    if (redirectInProgress) {
+                        return;
+                    }
+
                     try {
-                        //const response = await fetch(`http://192.168.100.16:5000/verificar-pagamento/${paymentId}`);
-                        //const response = await fetch(`${baseURL}/verificar_pagamento/${paymentId}`);
+                        if (Date.now() - startTime > VERIFICATION_TIMEOUT) {
+                            clearInterval(checkInterval);
+                            alert('Tempo de verificação expirado. Se você já realizou o pagamento, aguarde alguns instantes e atualize a página.');
+                            return;
+                        }
+
                         const response = await fetch(`${baseURL}/verificar-pagamento/${paymentId}`);
                         const data = await response.json();
                         
-                        if (data.success) {
-                            if (data.status === 'approved') {
-                                clearInterval(checkInterval);
-                                
-                                const modal = document.getElementById('paymentModal');
-                                const loadingElem = document.getElementById('loadingPayment');
-                                const successElem = document.getElementById('paymentSuccess');
-                                
-                                loadingElem.style.display = 'none';
-                                successElem.style.display = 'block';
-                                
-                                // Clear all non-essential localStorage items
-                                clearAllNonEssentialLocalStorage();
-                                
-                                // Redirect after 3 seconds
-                                setTimeout(() => {
-                                    window.location.href = `/comprovante/${paymentId}`;
-                                }, 3000); 
-                            }
+                        if (data.success && data.status === 'approved') {
+                            // Marca que o redirecionamento está em progresso
+                            redirectInProgress = true;
+                            
+                            // Limpa o intervalo imediatamente
+                            clearInterval(checkInterval);
+                            
+                            // Remove o paymentId do sessionStorage
+                            sessionStorage.removeItem('currentPaymentId');
+                            
+                            const modal = document.getElementById('paymentModal');
+                            const loadingElem = document.getElementById('loadingPayment');
+                            const successElem = document.getElementById('paymentSuccess');
+                            
+                            loadingElem.style.display = 'none';
+                            successElem.style.display = 'block';
+                            
+                            clearAllNonEssentialLocalStorage();
+                            
+                            // Remove o listener de visibilitychange antes do redirecionamento
+                            document.removeEventListener('visibilitychange', handleVisibilityChange);
+                            
+                            setTimeout(() => {
+                                window.location.href = `/comprovante/${paymentId}`;
+                            }, 3000);
                         }
                     } catch (error) {
                         console.error('Erro ao verificar pagamento:', error);
@@ -526,10 +591,24 @@
                 };
 
                 await checkPayment();
-                checkInterval = setInterval(checkPayment, 3000);
+                checkInterval = setInterval(checkPayment, 5000);
             }
 
-            ////// nova função copiar chave
+            // Define a função handleVisibilityChange separadamente para poder removê-la depois
+            function handleVisibilityChange() {
+                if (document.visibilityState === 'visible') {
+                    const persistedId = getPersistedPaymentId();
+                    if (persistedId) {
+                        console.log('Página voltou a ficar visível, retomando verificação');
+                        startPaymentVerification(persistedId);
+                    }
+                }
+            }
+
+            // Adiciona o listener usando a função nomeada
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            // Função para copiar chave PIX
             window.copyPixKey = function() {
                 const pixKey = document.getElementById('pixKey').textContent;
                 if (!pixKey) {
@@ -538,7 +617,6 @@
                     return;
                 }
                 
-                // Tenta primeiro o método moderno
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(pixKey)
                         .then(() => {
@@ -548,18 +626,15 @@
                             fallbackCopyMethod(pixKey);
                         });
                 } else {
-                    // Método alternativo para ambientes não seguros
                     fallbackCopyMethod(pixKey);
                 }
             };
 
             function fallbackCopyMethod(text) {
                 try {
-                    // Cria um elemento temporário
                     const textArea = document.createElement('textarea');
                     textArea.value = text;
                     
-                    // Evita scrolling para o elemento
                     textArea.style.top = '0';
                     textArea.style.left = '0';
                     textArea.style.position = 'fixed';
@@ -569,7 +644,6 @@
                     textArea.focus();
                     textArea.select();
                     
-                    // Tenta copiar o texto
                     const successful = document.execCommand('copy');
                     document.body.removeChild(textArea);
                     
@@ -584,25 +658,16 @@
                 }
             }
 
-            // Essa função de Copiar estava funcionando somente em PRODUÇÂO
-            // Copy PIX key function
-            // window.copyPixKey = function() {
-            //     const pixKey = document.getElementById('pixKey').textContent;
-            //     if (!pixKey) {
-            //         console.error('Chave PIX não encontrada');
-            //         alert('Chave PIX não disponível no momento. Por favor, aguarde o carregamento ou recarregue a página.');
-            //         return;
-            //     }
-                
-            //     navigator.clipboard.writeText(pixKey)
-            //         .then(() => {
-            //             alert('Chave PIX copiada com sucesso!');
-            //         })
-            //         .catch(err => {
-            //             console.error('Erro ao copiar chave PIX:', err);
-            //             alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
-            //         });
-            // };
+            // Listener para eventos de visibilidade da página
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible') {
+                    const persistedId = getPersistedPaymentId();
+                    if (persistedId) {
+                        console.log('Página voltou a ficar visível, retomando verificação');
+                        startPaymentVerification(persistedId);
+                    }
+                }
+            });
 
             // Add event listener for 'Back' button to clear specific items
             document.querySelector('button.button.secondary').addEventListener('click', clearPaymentRelatedLocalStorage);
