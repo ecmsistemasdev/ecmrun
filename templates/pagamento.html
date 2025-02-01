@@ -216,7 +216,6 @@
             align-items: center;
         }
 
-
         .modal-content {
             background-color: white;
             padding: 30px;
@@ -226,13 +225,11 @@
             width: 90%;
         }
 
-
         .modal-title {
             font-size: 24px;
             color: #4376ac;
             margin-bottom: 20px;
         }
-
 
         .spinner {
             display: inline-block;
@@ -276,14 +273,12 @@
     </style>
 </head>
 <body>
-
     <div class="logo-container">
         <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
     </div>
 
     <div class="payment-container" id="pixForm">
-        <div class="form-title">Pagamento via PIX</div>
-        
+        <div class="form-title">Pagamento via PIX</div>  
         <div class="payment-info">
             <div>Valor total a pagar:</div>
             <div class="total-amount" id="totalAmount">Carregando...</div>
@@ -313,7 +308,8 @@
         </div>
 
         <div class="button-container">
-            <button class="button secondary" onclick="window.history.back()">Voltar</button>
+            <button class="button secondary" onclick="window.location.href='desafio200k'">Voltar</button>
+            <!--<button class="button secondary" onclick="window.history.back()">Voltar</button>-->
         </div>
     </div>
 
