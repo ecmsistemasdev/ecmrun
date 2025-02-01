@@ -294,10 +294,8 @@
             </div>
         </div>
 
-        <!--
-        <button type="submit" class="submit-btn">Entrar</button>
-        -->
-        <button type="submit" id="buscarCep" class="entrar-button">Entrar</button>
+        <!--<button type="submit" class="submit-btn">Entrar</button>-->
+        <button type="submit" id="submit" class="entrar-button">Entrar</button>
         <br><br>
         <a href="#"><b>Esqueceu sua senha, clique aqui.</b></a>
         <br>
@@ -318,6 +316,19 @@
     </footer>
 
     <script>
+        // Add the showModal and closeModal functions
+        function showModal(message) {
+            const modal = document.getElementById('cepModal');
+            const modalMessage = document.getElementById('modalMessage');
+            modalMessage.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('cepModal');
+            modal.style.display = 'none';
+        }
+
         // Update the script section in login.html
         $(document).ready(function() {
             $('#cadastroForm').on('submit', function(e) {
