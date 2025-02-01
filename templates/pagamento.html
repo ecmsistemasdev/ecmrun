@@ -422,7 +422,18 @@
                     }
                 });
             }
-        
+
+            // Função para realizar o redirecionamento
+            function redirectToReceipt(paymentId) {
+                console.log('Iniciando redirecionamento para comprovante...');
+                clearAllNonEssentialLocalStorage();
+                // Garantir que o redirecionamento aconteça
+                setTimeout(() => {
+                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+                    window.location.replace(`/comprovante/${paymentId}`);
+                }, 1000);
+            }
+            
             // Initialize payment page
             async function initializePagamento() {
                 try {
@@ -529,16 +540,22 @@
                         const data = await response.json();
                         
                         if (data.success && data.status === 'approved' && !isRedirecting) {
+                            console.log('Pagamento aprovado, preparando redirecionamento...');
                             isRedirecting = true;
                             clearInterval(checkInterval);
+
+                            // Remove event listeners
+                            document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+                            // Remover o paymentId do sessionStorage
                             sessionStorage.removeItem('currentPaymentId');
                             
-                            // Remove event listeners antes do redirecionamento
-                            document.removeEventListener('visibilitychange', handleVisibilityChange);
+                            // Executar o redirecionamento
+                            redirectToReceipt(paymentId);
                             
                             // Limpa dados e redireciona
-                            clearAllNonEssentialLocalStorage();
-                            window.location.href = `/comprovante/${paymentId}`;
+                            //clearAllNonEssentialLocalStorage();
+                            //window.location.href = `/comprovante/${paymentId}`;
                         }
                     } catch (error) {
                         console.error('Erro ao verificar pagamento:', error);
