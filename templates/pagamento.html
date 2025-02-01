@@ -355,7 +355,6 @@
         </div>
     </div>
 
-
     <footer class="footer">
         <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
         <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
@@ -363,56 +362,45 @@
     </footer>
 
     <script>
-
-        const environments = {
-            development: {
-                baseURL: 'http://192.168.100.16:5000'
-            },
-            production: {
-                baseURL: 'https://ecmrun.com.br'
-            }
-        };
-
-        // Determine environment 
-        const currentEnv = window.location.hostname === 'localhost' || 
-                        window.location.hostname.includes('192.168') ? 
-                        'development' : 'production';
-
-        const baseURL = environments[currentEnv].baseURL;        
-
         document.addEventListener('DOMContentLoaded', function() {
             let paymentId = null;
             let checkInterval = null;
             const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutos em milissegundos
-
+            let isRedirecting = false; // Flag para controlar redirecionamento
+        
+            const environments = {
+                development: {
+                    baseURL: 'http://192.168.100.16:5000'
+                },
+                production: {
+                    baseURL: 'https://ecmrun.com.br'
+                }
+            };
+        
+            const currentEnv = window.location.hostname === 'localhost' || 
+                            window.location.hostname.includes('192.168') ? 
+                            'development' : 'production';
+        
+            const baseURL = environments[currentEnv].baseURL;
+        
             const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
             const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
             const totalValue = vlinscricao + vltaxa;
-
-            const camiseta_ = (localStorage.getItem('camiseta') || '')
-            const apoio_ = (localStorage.getItem('apoio') || '')
-            const equipe_ = (localStorage.getItem('nome_equipe') || '')
-            const integrantes_ = (localStorage.getItem('integrantes') || '')
-            
-            console.error('Camisa:', camiseta_);           
-            console.error('Apoio:', apoio_);
-            console.error('Equipe:', equipe_);
-            console.error('Integrantes:', integrantes_);
-
+        
             // Função para persistir o paymentId
             function persistPaymentId(id) {
                 paymentId = id;
                 sessionStorage.setItem('currentPaymentId', id);
                 console.log('PaymentId persistido:', id);
             }
-
+        
             // Função para recuperar paymentId persistido
             function getPersistedPaymentId() {
                 const id = sessionStorage.getItem('currentPaymentId');
                 console.log('PaymentId recuperado:', id);
                 return id;
             }
-
+        
             // Function to format currency values
             function formatCurrency(value) {
                 return new Intl.NumberFormat('pt-BR', {
@@ -420,39 +408,30 @@
                     currency: 'BRL'
                 }).format(value);
             }
-
-            // Function to clear specific payment-related localStorage items
+        
+            // Function to clear payment-related localStorage items
             function clearPaymentRelatedLocalStorage() {
                 const itemsToRemove = ['vlinscricao', 'vltaxa'];
-                
                 itemsToRemove.forEach(item => {
                     localStorage.removeItem(item);
                 });
             }
-
+        
             // Function to clear all non-essential localStorage items
             function clearAllNonEssentialLocalStorage() {
                 const keysToKeep = ['user_name', 'user_email', 'user_cpf'];
-                
                 Object.keys(localStorage).forEach(key => {
                     if (!keysToKeep.includes(key)) {
                         localStorage.removeItem(key);
                     }
                 });
             }
-
+        
             // Initialize payment page
             async function initializePagamento() {
                 try {
-                    const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
-                    const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
-                    const totalValue = vlinscricao + vltaxa;
-                    
-                    console.log('Valor total:', totalValue);
-
                     document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
                     
-                    // Verifica se já existe um pagamento em andamento
                     const persistedId = getPersistedPaymentId();
                     if (persistedId) {
                         console.log('Retomando verificação de pagamento existente');
@@ -465,7 +444,7 @@
                     alert('Erro ao inicializar o pagamento. Por favor, tente novamente.');
                 }
             }
-
+        
             // Generate PIX payment
             async function generatePixPayment(totalValue) {
                 try {
@@ -479,18 +458,16 @@
                         nome_equipe: localStorage.getItem('nome_equipe'),
                         integrantes: localStorage.getItem('integrantes')
                     };
-
+        
                     if (!userData.email || !userData.cpf || !totalValue) {
                         throw new Error('Dados incompletos para geração do PIX');
                     }
-
+        
                     const requestData = {
                         valor_total: totalValue,
                         ...userData
                     };
-
-                    console.log('Dados sendo enviados para o servidor:', requestData);
-
+        
                     const response = await fetch(`${baseURL}/gerar-pix`, {
                         method: 'POST',
                         headers: {
@@ -498,18 +475,18 @@
                         },
                         body: JSON.stringify(requestData)
                     });
-
+        
                     const responseData = await response.json();
-
+        
                     if (!response.ok || !responseData.success) {
                         throw new Error(responseData.message || `Erro HTTP: ${response.status}`);
                     }
-
+        
                     const qrContainer = document.getElementById('qrContainer');
                     const loadingContainer = document.getElementById('loadingContainer');
                     const qrCode = document.getElementById('qrCode');
                     const pixKey = document.getElementById('pixKey');
-
+        
                     if (responseData.qr_code && responseData.qr_code_base64) {
                         qrCode.src = `data:image/png;base64,${responseData.qr_code_base64}`;
                         pixKey.textContent = responseData.qr_code;
@@ -522,9 +499,9 @@
                     
                     if (responseData.success && responseData.payment_id) {
                         persistPaymentId(responseData.payment_id);
-                        startPaymentVerification(responseData.payment_id);
+                        await startPaymentVerification(responseData.payment_id);
                     }
-
+        
                 } catch (error) {
                     console.error('Erro detalhado ao gerar PIX:', error);
                     document.getElementById('loadingContainer').innerHTML = `
@@ -533,70 +510,55 @@
                     `;
                 }
             }
-
+        
             // Start payment verification process
             async function startPaymentVerification(paymentId) {
                 if (checkInterval) {
                     clearInterval(checkInterval);
                 }
-
+        
                 let startTime = Date.now();
-                let redirectInProgress = false; // Flag para controlar o redirecionamento
                 
                 const checkPayment = async () => {
-                    // Se já estiver redirecionando, não faz nada
-                    if (redirectInProgress) {
-                        return;
-                    }
-
+                    if (isRedirecting) return;
+        
                     try {
                         if (Date.now() - startTime > VERIFICATION_TIMEOUT) {
                             clearInterval(checkInterval);
                             alert('Tempo de verificação expirado. Se você já realizou o pagamento, aguarde alguns instantes e atualize a página.');
                             return;
                         }
-
+        
                         const response = await fetch(`${baseURL}/verificar-pagamento/${paymentId}`);
                         const data = await response.json();
                         
-                        if (data.success && data.status === 'approved') {
-                            // Marca que o redirecionamento está em progresso
-                            redirectInProgress = true;
-                            
-                            // Limpa o intervalo imediatamente
+                        if (data.success && data.status === 'approved' && !isRedirecting) {
+                            isRedirecting = true;
                             clearInterval(checkInterval);
-                            
-                            // Remove o paymentId do sessionStorage
                             sessionStorage.removeItem('currentPaymentId');
                             
-                            const modal = document.getElementById('paymentModal');
-                            const loadingElem = document.getElementById('loadingPayment');
-                            const successElem = document.getElementById('paymentSuccess');
-                            
-                            loadingElem.style.display = 'none';
-                            successElem.style.display = 'block';
-                            
-                            clearAllNonEssentialLocalStorage();
-                            
-                            // Remove o listener de visibilitychange antes do redirecionamento
+                            // Remove event listeners antes do redirecionamento
                             document.removeEventListener('visibilitychange', handleVisibilityChange);
                             
-                            setTimeout(() => {
-                                window.location.href = `/comprovante/${paymentId}`;
-                            }, 3000);
+                            // Limpa dados e redireciona
+                            clearAllNonEssentialLocalStorage();
+                            window.location.href = `/comprovante/${paymentId}`;
                         }
                     } catch (error) {
                         console.error('Erro ao verificar pagamento:', error);
                     }
                 };
-
+        
+                // Primeira verificação imediata
                 await checkPayment();
-                checkInterval = setInterval(checkPayment, 5000);
+                // Configurar intervalo para verificações subsequentes
+                if (!isRedirecting) {
+                    checkInterval = setInterval(checkPayment, 5000);
+                }
             }
-
-            // Define a função handleVisibilityChange separadamente para poder removê-la depois
+        
             function handleVisibilityChange() {
-                if (document.visibilityState === 'visible') {
+                if (document.visibilityState === 'visible' && !isRedirecting) {
                     const persistedId = getPersistedPaymentId();
                     if (persistedId) {
                         console.log('Página voltou a ficar visível, retomando verificação');
@@ -604,10 +566,7 @@
                     }
                 }
             }
-
-            // Adiciona o listener usando a função nomeada
-            document.addEventListener('visibilitychange', handleVisibilityChange);
-
+        
             // Função para copiar chave PIX
             window.copyPixKey = function() {
                 const pixKey = document.getElementById('pixKey').textContent;
@@ -629,12 +588,11 @@
                     fallbackCopyMethod(pixKey);
                 }
             };
-
+        
             function fallbackCopyMethod(text) {
                 try {
                     const textArea = document.createElement('textarea');
                     textArea.value = text;
-                    
                     textArea.style.top = '0';
                     textArea.style.left = '0';
                     textArea.style.position = 'fixed';
@@ -657,25 +615,15 @@
                     alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
                 }
             }
-
-            // Listener para eventos de visibilidade da página
-            document.addEventListener('visibilitychange', function() {
-                if (document.visibilityState === 'visible') {
-                    const persistedId = getPersistedPaymentId();
-                    if (persistedId) {
-                        console.log('Página voltou a ficar visível, retomando verificação');
-                        startPaymentVerification(persistedId);
-                    }
-                }
-            });
-
-            // Add event listener for 'Back' button to clear specific items
+        
+            // Event Listeners
+            document.addEventListener('visibilitychange', handleVisibilityChange);
             document.querySelector('button.button.secondary').addEventListener('click', clearPaymentRelatedLocalStorage);
-
-            // Initialize payment page on load
+        
+            // Initialize
             initializePagamento();
         });
-
+        
     </script>
 </body>
 </html>
