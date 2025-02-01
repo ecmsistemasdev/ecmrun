@@ -90,14 +90,39 @@ def fn_email(valor):
 def index():
     return render_template("index.html")
 
-#@app.route('/comprovante')
-#def comprovante():
-#    return render_template('comprovante_insc.html', **receipt_data)
+
+def get_receipt_data(payment_id):
+    """Função separada para buscar dados do comprovante"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute('''
+            SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
+                CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
+                CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
+                CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
+                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
+            FROM ecmrun.INSCRICAO_TT I
+            JOIN ecmrun.ATLETA_TT A ON A.IDATLETA = I.IDATLETA
+            JOIN ecmrun.EVENTO E ON E.IDEVENTO = I.IDEVENTO
+            JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+            WHERE I.IDPAGAMENTO = %s
+        ''', (payment_id,))
+        
+        data = cur.fetchone()
+        cur.close()
+        return data
+    except Exception as e:
+        app.logger.error(f"Erro ao buscar dados: {str(e)}")
+        raise
+
+#########################
+
+#############################    
 
 def send_organizer_notification(receipt_data):
     try:
         msg = Message(
-            'Nova Inscrição - 4º Desafio 200k',
+            f'Nova Inscrição - 4º Desafio 200k - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'adm@ecmrun.com.br'),
             recipients=['ecmsistemasdeveloper@gmail.com']
         )
@@ -157,7 +182,7 @@ def comprovante(payment_id):
             'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[8],
             'inscricao': str(receipt_data[9]),
-            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, medalha e troféu.'
+            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, e após concluir: medalha e troféu. Obs: Será apenas um troféu por equipe.'
         }
         
         app.logger.info("Dados da Inscrição:")
@@ -221,7 +246,7 @@ def comprovanteemail(payment_id):
             'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[8],
             'inscricao': str(receipt_data[9]),
-            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, medalha e troféu.'
+            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, e após concluir: medalha e troféu. Obs: Será apenas um troféu por equipe.'
         }
         
         app.logger.info("Dados da Inscrição:")
@@ -234,19 +259,20 @@ def comprovanteemail(payment_id):
         return "Erro ao buscar dados", 500
 
 
+
 @app.route('/pagpix')
 def pagpix():
     return render_template('pagpix.html')
 
 ###############
 
-@app.route('/checkout')
-def checkout():
-    return render_template('checkout.html')
+#@app.route('/checkout')
+#def checkout():
+#    return render_template('checkout.html')
 
-@app.route('/checkout2')
-def checkout2():
-    return render_template('checkout2.html')
+#@app.route('/checkout2')
+#def checkout2():
+#    return render_template('checkout2.html')
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -845,39 +871,6 @@ def verificar_cpf_existente():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/generate-pdf', methods=['POST'])
-def generate_pdf():
-    # Renderiza o template HTML
-    html = render_template('comprovante_insc.html', data=request.form)
-    
-    # Gera o PDF a partir do HTML
-    pdf = pdfkit.from_string(html, False)  # False retorna o PDF como bytes
-    
-    # Cria uma resposta para download do PDF
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'attachment; filename=comprovante.pdf'
-    
-    return response
-
-# @app.route('/send-email', methods=['POST'])
-# def send_email():
-#     #pdf = pdfkit.from_string(render_template('comprovante_insc.html', data=request.form), False)
-    
-#     msg = Message("Comprovante PDF", recipients=["naicm12@gmail.com"])
-#     #msg.attach("comprovante001.pdf", "application/pdf", pdf)
-    
-#     mail.send(msg)
-    
-#     return "Email enviado com sucesso!"
-
-
-#@app.route('/send-email-link')
-#def send_email_link():
-#    # Chama a função send_email() diretamente
-#    return send_email()
-
-
 def send_email(receipt_data):
     try:
         # Recuperar o email do atleta do banco de dados
@@ -899,7 +892,7 @@ def send_email(receipt_data):
         recipient_email = email_result[0]
         
         msg = Message(
-            'Comprovante de Inscrição',
+            f'Comprovante de Inscrição - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'adm@ecmrun.com.br'),
             recipients=[recipient_email]
         )
@@ -912,23 +905,23 @@ def send_email(receipt_data):
         app.logger.error(f"Erro ao enviar email: {str(e)}")
         return False
 
-
-# @app.route('/send-email', methods=['POST'])
-# def send_email():
+# ### auterada pelo Claude
+# def send_email(receipt_data):
 #     # Renderiza o template HTML com os dados do recibo
 #     html_content = render_template('comprovante_email.html', **receipt_data)
 
 #     # Criação da mensagem de e-mail
 #     msg = Message(subject='Desafio 200k - Comprovante Inscrição',
 #                   sender='adm@ecmrun.com.br',
-#                   recipients=['naicm12@gmail.com'])
+#                   recipients=[var_email])  # Aqui você pode pegar o email do localStorage se estiver usando JS no frontend
 
 #     # Define o corpo do e-mail como HTML
 #     msg.html = html_content
 
 #     # Envia o e-mail
 #     mail.send(msg)
-#     return "Email enviado com sucesso!"
+#     app.logger.info(f"Enviado Email para: {var_email}")
+
 
 ###################
 
