@@ -363,9 +363,29 @@
                         localStorage.setItem('user_celular', data.celular);
                         localStorage.setItem('user_sexo', data.sexo);
                         localStorage.setItem('user_idatleta', data.idatleta);
+                        localStorage.setItem('insc_modalidade', data.modalidade);
+                        localStorage.setItem('insc_apoio', data.apoio);
+                        localStorage.setItem('insc_equipe200', data.equipe200);
+                        localStorage.setItem('insc_integrantes', data.integrantes)
+                        localStorage.setItem('insc_camiseta', data.camiseta);
+                        localStorage.setItem('insc_valor', data.valor);
+                        localStorage.setItem('insc_taxa', data.taxa);
+                        localStorage.setItem('insc_valortotal', data.valortotal);
+                        localStorage.setItem('insc_dtpagamento', data.dtpagamento);
+                        localStorage.setItem('insc_formapgto', data.formapgto);
+                        localStorage.setItem('insc_idpagamento', data.idpagamento);
+                        
+                        // Check the value of insc_idpagamento
+                        const idPagamento = localStorage.getItem('insc_idpagamento');
+                        
+                        if (!idPagamento || idPagamento === 'none') {
+                            // Redirect to inscription page if idpagamento is empty or 'none'
+                            window.location.href = '/inscricao200k';
+                        } else {
+                            // Redirect to form page if idpagamento has a value
+                            window.location.href = '/formulario200k';
+                        }
 
-                        // Redirect to inscription page
-                        window.location.href = '/inscricao200k';
                     } else {
                         showModal('Usuário ou senha inválidos');
                     }

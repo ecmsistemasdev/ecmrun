@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4º Desafio 200k</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 15px;
+            background-color: #f0f0f0;
+            min-height: 100vh;
+        }
+        /*
+        .logo-container {
+            width: 100%;
+            height: 70px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        */
+        .logo-container {
+            width: 100%;
+            height: 70px;
+            background-color: white;
+            display: flex;
+            justify-content: flex-start; /* Changed from center to flex-start */
+            padding-left: 20px; /* Added padding to the left */
+            align-items: center;
+            margin-bottom: 20px;
+        }        
+
+        .logo {
+            width: 70px;
+            height: 70px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .form-title {
+            background-color: #647e99;
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 7px 7px 0 0;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        form {
+            width: 50%;
+            background: white;
+            padding: 20px;
+            border-radius: 7px;
+            min-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            form {
+                width: calc(100% - 35px);
+                margin: 0px 20px 20px 20px;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            padding-top: 5px;
+        }
+
+        .form-row {
+            display: flex;
+            padding-top: 5px;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .field-group {
+            border-color: #647e99;
+            border-radius: 5px;
+            border-width: 1px;
+            font-size: 14px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            height: 40px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 3px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .info-label {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .value-label {
+            background-color: #e8f4ff;
+            padding: 10px;
+            border-radius: 4px;
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #0056b3;
+            font-weight: bold;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .radio-group label {
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #4376ac;
+            margin: 25px 0;
+        }
+
+        button {
+            background-color: #4376ac;
+            color: white;
+            margin-top: 25px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: auto;
+            display: inline-block;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    </div>
+
+    <h1>4º Desafio 200k - Porto Velho-Humaitá</h1>
+    
+    <form id="inscricaoForm">
+        <div class="form-title">Dados da Inscrição - Atleta</div>
+    
+        <div class="form-group">
+            <label>Nome Completo:</label>
+            <div id="nome_completo" class="info-label"></div>
+        </div>
+
+        <div class="form-group">
+            <label>CPF:</label>
+            <div id="cpf" class="info-label"></div>
+        </div>
+
+        <div>
+            <div class="form-group">
+                <label>Celular:</label>
+                <div id="celular" class="info-label"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Data Nascimento:</label>
+                <div id="dtnascimento" class="info-label"></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>E-mail:</label>
+            <div id="email" class="info-label"></div>
+        </div>
+    
+        <div class="form-group">
+            <label>Camiseta:</label>
+            <div class="radio-group">
+                <label><input type="radio" id="camiseta" name="camiseta" value="PP" readonly="true"> PP</label>
+                <label><input type="radio" id="camiseta" name="camiseta" value="P" readonly="true"> P</label>
+                <label><input type="radio" id="camiseta" name="camiseta" value="M" readonly="true"> M</label>
+                <label><input type="radio" id="camiseta" name="camiseta" value="G" readonly="true"> G</label>
+                <label><input type="radio" id="camiseta" name="camiseta" value="GG" readonly="true"> GG</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Modalidade:</label>
+            <div id="modalidade" class="value-label"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Apoio:</label>
+            <div id="apoio" class="value-label"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Nome da Equipe 200k:</label>
+            <div id="nome_equipe" class="value-label"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Integrantes:</label>
+            <div id="integrantes" class="value-label"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Valor da Inscrição:</label>
+            <div id="valor" class="value-label"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Forma de Pagamento:</label>
+            <div id="formapgto" class="value-label"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Data Inscrição:</label>
+            <div hidden id="dtpagamento" class="value-label"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+            <a id="comprovanteLink" href="#">Ver Comprovante</a>
+        </div>
+
+        <button onclick="window.location.href='/desafio200k'" type="button" class="button">Voltar</button>
+
+    </form>
+
+    <footer class="footer">
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+
+    <script>
+     
+        $(document).ready(function() {
+            // Get user data from localStorage
+            const userName = localStorage.getItem('user_name');
+            const userEmail = localStorage.getItem('user_email');
+            const cpf = localStorage.getItem('user_cpf');
+            const dataNascimento = localStorage.getItem('user_dtnascimento');
+            const celular = localStorage.getItem('user_celular');
+            const sexo = localStorage.getItem('user_sexo');
+            const idatleta = localStorage.getItem('user_idatleta');
+            const camiseta = localStorage.getItem('insc_camiseta')
+            const Modalidade = localStorage.getItem('insc_modalidade');
+            const valor = localStorage.getItem('valor');
+            const taxa = localStorage.getItem('insc_taxa');
+            const valortotal = localStorage.getItem('insc_valortotal');
+            const equipe200 = localStorage.getItem('insc_equipe200')
+            const apoio = localStorage.getItem('insc_apoio');
+            const integrantes = localStorage.getItem('insc_integrantes');
+            const dtpagamento = localStorage.getItem('insc_dtpagamento');
+            const formapgto = localStorage.getItem('insc_formapgto');
+            const idpagamento = localStorage.getItem('insc_idpagamento');
+
+            // Verifica se o ID foi recuperado com sucesso
+            if (idpagamento) {
+                // Constrói a URL da rota
+                const url = `/vercomprovante/${idpagamento}`;
+                
+                // Atribui a URL ao href do link
+                document.getElementById('comprovanteLink').setAttribute('href', url);
+            } else {
+                console.error("ID do pagamento não encontrado no localStorage.");
+            }            
+            //const categoriaId = localStorage.getItem('categoria_id');
+
+            // Function to format currency values
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(value);
+            };
+
+            $('#nome_completo').text(userName);
+            $('#email').text(userEmail);
+            $('#cpf').text(cpf);
+            $('#dtnascimento').text(dataNascimento);
+            $('#celular').text(celular);
+            $('#nome_equipe').text(equipe200);
+            $('#modalidade').text(Modalidade);
+            $('#apoio').text(apoio);
+            $('#integrantes').text(integrantes);
+            $('#formapgto').text(formapgto);
+            $('#camiseta').text(camiseta);
+            $('#dtpagamento').text(dtpagamento);
+            //$('#idpagamento').text(idpagamento);
+
+            //$('#categoria').text(categoria || 'Não selecionada');
+            $('#valor').text(valor || 'A definir');
+
+            // Handle team fields based on category
+            //handleTeamFields(categoriaId);
+            //} else {
+                // Redirect to login if no user data
+            //    window.location.href = '/login';
+            //}
+
+            // // Initial state of submit button
+            // $('#submitButton').prop('disabled', true);
+            // $('#aceitoTermos').prop('checked', false);
+        });
+
+
+
+    </script>
+</body>
+</html>

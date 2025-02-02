@@ -214,6 +214,22 @@
             margin: 2px 0;
         }
 
+        .qr-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qr-code {
+            width: 64px;
+            height: 64px;
+            flex-shrink: 0;
+        }
+
+        .registration-details {
+            flex: 1;
+        }
+                
         @media screen and (max-width: 768px) {
             .email-wrapper {
                 width: 100% !important;
@@ -329,14 +345,26 @@
                         </div>
                     </div>
                 </div>
-
+                
                 <div class="content-section">
                     <div class="info-box full-width-box">
                         <span class="info-label">Inscrição:</span>
                         <span class="info-value">{{ inscricao }}</span>
                     </div>
                 </div>
-
+                <!--
+                <div class="content-section">
+                    <div class="info-box full-width-box">
+                        <span class="info-label">Inscrição:</span>
+                        <div class="qr-container">
+                            <div class="registration-details">
+                                <span class="info-value">{{ inscricao }}</span>
+                            </div>
+                            <img class="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=64x64&data=https://{{ request.host }}/comprovanteemail/{{ inscricao }}" alt="QR Code de verificação">
+                        </div>
+                    </div>
+                </div>               
+                -->
                 <div class="content-section">
                     <div class="observations">
                         <div class="observations-label">Observações:</div>
