@@ -90,6 +90,11 @@ def fn_email(valor):
 def index():
     return render_template("index.html")
 
+#@app.route("/teste")
+#def teste():
+#    return render_template('organizer_email.html', **receipt_data)
+
+
 
 def get_receipt_data(payment_id):
     """Função separada para buscar dados do comprovante"""
@@ -193,6 +198,62 @@ def comprovante(payment_id):
         
         # Enviar notificação para o organizador
         send_organizer_notification(receipt_data_dict)
+
+        return render_template('comprovante_insc.html', **receipt_data_dict)
+
+    except Exception as e:
+        app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
+        return "Erro ao buscar dados", 500
+
+@app.route('/vercomprovante/<int:payment_id>')
+def vercomprovante(payment_id):
+    try:
+        
+        app.logger.info(f"Payment ID: {payment_id}")
+        
+        cur = mysql.connection.cursor()
+        # Execute a SQL com o payment_id
+        cur.execute('''
+            SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
+                CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
+                CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
+                CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
+                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
+            FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
+            ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+            WHERE M.IDITEM = I.IDITEM
+            AND E.IDEVENTO = I.IDEVENTO
+            AND A.IDATLETA = I.IDATLETA
+            AND I.IDPAGAMENTO = %s
+        ''', (payment_id,))
+        
+        receipt_data = cur.fetchone()
+        cur.close()
+
+        if not receipt_data:
+            app.logger.info("Dados não encontrados")
+            return "Dados não encontrados", 404
+        
+        # Converter a data de string para datetime
+        data_pagamento = datetime.strptime(receipt_data[0], '%d/%m/%Y %H:%M:%S')  # Formato correto
+
+        # Estruturar os dados do comprovante
+        receipt_data_dict = { 
+            'data': data_pagamento.strftime('%d/%m/%Y %H:%M'),  # Formatar data
+            'evento': receipt_data[1],
+            'endereco': receipt_data[2],
+            'dataevento': receipt_data[3],
+            'participante': receipt_data[4],
+            'km': receipt_data[5],
+            'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
+            'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
+            'formapgto': receipt_data[8],
+            'inscricao': str(receipt_data[9]),
+            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, e após concluir: medalha e troféu. Obs: Será apenas um troféu por equipe.'
+        }
+        
+        app.logger.info("Dados da Inscrição:")
+        app.logger.info(receipt_data)
 
         return render_template('comprovante_insc.html', **receipt_data_dict)
 
@@ -813,6 +874,10 @@ def municipios():
 def inscricao200k():
     return render_template('inscricao200k.html')
 
+@app.route('/formulario200k')
+def formulario200k():
+    return render_template('formulario200k.html')
+
 @app.route('/login')
 def login():
     return render_template('login.html')
@@ -986,17 +1051,61 @@ def autenticar_login():
         if '@' in cpf_email:
             # Query for email
             cur.execute("""
-                SELECT NOME, SOBRENOME, EMAIL, CPF, DTNASCIMENTO, NRCELULAR, SEXO, IDATLETA 
-                FROM ecmrun.ATLETA_TT 
-                WHERE EMAIL = %s AND SENHA = %s AND ATIVO = 'S'
+                SELECT 
+                    COALESCE(A.NOME, '') AS NOME, 
+                    COALESCE(A.SOBRENOME, '') AS SOBRENOME, 
+                    COALESCE(A.EMAIL, '') AS EMAIL, 
+                    COALESCE(A.CPF, '') AS CPF, 
+                    COALESCE(A.DTNASCIMENTO, '') AS DTNASCIMENTO, 
+                    COALESCE(A.NRCELULAR, '') AS NRCELULAR, 
+                    COALESCE(A.SEXO, '') AS SEXO, 
+                    COALESCE(A.IDATLETA, '') AS IDATLETA, 
+                    COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
+                    COALESCE(I.IDEVENTO, '') AS IDEVENTO, 
+                    COALESCE(I.APOIO, '') AS APOIO, 
+                    COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
+                    COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
+                    COALESCE(I.CAMISETA, '') AS CAMISETA,
+                    COALESCE(I.VALOR, '') AS VALOR,
+                    COALESCE(I.TAXA, '') AS TAXA,
+                    COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
+                    COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
+                    COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
+                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO
+                FROM ecmrun.ATLETA_TT A
+                LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1
+                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+                WHERE A.EMAIL = %s AND A.SENHA = %s AND A.ATIVO = 'S'                        
             """, (cpf_email, senha_hash))
         else:
             # Remove non-numeric characters from CPF
             cpf = ''.join(filter(str.isdigit, cpf_email))
             cur.execute("""
-                SELECT NOME, SOBRENOME, EMAIL, CPF, DTNASCIMENTO, NRCELULAR, SEXO, IDATLETA 
-                FROM ecmrun.ATLETA_TT 
-                WHERE CPF = %s AND SENHA = %s AND ATIVO = 'S'
+                SELECT 
+                    COALESCE(A.NOME, '') AS NOME, 
+                    COALESCE(A.SOBRENOME, '') AS SOBRENOME, 
+                    COALESCE(A.EMAIL, '') AS EMAIL, 
+                    COALESCE(A.CPF, '') AS CPF, 
+                    COALESCE(A.DTNASCIMENTO, '') AS DTNASCIMENTO, 
+                    COALESCE(A.NRCELULAR, '') AS NRCELULAR, 
+                    COALESCE(A.SEXO, '') AS SEXO, 
+                    COALESCE(A.IDATLETA, '') AS IDATLETA, 
+                    COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
+                    COALESCE(I.IDEVENTO, '') AS IDEVENTO, 
+                    COALESCE(I.APOIO, '') AS APOIO, 
+                    COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
+                    COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
+                    COALESCE(I.CAMISETA, '') AS CAMISETA,
+                    COALESCE(I.VALOR, '') AS VALOR,
+                    COALESCE(I.TAXA, '') AS TAXA,
+                    COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
+                    COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
+                    COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
+                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO
+                FROM ecmrun.ATLETA_TT A
+                LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1
+                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+                WHERE A.CPF = %s AND A.SENHA = %s AND A.ATIVO = 'S'
             """, (cpf, senha_hash))
         
         result = cur.fetchone()
@@ -1010,6 +1119,17 @@ def autenticar_login():
             celular = result[5]
             sexo = result[6]
             idatleta = result[7]
+            modalidade = result[8]
+            apoio = result[10]
+            equipe200 = result[11]
+            integrantes = result[12]
+            camiseta = result[13]
+            valor = result[14]
+            taxa = result[15]
+            valortotal = result[16]
+            dtpagamento = result[17]
+            formapgto = result[18]
+            idpagamento = result[19]
 
             # Store in session
             session['user_name'] = nome_completo
@@ -1019,6 +1139,17 @@ def autenticar_login():
             session['user_celular'] = celular
             session['user_sexo'] = sexo
             session['user_idatleta'] = idatleta
+            session['insc_modalidade'] = modalidade
+            session['insc_apoio'] = apoio
+            session['insc_equipe200'] = equipe200
+            session['insc_integrantes'] = integrantes
+            session['insc_camiseta'] = camiseta
+            session['insc_valor'] = valor
+            session['insc_taxa'] = taxa
+            session['insc_valortotal'] = valortotal
+            session['insc_dtpagamento'] = dtpagamento
+            session['insc_formapgto'] = formapgto
+            session['insc_idpagamento'] = idpagamento
             
             return jsonify({
                 'success': True,
@@ -1028,7 +1159,18 @@ def autenticar_login():
                 'dtnascimento': dtnascimento,
                 'celular': celular,
                 'sexo': sexo,
-                'idatleta': idatleta
+                'idatleta': idatleta,
+                'modalidade': modalidade,
+                'apoio': apoio,
+                'equipe200': equipe200,
+                'integrantes': integrantes,
+                'camiseta': camiseta,
+                'valor': valor,
+                'taxa': taxa,
+                'valortotal': valortotal,
+                'dtpagamento': dtpagamento,
+                'formapgto': formapgto,
+                'idpagamento': idpagamento
             })
         else:
             return jsonify({
