@@ -379,8 +379,10 @@
         
             const baseURL = environments[currentEnv].baseURL;
         
-            const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
-            const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
+            //const vlinscricao = parseFloat(localStorage.getItem('vlinscricao') || 0);
+            //const vltaxa = parseFloat(localStorage.getItem('vltaxa') || 0);
+            const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
+            const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
             const totalValue = vlinscricao + vltaxa;
         
             // Função para persistir o paymentId
@@ -407,7 +409,8 @@
         
             // Function to clear payment-related localStorage items
             function clearPaymentRelatedLocalStorage() {
-                const itemsToRemove = ['vlinscricao', 'vltaxa'];
+                //const itemsToRemove = ['vlinscricao', 'vltaxa'];
+                const itemsToRemove = ['valoratual', 'valortaxa'];
                 itemsToRemove.forEach(item => {
                     localStorage.removeItem(item);
                 });

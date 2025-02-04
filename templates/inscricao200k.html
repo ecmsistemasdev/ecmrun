@@ -122,6 +122,16 @@
             font-size: 14px;
         }
 
+        .label-info60 {
+            background-color: yellow;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #333;
+        }
+
         .info-label {
             background-color: #f0f0f0;
             padding: 10px;
@@ -246,6 +256,8 @@
             <div class="form-group">
                 <label>Valor da Inscrição:</label>
                 <div id="valor" class="value-label"></div>
+                <label class="label-info60" id="campoDesconto" style="display:none;">
+                    60+ : 50% do valor da inscrição, conforme Lei nº 10.741/2003</label>
             </div>
         </fieldset>
     
@@ -338,12 +350,50 @@
             const userEmail = localStorage.getItem('user_email');
             const cpf = localStorage.getItem('user_cpf');
             const dataNascimento = localStorage.getItem('user_dtnascimento');
+            const idade = parseInt(localStorage.getItem('user_idade')) || 0;
             const celular = localStorage.getItem('user_celular');
             const sexo = localStorage.getItem('user_sexo');
             const idatleta = localStorage.getItem('user_idatleta');
             const categoria = localStorage.getItem('categoria');
             const valor = localStorage.getItem('valor');
+            const valorinsc = parseFloat(localStorage.getItem('cat_vlinscricao')) || 0;
+            const taxa = parseFloat(localStorage.getItem('cat_vltaxa')) || 0;
             const categoriaId = localStorage.getItem('categoria_id');
+            const dataEvento = localStorage.getItem('user_dataevento');
+            
+            console.info('Valor Original:',valorinsc);
+
+            // Calculate the actual value based on age and format display
+            const calculateValues = () => {
+                // Determine valoratual based on age
+                const valoratual = idade >= 60 ? valorinsc / 2 : valorinsc;
+                console.info('Valor Atual:',valoratual);
+
+                // Calculate total value including taxa
+                const valortotal = valoratual + taxa;
+
+                // Store the calculated values in localStorage
+                localStorage.setItem('valoratual', valoratual.toString());
+                localStorage.setItem('valortaxa', taxa.toString()); // Mudado de 'valortotal' para 'valortaxa'
+                localStorage.setItem('valortotal', valortotal.toString());
+
+                console.info('Valor Total:',valortotal);
+
+                // Format the display string with all values
+                const displayValue = `${formatCurrency(valoratual)} + ${formatCurrency(taxa)} = Total: ${formatCurrency(valortotal)}`;
+                console.info('Valor Display:',displayValue);
+
+                // Update the display
+                $('#valor').text(displayValue);
+
+                return valortotal;
+            };
+
+            if (idade >= 60) {
+                campoDesconto.style.display = "block"; // Exibe o campo
+            } else {
+                campoDesconto.style.display = "none"; // Oculta o campo
+            }            
 
             // Function to format currency values
             const formatCurrency = (value) => {
@@ -383,6 +433,15 @@
                 }
             };
 
+            // Calculate and store values when page loads
+            const totalValue = calculateValues();
+            console.log('Idade:', idade);
+            console.log('Valor Original:', valorinsc);
+            //console.log('Valor Atual:', valoratual);
+            console.log('Taxa:', taxa);
+            console.log('Valor Total:', totalValue);
+
+            
             // Form submission handler
             $('#inscricaoForm').on('submit', function(e) {
                 e.preventDefault();
@@ -441,7 +500,7 @@
                 $('#dtnascimento').text(dataNascimento);
                 $('#celular').text(celular);
                 $('#categoria').text(categoria || 'Não selecionada');
-                $('#valor').text(valor || 'A definir');
+                //$('#valor').text(valor || 'A definir');
 
                 // Handle team fields based on category
                 handleTeamFields(categoriaId);
