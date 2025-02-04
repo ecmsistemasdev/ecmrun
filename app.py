@@ -558,7 +558,7 @@ def get_evento_data():
             'inicio_inscricao': results[0][7],
             'fim_inscricao': results[0][8],
             'iditem': results[0][9],
-            'modalidades': []
+            'modalidades': results[0][10]
         }
         
         # Adicionar todas as modalidades
@@ -1071,11 +1071,13 @@ def autenticar_login():
                     COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
                     COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
                     COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
-                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO
+                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
+                    E.DTINICIO
                 FROM ecmrun.ATLETA_TT A
-                LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1
+                JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+                LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
                 LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
-                WHERE A.EMAIL = %s AND A.SENHA = %s AND A.ATIVO = 'S'                        
+                WHERE A.CPF = %s AND A.SENHA = %s AND A.ATIVO = 'S'
             """, (cpf_email, senha_hash))
         else:
             # Remove non-numeric characters from CPF
@@ -1101,9 +1103,11 @@ def autenticar_login():
                     COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
                     COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
                     COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
-                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO
+                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
+                    E.DTINICIO
                 FROM ecmrun.ATLETA_TT A
-                LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1
+                JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+                LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
                 LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
                 WHERE A.CPF = %s AND A.SENHA = %s AND A.ATIVO = 'S'
             """, (cpf, senha_hash))
@@ -1130,12 +1134,25 @@ def autenticar_login():
             dtpagamento = result[17]
             formapgto = result[18]
             idpagamento = result[19]
+            dtinicio = result[20]
 
+            # Converta as strings para objetos datetime
+            dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
+            dt_inicio = datetime.strptime(dtinicio, "%d/%m/%Y")
+
+            # Calcule a idade
+            idade = dt_inicio.year - dt_nascimento.year - ((dt_inicio.month, dt_inicio.day) < (dt_nascimento.month, dt_nascimento.day))
+            app.logger.info(f'Idade: { idade }')
+            app.logger.info(f'Data Evento: { dtinicio }')
+                    
+        
             # Store in session
             session['user_name'] = nome_completo
             session['user_email'] = email
             session['user_cpf'] = vcpf
             session['user_dtnascimento'] = dtnascimento
+            session['user_dataevento'] = dtinicio
+            session['user_idade'] = str(idade)
             session['user_celular'] = celular
             session['user_sexo'] = sexo
             session['user_idatleta'] = idatleta
@@ -1150,13 +1167,14 @@ def autenticar_login():
             session['insc_dtpagamento'] = dtpagamento
             session['insc_formapgto'] = formapgto
             session['insc_idpagamento'] = idpagamento
-            
+        
             return jsonify({
                 'success': True,
                 'nome': nome_completo,
                 'email': email,
                 'cpf': vcpf,
                 'dtnascimento': dtnascimento,
+                'idade': str(idade),
                 'celular': celular,
                 'sexo': sexo,
                 'idatleta': idatleta,
@@ -1170,7 +1188,8 @@ def autenticar_login():
                 'valortotal': valortotal,
                 'dtpagamento': dtpagamento,
                 'formapgto': formapgto,
-                'idpagamento': idpagamento
+                'idpagamento': idpagamento,
+                'dataevendo': dtinicio
             })
         else:
             return jsonify({
