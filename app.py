@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, request, make_response, json
 from flask_mail import Mail, Message
 from flask_mysqldb import MySQL
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 import mercadopago
 import hashlib
 import pdfkit
@@ -335,16 +335,16 @@ def pagpix():
 #def checkout2():
 #    return render_template('checkout2.html')
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    data = request.json
-    app.logger.info(f"Webhook received: {data}")
+# @app.route('/webhook', methods=['POST'])
+# def webhook():
+#     data = request.json
+#     app.logger.info(f"Webhook received: {data}")
     
-    if data['type'] == 'payment':
-        payment_info = sdk.payment().get(data['data']['id'])
-        app.logger.info(f"Payment info: {payment_info}")
+#     if data['type'] == 'payment':
+#         payment_info = sdk.payment().get(data['data']['id'])
+#         app.logger.info(f"Payment info: {payment_info}")
     
-    return jsonify({'status': 'ok'}), 200
+#     return jsonify({'status': 'ok'}), 200
 
 
 #@app.route('/process_payment', methods=['POST'])
@@ -1217,6 +1217,35 @@ def pagamento():
                          valor_taxa=vltaxa,
                          valor_total=valor_total)
 
+def get_back_urls():
+    """
+    Dynamically generate back URLs based on environment
+    
+    Returns:
+        dict: Back URLs for Mercado Pago
+    """
+    # Check if running in production
+    is_production = os.getenv('FLASK_ENV', 'development') == 'production'
+    
+    if is_production:
+        # Production URLs
+        base_url = 'https://ecmrun.com.br'
+        back_urls = {
+            "success": f"{base_url}/aprovado",
+            "failure": f"{base_url}/negado", 
+            "pending": f"{base_url}/negado"
+        }
+    else:
+        # Development URLs using local IP
+        local_ip = 'http://192.168.30.123'  # '192.168.100.16'  # Your specific local IP
+        base_url = f'http://{local_ip}:5000'  # Assuming Flask default port
+        back_urls = {
+            "success": f"{base_url}/aprovado",
+            "failure": f"{base_url}/negado", 
+            "pending": f"{base_url}/negado"
+        }
+    
+    return back_urls
 
 
 @app.route('/gerar-pix', methods=['POST'])
@@ -1224,12 +1253,21 @@ def gerar_pix():
     try:
         data = request.get_json()
         # Round to 2 decimal places to avoid floating point precision issues
-        valor_total = round(float(data.get('valor_total', 0)), 2)
+        #valor_total = round(float(data.get('valor_total', 0)), 2)
         fn_camiseta(data.get('camiseta'))
         fn_apoio(data.get('apoio')) 
         fn_equipe(data.get('nome_equipe'))
         fn_integrantes(data.get('integrantes'))
         
+        #valor_total = float(data.get('valor_total', 0))
+        valor_total = round(float(data.get('valor_total', 0)), 2)
+        nome_completo = data.get('user_name', '')
+        
+        # Split full name into first and last name
+        nome_parts = nome_completo.split(' ', 1)
+        first_name = nome_parts[0]
+        last_name = nome_parts[1] if len(nome_parts) > 1 else ''
+
         # Validate minimum transaction amount (Mercado Pago usually requires >= 1)
         if valor_total < 1:
             return jsonify({
@@ -1247,7 +1285,7 @@ def gerar_pix():
         
         # Dados do pagador da sessão
         email = session.get('user_email')        
-        nome_completo = session.get('user_name', '').split()
+        #nome_completo = session.get('user_name', '').split()
         cpf = session.get('user_cpf')
 
         #alimento essa variavel global var_email pra ser usada no evio do email 
@@ -1260,6 +1298,9 @@ def gerar_pix():
 
         #Gerar referência externa única
         external_reference = str(uuid.uuid4())
+
+        # Set PIX expiration (24 hours from now)
+        expiration_date = (datetime.now() + timedelta(hours=24)).isoformat()
 
         # Preparar dados do pagamento
         payment_data = {
@@ -1278,6 +1319,38 @@ def gerar_pix():
             "notification_url": "https://ecmrun.com.br/webhook",
             "external_reference": external_reference
 
+        }
+
+
+
+
+
+        payment_data = {
+            "transaction_amount": valor_total,
+            "description": "Inscrição 4º Desafio 200k Porto Velho-Humaitá",
+            "payment_method_id": "pix",
+            "payer": {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": data.get('user_email'),
+                "identification": {
+                    "type": "CPF",
+                    "number": data.get('user_cpf')
+                }
+            },
+            # Campos adicionais para melhorar qualidade da integração
+            "metadata": {
+                "item_id": "200k-inscricao",
+                "item_title": "Inscrição 4º Desafio 200k",
+                "category_id": "sports_tickets",
+                "quantity": 1,
+                "unit_price": valor_total
+            },
+            "statement_descriptor": "ECM RUN",
+            "notification_url": f"{get_back_urls()['success'].rsplit('/', 1)[0]}/webhook",
+            "external_reference": data.get('user_idatleta'),
+            # Configuração específica do PIX
+            "date_of_expiration": expiration_date
         }
 
         print("Dados do pagamento preparados:")
@@ -1494,9 +1567,9 @@ def create_mercado_pago_payment():
             {"id": "1", "title": "Teste", "quantity": 1, "currency_id": "BRL", "unit_price": 1.00}
         ],
         "back_urls": {
-            "success": "http://192.168.100.16:5000/comprovante",
-            "failure": "http://192.168.100.16:5000/compraerrada",
-            "pending": "http://192.168.100.16:5000/compraerrada",
+            "success": "http://192.168.30.123:5000/comprovante",
+            "failure": "http://192.168.30.123:5000/compraerrada",
+            "pending": "http://192.168.30.123:5000/compraerrada",
         },
         "auto_return": "all"
     }
@@ -1505,6 +1578,103 @@ def create_mercado_pago_payment():
     return jsonify({
         "init_point": result["response"]["init_point"]
     })
+
+
+@app.route('/env-check')
+def env_check():
+    return jsonify({
+        "environment": os.getenv('FLASK_ENV', 'development'),
+        "back_urls": get_back_urls()
+    })
+
+@app.route('/criar_preferencia', methods=['POST'])
+def criar_preferencia():
+    try:
+        data = request.get_json()
+        
+        # Get values from localStorage (sent in request)
+        valor_total = float(data.get('valortotal', 0))
+        valor_taxa = float(data.get('valortaxa', 0))
+        nome_completo = data.get('user_name', '')
+        
+        # Split full name into first and last name
+        nome_parts = nome_completo.split(' ', 1)
+        first_name = nome_parts[0]
+        last_name = nome_parts[1] if len(nome_parts) > 1 else ''
+        
+        # Calculate price with 5% card fee
+        preco_final = valor_total * 1.05
+        
+        back_urls = get_back_urls()
+
+        preference_data = {
+            "items": [
+                {
+                    "id": "200k-inscricao",
+                    "title": "Inscrição 4º Desafio 200k",
+                    "quantity": 1,
+                    "unit_price": float(preco_final),
+                    "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
+                    "category_id": "sports_tickets"
+                }
+            ],
+            "payer": {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": data.get('user_email')
+            },
+            "payment_methods": {
+                "excluded_payment_methods": [
+                    {"id": "bolbradesco"},
+                    {"id": "pix"}
+                ],
+                "excluded_payment_types": [
+                    {"id": "ticket"},
+                    {"id": "bank_transfer"}
+                ],
+                "installments": 12
+            },
+            "back_urls": back_urls,
+            "auto_return": "approved",
+            "statement_descriptor": "ECM RUN",
+            "external_reference": data.get('user_idatleta'),
+            "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
+            #"notification_url": "https://ecmrun.com.br/webhook"
+        }
+        
+        preference_response = sdk.preference().create(preference_data)
+        preference = preference_response["response"]
+        
+        return jsonify({
+            "id": preference["id"],
+            "init_point": preference["init_point"]
+        })
+
+            #"back_urls": {
+            #    "success": "https://ecmrun.com.br/aprovado",
+            #    "failure": "https://ecmrun.com.br/negado",
+            #    "pending": "https://ecmrun.com.br/negado"
+            #},
+
+
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/webhook/mercadopago', methods=['POST'])
+def webhook():
+    try:
+        data = request.get_json()
+        if data['type'] == 'payment':
+            payment_info = sdk.payment().get(data['data']['id'])
+            app.logger.info(f'Info payment: {payment_info}')
+            # Process payment info and update your database
+            # You should implement the logic to update the inscription status
+            
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 
 
 
