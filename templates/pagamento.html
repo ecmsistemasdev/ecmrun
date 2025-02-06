@@ -366,7 +366,7 @@
         
             const environments = {
                 development: {
-                    baseURL: 'http://192.168.100.16:5000'
+                    baseURL: 'http://192.168.30.123:5000'
                 },
                 production: {
                     baseURL: 'https://ecmrun.com.br'
@@ -385,6 +385,20 @@
             const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
             const totalValue = vlinscricao + vltaxa;
         
+            // Função para verificar se os valores mudaram
+            function checkIfValuesChanged() {
+                const storedPaymentValue = sessionStorage.getItem('lastPaymentValue');
+                const currentValue = totalValue.toString();
+                
+                if (storedPaymentValue !== currentValue) {
+                    console.log('Valores diferentes detectados, iniciando novo pagamento');
+                    sessionStorage.setItem('lastPaymentValue', currentValue);
+                    return true;
+                }
+                return false;
+            }            
+            
+            
             // Função para persistir o paymentId
             function persistPaymentId(id) {
                 paymentId = id;
@@ -399,6 +413,12 @@
                 return id;
             }
         
+            function clearPaymentSession() {
+                sessionStorage.removeItem('currentPaymentId');
+                sessionStorage.removeItem('lastPaymentValue');
+                paymentId = null;
+            }
+            
             // Function to format currency values
             function formatCurrency(value) {
                 return new Intl.NumberFormat('pt-BR', {
@@ -409,7 +429,6 @@
         
             // Function to clear payment-related localStorage items
             function clearPaymentRelatedLocalStorage() {
-                //const itemsToRemove = ['vlinscricao', 'vltaxa'];
                 const itemsToRemove = ['valoratual', 'valortaxa'];
                 itemsToRemove.forEach(item => {
                     localStorage.removeItem(item);
@@ -442,10 +461,25 @@
                 try {
                     document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
                     
+                    const valuesChanged = checkIfValuesChanged();
                     const persistedId = getPersistedPaymentId();
-                    if (persistedId) {
+
+                    if (valuesChanged) {
+                        console.log('Valores mudaram, limpando sessão anterior');
+                        clearPaymentSession();
+                        await generatePixPayment(totalValue);
+                    } else if (persistedId && document.visibilityState === 'visible') {
                         console.log('Retomando verificação de pagamento existente');
                         await startPaymentVerification(persistedId);
+                        
+                        // Mostrar QR code salvo se disponível
+                        const savedQRCode = sessionStorage.getItem('lastQRCodeBase64');
+                        const savedPixKey = sessionStorage.getItem('lastPixKey');
+                        if (savedQRCode && savedPixKey) {
+                            showQRCode(savedQRCode, savedPixKey);
+                        } else {
+                            await generatePixPayment(totalValue);
+                        }
                     } else {
                         await generatePixPayment(totalValue);
                     }
@@ -455,6 +489,19 @@
                 }
             }
         
+            function showQRCode(qrCodeBase64, pixKey) {
+                const qrContainer = document.getElementById('qrContainer');
+                const loadingContainer = document.getElementById('loadingContainer');
+                const qrCode = document.getElementById('qrCode');
+                const pixKeyElement = document.getElementById('pixKey');
+
+                qrCode.src = `data:image/png;base64,${qrCodeBase64}`;
+                pixKeyElement.textContent = pixKey;
+                
+                loadingContainer.classList.add('hidden');
+                qrContainer.classList.remove('hidden');
+            }
+            
             // Generate PIX payment
             async function generatePixPayment(totalValue) {
                 try {
@@ -468,16 +515,16 @@
                         nome_equipe: localStorage.getItem('nome_equipe'),
                         integrantes: localStorage.getItem('integrantes')
                     };
-        
+
                     if (!userData.email || !userData.cpf || !totalValue) {
                         throw new Error('Dados incompletos para geração do PIX');
                     }
-        
+
                     const requestData = {
                         valor_total: totalValue,
                         ...userData
                     };
-        
+
                     const response = await fetch(`${baseURL}/gerar-pix`, {
                         method: 'POST',
                         headers: {
@@ -485,24 +532,18 @@
                         },
                         body: JSON.stringify(requestData)
                     });
-        
+
                     const responseData = await response.json();
-        
+
                     if (!response.ok || !responseData.success) {
                         throw new Error(responseData.message || `Erro HTTP: ${response.status}`);
                     }
-        
-                    const qrContainer = document.getElementById('qrContainer');
-                    const loadingContainer = document.getElementById('loadingContainer');
-                    const qrCode = document.getElementById('qrCode');
-                    const pixKey = document.getElementById('pixKey');
-        
+
                     if (responseData.qr_code && responseData.qr_code_base64) {
-                        qrCode.src = `data:image/png;base64,${responseData.qr_code_base64}`;
-                        pixKey.textContent = responseData.qr_code;
-                        
-                        loadingContainer.classList.add('hidden');
-                        qrContainer.classList.remove('hidden');
+                        // Salvar QR code na sessão
+                        sessionStorage.setItem('lastQRCodeBase64', responseData.qr_code_base64);
+                        sessionStorage.setItem('lastPixKey', responseData.qr_code);
+                        showQRCode(responseData.qr_code_base64, responseData.qr_code);
                     } else {
                         throw new Error('Dados do PIX incompletos na resposta');
                     }
@@ -511,7 +552,7 @@
                         persistPaymentId(responseData.payment_id);
                         await startPaymentVerification(responseData.payment_id);
                     }
-        
+
                 } catch (error) {
                     console.error('Erro detalhado ao gerar PIX:', error);
                     document.getElementById('loadingContainer').innerHTML = `
@@ -520,7 +561,7 @@
                     `;
                 }
             }
-        
+                    
             // Start payment verification process
             async function startPaymentVerification(paymentId) {
                 if (checkInterval) {
@@ -634,8 +675,11 @@
         
             // Event Listeners
             document.addEventListener('visibilitychange', handleVisibilityChange);
-            document.querySelector('button.button.secondary').addEventListener('click', clearPaymentRelatedLocalStorage);
-        
+            document.querySelector('button.button.secondary').addEventListener('click', () => {
+                clearPaymentRelatedLocalStorage();
+                clearPaymentSession();
+            });
+                    
             // Initialize
             initializePagamento();
         });
