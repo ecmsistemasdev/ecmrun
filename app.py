@@ -1261,6 +1261,9 @@ def gerar_pix():
         #Gerar referência externa única
         external_reference = str(uuid.uuid4())
 
+        # Set PIX expiration (24 hours from now)
+        #expiration_date = (datetime.now() + timedelta(hours=24)).isoformat()
+    
         # Preparar dados do pagamento
         payment_data = {
             "transaction_amount": valor_total,
@@ -1275,11 +1278,20 @@ def gerar_pix():
                     "number": re.sub(r'\D', '', cpf) if cpf else ""
                 }   
             },
+            "metadata": {
+                "item_id": "200k-inscricao",
+                "item_title": "Inscrição 4º Desafio 200k",
+                "category_id": "sports_tickets",
+                "quantity": 1,
+                "unit_price": valor_total
+            },
+            "statement_descriptor": "ECM RUN 200K",
             "notification_url": "https://ecmrun.com.br/webhook",
             "external_reference": external_reference
-
+            # Configuração específica do PIX
+            #"date_of_expiration": expiration_date
         }
-
+        
         print("Dados do pagamento preparados:")
         print(json.dumps(payment_data, indent=2))
 
