@@ -1278,13 +1278,6 @@ def gerar_pix():
                     "number": re.sub(r'\D', '', cpf) if cpf else ""
                 }   
             },
-            "metadata": {
-                "item_id": "200k-inscricao",
-                "item_title": "Inscrição 4º Desafio 200k",
-                "category_id": "sports_tickets",
-                "quantity": 1,
-                "unit_price": valor_total
-            },
             "statement_descriptor": "ECM RUN 200K",
             "notification_url": "https://ecmrun.com.br/webhook",
             "external_reference": external_reference
