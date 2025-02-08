@@ -1225,6 +1225,9 @@ def gerar_pix():
         data = request.get_json()
         # Round to 2 decimal places to avoid floating point precision issues
         valor_total = round(float(data.get('valor_total', 0)), 2)
+        valor_atual = round(float(data.get('valor_atual', 0)), 2)
+        valor_taxa = round(float(data.get('valor_taxa', 0)), 2)
+
         fn_camiseta(data.get('camiseta'))
         fn_apoio(data.get('apoio')) 
         fn_equipe(data.get('nome_equipe'))
@@ -1239,6 +1242,8 @@ def gerar_pix():
         
         print("=== DEBUG: Iniciando geração do PIX ===")
         print(f"Valor total recebido: {valor_total}")
+        print(f"Valor atual: {valor_atual}")
+        print(f"Valor taxa: {valor_taxa}")
         print(f"Token MP configurado: {os.getenv('MP_ACCESS_TOKEN')[:10]}...")
         print(f"CAMISA: {var_camiseta}")
         print(f"APOIO: {var_apoio}")
@@ -1261,7 +1266,22 @@ def gerar_pix():
         #Gerar referência externa única
         external_reference = str(uuid.uuid4())
 
-        # Preparar dados do pagamento
+        # Added required items structure
+        preference_data = {
+            "items": [{
+                "id": "desafio200k_inscricao",
+                "title": "Inscrição Desafio 200k",
+                "description": "Inscrição para o 4º Desafio 200k",
+                "category_id": "sports_tickets",
+                "quantity": 1,
+                "unit_price": valor_total
+            }],
+            "statement_descriptor": "DESAFIO200K"
+        }
+        
+        preference_result = sdk.preference().create(preference_data)
+        
+        # Mantendo o payment_data original que já funcionava
         payment_data = {
             "transaction_amount": valor_total,
             "description": "Inscrição 4º Desafio 200k",
@@ -1277,8 +1297,9 @@ def gerar_pix():
             },
             "notification_url": "https://ecmrun.com.br/webhook",
             "external_reference": external_reference
-
         }
+        
+        payment_response = sdk.payment().create(payment_data)
 
         print("Dados do pagamento preparados:")
         print(json.dumps(payment_data, indent=2))
@@ -1374,9 +1395,9 @@ def verificar_pagamento(payment_id):
                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                     NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, 
                     VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
-                    IDPAGAMENTO
+                    IDPAGAMENTO, FLMAIL
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
                 """
                 
@@ -1395,7 +1416,8 @@ def verificar_pagamento(payment_id):
                     data_pagamento,                      # DTPAGAMENTO
                     'CONFIRMADO',                        # STATUS
                     'PIX',                               # FORMAPGTO
-                    payment_id                           # IDPAGAMENTO
+                    payment_id,                          # IDPAGAMENTO
+                    'N'
                 )
                 
                 cur.execute(query, params)
