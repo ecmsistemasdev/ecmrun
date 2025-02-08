@@ -1219,126 +1219,6 @@ def pagamento():
 
 
 
-#@app.route('/gerar-pix', methods=['POST'])
-#def gerar_pix():
-#    try:
-#        data = request.get_json()
-#        # Round to 2 decimal places to avoid floating point precision issues
-#        valor_total = round(float(data.get('valor_total', 0)), 2)
-#        fn_camiseta(data.get('camiseta'))
-#        fn_apoio(data.get('apoio')) 
-#        fn_equipe(data.get('nome_equipe'))
-#        fn_integrantes(data.get('integrantes'))
-        
-#        # Validate minimum transaction amount (Mercado Pago usually requires >= 1)
-#        if valor_total < 1:
-#            return jsonify({
-#                'success': False,
-#                'message': 'Valor mínimo da transação deve ser maior que R$ 1,00'
-#            }), 400
-        
-#        print("=== DEBUG: Iniciando geração do PIX ===")
-#        print(f"Valor total recebido: {valor_total}")
-#        print(f"Token MP configurado: {os.getenv('MP_ACCESS_TOKEN')[:10]}...")
-#        print(f"CAMISA: {var_camiseta}")
-#        print(f"APOIO: {var_apoio}")
-#        print(f"EQUIPE: {var_equipe}")
-#        print(f"INTEGRANTES: {var_integrantes}")
-        
-#        # Dados do pagador da sessão
-#        email = session.get('user_email')        
-#        nome_completo = session.get('user_name', '').split()
-#        cpf = session.get('user_cpf')
-
-#        #alimento essa variavel global var_email pra ser usada no evio do email 
-#        fn_email(email)
-        
-#        print(f"Dados do pagador da sessão:")
-#        print(f"- Email: {email}")
-#        print(f"- Nome: {nome_completo}")
-#        print(f"- CPF: {cpf}")
-
-#        #Gerar referência externa única
-#        external_reference = str(uuid.uuid4())
-
-#        # Preparar dados do pagamento
-#        payment_data = {
-#            "transaction_amount": valor_total,
-#            "description": "Inscrição 4º Desafio 200k",
-#            "payment_method_id": "pix",
-#            "payer": {
-#                "email": email,
-#                "first_name": nome_completo[0] if nome_completo else "",
-#                "last_name": " ".join(nome_completo[1:]) if len(nome_completo) > 1 else "",
-#                "identification": {
-#                    "type": "CPF",
-#                    "number": re.sub(r'\D', '', cpf) if cpf else ""
-#                }   
-#            },
-#            "notification_url": "https://ecmrun.com.br/webhook",
-#            "external_reference": external_reference
-
-#        }
-
-#        print("Dados do pagamento preparados:")
-#        print(json.dumps(payment_data, indent=2))
-
-#        # Criar pagamento no Mercado Pago
-#        print("Enviando requisição para o Mercado Pago...")
-#        payment_response = sdk.payment().create(payment_data)
-        
-#        print("Resposta do Mercado Pago:")
-#        print(json.dumps(payment_response, indent=2))
-        
-#        if not payment_response or "response" not in payment_response:
-#            print("Erro: Resposta do Mercado Pago inválida")
-#            return jsonify({
-#                'success': False,
-#                'message': 'Erro na resposta do Mercado Pago'
-#            }), 500
-
-#        payment = payment_response["response"]
-        
-#        # Verificar a estrutura completa da resposta
-#        print("Estrutura da resposta payment:")
-#        print(json.dumps(payment, indent=2))
-        
-#        # Verificar se há dados do PIX na resposta
-#        if "point_of_interaction" not in payment:
-#            print("Erro: point_of_interaction não encontrado na resposta")
-#            return jsonify({
-#                'success': False,
-#                'message': 'Dados do PIX não disponíveis - point_of_interaction não encontrado'
-#            }), 500
-            
-#        if "transaction_data" not in payment["point_of_interaction"]:
-#            print("Erro: transaction_data não encontrado em point_of_interaction")
-#            return jsonify({
-#                'success': False,
-#                'message': 'Dados do PIX não disponíveis - transaction_data não encontrado'
-#            }), 500
-
-#        # Se chegou até aqui, retorna os dados do PIX
-#        return jsonify({
-#            'success': True,
-#            'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
-#            'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
-#            'payment_id': payment['id']
-#        })
-
-#    except Exception as e:
-#        print(f"=== ERRO CRÍTICO: ===")
-#        print(f"Tipo do erro: {type(e)}")
-#        print(f"Mensagem de erro: {str(e)}")
-#        print(f"Stack trace:")
-#        import traceback
-#        traceback.print_exc()
-        
-#        return jsonify({
-#            'success': False,
-#            'message': f'Erro ao gerar PIX: {str(e)}'
-#        }), 500
-
 @app.route('/gerar-pix', methods=['POST'])
 def gerar_pix():
     try:
@@ -1381,22 +1261,7 @@ def gerar_pix():
         #Gerar referência externa única
         external_reference = str(uuid.uuid4())
 
-        # Added required items structure
-        preference_data = {
-            "items": [{
-                "id": "desafio200k_inscricao",
-                "title": "Inscrição Desafio 200k",
-                "description": "Inscrição para o 4º Desafio 200k",
-                "category_id": "sports_tickets",
-                "quantity": 1,
-                "unit_price": valor_total
-            }],
-            "statement_descriptor": "DESAFIO200K"
-        }
-        
-        preference_result = sdk.preference().create(preference_data)
-        
-        # Mantendo o payment_data original que já funcionava
+        # Preparar dados do pagamento
         payment_data = {
             "transaction_amount": valor_total,
             "description": "Inscrição 4º Desafio 200k",
@@ -1412,9 +1277,8 @@ def gerar_pix():
             },
             "notification_url": "https://ecmrun.com.br/webhook",
             "external_reference": external_reference
+
         }
-        
-        payment_response = sdk.payment().create(payment_data)
 
         print("Dados do pagamento preparados:")
         print(json.dumps(payment_data, indent=2))
@@ -1474,6 +1338,7 @@ def gerar_pix():
             'success': False,
             'message': f'Erro ao gerar PIX: {str(e)}'
         }), 500
+
 
 @app.route('/verificar-pagamento/<payment_id>')
 def verificar_pagamento(payment_id):
