@@ -1261,7 +1261,22 @@ def gerar_pix():
         #Gerar referência externa única
         external_reference = str(uuid.uuid4())
 
-        # Preparar dados do pagamento
+        # Added required items structure
+        preference_data = {
+            "items": [{
+                "id": "desafio200k_inscricao",
+                "title": "Inscrição Desafio 200k",
+                "description": "Inscrição para o 4º Desafio 200k",
+                "category_id": "sports_tickets",
+                "quantity": 1,
+                "unit_price": valor_total
+            }],
+            "statement_descriptor": "DESAFIO200K"
+        }
+        
+        preference_result = sdk.preference().create(preference_data)
+        
+        # Mantendo o payment_data original que já funcionava
         payment_data = {
             "transaction_amount": valor_total,
             "description": "Inscrição 4º Desafio 200k",
@@ -1277,8 +1292,9 @@ def gerar_pix():
             },
             "notification_url": "https://ecmrun.com.br/webhook",
             "external_reference": external_reference
-
         }
+        
+        payment_response = sdk.payment().create(payment_data)
 
         print("Dados do pagamento preparados:")
         print(json.dumps(payment_data, indent=2))
@@ -1338,7 +1354,6 @@ def gerar_pix():
             'success': False,
             'message': f'Erro ao gerar PIX: {str(e)}'
         }), 500
-
 
 @app.route('/verificar-pagamento/<payment_id>')
 def verificar_pagamento(payment_id):
