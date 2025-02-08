@@ -1077,7 +1077,7 @@ def autenticar_login():
                 JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
                 LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
                 LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
-                WHERE A.CPF = %s AND A.SENHA = %s AND A.ATIVO = 'S'
+                WHERE A.EMAIL = %s AND A.SENHA = %s AND A.ATIVO = 'S'
             """, (cpf_email, senha_hash))
         else:
             # Remove non-numeric characters from CPF
