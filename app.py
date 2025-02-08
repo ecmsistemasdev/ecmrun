@@ -1372,9 +1372,13 @@ def verificar_pagamento(payment_id):
             
             if not existing_record:
                 # Calculate valor_pgto (total payment)
-                valor = float(session.get('cat_vlinscricao', 0))
-                taxa = float(session.get('cat_vltaxa', 0))
+                valor = float(session.get('valoratual', 0))
+                taxa = float(session.get('valortaxa', 0))
                 valor_pgto = valor + taxa
+
+                logging.info(f" Valor Atual: { valor }")
+                logging.info(f" Valor Taxa: { taxa }")
+                logging.info(f" Valor Total: { valor_pgto }")
                 
                 # Format current date as dd/mm/yyyy
                 data_pagamento = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
