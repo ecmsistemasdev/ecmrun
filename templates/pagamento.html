@@ -366,7 +366,7 @@
         
             const environments = {
                 development: {
-                    baseURL: 'http://192.168.100.16:5000'
+                    baseURL: 'http://192.168.134.123:5000/'
                 },
                 production: {
                     baseURL: 'https://ecmrun.com.br'
@@ -472,8 +472,13 @@
                     if (!userData.email || !userData.cpf || !totalValue) {
                         throw new Error('Dados incompletos para geração do PIX');
                     }
-        
+
+                    const vl_atual = parseFloat(localStorage.getItem('valoratual') || 0);
+                    const vl_taxa = parseFloat(localStorage.getItem('valortaxa') || 0);
+                    
                     const requestData = {
+                        valor_atual: vl_atual,
+                        valor_taxa: vl_taxa,
                         valor_total: totalValue,
                         ...userData
                     };
