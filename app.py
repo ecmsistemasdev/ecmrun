@@ -193,9 +193,12 @@ def comprovante(payment_id):
         
         app.logger.info("Dados da Inscrição:")
         app.logger.info(receipt_data)
-        
-        idinscricao = receipt_data[11]
-        if receipt_data[10] == 'N':
+
+        flmail = receipt_data['FLMAIL']
+        id_inscricao = receipt_data['IDINSCRICAO']
+
+        if flmail == 'N':
+
             # Enviar email com os dados do comprovante
             send_email(receipt_data_dict)
         
@@ -204,19 +207,20 @@ def comprovante(payment_id):
 
             cur1 = mysql.connection.cursor()
             cur1.execute('''
-            UPDATE ecmrun.INSCRICAO_TT SET FLMAIL = 'S'                         
-            WHERE I.IDINSCRICAO = %s
-            ''', (idinscricao,))
+                UPDATE ecmrun.INSCRICAO_TT SET FLMAIL = 'S'
+                WHERE IDINSCRICAO = %s
+            ''', (id_inscricao,))
 
             mysql.connection.commit()
             cur1.close()
+
 
         return render_template('comprovante_insc.html', **receipt_data_dict)
 
     except Exception as e:
         app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
         return "Erro ao buscar dados", 500
-
+        
 @app.route('/vercomprovante/<int:payment_id>')
 def vercomprovante(payment_id):
     try:
