@@ -19,7 +19,7 @@ load_dotenv()  # Carrega as variáveis do arquivo .env
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
-sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN2'))
+sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN'))
 
 app.secret_key = os.getenv('SECRET_KEY')
 
