@@ -3,6 +3,7 @@ from flask_mail import Mail, Message
 from flask_mysqldb import MySQL
 from dotenv import load_dotenv
 from datetime import datetime
+from pytz import timezone
 import mercadopago
 import hashlib
 import pdfkit
@@ -156,7 +157,7 @@ def comprovante(payment_id):
                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
+                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO, I.FLMAIL
             FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
@@ -193,11 +194,21 @@ def comprovante(payment_id):
         app.logger.info("Dados da Inscrição:")
         app.logger.info(receipt_data)
 
-        # Enviar email com os dados do comprovante
-        send_email(receipt_data_dict)
+        if receipt_data[10] == 'N':
+            # Enviar email com os dados do comprovante
+            send_email(receipt_data_dict)
         
-        # Enviar notificação para o organizador
-        send_organizer_notification(receipt_data_dict)
+            # Enviar notificação para o organizador
+            send_organizer_notification(receipt_data_dict)
+
+            cur1 = mysql.connection.cursor()
+            cur1.execute('''
+            UPDATE ecmrun.INSCRICAO_TT SET FLMAIL = 'S'                         
+            WHERE I.IDPAGAMENTO = %s
+            ''', (payment_id,))
+
+            mysql.connection.commit()
+            cur1.close()
 
         return render_template('comprovante_insc.html', **receipt_data_dict)
 
@@ -1381,9 +1392,17 @@ def verificar_pagamento(payment_id):
                 valor = float(session.get('cat_vlinscricao', 0))
                 taxa = float(session.get('cat_vltaxa', 0))
                 valor_pgto = valor + taxa
+
+                # Obtém a data e hora atuais
+                data_e_hora_atual = datetime.now()
+                # Define o fuso horário para Manaus
+                fuso_horario = timezone('America/Manaus')
+                # Converte a data e hora para o fuso horário de Manaus
+                data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+                # Formata a data e hora no formato desejado (dd/mm/yyyy hh:mm)
+                data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
                 
-                # Format current date as dd/mm/yyyy
-                data_pagamento = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                #data_pagamento = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
                 
                 # Get additional data from session
                 idatleta = session.get('user_idatleta')
