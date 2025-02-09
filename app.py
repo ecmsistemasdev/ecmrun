@@ -157,7 +157,7 @@ def comprovante(payment_id):
                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO, I.FLMAIL
+                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO, I.FLMAIL, I.IDINSCRICAO
             FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
@@ -193,7 +193,8 @@ def comprovante(payment_id):
         
         app.logger.info("Dados da Inscrição:")
         app.logger.info(receipt_data)
-
+        
+        idinscricao = receipt_data[11]
         if receipt_data[10] == 'N':
             # Enviar email com os dados do comprovante
             send_email(receipt_data_dict)
@@ -204,8 +205,8 @@ def comprovante(payment_id):
             cur1 = mysql.connection.cursor()
             cur1.execute('''
             UPDATE ecmrun.INSCRICAO_TT SET FLMAIL = 'S'                         
-            WHERE I.IDPAGAMENTO = %s
-            ''', (payment_id,))
+            WHERE I.IDINSCRICAO = %s
+            ''', (idinscricao,))
 
             mysql.connection.commit()
             cur1.close()
