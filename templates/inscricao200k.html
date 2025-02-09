@@ -450,8 +450,12 @@
                 localStorage.setItem('payment_method', paymentMethod);
                 
                 // Get the values from session
-                const vlinscricao = parseFloat('{{ session.get("cat_vlinscricao", 0) }}');
-                const vltaxa = parseFloat('{{ session.get("cat_vltaxa", 0) }}');            
+                //const vlinscricao = parseFloat('{{ session.get("cat_vlinscricao", 0) }}');
+                //const vltaxa = parseFloat('{{ session.get("cat_vltaxa", 0) }}');            
+                const vlinscricao =  parseFloat(localStorage.getItem('valoratual')) || 0;   
+                const vltaxa = parseFloat(localStorage.getItem('valortaxa')) || 0;            
+                console.info('Valor Atual:', vlinscricao);
+                console.info('Valor Taxa:', vltaxa);
                 
                 // Get form values
                 const camiseta = $('input[name="camiseta"]:checked').val();
@@ -459,10 +463,10 @@
                 const nomeEquipe = $('#nome_equipe').val();
                 const integrantes = $('#integrantes').val();
 
-                console.error('Camisa:', camiseta);           
-                console.error('Apoio:', apoio);
-                console.error('Equipe:', nomeEquipe);
-                console.error('Integrantes:', integrantes);
+                console.info('Camisa:', camiseta);           
+                console.info('Apoio:', apoio);
+                console.info('Equipe:', nomeEquipe);
+                console.info('Integrantes:', integrantes);
 
                 // Store form values
                 localStorage.setItem('camiseta', camiseta);
