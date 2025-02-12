@@ -1386,6 +1386,9 @@ def verificar_pagamento(payment_id):
         # Buscar o status diretamente do Mercado Pago
         payment_response = sdk.payment().get(payment_id)
         payment = payment_response["response"]
+        data = request.get_json()
+        equipe = data.get('equipe')
+        print(f"Equipe: { equipe }")
         
         print(f"Status do pagamento recebido: {payment['status']}")
         
@@ -1422,9 +1425,9 @@ def verificar_pagamento(payment_id):
                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                     NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, 
                     VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
-                    IDPAGAMENTO, FLMAIL
+                    IDPAGAMENTO, FLMAIL, EQUIPE
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
                 """
                 
@@ -1444,7 +1447,8 @@ def verificar_pagamento(payment_id):
                     'CONFIRMADO',                        # STATUS
                     'PIX',                               # FORMAPGTO
                     payment_id,                          # IDPAGAMENTO
-                    'N'
+                    'N',
+                    equipe
                 )
                 
                 cur.execute(query, params)
