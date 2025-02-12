@@ -87,8 +87,8 @@
 
         .payment-info {
             text-align: center;
-            margin-bottom: 20px;
-            padding: 15px;
+            margin-bottom: 10px; /* Reduzido de 20px */
+            padding: 10px; /* Reduzido de 15px */
             background-color: #f8f9fa;
             border-radius: 4px;
         }
@@ -100,40 +100,60 @@
             margin: 10px 0;
         }
 
+        .total-amount {
+            font-size: 24px;
+            color: #0056b3;
+            font-weight: bold;
+            margin: 5px 0; /* Reduzido de 10px */
+        }
+
         .qr-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 20px 0;
+            margin: 10px 0; /* Reduzido de 20px */
         }
-
+        
+        .qr-container h3 {
+            margin: 5px 0; /* Adicionado para reduzir espaço */
+        }
+        
+                
         .qr-code {
-            width: 200px;
-            height: 200px;
-            margin: 20px 0;
-            padding: 10px;
+            width: 230px;
+            height: 230px;
+            margin: 10px 0; /* Reduzido de 20px */
+            padding: 5px; /* Reduzido de 10px */
             border: 1px solid #ddd;
             border-radius: 4px;
-        }
-
+        }}
+        
         .pix-key-container {
             width: 100%;
             max-width: 400px;
-            margin: 15px auto;
+            margin: 10px auto; /* Reduzido de 15px */
             position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-
+        
         .pix-key {
             width: 100%;
-            padding: 12px;
+            padding: 8px; /* Reduzido de 12px */
             border: 1px solid #ddd;
             border-radius: 4px;
             background: #f8f9fa;
             font-size: 14px;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px; /* Reduzido de 10px */
         }
-
+                
+        .pix-key-container .button {
+            margin: 5px auto; /* Centraliza o botão */
+            display: block;
+        }
+        
         .button {
             background-color: #4376ac;
             color: white;
@@ -160,13 +180,14 @@
             gap: 10px;
             margin-top: 20px;
         }
+        
         /* adicionado 01/02 */
         .payment-status {
             background-color: #fff3cd;
-            color: #856404;
-            padding: 15px;
+            color: #8b0000; /* Vermelho escuro */
+            padding: 10px; /* Reduzido de 15px */
             border-radius: 4px;
-            margin: 15px 0;
+            margin: 10px 0; /* Reduzido de 15px */
             text-align: center;
             font-weight: bold;
             border: 1px solid #ffeeba;
@@ -184,13 +205,13 @@
 
         @media (max-width: 480px) {
             .qr-code {
-                width: 180px;
-                height: 180px;
+                width: 230px;
+                height: 230px;
             }
 
             .payment-container {
                 width: 95%;
-                padding: 15px;
+                padding: 10px;
             }
 
             .button {
