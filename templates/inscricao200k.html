@@ -173,6 +173,29 @@
         }
 
         button {
+            background-color: #ccc;
+            color: white;
+            margin-top: 25px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: not-allowed;
+            font-size: 16px;
+            width: auto;
+            display: inline-block;
+        }
+
+        button.active {
+            background-color: #4376ac !important;
+            cursor: pointer !important;
+        }
+
+        button.active:hover {
+            background-color: #3665a0;
+        }
+
+        /*        
+        button {
             background-color: #4376ac;
             color: white;
             margin-top: 25px;
@@ -188,7 +211,8 @@
         button:hover {
             background-color: #0056b3;
         }
-
+        */
+        
         .footer {
             background-color: white;
             padding: 20px 0;
@@ -446,6 +470,17 @@
             
             console.log('Idade:', idade);
             console.log('Valor Original:', valorinsc);
+
+
+           // Habilitar/desabilitar botão de submit baseado no checkbox
+            $('#aceitoTermos').on('change', function() {
+                if (this.checked) {
+                    $('#submitButton').prop('disabled', false).addClass('active');
+                } else {
+                    $('#submitButton').prop('disabled', true).removeClass('active');
+                }
+            });
+            
             
             // Form submission handler
             $('#inscricaoForm').on('submit', function(e) {
