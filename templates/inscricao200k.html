@@ -487,63 +487,111 @@
                 e.preventDefault();
                 
                 const paymentMethod = $('input[name="pagamento"]:checked').val();
-                localStorage.setItem('payment_method', paymentMethod)
-                console.log('Metodo Pagto:', paymentMethod);
+                localStorage.setItem('payment_method', paymentMethod);
                 
-                const vlinscricao =  parseFloat(localStorage.getItem('valoratual')) || 0;   
-
+                // Obter valores do localStorage com validação
+                const valorTotal = parseFloat(localStorage.getItem('valortotal')) || 0;
+                const valorTaxa = parseFloat(localStorage.getItem('valortaxa')) || 0;
+                const vlinscricao = parseFloat(localStorage.getItem('valoratual')) || 0;
                 
-                if (paymentMethod === 'pix') {
-                    let percentualDesconto = 5;
-                    let valorDesconto = vlinscricao * (percentualDesconto / 100);
-                    const taxaatual = parseFloat(localStorage.getItem('valortaxa')) || 0;
-
-                    valor_comdesconto = vlinscricao - valorDesconto
-                    console.info('Valor Com Desconto:', valor_comdesconto);
-                
-                    localStorage.setItem('valoratual', valor_comdesconto);
-                    localStorage.setItem('vlinscricao', valor_comdesconto);
-                    const novo_valoratual = parseFloat(localStorage.getItem('valoratual')) || 0; 
-                    const valor_total = valor_comdesconto + taxaatual;
-                    localStorage.setItem('valortotal', valor_total.toString);
-                    console.info('Valor Recebido do Storage:', novo_valoratual);
-                    
-                } else {
-                    localStorage.setItem('vlinscricao', vlinscricao);
-                }
-         
-                // Get the values from session           
-                const vltaxa = parseFloat(localStorage.getItem('valortaxa')) || 0;            
-                console.info('Valor Atual:', vlinscricao);
-                console.info('Valor Taxa:', vltaxa);
-                
-                // Get form values
+                // Obter outros campos do formulário
                 const camiseta = $('input[name="camiseta"]:checked').val();
                 const equipe = $('#equipe').val();
                 const apoio = $('#apoio').val();
                 const nomeEquipe = $('#nome_equipe').val();
                 const integrantes = $('#integrantes').val();
-
-                console.info('Camisa:', camiseta);           
-                console.info('Apoio:', apoio);
-                console.info('Equipe:', equipe);
-                console.info('Equipe200k:', nomeEquipe);
-                console.info('Integrantes:', integrantes);
-
-                // Store form values
+                
+                // Armazenar valores no localStorage
                 localStorage.setItem('camiseta', camiseta);
                 localStorage.setItem('apoio', apoio);
                 localStorage.setItem('equipe', equipe);
                 localStorage.setItem('nome_equipe', nomeEquipe);
                 localStorage.setItem('integrantes', integrantes);
+                localStorage.setItem('vltaxa', valorTaxa);
                 
-                localStorage.setItem('vltaxa', vltaxa);
+                if (paymentMethod === 'cartao') {
+                    // Log dos valores antes de enviar
+                    console.log('Dados sendo enviados para /criar_preferencia:', {
+                        valortotal: valorTotal,
+                        valortaxa: valorTaxa,
+                        user_name: localStorage.getItem('user_name'),
+                        user_email: localStorage.getItem('user_email'),
+                        user_idatleta: localStorage.getItem('user_idatleta')
+                    });
 
-                // Remover o paymentId do sessionStorage -- ADICIONADO POR MIM
-                sessionStorage.removeItem('currentPaymentId');                
+                    // Validar se todos os campos necessários estão presentes
+                    if (!valorTotal || !localStorage.getItem('user_name') || !localStorage.getItem('user_email')) {
+                        console.error('Dados obrigatórios faltando:', {
+                            valorTotal,
+                            userName: localStorage.getItem('user_name'),
+                            userEmail: localStorage.getItem('user_email')
+                        });
+                        alert('Dados incompletos. Por favor, verifique se todos os campos estão preenchidos.');
+                        return;
+                    }
+
+                    // Preparar dados para enviar ao backend
+                    const requestData = {
+                        valortotal: valorTotal,
+                        valortaxa: valorTaxa,
+                        user_name: localStorage.getItem('user_name'),
+                        user_email: localStorage.getItem('user_email'),
+                        user_idatleta: localStorage.getItem('user_idatleta')
+                    };
+                    
+                    // Fazer requisição para criar preferência no Mercado Pago
+                    fetch('/criar_preferencia', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestData)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            // Log detalhado do erro
+                            return response.text().then(text => {
+                                console.error('Erro na resposta:', {
+                                    status: response.status,
+                                    statusText: response.statusText,
+                                    body: text
+                                });
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Resposta do servidor:', data);
+                        if (data.init_point) {
+                            // Redirecionar para a página de pagamento do Mercado Pago
+                            window.location.href = data.init_point;
+                        } else {
+                            console.error('init_point não encontrado na resposta:', data);
+                            alert('Erro ao processar pagamento. Por favor, tente novamente.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro detalhado:', error);
+                        alert('Erro ao processar pagamento. Por favor, tente novamente.');
+                    });
+                } else if (paymentMethod === 'pix') {
+                    // Código existente para PIX...
+                    let percentualDesconto = 5;
+                    let valorDesconto = vlinscricao * (percentualDesconto / 100);
+                    const taxaatual = parseFloat(localStorage.getItem('valortaxa')) || 0;
+                    
+                    const valor_comdesconto = vlinscricao - valorDesconto;
+                    const valor_total = valor_comdesconto + taxaatual;
+                    
+                    localStorage.setItem('valoratual', valor_comdesconto.toString());
+                    localStorage.setItem('vlinscricao', valor_comdesconto.toString());
+                    localStorage.setItem('valortotal', valor_total.toString());
+                    
+                    window.location.href = '/pagamento';
+                }
                 
-                // Redirect to payment page
-                window.location.href = '/pagamento';
+                sessionStorage.removeItem('currentPaymentId');
             });
 
             // Handle terms acceptance and submit button
@@ -582,8 +630,6 @@
             $('#submitButton').prop('disabled', true);
             $('#aceitoTermos').prop('checked', false);
         });
-
-
 
     </script>
 </body>
