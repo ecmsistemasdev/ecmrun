@@ -273,6 +273,11 @@
         </div>
 
         <div class="form-group">
+            <label for="equipe">Equipe/Grupo/Academia:</label>
+            <input type="text" id="equipe" name="equipe" placeholder="">
+        </div>
+
+        <div class="form-group">
             <label for="apoio">Nome do Apoio (se tiver):</label>
             <input type="text" id="apoio" name="apoio" placeholder="">
         </div>
@@ -406,6 +411,7 @@
             // Function to handle team fields visibility
             const handleTeamFields = (categoriaId) => {
                 const camisetaField = document.getElementById('camiseta');
+                const equipeField = document.getElementById('equipe');
                 const apoioField = document.getElementById('apoio');
                 const nomeEquipeField = document.getElementById('nome_equipe');
                 const integrantesField = document.getElementById('integrantes');
@@ -459,25 +465,28 @@
                 
                 // Get form values
                 const camiseta = $('input[name="camiseta"]:checked').val();
+                const equipe = $('#equipe').val();
                 const apoio = $('#apoio').val();
                 const nomeEquipe = $('#nome_equipe').val();
                 const integrantes = $('#integrantes').val();
 
                 console.info('Camisa:', camiseta);           
                 console.info('Apoio:', apoio);
-                console.info('Equipe:', nomeEquipe);
+                console.info('Equipe:', equipe);
+                console.info('Equipe200k:', nomeEquipe);
                 console.info('Integrantes:', integrantes);
 
                 // Store form values
                 localStorage.setItem('camiseta', camiseta);
                 localStorage.setItem('apoio', apoio);
+                localStorage.setItem('equipe', equipe);
                 localStorage.setItem('nome_equipe', nomeEquipe);
                 localStorage.setItem('integrantes', integrantes);
                 
                 localStorage.setItem('vlinscricao', vlinscricao);
                 localStorage.setItem('vltaxa', vltaxa);
 
-                // Remover o paymentId do sessionStorage
+                // Remover o paymentId do sessionStorage -- ADICIONADO POR MIM
                 sessionStorage.removeItem('currentPaymentId');                
                 
                 // Redirect to payment page
