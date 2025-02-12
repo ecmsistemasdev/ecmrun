@@ -464,10 +464,15 @@
                     let valorDesconto = vlinscricao * (percentualDesconto / 100);
 
                     valor_comdesconto = vlinscricao - valorDesconto
-                    localStorage.setItem('valoratual', valor_comdesconto.toString());
+                    console.info('Valor Com Desconto:', valor_comdesconto);
+                
+                    localStorage.setItem('valoratual', valor_comdesconto);
+                    localStorage.setItem('vlinscricao', valor_comdesconto);
+                    const novo_valoratual = parseFloat(localStorage.getItem('valoratual')) || 0; 
                     const valor_total = valor_comdesconto + taxa;
                     localStorage.setItem('valortotal', valor_total.toString);
-                    localStorage.setItem('vlinscricao', valor_comdesconto);
+                    console.info('Valor Recebido do Storage:', novo_valoratual);
+                    
                 } else {
                     localStorage.setItem('vlinscricao', vlinscricao);
                 }
