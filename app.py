@@ -79,6 +79,10 @@ def fn_equipe(valor):
     global var_equipe
     var_equipe = valor
 
+def fn_nome_equipe(valor):
+    global var_nome_equipe
+    var_nome_equipe = valor
+
 def fn_integrantes(valor):
     global var_integrantes
     var_integrantes = valor
@@ -1249,7 +1253,8 @@ def gerar_pix():
 
         fn_camiseta(data.get('camiseta'))
         fn_apoio(data.get('apoio')) 
-        fn_equipe(data.get('nome_equipe'))
+        fn_equipe(data.get('equipe'))
+        fn_nome_equipe(data.get('nome_equipe'))
         fn_integrantes(data.get('integrantes'))
         
         # Validate minimum transaction amount (Mercado Pago usually requires >= 1)
@@ -1267,6 +1272,7 @@ def gerar_pix():
         print(f"CAMISA: {var_camiseta}")
         print(f"APOIO: {var_apoio}")
         print(f"EQUIPE: {var_equipe}")
+        print(f"EQUIPE 200k: {var_nome_equipe}")
         print(f"INTEGRANTES: {var_integrantes}")
         
         # Dados do pagador da sessão
@@ -1386,9 +1392,6 @@ def verificar_pagamento(payment_id):
         # Buscar o status diretamente do Mercado Pago
         payment_response = sdk.payment().get(payment_id)
         payment = payment_response["response"]
-        data = request.get_json()
-        equipe = data.get('equipe')
-        #print(f"Equipe: { equipe }")
         
         print(f"Status do pagamento recebido: {payment['status']}")
         
@@ -1438,7 +1441,7 @@ def verificar_pagamento(payment_id):
                     session.get('cat_iditem'),           # IDITEM
                     var_camiseta,                        # CAMISETA
                     var_apoio,                           # APOIO
-                    var_equipe,                          # NOME_EQUIPE
+                    var_nome_equipe,                     # NOME_EQUIPE
                     var_integrantes,                     # INTEGRANTES
                     valor,                               # VALOR
                     taxa,                                # TAXA
@@ -1448,7 +1451,7 @@ def verificar_pagamento(payment_id):
                     'PIX',                               # FORMAPGTO
                     payment_id,                          # IDPAGAMENTO
                     'N',
-                    equipe
+                    var_equipe
                 )
                 
                 cur.execute(query, params)
