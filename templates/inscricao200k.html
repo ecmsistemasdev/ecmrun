@@ -301,10 +301,10 @@
                 <label>Forma de pagamento:</label>
                 <div class="radio-group">
                     <label>
-                        <input type="radio" name="pagamento" value="pix" required> PIX
+                        <input type="radio" name="pagamento" value="pix" required> PIX (Desc. 5% do valor Insc.)
                     </label>
                     <label>
-                        <input type="radio" name="pagamento" value="cartao"> Cartão de Crédito (acres. de 5%)
+                        <input type="radio" name="pagamento" value="cartao"> Cartão de Crédito
                     </label>
                 </div>
             </div>
@@ -453,12 +453,25 @@
                 e.preventDefault();
                 
                 const paymentMethod = $('input[name="pagamento"]:checked').val();
-                localStorage.setItem('payment_method', paymentMethod);
+                localStorage.setItem('payment_method', paymentMethod)
                 
-                // Get the values from session
-                //const vlinscricao = parseFloat('{{ session.get("cat_vlinscricao", 0) }}');
-                //const vltaxa = parseFloat('{{ session.get("cat_vltaxa", 0) }}');            
                 const vlinscricao =  parseFloat(localStorage.getItem('valoratual')) || 0;   
+
+                
+                if (paymentMethod === 'PIX') {
+                    let percentualDesconto = 5;
+                    let valorDesconto = vlinscricao * (percentualDesconto / 100);
+
+                    valor_comdesconto = vlinscricao - valorDesconto
+                    localStorage.setItem('valoratual', valor_comdesconto.toString());
+                    const valor_total = valor_comdesconto + taxa;
+                    localStorage.setItem('valortotal', valor_total.toString);
+                    localStorage.setItem('vlinscricao', valor_comdesconto);
+                } else {
+                    localStorage.setItem('vlinscricao', vlinscricao);
+                }
+         
+                // Get the values from session           
                 const vltaxa = parseFloat(localStorage.getItem('valortaxa')) || 0;            
                 console.info('Valor Atual:', vlinscricao);
                 console.info('Valor Taxa:', vltaxa);
@@ -483,7 +496,6 @@
                 localStorage.setItem('nome_equipe', nomeEquipe);
                 localStorage.setItem('integrantes', integrantes);
                 
-                localStorage.setItem('vlinscricao', vlinscricao);
                 localStorage.setItem('vltaxa', vltaxa);
 
                 // Remover o paymentId do sessionStorage -- ADICIONADO POR MIM
