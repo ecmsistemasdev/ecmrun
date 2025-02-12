@@ -1403,23 +1403,31 @@ def verificar_pagamento(payment_id):
             existing_record = cur.fetchone()
             
             if not existing_record:
-                # Calculate valor_pgto (total payment)
-                valor = float(session.get('cat_vlinscricao', 0))
-                taxa = float(session.get('cat_vltaxa', 0))
-                valor_pgto = valor + taxa
+                # Determinar forma de pagamento baseado no payment response
+                forma_pgto = payment.get('payment_type_id', '').upper()
+                if forma_pgto == 'CREDIT_CARD':
+                    forma_pgto = 'CARTAO'
+                
+                # Obter valores do pagamento
+                transaction_amount = float(payment.get('transaction_amount', 0))
+                
+                # Se for cartão de crédito, considerar que o valor já inclui a taxa
+                if forma_pgto == 'CARTAO':
+                    valor = transaction_amount / 1.05  # Remove 5% fee
+                    taxa = transaction_amount - valor
+                else:
+                    valor = float(session.get('cat_vlinscricao', 0))
+                    taxa = float(session.get('cat_vltaxa', 0))
+                
+                valor_pgto = transaction_amount
 
-                # Obtém a data e hora atuais
+                # Obtém a data e hora atuais em Manaus
                 data_e_hora_atual = datetime.now()
-                # Define o fuso horário para Manaus
                 fuso_horario = timezone('America/Manaus')
-                # Converte a data e hora para o fuso horário de Manaus
                 data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
-                # Formata a data e hora no formato desejado (dd/mm/yyyy hh:mm)
                 data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
                 
-                #data_pagamento = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                
-                # Get additional data from session
+                # Get additional data
                 idatleta = session.get('user_idatleta')
                 cpf = session.get('user_cpf')
                 
@@ -1438,28 +1446,28 @@ def verificar_pagamento(payment_id):
                 params = (
                     idatleta,                            # IDATLETA
                     cpf,                                 # CPF
-                    1,                                   # IDEVENTO (hardcoded as 1 for this event)
+                    1,                                   # IDEVENTO
                     session.get('cat_iditem'),           # IDITEM
-                    var_camiseta,                        # CAMISETA
-                    var_apoio,                           # APOIO
-                    var_nome_equipe,                     # NOME_EQUIPE
-                    var_integrantes,                     # INTEGRANTES
+                    session.get('camiseta'),             # CAMISETA
+                    session.get('apoio'),                # APOIO
+                    session.get('nome_equipe'),          # NOME_EQUIPE
+                    session.get('integrantes'),          # INTEGRANTES
                     valor,                               # VALOR
                     taxa,                                # TAXA
                     valor_pgto,                          # VALOR_PGTO
                     data_pagamento,                      # DTPAGAMENTO
                     'CONFIRMADO',                        # STATUS
-                    'PIX',                               # FORMAPGTO
+                    forma_pgto,                          # FORMAPGTO
                     payment_id,                          # IDPAGAMENTO
-                    'N',
-                    var_equipe
+                    'N',                                 # FLMAIL
+                    session.get('equipe')                # EQUIPE
                 )
                 
                 cur.execute(query, params)
                 mysql.connection.commit()
                 cur.close()
                 
-                print("Registro de pagamento inserido com sucesso!")
+                print(f"Registro de pagamento {forma_pgto} inserido com sucesso!")
                 
                 return jsonify({
                     'success': True,
@@ -1481,13 +1489,36 @@ def verificar_pagamento(payment_id):
         
     except Exception as e:
         print(f"Erro ao verificar pagamento: {str(e)}")
-        # Ensure JSON is returned even on error
         return jsonify({
             'success': False, 
             'message': str(e),
             'status': 'error'
-        }), 500
+        }), 500    
+
+
+@app.route('/success')
+def payment_success():
+    payment_id = request.args.get('payment_id')
+    if not payment_id:
+        return "Payment ID não encontrado", 400
+        
+    # Verificar e processar o pagamento
+    verification_response = verificar_pagamento(payment_id)
     
+    if verification_response.json.get('success'):
+        # Redirecionar para o comprovante com o payment_id
+        return redirect(f'/comprovante/{payment_id}')
+    else:
+        # Redirecionar para página de erro
+        return redirect('/pagamento-erro')
+
+@app.route('/failure')
+def payment_failure():
+    return redirect('/pagamento-erro')
+
+@app.route('/pending')
+def payment_pending():
+    return redirect('/pagamento-pendente')
 
 # @app.route('/create-mercado-pago-payment', methods=['POST'])
 # def create_mercado_pago_payment():
@@ -1675,17 +1706,16 @@ def criar_preferencia():
         first_name = nome_parts[0]
         last_name = nome_parts[1] if len(nome_parts) > 1 else ''
         
-        # Calculate price with 5% card fee
-        preco_final = valor_total * 1.05
+        preco_final = valor_total
         
         print("Preço final calculado:", preco_final)
         
         # Configurar URLs de retorno
         base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
         back_urls = {
-            "success": f"{base_url}/success",
-            "failure": f"{base_url}/failure",
-            "pending": f"{base_url}/pending"
+            "success": f"{base_url}/aprovado",
+            "failure": f"{base_url}/negado",
+            "pending": f"{base_url}/negado"
         }
 
         preference_data = {
@@ -1744,21 +1774,27 @@ def criar_preferencia():
 
 
 
-#@app.route('/webhook/mercadopago', methods=['POST'])
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
-        data = request.get_json()
-        if data['type'] == 'payment':
-            payment_info = sdk.payment().get(data['data']['id'])
-            app.logger.info(f'Info payment: {payment_info}')
-            # Process payment info and update your database
-            # You should implement the logic to update the inscription status
+        data = request.json
+        
+        if 'data' in data and 'id' in data['data']:
+            payment_id = data['data']['id']
             
-        return jsonify({"status": "ok"}), 200
+            # Verificar o pagamento
+            verification_response = verificar_pagamento(payment_id)
+            
+            if verification_response.json.get('success'):
+                return jsonify({'status': 'success'}), 200
+            else:
+                return jsonify({'status': 'error', 'message': 'Falha ao processar pagamento'}), 400
+        
+        return jsonify({'status': 'error', 'message': 'Payload inválido'}), 400
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
+        print(f"Erro no webhook: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 
