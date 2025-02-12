@@ -373,19 +373,20 @@
                 // Determine valoratual based on age
                 const valoratual = idade >= 60 ? valorinsc / 2 : valorinsc;
                 console.info('Valor Atual:',valoratual);
+                const vltaxa = idade >= 60 ? taxa / 2 : taxa;
 
                 // Calculate total value including taxa
-                const valortotal = valoratual + taxa;
+                const valortotal = valoratual + vltaxa;
 
                 // Store the calculated values in localStorage
                 localStorage.setItem('valoratual', valoratual.toString());
-                localStorage.setItem('valortaxa', taxa.toString()); // Mudado de 'valortotal' para 'valortaxa'
+                localStorage.setItem('valortaxa', vltaxa.toString()); // Mudado de 'valortotal' para 'valortaxa'
                 localStorage.setItem('valortotal', valortotal.toString());
 
                 console.info('Valor Total:',valortotal);
 
                 // Format the display string with all values
-                const displayValue = `${formatCurrency(valoratual)} + ${formatCurrency(taxa)} = Total: ${formatCurrency(valortotal)}`;
+                const displayValue = `${formatCurrency(valoratual)} + ${formatCurrency(valortaxa)} = Total: ${formatCurrency(valortotal)}`;
                 console.info('Valor Display:',displayValue);
 
                 // Update the display
@@ -441,12 +442,10 @@
 
             // Calculate and store values when page loads
             const totalValue = calculateValues();
+            const valortaxa = parseFloat(localStorage.getItem('valortaxa')) || 0;
+            
             console.log('Idade:', idade);
             console.log('Valor Original:', valorinsc);
-            //console.log('Valor Atual:', valoratual);
-            console.log('Taxa:', taxa);
-            console.log('Valor Total:', totalValue);
-
             
             // Form submission handler
             $('#inscricaoForm').on('submit', function(e) {
@@ -469,7 +468,7 @@
                     localStorage.setItem('valoratual', valor_comdesconto);
                     localStorage.setItem('vlinscricao', valor_comdesconto);
                     const novo_valoratual = parseFloat(localStorage.getItem('valoratual')) || 0; 
-                    const valor_total = valor_comdesconto + taxa;
+                    const valor_total = valor_comdesconto + valortaxa;
                     localStorage.setItem('valortotal', valor_total.toString);
                     console.info('Valor Recebido do Storage:', novo_valoratual);
                     
