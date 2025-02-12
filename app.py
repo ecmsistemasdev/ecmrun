@@ -722,10 +722,10 @@ def salvar_cadastro():
         query = """
         INSERT INTO ecmrun.ATLETA_TT (
             CPF, NOME, SOBRENOME, DTNASCIMENTO, NRCELULAR, SEXO, 
-            EMAIL, ID_ENDERECO, EQUIPE, TEL_EMERGENCIA, 
+            EMAIL, ID_ENDERECO, TEL_EMERGENCIA, 
             CONT_EMERGENCIA, SENHA, ATIVO, DTCADASTRO
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         """
         
@@ -743,13 +743,14 @@ def salvar_cadastro():
             data.get('sexo'),
             data.get('email'),
             data.get('id_logradouro'),  # ID obtido na pesquisa do CEP
-            data.get('equipe').upper() if data.get('equipe') else None,
             tel_emergencia_limpo,
             data.get('contato_emergencia').upper() if data.get('contato_emergencia') else None,
             senha_hash,
             'S',  # ATIVO
             data_cadastro
         )
+
+        #data.get('equipe').upper() if data.get('equipe') else None,
         
         # Executar a query
         cur = mysql.connection.cursor()
