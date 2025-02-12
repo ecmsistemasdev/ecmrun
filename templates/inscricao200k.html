@@ -454,6 +454,7 @@
                 
                 const paymentMethod = $('input[name="pagamento"]:checked').val();
                 localStorage.setItem('payment_method', paymentMethod)
+                console.log('Metodo Pagto:', paymentMethod);
                 
                 const vlinscricao =  parseFloat(localStorage.getItem('valoratual')) || 0;   
 
