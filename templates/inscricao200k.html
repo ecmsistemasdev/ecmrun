@@ -477,6 +477,9 @@
                 localStorage.setItem('vlinscricao', vlinscricao);
                 localStorage.setItem('vltaxa', vltaxa);
 
+                // Remover o paymentId do sessionStorage
+                sessionStorage.removeItem('currentPaymentId');                
+                
                 // Redirect to payment page
                 window.location.href = '/pagamento';
             });
