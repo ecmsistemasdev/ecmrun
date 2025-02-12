@@ -552,6 +552,7 @@
 
             // Start payment verification process
             async function startPaymentVerification(paymentId) {
+                // Limpa qualquer intervalo existente
                 if (checkInterval) {
                     clearInterval(checkInterval);
                 }
@@ -562,40 +563,55 @@
                     if (isRedirecting) return;
 
                     try {
+                        // Verifica timeout
                         if (Date.now() - startTime > VERIFICATION_TIMEOUT) {
                             clearInterval(checkInterval);
-                            sessionStorage.removeItem('pixData'); // Limpa dados expirados
+                            sessionStorage.removeItem('pixData');
                             alert('Tempo de verificação expirado. Se você já realizou o pagamento, aguarde alguns instantes e atualize a página.');
                             return;
                         }
 
-                        console.log('Verificando status do pagamento...');
+                        console.log('Verificando status do pagamento...', paymentId);
                         const response = await fetch(`${baseURL}/verificar-pagamento/${paymentId}`);
                         const data = await response.json();
                         
-                        if (data.success && data.status === 'approved' && !isRedirecting) {
-                            console.log('Pagamento aprovado, preparando redirecionamento...');
-                            isRedirecting = true;
-                            clearInterval(checkInterval);
-
-                            // Remove event listeners
-                            document.removeEventListener('visibilitychange', handleVisibilityChange);
-
-                            // Remover dados do PIX do sessionStorage
-                            sessionStorage.removeItem('pixData');
+                        if (response.ok && data.success) {
+                            console.log('Resposta da verificação:', data);
                             
-                            // Executar o redirecionamento
-                            redirectToReceipt(paymentId);
+                            if (data.status === 'approved') {
+                                console.log('Pagamento aprovado!');
+                                isRedirecting = true;
+                                
+                                // Limpa o intervalo de verificação
+                                if (checkInterval) {
+                                    clearInterval(checkInterval);
+                                }
+
+                                // Remove event listeners
+                                document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+                                // Limpa dados do sessionStorage
+                                sessionStorage.removeItem('pixData');
+                                
+                                // Redireciona para o comprovante
+                                redirectToReceipt(paymentId);
+                            } else {
+                                console.log('Pagamento ainda não aprovado, status:', data.status);
+                            }
+                        } else {
+                            console.log('Erro na resposta da verificação:', data);
                         }
                     } catch (error) {
                         console.error('Erro ao verificar pagamento:', error);
                     }
                 };
 
-                // Primeira verificação imediata
+                // Executa a primeira verificação imediatamente
                 await checkPayment();
-                // Configurar intervalo para verificações subsequentes
+
+                // Configura o intervalo para verificações a cada 5 segundos
                 if (!isRedirecting) {
+                    console.log('Iniciando verificações periódicas...');
                     checkInterval = setInterval(checkPayment, 5000);
                 }
             }
@@ -682,3 +698,4 @@
     </script>
 </body>
 </html>
+
