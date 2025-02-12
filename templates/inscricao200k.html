@@ -442,7 +442,7 @@
 
             // Calculate and store values when page loads
             const totalValue = calculateValues();
-            const valortaxa = parseFloat(localStorage.getItem('valortaxa')) || 0;
+            //const valortaxa = parseFloat(localStorage.getItem('valortaxa')) || 0;
             
             console.log('Idade:', idade);
             console.log('Valor Original:', valorinsc);
@@ -461,6 +461,7 @@
                 if (paymentMethod === 'pix') {
                     let percentualDesconto = 5;
                     let valorDesconto = vlinscricao * (percentualDesconto / 100);
+                    const taxaatual = parseFloat(localStorage.getItem('valortaxa')) || 0;
 
                     valor_comdesconto = vlinscricao - valorDesconto
                     console.info('Valor Com Desconto:', valor_comdesconto);
@@ -468,7 +469,7 @@
                     localStorage.setItem('valoratual', valor_comdesconto);
                     localStorage.setItem('vlinscricao', valor_comdesconto);
                     const novo_valoratual = parseFloat(localStorage.getItem('valoratual')) || 0; 
-                    const valor_total = valor_comdesconto + valortaxa;
+                    const valor_total = valor_comdesconto + taxaatual;
                     localStorage.setItem('valortotal', valor_total.toString);
                     console.info('Valor Recebido do Storage:', novo_valoratual);
                     
