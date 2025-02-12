@@ -358,16 +358,16 @@ def pagpix():
 #def checkout2():
 #    return render_template('checkout2.html')
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    data = request.json
-    app.logger.info(f"Webhook received: {data}")
+#@app.route('/webhook', methods=['POST'])
+# def webhook():
+#     data = request.json
+#     app.logger.info(f"Webhook received: {data}")
     
-    if data['type'] == 'payment':
-        payment_info = sdk.payment().get(data['data']['id'])
-        app.logger.info(f"Payment info: {payment_info}")
+#     if data['type'] == 'payment':
+#         payment_info = sdk.payment().get(data['data']['id'])
+#         app.logger.info(f"Payment info: {payment_info}")
     
-    return jsonify({'status': 'ok'}), 200
+#     return jsonify({'status': 'ok'}), 200
 
 
 #@app.route('/process_payment', methods=['POST'])
@@ -1562,6 +1562,206 @@ def create_mercado_pago_payment():
     return jsonify({
         "init_point": result["response"]["init_point"]
     })
+
+####  adicionado pra pagamento com cartão
+def get_back_urls():
+    """
+    Dynamically generate back URLs based on environment
+    """
+    is_production = os.getenv('FLASK_ENV', 'development') == 'production'
+    
+    if is_production:
+        base_url = 'https://ecmrun.com.br'
+    else:
+        local_ip = 'http://192.168.77.123/'
+        base_url = f'http://{local_ip}:5000'
+    
+    return {
+        "success": f"{base_url}/aprovado",
+        "failure": f"{base_url}/negado",
+        "pending": f"{base_url}/negado"
+    }
+
+@app.route('/env-check')
+def env_check():
+    return jsonify({
+        "environment": os.getenv('FLASK_ENV', 'development'),
+        "back_urls": get_back_urls()
+    })
+
+# @app.route('/criar_preferencia', methods=['POST'])
+# def criar_preferencia():
+#     try:
+#         data = request.get_json()
+        
+#         # Get values from localStorage (sent in request)
+#         valor_total = float(data.get('valortotal', 0))
+#         valor_taxa = float(data.get('valortaxa', 0))
+#         nome_completo = data.get('user_name', '')
+        
+#         # Split full name into first and last name
+#         nome_parts = nome_completo.split(' ', 1)
+#         first_name = nome_parts[0]
+#         last_name = nome_parts[1] if len(nome_parts) > 1 else ''
+        
+#         # Calculate price with 5% card fee
+#         preco_final = valor_total * 1.05
+        
+#         back_urls = get_back_urls()
+
+#         preference_data = {
+#             "items": [
+#                 {
+#                     "id": "200k-inscricao",
+#                     "title": "Inscrição 4º Desafio 200k",
+#                     "quantity": 1,
+#                     "unit_price": float(preco_final),
+#                     "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
+#                     "category_id": "sports_tickets"
+#                 }
+#             ],
+#             "payer": {
+#                 "first_name": first_name,
+#                 "last_name": last_name,
+#                 "email": data.get('user_email')
+#             },
+#             "payment_methods": {
+#                 "excluded_payment_methods": [
+#                     {"id": "bolbradesco"},
+#                     {"id": "pix"}
+#                 ],
+#                 "excluded_payment_types": [
+#                     {"id": "ticket"},
+#                     {"id": "bank_transfer"}
+#                 ],
+#                 "installments": 12
+#             },
+#             "back_urls": back_urls,
+#             "auto_return": "approved",
+#             "statement_descriptor": "ECM RUN",
+#             "external_reference": data.get('user_idatleta'),
+#             "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
+#             #"notification_url": "https://ecmrun.com.br/webhook"
+#         }
+        
+#         preference_response = sdk.preference().create(preference_data)
+#         preference = preference_response["response"]
+        
+#         return jsonify({
+#             "id": preference["id"],
+#             "init_point": preference["init_point"]
+#         })
+    
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 400
+
+
+@app.route('/criar_preferencia', methods=['POST'])
+def criar_preferencia():
+    try:
+        data = request.get_json()
+        
+        # Log dos dados recebidos
+        print("Dados recebidos:", data)
+        
+        # Get values from localStorage (sent in request)
+        valor_total = float(data.get('valortotal', 0))
+        valor_taxa = float(data.get('valortaxa', 0))
+        nome_completo = data.get('user_name', '')
+        
+        # Split full name into first and last name
+        nome_parts = nome_completo.split(' ', 1)
+        first_name = nome_parts[0]
+        last_name = nome_parts[1] if len(nome_parts) > 1 else ''
+        
+        # Calculate price with 5% card fee
+        preco_final = valor_total * 1.05
+        
+        print("Preço final calculado:", preco_final)
+        
+        # Configurar URLs de retorno
+        base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
+        back_urls = {
+            "success": f"{base_url}/success",
+            "failure": f"{base_url}/failure",
+            "pending": f"{base_url}/pending"
+        }
+
+        preference_data = {
+            "items": [
+                {
+                    "id": "200k-inscricao",
+                    "title": "Inscrição 4º Desafio 200k",
+                    "quantity": 1,
+                    "unit_price": float(preco_final),
+                    "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
+                    "category_id": "sports_tickets"
+                }
+            ],
+            "payer": {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": data.get('user_email')
+            },
+            "payment_methods": {
+                "excluded_payment_methods": [
+                    {"id": "bolbradesco"},
+                    {"id": "pix"}
+                ],
+                "excluded_payment_types": [
+                    {"id": "ticket"},
+                    {"id": "bank_transfer"}
+                ],
+                "installments": 12
+            },
+            "back_urls": back_urls,
+            "auto_return": "approved",
+            "statement_descriptor": "ECM RUN",
+            "external_reference": data.get('user_idatleta'),
+            "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
+        }
+        
+        # Log da preference antes de criar
+        print("Preference data:", preference_data)
+        
+        preference_response = sdk.preference().create(preference_data)
+        print("Resposta do MP:", preference_response)
+        
+        if "response" not in preference_response:
+            raise Exception("Erro na resposta do Mercado Pago: " + str(preference_response))
+            
+        preference = preference_response["response"]
+        
+        return jsonify({
+            "id": preference["id"],
+            "init_point": preference["init_point"]
+        })
+    
+    except Exception as e:
+        print("Erro detalhado:", str(e))
+        return jsonify({"error": str(e)}), 400
+
+
+
+#@app.route('/webhook/mercadopago', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    try:
+        data = request.get_json()
+        if data['type'] == 'payment':
+            payment_info = sdk.payment().get(data['data']['id'])
+            app.logger.info(f'Info payment: {payment_info}')
+            # Process payment info and update your database
+            # You should implement the logic to update the inscription status
+            
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+
+
 
 
 
