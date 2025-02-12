@@ -362,8 +362,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             let paymentId = null;
             let checkInterval = null;
-            const VERIFICATION_TIMEOUT = 10 * 60 * 1000;
-            let isRedirecting = false;
+            const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutos em milissegundos
+            let isRedirecting = false; // Flag para controlar redirecionamento
 
             const environments = {
                 development: {
@@ -440,6 +440,7 @@
                 clearAllNonEssentialLocalStorage();
                 sessionStorage.removeItem('paymentData');
                 setTimeout(() => {
+                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
                     window.location.replace(`/comprovante/${paymentId}`);
                 }, 1000);
             }
@@ -451,19 +452,14 @@
                     const persistedData = getPersistedPaymentData();
                     if (persistedData) {
                         console.log('Recuperando dados de pagamento persistidos');
-                        // Verifica se os dados não expiraram (30 minutos)
-                        if (Date.now() - persistedData.timestamp < 30 * 60 * 1000) {
-                            displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode);
-                            await startPaymentVerification(persistedData.paymentId);
-                            return;
-                        } else {
-                            sessionStorage.removeItem('paymentData');
-                        }
+                        displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode);
+                        await startPaymentVerification(persistedData.paymentId);
+                        return;
                     }
                     await generatePixPayment(totalValue);
                 } catch (error) {
                     console.error('Erro na inicialização:', error);
-                    handleError('Erro ao inicializar o pagamento. Por favor, tente novamente.');
+                    alert('Erro ao inicializar o pagamento. Por favor, tente novamente.');
                 }
             }
 
@@ -509,24 +505,21 @@
                     if (responseData.qr_code && responseData.qr_code_base64) {
                         persistPaymentData(responseData);
                         displayQRCode(responseData.qr_code_base64, responseData.qr_code);
-                        await startPaymentVerification(responseData.payment_id);
+                        
+                        if (responseData.payment_id) {
+                            await startPaymentVerification(responseData.payment_id);
+                        }
                     } else {
                         throw new Error('Dados do PIX incompletos na resposta');
                     }
 
                 } catch (error) {
                     console.error('Erro detalhado ao gerar PIX:', error);
-                    handleError(`Erro ao gerar QR Code PIX: ${error.message}`);
+                    document.getElementById('loadingContainer').innerHTML = `
+                        <p>Erro ao gerar QR Code PIX: ${error.message}
+                        <button class="button" onclick="window.location.reload()">Tentar novamente</button></p>
+                    `;
                 }
-            }
-
-            function handleError(errorMessage) {
-                const loadingContainer = document.getElementById('loadingContainer');
-                loadingContainer.innerHTML = `
-                    <p>${errorMessage}</p>
-                    <button class="button" onclick="window.location.reload()">Tentar novamente</button>
-                `;
-                loadingContainer.classList.remove('hidden');
             }
 
             async function startPaymentVerification(paymentId) {
@@ -542,7 +535,7 @@
                     try {
                         if (Date.now() - startTime > VERIFICATION_TIMEOUT) {
                             clearInterval(checkInterval);
-                            handleError('Tempo de verificação expirado. Se você já realizou o pagamento, aguarde alguns instantes e atualize a página.');
+                            alert('Tempo de verificação expirado. Se você já realizou o pagamento, aguarde alguns instantes e atualize a página.');
                             return;
                         }
 
@@ -553,7 +546,11 @@
                             console.log('Pagamento aprovado, preparando redirecionamento...');
                             isRedirecting = true;
                             clearInterval(checkInterval);
+
+                            // Remove event listeners
                             document.removeEventListener('visibilitychange', handleVisibilityChange);
+                            
+                            // Executar o redirecionamento
                             redirectToReceipt(paymentId);
                         }
                     } catch (error) {
@@ -561,7 +558,9 @@
                     }
                 };
 
+                // Primeira verificação imediata
                 await checkPayment();
+                // Configurar intervalo para verificações subsequentes
                 if (!isRedirecting) {
                     checkInterval = setInterval(checkPayment, 5000);
                 }
