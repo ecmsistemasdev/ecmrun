@@ -1514,11 +1514,13 @@ def payment_success():
 
 @app.route('/failure')
 def payment_failure():
-    return redirect('/pagamento-erro')
+    return render_template('negado.html')
+    #return redirect('/')
 
 @app.route('/pending')
 def payment_pending():
-    return redirect('/pagamento-pendente')
+    return render_template('negado.html')
+    #return redirect('/pagamento-pendente')
 
 # @app.route('/create-mercado-pago-payment', methods=['POST'])
 # def create_mercado_pago_payment():
