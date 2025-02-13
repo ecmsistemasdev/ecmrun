@@ -383,8 +383,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             let paymentId = null;
             let checkInterval = null;
-            const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutos em milissegundos
-            let isRedirecting = false; // Flag para controlar redirecionamento
+            const VERIFICATION_TIMEOUT = 10 * 60 * 1000;
+            let isRedirecting = false;
+            let retryCount = 0;
+            const MAX_RETRIES = 3;
 
             const environments = {
                 development: {
@@ -403,9 +405,11 @@
 
             const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
             const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
-            const totalValue = vlinscricao + vltaxa;
+            const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
+            //const totalValue = vlinscricao + vltaxa;
+            console.info('Valor pag',totalValue)
 
-            // Function to format currency values
+            // Função para formatar moeda
             function formatCurrency(value) {
                 return new Intl.NumberFormat('pt-BR', {
                     style: 'currency',
@@ -413,46 +417,137 @@
                 }).format(value);
             }
 
-            // Function to clear payment-related localStorage items
-            function clearPaymentRelatedLocalStorage() {
-                const itemsToRemove = ['valoratual', 'valortaxa'];
-                itemsToRemove.forEach(item => {
-                    localStorage.removeItem(item);
-                });
-            }
-
-            // Function to clear all non-essential localStorage items
-            function clearAllNonEssentialLocalStorage() {
-                const keysToKeep = ['user_name', 'user_email', 'user_cpf'];
-                Object.keys(localStorage).forEach(key => {
-                    if (!keysToKeep.includes(key)) {
-                        localStorage.removeItem(key);
-                    }
-                });
-            }
-
-            // Função para persistir os dados do pagamento
+            // Função para persistir dados do pagamento com verificação
             function persistPaymentData(data) {
-                sessionStorage.setItem('paymentData', JSON.stringify({
-                    paymentId: data.payment_id,
-                    qrCode: data.qr_code,
-                    qrCodeBase64: data.qr_code_base64,
-                    timestamp: Date.now()
-                }));
+                if (!data) return false;
+                
+                try {
+                    const paymentData = {
+                        paymentId: data.payment_id,
+                        qrCode: data.qr_code,
+                        qrCodeBase64: data.qr_code_base64,
+                        timestamp: Date.now()
+                    };
+                    
+                    // Verifica se todos os dados necessários estão presentes
+                    if (!paymentData.paymentId || !paymentData.qrCode || !paymentData.qrCodeBase64) {
+                        console.error('Dados incompletos para persistência');
+                        return false;
+                    }
+
+                    sessionStorage.setItem('paymentData', JSON.stringify(paymentData));
+                    localStorage.setItem('lastPaymentId', data.payment_id); // Backup adicional
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao persistir dados:', error);
+                    return false;
+                }
             }
 
-            // Função para recuperar dados do pagamento
+            // Função para recuperar dados do pagamento com validação
             function getPersistedPaymentData() {
-                const data = sessionStorage.getItem('paymentData');
-                return data ? JSON.parse(data) : null;
+                try {
+                    const sessionData = sessionStorage.getItem('paymentData');
+                    if (sessionData) {
+                        const data = JSON.parse(sessionData);
+                        // Verifica se os dados são válidos e não muito antigos (menos de 15 minutos)
+                        if (data && data.timestamp && (Date.now() - data.timestamp) < 900000) {
+                            return data;
+                        }
+                    }
+
+                    // Se não encontrou no sessionStorage, tenta recuperar o ID do localStorage
+                    const lastPaymentId = localStorage.getItem('lastPaymentId');
+                    if (lastPaymentId) {
+                        return { paymentId: lastPaymentId };
+                    }
+
+                    return null;
+                } catch (error) {
+                    console.error('Erro ao recuperar dados persistidos:', error);
+                    return null;
+                }
             }
 
-            // Função para exibir QR Code
+            // Adicione esta função que estava faltando
+            function redirectToReceipt(paymentId) {
+                try {
+                    // Limpa dados do pagamento antes do redirecionamento
+                    sessionStorage.removeItem('paymentData');
+                    localStorage.removeItem('lastPaymentId');
+                    
+                    // Redireciona para a página de recibo
+                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+                    window.location.replace(`/comprovante/${paymentId}`);
+                } catch (error) {
+                    console.error('Erro ao redirecionar:', error);
+                    alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
+                }
+            }
+
+            // // Função para realizar o redirecionamento
+            // function redirectToReceipt(paymentId) {
+            //     console.log('Iniciando redirecionamento para comprovante...');
+            //     clearAllNonEssentialLocalStorage();
+            //     sessionStorage.removeItem('paymentData');
+                
+            //     // Garantir que o redirecionamento aconteça
+            //     setTimeout(() => {
+            //         console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+            //         window.location.replace(`/comprovante/${paymentId}`);
+            //     }, 1000);
+            // }
+
+
+            // Adicione esta função que estava faltando
+            function clearPaymentRelatedLocalStorage() {
+                sessionStorage.removeItem('paymentData');
+                localStorage.removeItem('lastPaymentId');
+            }
+
+
+            // Função para recuperar QR Code
+            async function recoverQRCode(paymentId) {
+                try {
+                    const response = await fetch(`${baseURL}/recuperar-qrcode/${paymentId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.qr_code && data.qr_code_base64) {
+                        return data;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Erro ao recuperar QR Code:', error);
+                    return null;
+                }
+            }
+
+            // Função para exibir QR Code com validação
             function displayQRCode(qrCodeBase64, qrCodeText) {
+                if (!qrCodeBase64 || !qrCodeText) {
+                    throw new Error('Dados do QR Code inválidos');
+                }
+
                 const qrContainer = document.getElementById('qrContainer');
                 const loadingContainer = document.getElementById('loadingContainer');
                 const qrCode = document.getElementById('qrCode');
                 const pixKey = document.getElementById('pixKey');
+                const totalAmount = document.getElementById('totalAmount');
+
+                // Garante que o valor total seja exibido
+                const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
+                const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
+                //const vldesconto = parseFloat(localStorage.getItem('vldesconto') || 0);
+                const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
+                //const totalValue = vlinscricao + vltaxa;
+                
+                totalAmount.textContent = formatCurrency(totalValue);
 
                 qrCode.src = `data:image/png;base64,${qrCodeBase64}`;
                 pixKey.textContent = qrCodeText;
@@ -460,23 +555,14 @@
                 loadingContainer.classList.add('hidden');
                 qrContainer.classList.remove('hidden');
             }
-
-            // Função para realizar o redirecionamento
-            function redirectToReceipt(paymentId) {
-                console.log('Iniciando redirecionamento para comprovante...');
-                clearAllNonEssentialLocalStorage();
-                sessionStorage.removeItem('paymentData');
-                
-                // Garantir que o redirecionamento aconteça
-                setTimeout(() => {
-                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
-                    window.location.replace(`/comprovante/${paymentId}`);
-                }, 1000);
-            }
-
-            // Função para gerar novo pagamento PIX
-            async function generatePixPayment(totalValue) {
+ 
+            // Função principal para gerar pagamento PIX com retry
+            async function generatePixPayment(totalValue, isRetry = false) {
                 try {
+                    if (isRetry && retryCount >= MAX_RETRIES) {
+                        throw new Error('Número máximo de tentativas excedido');
+                    }
+
                     const userData = {
                         nome: localStorage.getItem('user_name'),
                         email: localStorage.getItem('user_email'),
@@ -510,8 +596,20 @@
 
                     const responseData = await response.json();
 
-                    if (!response.ok || !responseData.success) {
+                    if (!response.ok) {
                         throw new Error(responseData.message || `Erro HTTP: ${response.status}`);
+                    }
+
+                    // Verifica se tem os dados necessários
+                    if (!responseData.qr_code || !responseData.qr_code_base64) {
+                        // Tenta recuperar o QR code se tiver o payment_id
+                        if (responseData.payment_id) {
+                            const recoveredData = await recoverQRCode(responseData.payment_id);
+                            if (recoveredData) {
+                                responseData.qr_code = recoveredData.qr_code;
+                                responseData.qr_code_base64 = recoveredData.qr_code_base64;
+                            }
+                        }
                     }
 
                     if (responseData.qr_code && responseData.qr_code_base64) {
@@ -522,26 +620,40 @@
                             await startPaymentVerification(responseData.payment_id);
                         }
                     } else {
-                        throw new Error('Dados do PIX incompletos na resposta');
+                        throw new Error('Dados do QR Code incompletos');
                     }
 
                 } catch (error) {
                     console.error('Erro ao gerar PIX:', error);
-                    document.getElementById('loadingContainer').innerHTML = `
-                        <p>Erro ao gerar QR Code PIX. Tentando recuperar dados anteriores...</p>
-                    `;
                     
-                    // Tenta recuperar dados anteriores
-                    const persistedData = getPersistedPaymentData();
-                    if (persistedData && persistedData.qrCodeBase64 && persistedData.qrCode) {
-                        displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode);
-                        if (persistedData.paymentId) {
-                            await startPaymentVerification(persistedData.paymentId);
+                    if (!isRetry) {
+                        // Tenta recuperar dados anteriores primeiro
+                        const persistedData = getPersistedPaymentData();
+                        if (persistedData) {
+                            if (persistedData.qrCodeBase64 && persistedData.qrCode) {
+                                displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode);
+                                if (persistedData.paymentId) {
+                                    await startPaymentVerification(persistedData.paymentId);
+                                    return;
+                                }
+                            } else if (persistedData.paymentId) {
+                                // Tenta recuperar apenas o QR code
+                                const recoveredData = await recoverQRCode(persistedData.paymentId);
+                                if (recoveredData) {
+                                    displayQRCode(recoveredData.qr_code_base64, recoveredData.qr_code);
+                                    await startPaymentVerification(persistedData.paymentId);
+                                    return;
+                                }
+                            }
                         }
+
+                        // Se não conseguiu recuperar, tenta gerar novo
+                        retryCount++;
+                        await generatePixPayment(totalValue, true);
                     } else {
                         document.getElementById('loadingContainer').innerHTML = `
-                            <p>Erro ao gerar QR Code PIX: ${error.message}
-                            <button class="button" onclick="window.location.reload()">Tentar novamente</button></p>
+                            <p>Erro ao gerar QR Code PIX. Por favor, tente novamente em alguns instantes.</p>
+                            <button class="button" onclick="window.location.reload()">Tentar novamente</button>
                         `;
                     }
                 }
@@ -604,16 +716,22 @@
             // Inicialização da página
             async function initializePagamento() {
                 try {
+                    const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
+                    const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
+                    const totalValue = parseFloat(localStorage.getItem('valortotal') || 0); //  vlinscricao + vltaxa;
+
                     document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
                     
                     // Tenta recuperar dados persistidos
                     const persistedData = getPersistedPaymentData();
-                    if (persistedData && persistedData.qrCodeBase64 && persistedData.qrCode) {
+                    if (persistedData && persistedData.qrCodeBase64 && persistedData.qrCode && 
+                        persistedData.timestamp && (Date.now() - persistedData.timestamp) < 900000) {
                         displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode);
                         if (persistedData.paymentId) {
                             await startPaymentVerification(persistedData.paymentId);
                         }
                     } else {
+                        // Se não há dados persistidos válidos, gera um novo QR code
                         await generatePixPayment(totalValue);
                     }
                 } catch (error) {
