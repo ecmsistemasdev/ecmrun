@@ -358,16 +358,16 @@ def pagpix():
 #def checkout2():
 #    return render_template('checkout2.html')
 
-#@app.route('/webhook', methods=['POST'])
-# def webhook():
-#     data = request.json
-#     app.logger.info(f"Webhook received: {data}")
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.json
+    app.logger.info(f"Webhook received: {data}")
     
-#     if data['type'] == 'payment':
-#         payment_info = sdk.payment().get(data['data']['id'])
-#         app.logger.info(f"Payment info: {payment_info}")
+    if data['type'] == 'payment':
+        payment_info = sdk.payment().get(data['data']['id'])
+        app.logger.info(f"Payment info: {payment_info}")
     
-#     return jsonify({'status': 'ok'}), 200
+    return jsonify({'status': 'ok'}), 200
 
 
 #@app.route('/process_payment', methods=['POST'])
@@ -1403,31 +1403,23 @@ def verificar_pagamento(payment_id):
             existing_record = cur.fetchone()
             
             if not existing_record:
-                # Determinar forma de pagamento baseado no payment response
-                forma_pgto = payment.get('payment_type_id', '').upper()
-                if forma_pgto == 'CREDIT_CARD':
-                    forma_pgto = 'CARTAO'
-                
-                # Obter valores do pagamento
-                transaction_amount = float(payment.get('transaction_amount', 0))
-                
-                # Se for cartão de crédito, considerar que o valor já inclui a taxa
-                if forma_pgto == 'CARTAO':
-                    valor = transaction_amount / 1.05  # Remove 5% fee
-                    taxa = transaction_amount - valor
-                else:
-                    valor = float(session.get('cat_vlinscricao', 0))
-                    taxa = float(session.get('cat_vltaxa', 0))
-                
-                valor_pgto = transaction_amount
+                # Calculate valor_pgto (total payment)
+                valor = float(session.get('cat_vlinscricao', 0))
+                taxa = float(session.get('cat_vltaxa', 0))
+                valor_pgto = valor + taxa
 
-                # Obtém a data e hora atuais em Manaus
+                # Obtém a data e hora atuais
                 data_e_hora_atual = datetime.now()
+                # Define o fuso horário para Manaus
                 fuso_horario = timezone('America/Manaus')
+                # Converte a data e hora para o fuso horário de Manaus
                 data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+                # Formata a data e hora no formato desejado (dd/mm/yyyy hh:mm)
                 data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
                 
-                # Get additional data
+                #data_pagamento = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                
+                # Get additional data from session
                 idatleta = session.get('user_idatleta')
                 cpf = session.get('user_cpf')
                 
@@ -1446,28 +1438,28 @@ def verificar_pagamento(payment_id):
                 params = (
                     idatleta,                            # IDATLETA
                     cpf,                                 # CPF
-                    1,                                   # IDEVENTO
+                    1,                                   # IDEVENTO (hardcoded as 1 for this event)
                     session.get('cat_iditem'),           # IDITEM
-                    session.get('camiseta'),             # CAMISETA
-                    session.get('apoio'),                # APOIO
-                    session.get('nome_equipe'),          # NOME_EQUIPE
-                    session.get('integrantes'),          # INTEGRANTES
+                    var_camiseta,                        # CAMISETA
+                    var_apoio,                           # APOIO
+                    var_nome_equipe,                     # NOME_EQUIPE
+                    var_integrantes,                     # INTEGRANTES
                     valor,                               # VALOR
                     taxa,                                # TAXA
                     valor_pgto,                          # VALOR_PGTO
                     data_pagamento,                      # DTPAGAMENTO
                     'CONFIRMADO',                        # STATUS
-                    forma_pgto,                          # FORMAPGTO
+                    'PIX',                               # FORMAPGTO
                     payment_id,                          # IDPAGAMENTO
-                    'N',                                 # FLMAIL
-                    session.get('equipe')                # EQUIPE
+                    'N',
+                    var_equipe
                 )
                 
                 cur.execute(query, params)
                 mysql.connection.commit()
                 cur.close()
                 
-                print(f"Registro de pagamento {forma_pgto} inserido com sucesso!")
+                print("Registro de pagamento inserido com sucesso!")
                 
                 return jsonify({
                     'success': True,
@@ -1489,38 +1481,13 @@ def verificar_pagamento(payment_id):
         
     except Exception as e:
         print(f"Erro ao verificar pagamento: {str(e)}")
+        # Ensure JSON is returned even on error
         return jsonify({
             'success': False, 
             'message': str(e),
             'status': 'error'
-        }), 500    
-
-
-@app.route('/success')
-def payment_success():
-    payment_id = request.args.get('payment_id')
-    if not payment_id:
-        return "Payment ID não encontrado", 400
-        
-    # Verificar e processar o pagamento
-    verification_response = verificar_pagamento(payment_id)
+        }), 500
     
-    if verification_response.json.get('success'):
-        # Redirecionar para o comprovante com o payment_id
-        return redirect(f'/comprovante/{payment_id}')
-    else:
-        # Redirecionar para página de erro
-        return redirect('/pagamento-erro')
-
-@app.route('/failure')
-def payment_failure():
-    return render_template('negado.html')
-    #return redirect('/')
-
-@app.route('/pending')
-def payment_pending():
-    return render_template('negado.html')
-    #return redirect('/pagamento-pendente')
 
 # @app.route('/create-mercado-pago-payment', methods=['POST'])
 # def create_mercado_pago_payment():
@@ -1595,211 +1562,6 @@ def create_mercado_pago_payment():
     return jsonify({
         "init_point": result["response"]["init_point"]
     })
-
-####  adicionado pra pagamento com cartão
-def get_back_urls():
-    """
-    Dynamically generate back URLs based on environment
-    """
-    is_production = os.getenv('FLASK_ENV', 'development') == 'production'
-    
-    if is_production:
-        base_url = 'https://ecmrun.com.br'
-    else:
-        local_ip = 'http://192.168.77.123/'
-        base_url = f'http://{local_ip}:5000'
-    
-    return {
-        "success": f"{base_url}/aprovado",
-        "failure": f"{base_url}/negado",
-        "pending": f"{base_url}/negado"
-    }
-
-@app.route('/env-check')
-def env_check():
-    return jsonify({
-        "environment": os.getenv('FLASK_ENV', 'development'),
-        "back_urls": get_back_urls()
-    })
-
-# @app.route('/criar_preferencia', methods=['POST'])
-# def criar_preferencia():
-#     try:
-#         data = request.get_json()
-        
-#         # Get values from localStorage (sent in request)
-#         valor_total = float(data.get('valortotal', 0))
-#         valor_taxa = float(data.get('valortaxa', 0))
-#         nome_completo = data.get('user_name', '')
-        
-#         # Split full name into first and last name
-#         nome_parts = nome_completo.split(' ', 1)
-#         first_name = nome_parts[0]
-#         last_name = nome_parts[1] if len(nome_parts) > 1 else ''
-        
-#         # Calculate price with 5% card fee
-#         preco_final = valor_total * 1.05
-        
-#         back_urls = get_back_urls()
-
-#         preference_data = {
-#             "items": [
-#                 {
-#                     "id": "200k-inscricao",
-#                     "title": "Inscrição 4º Desafio 200k",
-#                     "quantity": 1,
-#                     "unit_price": float(preco_final),
-#                     "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
-#                     "category_id": "sports_tickets"
-#                 }
-#             ],
-#             "payer": {
-#                 "first_name": first_name,
-#                 "last_name": last_name,
-#                 "email": data.get('user_email')
-#             },
-#             "payment_methods": {
-#                 "excluded_payment_methods": [
-#                     {"id": "bolbradesco"},
-#                     {"id": "pix"}
-#                 ],
-#                 "excluded_payment_types": [
-#                     {"id": "ticket"},
-#                     {"id": "bank_transfer"}
-#                 ],
-#                 "installments": 12
-#             },
-#             "back_urls": back_urls,
-#             "auto_return": "approved",
-#             "statement_descriptor": "ECM RUN",
-#             "external_reference": data.get('user_idatleta'),
-#             "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
-#             #"notification_url": "https://ecmrun.com.br/webhook"
-#         }
-        
-#         preference_response = sdk.preference().create(preference_data)
-#         preference = preference_response["response"]
-        
-#         return jsonify({
-#             "id": preference["id"],
-#             "init_point": preference["init_point"]
-#         })
-    
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 400
-
-
-@app.route('/criar_preferencia', methods=['POST'])
-def criar_preferencia():
-    try:
-        data = request.get_json()
-        
-        # Log dos dados recebidos
-        print("Dados recebidos:", data)
-        
-        # Get values from localStorage (sent in request)
-        valor_total = float(data.get('valortotal', 0))
-        valor_taxa = float(data.get('valortaxa', 0))
-        nome_completo = data.get('user_name', '')
-        
-        # Split full name into first and last name
-        nome_parts = nome_completo.split(' ', 1)
-        first_name = nome_parts[0]
-        last_name = nome_parts[1] if len(nome_parts) > 1 else ''
-        
-        preco_final = valor_total
-        
-        print("Preço final calculado:", preco_final)
-        
-        # Configurar URLs de retorno
-        base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
-        back_urls = {
-            "success": f"{base_url}/aprovado",
-            "failure": f"{base_url}/negado",
-            "pending": f"{base_url}/negado"
-        }
-
-        preference_data = {
-            "items": [
-                {
-                    "id": "200k-inscricao",
-                    "title": "Inscrição 4º Desafio 200k",
-                    "quantity": 1,
-                    "unit_price": float(preco_final),
-                    "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
-                    "category_id": "sports_tickets"
-                }
-            ],
-            "payer": {
-                "first_name": first_name,
-                "last_name": last_name,
-                "email": data.get('user_email')
-            },
-            "payment_methods": {
-                "excluded_payment_methods": [
-                    {"id": "bolbradesco"},
-                    {"id": "pix"}
-                ],
-                "excluded_payment_types": [
-                    {"id": "ticket"},
-                    {"id": "bank_transfer"}
-                ],
-                "installments": 12
-            },
-            "back_urls": back_urls,
-            "auto_return": "approved",
-            "statement_descriptor": "ECM RUN",
-            "external_reference": data.get('user_idatleta'),
-            "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
-        }
-        
-        # Log da preference antes de criar
-        print("Preference data:", preference_data)
-        
-        preference_response = sdk.preference().create(preference_data)
-        print("Resposta do MP:", preference_response)
-        
-        if "response" not in preference_response:
-            raise Exception("Erro na resposta do Mercado Pago: " + str(preference_response))
-            
-        preference = preference_response["response"]
-        
-        return jsonify({
-            "id": preference["id"],
-            "init_point": preference["init_point"]
-        })
-    
-    except Exception as e:
-        print("Erro detalhado:", str(e))
-        return jsonify({"error": str(e)}), 400
-
-
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    try:
-        data = request.json
-        
-        if 'data' in data and 'id' in data['data']:
-            payment_id = data['data']['id']
-            
-            # Verificar o pagamento
-            verification_response = verificar_pagamento(payment_id)
-            
-            if verification_response.json.get('success'):
-                return jsonify({'status': 'success'}), 200
-            else:
-                return jsonify({'status': 'error', 'message': 'Falha ao processar pagamento'}), 400
-        
-        return jsonify({'status': 'error', 'message': 'Payload inválido'}), 400
-        
-    except Exception as e:
-        print(f"Erro no webhook: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-
-
 
 
 
