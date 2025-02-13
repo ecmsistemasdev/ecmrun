@@ -348,206 +348,6 @@ def comprovanteemail(payment_id):
 def pagpix():
     return render_template('pagpix.html')
 
-###############
-
-#@app.route('/checkout')
-#def checkout():
-#    return render_template('checkout.html')
-
-#@app.route('/checkout2')
-#def checkout2():
-#    return render_template('checkout2.html')
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    data = request.json
-    app.logger.info(f"Webhook received: {data}")
-    
-    if data['type'] == 'payment':
-        payment_info = sdk.payment().get(data['data']['id'])
-        app.logger.info(f"Payment info: {payment_info}")
-    
-    return jsonify({'status': 'ok'}), 200
-
-
-#@app.route('/process_payment', methods=['POST'])
-#def process_payment():
-#    try:
-#        app.logger.info("Dados recebidos:")
-#        app.logger.info(request.form)
-        
-#        # Validar dados recebidos
-#        required_fields = ['token', 'transaction_amount', 'email', 'doc_type', 'doc_number']
-#        for field in required_fields:
-#            if field not in request.form:
-#                raise ValueError(f"Campo obrigatório ausente: {field}")
-
-#        # Gerar referência externa única
-#        external_reference = str(uuid.uuid4())
-        
-#        # Criar preferência de pagamento
-#        preference_data = {
-#            "items": [{
-#                "title": request.form['description'],
-#                "quantity": 1,
-#                "currency_id": "BRL",
-#                "unit_price": float(request.form['transaction_amount']),
-#                "description": request.form['description'],
-#                "category_id": "others"
-#            }],
-#            "notification_url": "https://ecmrun.com.br/webhook",
-#            "external_reference": external_reference
-#        }
-        
-#        # Criar preferência e obter o ID
-#        preference_response = sdk.preference().create(preference_data)
-#        preference_id = preference_response["response"]["id"]
-        
-#        payment_data = {
-#            "transaction_amount": float(request.form['transaction_amount']),
-#            "token": request.form['token'],
-#            "description": request.form['description'],
-#            "installments": int(request.form['installments']),
-#            "payment_method_id": request.form['payment_method_id'],
-#            "external_reference": external_reference,
-#            "notification_url": "https://ecmrun.com.br/webhook",
-#            "payer": {
-#                "email": request.form['email'],
-#                "first_name": request.form['first_name'],
-#                "last_name": request.form['last_name'],
-#                "identification": {
-#                    "type": request.form['doc_type'],
-#                    "number": request.form['doc_number']
-#                }
-#            }
-#            # Remover >> preference_id": preference_id
-#        }
-
-#        app.logger.info("Dados do pagamento:")
-#        app.logger.info(payment_data)
-        
-#        payment_response = sdk.payment().create(payment_data)
-        
-#        app.logger.info("Resposta do pagamento:")
-#        app.logger.info(payment_response)
-        
-#        if "error" in payment_response:
-#            return jsonify(payment_response), 400
-            
-#        return jsonify(payment_response["response"]), 200
-        
-#    except ValueError as e:
-#        app.logger.error(f"Erro de validação: {str(e)}")
-#        return jsonify({"error": str(e)}), 400
-#    except Exception as e:
-#        app.logger.error(f"Erro no processamento: {str(e)}")
-#        return jsonify({"error": str(e)}), 400
-
-
-@app.route('/process_payment', methods=['POST'])
-def process_payment():
-    try:
-        app.logger.info("Dados recebidos:")
-        payment_data = request.json
-        app.logger.info(payment_data)
-        
-        # Validar dados recebidos
-        required_fields = [
-            'token', 
-            'transaction_amount', 
-            'installments', 
-            'payment_method_id',
-            'payer'
-        ]
-        
-        for field in required_fields:
-            if field not in payment_data:
-                raise ValueError(f"Campo obrigatório ausente: {field}")
-
-        # Gerar referência externa única
-        external_reference = str(uuid.uuid4())
-        
-        # Criar preferência de pagamento
-        preference_data = {
-            "items": [{
-                "title": payment_data.get('description', 'Produto'),
-                "quantity": 1,
-                "currency_id": "BRL",
-                "unit_price": float(payment_data['transaction_amount']),
-                "description": payment_data.get('description_item', 'Produto'),
-                "category_id": "others"
-            }],
-            "notification_url": "https://ecmrun.com.br/webhook",
-            "external_reference": external_reference
-        }
-        
-        # Criar preferência
-        preference_response = sdk.preference().create(preference_data)
-        
-        if "response" not in preference_response:
-            raise ValueError("Erro ao criar preferência de pagamento")
-            
-        # Preparar dados do pagamento
-        payment_info = {
-            "transaction_amount": float(payment_data['transaction_amount']),
-            "token": payment_data['token'],
-            "description": payment_data.get('description', 'Produto'),
-            "installments": int(payment_data['installments']),
-            "payment_method_id": payment_data['payment_method_id'],
-            "external_reference": external_reference,
-            "notification_url": "https://ecmrun.com.br/webhook",
-            "payer": payment_data['payer']
-        }
-
-        app.logger.info("Dados do pagamento:")
-        app.logger.info(payment_info)
-        
-        # Processar pagamento
-        payment_response = sdk.payment().create(payment_info)
-        
-        app.logger.info("Resposta do pagamento:")
-        app.logger.info(payment_response)
-        
-        if "response" not in payment_response:
-            return jsonify({
-                "error": "Erro ao processar pagamento",
-                "details": payment_response.get("message", "Erro desconhecido")
-            }), 400
-            
-        return jsonify(payment_response["response"]), 200
-        
-    except ValueError as e:
-        app.logger.error(f"Erro de validação: {str(e)}")
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        app.logger.error(f"Erro no processamento: {str(e)}")
-        return jsonify({"error": str(e)}), 400
-
-#  GUARDAR POR ESSA FOI A QEU FUNCIONOU 
-#
-# @app.route('/process_payment', methods=['POST'])
-# def process_payment():
-#     payment_data = {
-#         "transaction_amount": float(request.form['transaction_amount']),
-#         "token": request.form['token'],
-#         "description": request.form['description'],
-#         "installments": int(request.form['installments']),
-#         "payment_method_id": request.form['payment_method_id'],
-#         "payer": {
-#             "email": request.form['email'],
-#             "identification": {
-#                 "type": request.form['doc_type'],
-#                 "number": request.form['doc_number']
-#             }
-#         }
-#     }
-
-#     payment_response = sdk.payment().create(payment_data)
-    
-#     return jsonify(payment_response)
-
-
-##########################################
 
 @app.route('/get_evento_data')
 def get_evento_data():
@@ -603,6 +403,7 @@ def get_evento_data():
         print(f"Erro ao buscar dados do evento: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/desafio200k')
 def desafio200k():
     try:
@@ -631,6 +432,7 @@ def desafio200k():
     except Exception as e:
         print(f"Erro ao carregar página: {str(e)}")
         return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
+
 
 @app.route('/get_modalidade_valores/<int:iditem>')
 def get_modalidade_valores(iditem):
@@ -994,25 +796,6 @@ def send_email(receipt_data):
         app.logger.error(f"Erro ao enviar email: {str(e)}")
         return False
 
-# ### auterada pelo Claude
-# def send_email(receipt_data):
-#     # Renderiza o template HTML com os dados do recibo
-#     html_content = render_template('comprovante_email.html', **receipt_data)
-
-#     # Criação da mensagem de e-mail
-#     msg = Message(subject='Desafio 200k - Comprovante Inscrição',
-#                   sender='adm@ecmrun.com.br',
-#                   recipients=[var_email])  # Aqui você pode pegar o email do localStorage se estiver usando JS no frontend
-
-#     # Define o corpo do e-mail como HTML
-#     msg.html = html_content
-
-#     # Envia o e-mail
-#     mail.send(msg)
-#     app.logger.info(f"Enviado Email para: {var_email}")
-
-
-###################
 
 @app.route('/pesquisarCEP', methods=['GET'])
 def pesquisar_cep():
@@ -1232,15 +1015,14 @@ def autenticar_login():
 @app.route('/pagamento')
 def pagamento():
     # Get values from session
-    vlinscricao = session.get('cat_vlinscricao', 0)
-    vltaxa = session.get('cat_vltaxa', 0)
+    vlinscricao = session.get('valoratual', 0)
+    vltaxa = session.get('valortaxa', 0)
     valor_total = float(vlinscricao) + float(vltaxa)
     
     return render_template('pagamento.html', 
                          valor_inscricao=vlinscricao,
                          valor_taxa=vltaxa,
                          valor_total=valor_total)
-
 
 
 @app.route('/gerar-pix', methods=['POST'])
@@ -1251,6 +1033,13 @@ def gerar_pix():
         valor_total = round(float(data.get('valor_total', 0)), 2)
         valor_atual = round(float(data.get('valor_atual', 0)), 2)
         valor_taxa = round(float(data.get('valor_taxa', 0)), 2)
+        #valor_desconto = round(float(data.get('valor_desconto', 0)), 2)
+
+        session['valorTotal'] = valor_total
+        session['valorAtual'] = valor_atual
+        session['valorTaxa'] = valor_taxa
+        
+    
 
         fn_camiseta(data.get('camiseta'))
         fn_apoio(data.get('apoio')) 
@@ -1269,6 +1058,7 @@ def gerar_pix():
         print(f"Valor total recebido: {valor_total}")
         print(f"Valor atual: {valor_atual}")
         print(f"Valor taxa: {valor_taxa}")
+        #print(f"Valor desconto: {valor_desconto}")
         print(f"Token MP configurado: {os.getenv('MP_ACCESS_TOKEN')[:10]}...")
         print(f"CAMISA: {var_camiseta}")
         print(f"APOIO: {var_apoio}")
@@ -1387,13 +1177,34 @@ def gerar_pix():
         }), 500
 
 
+@app.route('/recuperar-qrcode/<payment_id>', methods=['GET'])
+def recuperar_qrcode(payment_id):
+    try:
+        # Recupera o pagamento do Mercado Pago
+        payment = sdk.payment().get(payment_id)
+        if payment['status'] == 404:
+            return jsonify({'success': False, 'message': 'Pagamento não encontrado'})
+            
+        # Extrai os dados do QR code
+        point_of_interaction = payment.get('point_of_interaction', {})
+        transaction_data = point_of_interaction.get('transaction_data', {})
+        
+        return jsonify({
+            'success': True,
+            'qr_code': transaction_data.get('qr_code'),
+            'qr_code_base64': transaction_data.get('qr_code_base64')
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+    
+
 @app.route('/verificar-pagamento/<payment_id>')
 def verificar_pagamento(payment_id):
     try:
         # Buscar o status diretamente do Mercado Pago
         payment_response = sdk.payment().get(payment_id)
         payment = payment_response["response"]
-        
+
         print(f"Status do pagamento recebido: {payment['status']}")
         
         if payment["status"] == "approved":
@@ -1404,21 +1215,17 @@ def verificar_pagamento(payment_id):
             
             if not existing_record:
                 # Calculate valor_pgto (total payment)
-                valor = float(session.get('cat_vlinscricao', 0))
-                taxa = float(session.get('cat_vltaxa', 0))
-                valor_pgto = valor + taxa
+                valor = float(session.get('valorAtual', 0))
+                taxa = float(session.get('valorTaxa', 0))
+                valoratual = valor + taxa
+                valor_pgto = float(session.get('valorTotal', 0))
+                desconto = valor_pgto - valoratual
 
-                # Obtém a data e hora atuais
                 data_e_hora_atual = datetime.now()
-                # Define o fuso horário para Manaus
                 fuso_horario = timezone('America/Manaus')
-                # Converte a data e hora para o fuso horário de Manaus
                 data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
-                # Formata a data e hora no formato desejado (dd/mm/yyyy hh:mm)
                 data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
-                
-                #data_pagamento = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                
+                                
                 # Get additional data from session
                 idatleta = session.get('user_idatleta')
                 cpf = session.get('user_cpf')
@@ -1427,11 +1234,11 @@ def verificar_pagamento(payment_id):
                 query = """
                 INSERT INTO ecmrun.INSCRICAO_TT (
                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
-                    NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, 
+                    NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
                     VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
                     IDPAGAMENTO, FLMAIL, EQUIPE
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
                 """
                 
@@ -1446,6 +1253,7 @@ def verificar_pagamento(payment_id):
                     var_integrantes,                     # INTEGRANTES
                     valor,                               # VALOR
                     taxa,                                # TAXA
+                    desconto,                            # DESCONTO
                     valor_pgto,                          # VALOR_PGTO
                     data_pagamento,                      # DTPAGAMENTO
                     'CONFIRMADO',                        # STATUS
@@ -1489,37 +1297,103 @@ def verificar_pagamento(payment_id):
         }), 500
     
 
-# @app.route('/create-mercado-pago-payment', methods=['POST'])
-# def create_mercado_pago_payment():
-#     data = request.get_json()
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.json
+    app.logger.info(f"Webhook received: {data}")
     
-#     preference_data = {
-#         "items": data['items'],
-#         "payment_methods": {
-#             "excluded_payment_methods": [
-#                 {"id": "ticket"},
-#                 {"id": "bank_transfer"},
-#                 {"id": "digital_wallet"},
-#                 {"id": "prepaid_card"}
-#             ],
-#             "excluded_payment_types": [
-#                 {"id": "ticket"},
-#                 {"id": "bank_transfer"},
-#                 {"id": "digital_wallet"}
-#             ],
-#             "installments": 3  # Optional: limit to single installment
-#         },
-#         "back_urls": {
-#             "success": "http://192.168.1.21:5000/comprovante",
-#             "failure": "http://192.168.1.21:5000/payment-failure",
-#             "pending": "http://192.168.1.21:5000/payment-pending"
-#         }
-#     }
-#    
-#    preference_response = sdk.preference().create(preference_data)
-#    return jsonify({
-#        "init_point": preference_response["response"]["init_point"]
-#    })
+    if data['type'] == 'payment':
+        payment_info = sdk.payment().get(data['data']['id'])
+        app.logger.info(f"Payment info: {payment_info}")
+    
+    return jsonify({'status': 'ok'}), 200
+
+
+@app.route('/criar_preferencia', methods=['POST'])
+def criar_preferencia():
+    try:
+        data = request.get_json()
+        
+        # Log dos dados recebidos
+        print("Dados recebidos:", data)
+        
+        # Get values from localStorage (sent in request)
+        valor_total = float(data.get('valortotal', 0))
+        valor_taxa = float(data.get('valortaxa', 0))
+        nome_completo = data.get('user_name', '')
+        
+        # Split full name into first and last name
+        nome_parts = nome_completo.split(' ', 1)
+        first_name = nome_parts[0]
+        last_name = nome_parts[1] if len(nome_parts) > 1 else ''
+        
+        preco_final = valor_total
+        
+        print("Preço final calculado:", preco_final)
+        
+        # Configurar URLs de retorno
+        base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
+        back_urls = {
+            "success": f"{base_url}/aprovado",
+            "failure": f"{base_url}/negado",
+            "pending": f"{base_url}/negado"
+        }
+
+        preference_data = {
+            "items": [
+                {
+                    "id": "200k-inscricao",
+                    "title": "Inscrição 4º Desafio 200k",
+                    "quantity": 1,
+                    "unit_price": float(preco_final),
+                    "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
+                    "category_id": "sports_tickets"
+                }
+            ],
+            "payer": {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": data.get('user_email')
+            },
+            "payment_methods": {
+                "excluded_payment_methods": [
+                    {"id": "bolbradesco"},
+                    {"id": "pix"}
+                ],
+                "excluded_payment_types": [
+                    {"id": "ticket"},
+                    {"id": "bank_transfer"}
+                ],
+                "installments": 12
+            },
+            "back_urls": back_urls,
+            "auto_return": "approved",
+            "statement_descriptor": "ECM RUN",
+            "external_reference": data.get('user_idatleta'),
+            "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
+        }
+        
+        # Log da preference antes de criar
+        print("Preference data:", preference_data)
+        
+        preference_response = sdk.preference().create(preference_data)
+        print("Resposta do MP:", preference_response)
+        
+        if "response" not in preference_response:
+            raise Exception("Erro na resposta do Mercado Pago: " + str(preference_response))
+            
+        preference = preference_response["response"]
+        
+        return jsonify({
+            "id": preference["id"],
+            "init_point": preference["init_point"]
+        })
+    
+    except Exception as e:
+        print("Erro detalhado:", str(e))
+        return jsonify({"error": str(e)}), 400
+
+
 
 
 def gerar_link_pagamento():
@@ -1540,6 +1414,7 @@ def gerar_link_pagamento():
     payment = result["response"]
     link_iniciar_pagamento = payment["init_point"]
     return link_iniciar_pagamento
+
 
 
 @app.route('/create-mercado-pago-payment', methods=['POST'])
