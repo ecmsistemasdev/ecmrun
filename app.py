@@ -1487,39 +1487,143 @@ def verificar_pagamento(payment_id):
             'message': str(e),
             'status': 'error'
         }), 500
-    
 
-# @app.route('/create-mercado-pago-payment', methods=['POST'])
-# def create_mercado_pago_payment():
-#     data = request.get_json()
+
+@app.route('/verificar-pagamento-cartao/<payment_id>')
+def verificar_pagamento_cartao(payment_id):
+    try:
+        # Buscar o status diretamente do Mercado Pago
+        payment_response = sdk.payment().get(payment_id)
+        payment = payment_response["response"]
+        
+        print(f"Status do pagamento recebido: {payment['status']}")
+        
+        if payment["status"] == "approved":
+            # Verificar se já não foi processado antes
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT * FROM ecmrun.INSCRICAO_TT WHERE IDPAGAMENTO = %s", (payment_id,))
+            existing_record = cur.fetchone()
+            
+            if not existing_record:
+                # Determinar forma de pagamento baseado no payment response
+                forma_pgto = payment.get('payment_type_id', '').upper()
+                if forma_pgto == 'CREDIT_CARD':
+                    forma_pgto = 'CARTAO'
+                
+                # Obter valores do pagamento
+                transaction_amount = float(payment.get('transaction_amount', 0))
+                
+                # Se for cartão de crédito, considerar que o valor já inclui a taxa
+                if forma_pgto == 'CARTAO':
+                    valor = transaction_amount / 1.05  # Remove 5% fee
+                    taxa = transaction_amount - valor
+                else:
+                    valor = float(session.get('cat_vlinscricao', 0))
+                    taxa = float(session.get('cat_vltaxa', 0))
+                
+                valor_pgto = transaction_amount
+
+                # Obtém a data e hora atuais em Manaus
+                data_e_hora_atual = datetime.now()
+                fuso_horario = timezone('America/Manaus')
+                data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+                data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
+                
+                # Get additional data
+                idatleta = session.get('user_idatleta')
+                cpf = session.get('user_cpf')
+                
+                # Insert payment record
+                query = """
+                INSERT INTO ecmrun.INSCRICAO_TT (
+                    IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                    NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, 
+                    VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                    IDPAGAMENTO, FLMAIL, EQUIPE
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                """
+                
+                params = (
+                    idatleta,                            # IDATLETA
+                    cpf,                                 # CPF
+                    1,                                   # IDEVENTO
+                    session.get('cat_iditem'),           # IDITEM
+                    session.get('camiseta'),             # CAMISETA
+                    session.get('apoio'),                # APOIO
+                    session.get('nome_equipe'),          # NOME_EQUIPE
+                    session.get('integrantes'),          # INTEGRANTES
+                    valor,                               # VALOR
+                    taxa,                                # TAXA
+                    valor_pgto,                          # VALOR_PGTO
+                    data_pagamento,                      # DTPAGAMENTO
+                    'CONFIRMADO',                        # STATUS
+                    forma_pgto,                          # FORMAPGTO
+                    payment_id,                          # IDPAGAMENTO
+                    'N',                                 # FLMAIL
+                    session.get('equipe')                # EQUIPE
+                )
+                
+                cur.execute(query, params)
+                mysql.connection.commit()
+                cur.close()
+                
+                print(f"Registro de pagamento {forma_pgto} inserido com sucesso!")
+                
+                return jsonify({
+                    'success': True,
+                    'status': 'approved',
+                    'message': 'Pagamento processado e registrado'
+                })
+            else:
+                print("Pagamento já processado anteriormente")
+                return jsonify({
+                    'success': True,
+                    'status': 'approved',
+                    'message': 'Pagamento já processado'
+                })
+        
+        return jsonify({
+            'success': True,
+            'status': payment["status"]
+        })
+        
+    except Exception as e:
+        print(f"Erro ao verificar pagamento: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': str(e),
+            'status': 'error'
+        }), 500    
+
+
+@app.route('/success')
+def payment_success():
+    payment_id = request.args.get('payment_id')
+    if not payment_id:
+        return "Payment ID não encontrado", 400
+        
+    # Verificar e processar o pagamento
+    verification_response = verificar_pagamento_cartao(payment_id)
     
-#     preference_data = {
-#         "items": data['items'],
-#         "payment_methods": {
-#             "excluded_payment_methods": [
-#                 {"id": "ticket"},
-#                 {"id": "bank_transfer"},
-#                 {"id": "digital_wallet"},
-#                 {"id": "prepaid_card"}
-#             ],
-#             "excluded_payment_types": [
-#                 {"id": "ticket"},
-#                 {"id": "bank_transfer"},
-#                 {"id": "digital_wallet"}
-#             ],
-#             "installments": 3  # Optional: limit to single installment
-#         },
-#         "back_urls": {
-#             "success": "http://192.168.1.21:5000/comprovante",
-#             "failure": "http://192.168.1.21:5000/payment-failure",
-#             "pending": "http://192.168.1.21:5000/payment-pending"
-#         }
-#     }
-#    
-#    preference_response = sdk.preference().create(preference_data)
-#    return jsonify({
-#        "init_point": preference_response["response"]["init_point"]
-#    })
+    if verification_response.json.get('success'):
+        # Redirecionar para o comprovante com o payment_id
+        return redirect(f'/comprovante/{payment_id}')
+    else:
+        # Redirecionar para página de erro
+        return redirect('/pagamento-erro')
+
+@app.route('/failure')
+def payment_failure():
+    return render_template('negado.html')
+    #return redirect('/')
+
+@app.route('/pending')
+def payment_pending():
+    return render_template('negado.html')
+
+
 
 
 def gerar_link_pagamento():
@@ -1563,6 +1667,111 @@ def create_mercado_pago_payment():
         "init_point": result["response"]["init_point"]
     })
 
+@app.route('/criar_preferencia', methods=['POST'])
+def criar_preferencia():
+    try:
+        data = request.get_json()
+        
+        # Log dos dados recebidos
+        print("Dados recebidos:", data)
+        
+        # Get values from localStorage (sent in request)
+        valor_total = float(data.get('valortotal', 0))
+        valor_taxa = float(data.get('valortaxa', 0))
+        nome_completo = data.get('user_name', '')
+        
+        # Split full name into first and last name
+        nome_parts = nome_completo.split(' ', 1)
+        first_name = nome_parts[0]
+        last_name = nome_parts[1] if len(nome_parts) > 1 else ''
+        
+        preco_final = valor_total
+        
+        print("Preço final calculado:", preco_final)
+        
+        # Configurar URLs de retorno
+        base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
+        back_urls = {
+            "success": f"{base_url}/aprovado",
+            "failure": f"{base_url}/negado",
+            "pending": f"{base_url}/negado"
+        }
+
+        preference_data = {
+            "items": [
+                {
+                    "id": "200k-inscricao",
+                    "title": "Inscrição 4º Desafio 200k",
+                    "quantity": 1,
+                    "unit_price": float(preco_final),
+                    "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
+                    "category_id": "sports_tickets"
+                }
+            ],
+            "payer": {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": data.get('user_email')
+            },
+            "payment_methods": {
+                "excluded_payment_methods": [
+                    {"id": "bolbradesco"},
+                    {"id": "pix"}
+                ],
+                "excluded_payment_types": [
+                    {"id": "ticket"},
+                    {"id": "bank_transfer"}
+                ],
+                "installments": 12
+            },
+            "back_urls": back_urls,
+            "auto_return": "approved",
+            "statement_descriptor": "ECM RUN",
+            "external_reference": data.get('user_idatleta'),
+            "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
+        }
+        
+        # Log da preference antes de criar
+        print("Preference data:", preference_data)
+        
+        preference_response = sdk.preference().create(preference_data)
+        print("Resposta do MP:", preference_response)
+        
+        if "response" not in preference_response:
+            raise Exception("Erro na resposta do Mercado Pago: " + str(preference_response))
+            
+        preference = preference_response["response"]
+        
+        return jsonify({
+            "id": preference["id"],
+            "init_point": preference["init_point"]
+        })
+    
+    except Exception as e:
+        print("Erro detalhado:", str(e))
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    try:
+        data = request.json
+        
+        if 'data' in data and 'id' in data['data']:
+            payment_id = data['data']['id']
+            
+            # Verificar o pagamento
+            verification_response = verificar_pagamento_cartao(payment_id)
+            
+            if verification_response.json.get('success'):
+                return jsonify({'status': 'success'}), 200
+            else:
+                return jsonify({'status': 'error', 'message': 'Falha ao processar pagamento'}), 400
+        
+        return jsonify({'status': 'error', 'message': 'Payload inválido'}), 400
+        
+    except Exception as e:
+        print(f"Erro no webhook: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 if __name__ == "__main__":
