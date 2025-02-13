@@ -383,8 +383,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             let paymentId = null;
             let checkInterval = null;
-            const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutos
-            let isRedirecting = false;
+            const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutos em milissegundos
+            let isRedirecting = false; // Flag para controlar redirecionamento
 
             const environments = {
                 development: {
@@ -404,6 +404,32 @@
             const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
             const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
             const totalValue = vlinscricao + vltaxa;
+
+            // Function to format currency values
+            function formatCurrency(value) {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(value);
+            }
+
+            // Function to clear payment-related localStorage items
+            function clearPaymentRelatedLocalStorage() {
+                const itemsToRemove = ['valoratual', 'valortaxa'];
+                itemsToRemove.forEach(item => {
+                    localStorage.removeItem(item);
+                });
+            }
+
+            // Function to clear all non-essential localStorage items
+            function clearAllNonEssentialLocalStorage() {
+                const keysToKeep = ['user_name', 'user_email', 'user_cpf'];
+                Object.keys(localStorage).forEach(key => {
+                    if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
 
             // Função para persistir os dados do pagamento
             function persistPaymentData(data) {
@@ -433,6 +459,19 @@
                 
                 loadingContainer.classList.add('hidden');
                 qrContainer.classList.remove('hidden');
+            }
+
+            // Função para realizar o redirecionamento
+            function redirectToReceipt(paymentId) {
+                console.log('Iniciando redirecionamento para comprovante...');
+                clearAllNonEssentialLocalStorage();
+                sessionStorage.removeItem('paymentData');
+                
+                // Garantir que o redirecionamento aconteça
+                setTimeout(() => {
+                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+                    window.location.replace(`/comprovante/${paymentId}`);
+                }, 1000);
             }
 
             // Função para gerar novo pagamento PIX
@@ -533,13 +572,12 @@
                             console.log('Pagamento aprovado, preparando redirecionamento...');
                             isRedirecting = true;
                             clearInterval(checkInterval);
+
+                            // Remove event listeners
+                            document.removeEventListener('visibilitychange', handleVisibilityChange);
                             
-                            // Limpar dados armazenados
-                            sessionStorage.removeItem('paymentData');
-                            clearAllNonEssentialLocalStorage();
-                            
-                            // Redirecionar para página de comprovante
-                            window.location.replace(`/comprovante/${paymentId}`);
+                            // Executa o redirecionamento
+                            redirectToReceipt(paymentId);
                         }
                     } catch (error) {
                         console.error('Erro ao verificar pagamento:', error);
@@ -549,6 +587,17 @@
                 await checkPayment();
                 if (!isRedirecting) {
                     checkInterval = setInterval(checkPayment, 5000);
+                }
+            }
+
+            // Função para lidar com mudanças de visibilidade da página
+            function handleVisibilityChange() {
+                if (document.visibilityState === 'visible') {
+                    const persistedData = getPersistedPaymentData();
+                    if (persistedData && persistedData.paymentId && !isRedirecting) {
+                        console.log('Página voltou a ficar visível, retomando verificação');
+                        startPaymentVerification(persistedData.paymentId);
+                    }
                 }
             }
 
@@ -573,7 +622,7 @@
                 }
             }
 
-            // Event Listeners e inicialização
+            // Função para copiar chave PIX
             window.copyPixKey = function() {
                 const pixKey = document.getElementById('pixKey').textContent;
                 if (!pixKey) {
@@ -581,28 +630,54 @@
                     return;
                 }
                 
-                navigator.clipboard.writeText(pixKey)
-                    .then(() => alert('Chave PIX copiada com sucesso!'))
-                    .catch(() => {
-                        // Fallback para método alternativo de cópia
-                        const textArea = document.createElement('textarea');
-                        textArea.value = pixKey;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        try {
-                            document.execCommand('copy');
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(pixKey)
+                        .then(() => {
                             alert('Chave PIX copiada com sucesso!');
-                        } catch (err) {
-                            alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
-                        }
-                        document.body.removeChild(textArea);
-                    });
+                        })
+                        .catch(err => {
+                            fallbackCopyMethod(pixKey);
+                        });
+                } else {
+                    fallbackCopyMethod(pixKey);
+                }
             };
 
-            // Inicializar
+            // Método alternativo para copiar texto
+            function fallbackCopyMethod(text) {
+                try {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.top = '0';
+                    textArea.style.left = '0';
+                    textArea.style.position = 'fixed';
+                    textArea.style.opacity = '0';
+                    
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    if (successful) {
+                        alert('Chave PIX copiada com sucesso!');
+                    } else {
+                        alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
+                    }
+                } catch (err) {
+                    console.error('Erro ao copiar:', err);
+                    alert('Erro ao copiar chave PIX. Por favor, tente copiar manualmente.');
+                }
+            }
+
+            // Event Listeners
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            document.querySelector('button.button.secondary').addEventListener('click', clearPaymentRelatedLocalStorage);
+
+            // Initialize
             initializePagamento();
         });
-
         
     </script>
 </body>
