@@ -1517,7 +1517,8 @@ def payment_success():
         return redirect(f'/comprovante/{payment_id}')
     else:
         # Redirecionar para página de erro
-        return redirect('/pagamento-erro')
+        #return render_template('negado.html')
+        return redirect('/failure')
 
 @app.route('/failure')
 def payment_failure():
