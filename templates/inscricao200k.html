@@ -153,6 +153,17 @@
             font-weight: bold;
         }
 
+        .value-label1 {
+            background-color: #e8f4ff;
+            padding: 10px;
+            border-radius: 4px;
+            display: block;
+            margin-top: 5px;
+            font-size: 16px;
+            color: #0056b3;
+            font-weight: bold;
+        }
+
         .radio-group {
             display: flex;
             gap: 15px;
@@ -277,12 +288,12 @@
                 <div id="categoria" class="value-label"></div>
             </div>
 
-            <div class="form-group">
+            <!--<div class="form-group">
                 <label>Valor da Inscrição:</label>
                 <div id="valor" class="value-label"></div>
                 <label class="label-info60" id="campoDesconto" style="display:none;">
                     60+ : 50% do valor da inscrição, conforme Lei nº 10.741/2003</label>
-            </div>
+            </div>-->
         </fieldset>
     
         <div class="form-group">
@@ -347,7 +358,9 @@
                     </label>
                 </div>
             </div>
-        
+            
+            <div class="divider"></div>
+
             <div class="form-group">
                 <label>Forma de pagamento:</label>
                 <div class="radio-group">
@@ -357,6 +370,12 @@
                     <label>
                         <input type="radio" name="pagamento" value="cartao"> Cartão de Crédito
                     </label>
+                    <div class="radio-group">
+                        <!--<label>Valor da Atualizado:</label>-->
+                        <div id="valorAtualizado" class="value-label1"></div>
+                        <label class="label-info60" id="campoDesconto" style="display:none;">
+                            Atletas com idade 60+ paga 50% do valor da inscrição, conforme Lei nº 10.741/2003</label>
+                    </div>
                 </div>
             </div>
 
@@ -481,7 +500,42 @@
                 }
             });
             
-            
+            $('input[name="pagamento"]').on('change', function() {
+                let vlinsc = parseFloat(localStorage.getItem('valoratual')) || 0;
+                let tx = parseFloat(localStorage.getItem('valortaxa')) || 0;
+                let vl_total;
+
+                if (this.value === 'pix') {
+                    let percDesconto = 5;
+                    let vlDesconto = vlinsc * (percDesconto / 100);
+                    const vl_comdesconto = vlinsc - vlDesconto;
+                    vl_total = vl_comdesconto + tx;
+
+                    //localStorage.setItem('valoratual', vlinscricao.toString());
+                    //localStorage.setItem('vlinscricao', vlinscricao.toString());
+                    //localStorage.setItem('valortotal', vl_total.toString());
+
+                    const displayValueA = `Valor: ${formatCurrency(vl_comdesconto)} + ${formatCurrency(tx)} = Total a pagar: ${formatCurrency(vl_total)}`;
+                    console.info('Valor Display atualizado:', displayValueA);
+
+                    // Atualiza a exibição
+                    $('#valorAtualizado').text(displayValueA);
+                } else {
+                    vl_total = vlinsc + tx;
+
+                    //localStorage.setItem('valoratual', vlinscricao.toString());
+                    //localStorage.setItem('vlinscricao', vlinscricao.toString());
+                    //localStorage.setItem('valortotal', vl_total.toString());
+
+                    const displayValueA = `Valor: ${formatCurrency(vlinsc)} + ${formatCurrency(tx)} = Total a pagar: ${formatCurrency(vl_total)}`;
+                    console.info('Valor Display atualizado:', displayValueA);
+
+                    // Atualiza a exibição
+                    $('#valorAtualizado').text(displayValueA);
+                }
+            });
+
+        
             // Form submission handler
             $('#inscricaoForm').on('submit', function(e) {
                 e.preventDefault();
