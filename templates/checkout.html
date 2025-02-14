@@ -300,6 +300,12 @@
             margin: 2px 0;
         }        
 
+        .selo-text {
+            font-size: 0.6em;
+            text-align: justify;
+            color: #333;
+            margin: 2px 0;
+        }        
 
 
     </style>
@@ -409,6 +415,7 @@
             </div>
         </div>
         <!--Final do selo -->
+        <p class="selo-text"></p>A sua segurança é nossa prioridade. Ao realizar pagamentos com cartão de crédito através do nosso aplicativo, garantimos que todas as informações fornecidas são protegidas e criptografadas. Utilizamos tecnologias avançadas para proteger seus dados contra fraudes e acessos não autorizados.</p>
 
     </form>
 
@@ -760,6 +767,22 @@
                 }
             });
 
+
+            function redirectToReceipt(paymentId) {
+                try {
+                    // Limpa dados do pagamento antes do redirecionamento
+                    //sessionStorage.removeItem('paymentData');
+                    //localStorage.removeItem('lastPaymentId');
+                    
+                    // Redireciona para a página de recibo
+                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+                    window.location.replace(`/comprovante/${paymentId}`);
+                } catch (error) {
+                    console.error('Erro ao redirecionar:', error);
+                    alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
+                }
+            }
+
             // Manipulador do envio do formulário
             document.getElementById('payment-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -773,6 +796,7 @@
                         throw new Error('Por favor, insira nome e sobrenome completos');
                     }
                     
+                    const formapagto = localStorage.getItem('formaPagto');
                     const firstName = nameParts[0];
                     const lastName = nameParts.slice(1).join(' ');
                     
@@ -841,8 +865,34 @@
                     const data = await response.json();
                     console.log('Resposta do servidor:', data);
 
-                    if (data.status === "approved") {
-                        alert('Pagamento processado com sucesso!');
+                    if (data.status === "approved") {                        
+                        try {
+                            // Fazer a chamada para verificar o pagamento
+                            const verificationResponse = await fetch(`/verificar-pagamento/${data.id}`, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            if (!verificationResponse.ok) {
+                                throw new Error('Erro ao verificar o pagamento');
+                            }
+
+                            const verificationData = await verificationResponse.json();
+                            console.log('Verificação do pagamento:', verificationData);
+                            
+                            // Se tudo correr bem, mostra mensagem de sucesso
+                            alert('Pagamento processado e verificado com sucesso!');
+
+                            // Executa o redirecionamento
+                            redirectToReceipt(data.id);
+
+                        } catch (verificationError) {
+                            console.error('Erro na verificação do pagamento:', verificationError);
+                            alert('Pagamento aprovado, mas houve um erro na verificação e na finalização da inscrição. Mas fique tranquilo, sua inscrição está garantida, nosso suporte entrerá em contato pra finalizar seu cadastro, mas caso queira, você poderá entrar em contato com o suporte pelo WhatsApp (69)99925-7724 ou pelo e-mail adm@ecmrun.com.br. Desde já pedimos desconpas pelo ocorrido.');
+                        }
+
                     } else {
                         alert(`Status do pagamento: ${data.status}`);
                     }
