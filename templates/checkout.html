@@ -18,6 +18,17 @@
             background-color: #f5f5f5;
         }
 
+        .form-title {
+            background-color: #647e99;
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 7px 7px 0 0;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+
         form {
             max-width: 500px;
             margin: 5px auto;
@@ -295,6 +306,8 @@
 </head>
 <body>
     <form id="payment-form">
+        <div class="form-title">Pagamento com Cartão de Crédito</div>
+
         <div class="form-group">
             <label class="checkbox-container">
                 <input type="checkbox" id="same-user-data" name="same_user_data">
@@ -388,14 +401,14 @@
         <input type="hidden" name="token" id="token">
         <button type="submit">Finalizar Pagamento</button>
 
-        <!--Início do selo by lucas no drop-->
+        <!--Início do selo -->
         <div class="cartoes" align="center">      
             <!--Selo do Mercado--->
             <div>
                 <img src="https://ecmrun.com.br/static/img/seloseguro.png" style="width:60%; margin-top: 3px;">
             </div>
         </div>
-        <!--Final do selo by lucas no drop-->
+        <!--Final do selo -->
 
     </form>
 
