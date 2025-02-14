@@ -98,16 +98,16 @@ def process_payment():
         payment_data = request.json
         app.logger.info(payment_data)
         
-        data = request.get_json()
+        #data = request.get_json()
         # Round to 2 decimal places to avoid floating point precision issues
-        valor_total = round(float(data.get('valor_total', 0)), 2)
-        valor_atual = round(float(data.get('valor_atual', 0)), 2)
-        valor_taxa = round(float(data.get('valor_taxa', 0)), 2)
-        camisa = data.get('camiseta')
-        apoio = data.get('apoio')
-        equipe = data.get('equipe')
-        equipe200 = data.get('nome_equipe')
-        integrantes = data.get('integrantes')
+        valor_total = round(float(payment_data.get('valor_total', 0)), 2)
+        valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
+        valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
+        camisa = payment_data.get('camiseta')
+        apoio = payment_data.get('apoio')
+        equipe = payment_data.get('equipe')
+        equipe200 = payment_data.get('nome_equipe')
+        integrantes = payment_data.get('integrantes')
 
         session['valorTotal'] = valor_total
         session['valorAtual'] = valor_atual
