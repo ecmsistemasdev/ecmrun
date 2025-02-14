@@ -427,7 +427,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            //localStorage.setItem('valortotal', '500.00');
 
             // Inicializar o Mercado Pago
             const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
@@ -446,6 +445,10 @@
 
 
             // Adicionar listener para o checkbox
+            const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
+            const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
+            const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
+
             const checkbox = document.getElementById('same-user-data');
             const cardHolderName = document.getElementById('card_holder_name');
             const docNumber = document.getElementById('doc_number');
@@ -791,6 +794,10 @@
             document.getElementById('payment-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
+                const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
+                const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
+                const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
+
                 try {
                     // Validação do nome completo
                     const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
@@ -813,12 +820,25 @@
                     }
 
                     console.log('Criando token do cartão...');
+
+                    const userData = {
+                        equipe: localStorage.getItem('equipe'),
+                        apoio: localStorage.getItem('apoio'),
+                        camiseta: localStorage.getItem('camiseta'),
+                        nome_equipe: localStorage.getItem('nome_equipe'),
+                        integrantes: localStorage.getItem('integrantes'),
+                        valor_atual: vlinscricao,
+                        valor_taxa: vltaxa,
+                        valor_total: totalValue
+                    };
+
                     const cardFormData = {
                         cardNumber: cardNumber,
                         cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
                         cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
                         securityCode: document.getElementById('security-code').value,
-                        cardholderName: fullName
+                        cardholderName: fullName,
+                        ...userData
                     };
 
                     console.log('Dados do cartão:', cardFormData);
