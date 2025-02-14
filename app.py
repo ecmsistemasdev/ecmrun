@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, request, make_response, jsonify, flash, session
 from flask_mail import Mail, Message
+from flask_cors import CORS
 from flask_mysqldb import MySQL
 from dotenv import load_dotenv
 from datetime import datetime
@@ -22,6 +23,7 @@ logging.basicConfig(level=logging.DEBUG)
 sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN'))
 
 app.secret_key = os.getenv('SECRET_KEY')
+CORS(app)
 
 # Configuração do Flask-Mail
 app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')  # Substitua pelo seu servidor SMTP
@@ -103,12 +105,17 @@ def index():
 def checkout():
     return render_template("checkout.html")
 
+@app.route("/checkout2")
+def checkout2():
+    return render_template("checkout2.html")
+
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
     try:
         app.logger.info("Dados recebidos:")
         payment_data = request.json
         app.logger.info(payment_data)
+        session['formaPagto'] = 'CARTAO'
         
         # Validar dados recebidos
         required_fields = [
@@ -1120,9 +1127,9 @@ def gerar_pix():
         session['valorTotal'] = valor_total
         session['valorAtual'] = valor_atual
         session['valorTaxa'] = valor_taxa
-        
-    
+        session['formaPagto'] = 'PIX'
 
+        
         fn_camiseta(data.get('camiseta'))
         fn_apoio(data.get('apoio')) 
         fn_equipe(data.get('equipe'))
@@ -1302,6 +1309,7 @@ def verificar_pagamento(payment_id):
                 valoratual = valor + taxa
                 valor_pgto = float(session.get('valorTotal', 0))
                 desconto = valor_pgto - valoratual
+                formaPagto = session.get('formaPagto')
 
                 data_e_hora_atual = datetime.now()
                 fuso_horario = timezone('America/Manaus')
@@ -1339,7 +1347,7 @@ def verificar_pagamento(payment_id):
                     valor_pgto,                          # VALOR_PGTO
                     data_pagamento,                      # DTPAGAMENTO
                     'CONFIRMADO',                        # STATUS
-                    'PIX',                               # FORMAPGTO
+                    formaPagto,                          # FORMAPGTO
                     payment_id,                          # IDPAGAMENTO
                     'N',
                     var_equipe
@@ -1393,6 +1401,11 @@ def webhook():
 
 @app.route('/criar_preferencia', methods=['POST'])
 def criar_preferencia():
+
+    app.logger.info("Recebendo requisição para criar preferência")
+    app.logger.debug(f"Dados recebidos: {request.get_json()}")
+    app.logger.debug(f"MP_ACCESS_TOKEN configurado: {'MP_ACCESS_TOKEN' in os.environ}")
+
     try:
         data = request.get_json()
         
@@ -1415,6 +1428,7 @@ def criar_preferencia():
         
         # Configurar URLs de retorno
         base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
+
         back_urls = {
             "success": f"{base_url}/aprovado",
             "failure": f"{base_url}/negado",
@@ -1476,50 +1490,126 @@ def criar_preferencia():
         return jsonify({"error": str(e)}), 400
 
 
+@app.route('/verificar-pagamento-cartao/<payment_id>')
+def verificar_pagamento_cartao(payment_id):
+    try:
+        # Buscar o status diretamente do Mercado Pago
+        payment_response = sdk.payment().get(payment_id)
+        payment = payment_response["response"]
+
+        print(f"Status do pagamento recebido: {payment['status']}")
+        
+        if payment["status"] == "approved":
+            # Verificar se já não foi processado antes
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT * FROM ecmrun.INSCRICAO_TT WHERE IDPAGAMENTO = %s", (payment_id,))
+            existing_record = cur.fetchone()
+            
+            if not existing_record:
+                # Calculate valor_pgto (total payment)
+                valor = float(session.get('valorAtual', 0))
+                taxa = float(session.get('valorTaxa', 0))
+                valoratual = valor + taxa
+                valor_pgto = float(session.get('valorTotal', 0))
+                desconto = 0
+
+                data_e_hora_atual = datetime.now()
+                fuso_horario = timezone('America/Manaus')
+                data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+                data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
+                                
+                # Get additional data from session
+                idatleta = session.get('user_idatleta')
+                cpf = session.get('user_cpf')
+                
+                # Insert payment record
+                query = """
+                INSERT INTO ecmrun.INSCRICAO_TT (
+                    IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                    NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
+                    VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                    IDPAGAMENTO, FLMAIL, EQUIPE
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                """
+                
+                params = (
+                    idatleta,                            # IDATLETA
+                    cpf,                                 # CPF
+                    1,                                   # IDEVENTO (hardcoded as 1 for this event)
+                    session.get('cat_iditem'),           # IDITEM
+                    var_camiseta,                        # CAMISETA
+                    var_apoio,                           # APOIO
+                    var_nome_equipe,                     # NOME_EQUIPE
+                    var_integrantes,                     # INTEGRANTES
+                    valor,                               # VALOR
+                    taxa,                                # TAXA
+                    desconto,                            # DESCONTO
+                    valor_pgto,                          # VALOR_PGTO
+                    data_pagamento,                      # DTPAGAMENTO
+                    'CONFIRMADO',                        # STATUS
+                    'CARTAO DE CREDITO',                 # FORMAPGTO
+                    payment_id,                          # IDPAGAMENTO
+                    'N',
+                    var_equipe
+                )
+                
+                cur.execute(query, params)
+                mysql.connection.commit()
+                cur.close()
+                
+                print("Registro de pagamento inserido com sucesso!")
+                
+                return jsonify({
+                    'success': True,
+                    'status': 'approved',
+                    'message': 'Pagamento processado e registrado'
+                })
+            
+                ## TALVES AQUI ABRE O COMPROVANTE, VOU VERIFICAR
+            else:
+                print("Pagamento já processado anteriormente")
+                return jsonify({
+                    'success': True,
+                    'status': 'approved',
+                    'message': 'Pagamento já processado'
+                })
+        
+        return jsonify({
+            'success': True,
+            'status': payment["status"]
+        })
+        
+    except Exception as e:
+        print(f"Erro ao verificar pagamento: {str(e)}")
+        # Ensure JSON is returned even on error
+        return jsonify({
+            'success': False, 
+            'message': str(e),
+            'status': 'error'
+        }), 500
 
 
-def gerar_link_pagamento():
-    #sdk = mercadopago.SDK("YOUR_ACCESS_TOKEN")  # Substitua pelo seu token de acesso
-    payment_data = {
-        "items": [
-            {"id": "1", "title": "Camisa", "quantity": 1, "currency_id": "BRL", "unit_price": 259.99}
-        ],
-        "back_urls": {
-            "success": "http://127.0.0.1:5000/compracerta",
-            "failure": "http://127.0.0.1:5000/compraerrada",
-            "pending": "http://127.0.0.1:5000/compraerrada",
-        },
-        "auto_return": "all"
-    }
 
-    result = sdk.preference().create(payment_data)
-    payment = result["response"]
-    link_iniciar_pagamento = payment["init_point"]
-    return link_iniciar_pagamento
+# def gerar_link_pagamento():
+#     #sdk = mercadopago.SDK("YOUR_ACCESS_TOKEN")  # Substitua pelo seu token de acesso
+#     payment_data = {
+#         "items": [
+#             {"id": "1", "title": "Camisa", "quantity": 1, "currency_id": "BRL", "unit_price": 259.99}
+#         ],
+#         "back_urls": {
+#             "success": "http://127.0.0.1:5000/compracerta",
+#             "failure": "http://127.0.0.1:5000/compraerrada",
+#             "pending": "http://127.0.0.1:5000/compraerrada",
+#         },
+#         "auto_return": "all"
+#     }
 
-
-
-@app.route('/create-mercado-pago-payment', methods=['POST'])
-def create_mercado_pago_payment():
-    data = request.get_json()
-    
-    payment_data = {
-        "items": [
-            {"id": "1", "title": "Teste", "quantity": 1, "currency_id": "BRL", "unit_price": 1.00}
-        ],
-        "back_urls": {
-            "success": "http://192.168.100.16:5000/comprovante",
-            "failure": "http://192.168.100.16:5000/compraerrada",
-            "pending": "http://192.168.100.16:5000/compraerrada",
-        },
-        "auto_return": "all"
-    }
-    result = sdk.preference().create(payment_data)
-
-    return jsonify({
-        "init_point": result["response"]["init_point"]
-    })
-
+#     result = sdk.preference().create(payment_data)
+#     payment = result["response"]
+#     link_iniciar_pagamento = payment["init_point"]
+#     return link_iniciar_pagamento
 
 
 if __name__ == "__main__":
