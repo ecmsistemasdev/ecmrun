@@ -830,7 +830,7 @@
                     const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
 
                     const paymentData = {
-                        transaction_amount: parseFloat(storedAmount),
+                        transaction_amount: Number(parseFloat(storedAmount).toFixed(2)),
                         token: cardToken.id,
                         description: document.querySelector('[name="description"]').value,
                         installments: parseInt(document.querySelector('[name="installments"]').value),
