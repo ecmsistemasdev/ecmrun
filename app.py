@@ -99,6 +99,88 @@ def index():
 #def teste():
 #    return render_template('organizer_email.html', **receipt_data)
 
+@app.route("/checkout")
+def checkout():
+    return render_template("checkout.html")
+
+@app.route('/process_payment', methods=['POST'])
+def process_payment():
+    try:
+        app.logger.info("Dados recebidos:")
+        payment_data = request.json
+        app.logger.info(payment_data)
+        
+        # Validar dados recebidos
+        required_fields = [
+            'token', 
+            'transaction_amount', 
+            'installments', 
+            'payment_method_id',
+            'payer'
+        ]
+        
+        for field in required_fields:
+            if field not in payment_data:
+                raise ValueError(f"Campo obrigatório ausente: {field}")
+
+        # Gerar referência externa única
+        external_reference = str(uuid.uuid4())
+        
+        # Criar preferência de pagamento
+        preference_data = {
+            "items": [{
+                "title": payment_data.get('description', 'Produto'),
+                "quantity": 1,
+                "currency_id": "BRL",
+                "unit_price": float(payment_data['transaction_amount']),
+                "description": payment_data.get('description_item', 'Produto'),
+                "category_id": "others"
+            }],
+            "notification_url": "https://ecmrun.com.br/webhook",
+            "external_reference": external_reference
+        }
+        
+        # Criar preferência
+        preference_response = sdk.preference().create(preference_data)
+        
+        if "response" not in preference_response:
+            raise ValueError("Erro ao criar preferência de pagamento")
+            
+        # Preparar dados do pagamento
+        payment_info = {
+            "transaction_amount": float(payment_data['transaction_amount']),
+            "token": payment_data['token'],
+            "description": payment_data.get('description', 'Produto'),
+            "installments": int(payment_data['installments']),
+            "payment_method_id": payment_data['payment_method_id'],
+            "external_reference": external_reference,
+            "notification_url": "https://ecmrun.com.br/webhook",
+            "payer": payment_data['payer']
+        }
+
+        app.logger.info("Dados do pagamento:")
+        app.logger.info(payment_info)
+        
+        # Processar pagamento
+        payment_response = sdk.payment().create(payment_info)
+        
+        app.logger.info("Resposta do pagamento:")
+        app.logger.info(payment_response)
+        
+        if "response" not in payment_response:
+            return jsonify({
+                "error": "Erro ao processar pagamento",
+                "details": payment_response.get("message", "Erro desconhecido")
+            }), 400
+            
+        return jsonify(payment_response["response"]), 200
+        
+    except ValueError as e:
+        app.logger.error(f"Erro de validação: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        app.logger.error(f"Erro no processamento: {str(e)}")
+        return jsonify({"error": str(e)}), 400
 
 
 def get_receipt_data(payment_id):
