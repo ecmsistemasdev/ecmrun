@@ -27,6 +27,17 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        .total-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+
         .form-control {
             height: 40px;
             border: 1px solid #ccc;
@@ -56,22 +67,19 @@
             display: flex;
             gap: 15px;
             margin-bottom: 15px;
-            width: 100%; /* Garante que ocupe toda a largura disponível */
+            width: 100%;
         }
 
-        /* Tipo de documento */
         .form-col.doc-type {
-            flex: 1; /* Mudamos de um valor fixo para proporção */
-            min-width: 140px; /* Aumentamos a largura mínima */
-            max-width: 140px; /* Aumentamos a largura máxima */
+            flex: 1;
+            min-width: 140px;
+            max-width: 140px;
         }
 
-        /* Número do documento */
         .form-col.doc-number {
-            flex: 3; /* Aumentamos a proporção em relação ao tipo */
+            flex: 3;
         }
 
-        /* Garante que os inputs e selects dentro desses campos mantenham o tamanho correto */
         .form-row.doc-row input,
         .form-row.doc-row select {
             width: 100%;
@@ -142,7 +150,7 @@
         .cvv-field {
             flex: 1;
         }
-        
+
         /* Garante que todos os inputs e selects tenham a mesma altura */
         .form-group input,
         .form-group select,
@@ -156,7 +164,7 @@
             font-size: 14px;
             transition: border-color 0.2s;
             box-sizing: border-box;
-        }        
+        } 
 
         @media (max-width: 600px) {
             body {
@@ -181,20 +189,19 @@
                 gap: 15px;
             }
             
-            /* Mantém os campos de documento lado a lado */
             .form-row.doc-row {
-                flex-direction: row; /* Mantém lado a lado */
+                flex-direction: row;
                 width: 100%;
             }
 
             .form-col.doc-type {
                 flex: 1;
-                min-width: 120px; /* Ligeiramente menor em mobile */
+                min-width: 120px;
                 max-width: 120px;
             }           
 
             .form-col.doc-number {
-                flex: 2; /* Proporção um pouco menor em mobile */
+                flex: 2;
             }
 
             .form-group label {
@@ -238,14 +245,8 @@
 <body>
     <form id="payment-form">
         <div class="form-group">
-            <label>Valor do Pagamento</label>
-            <input 
-                type="text" 
-                name="transaction_amount" 
-                id="transaction-amount" 
-                placeholder="Valor do pagamento" 
-                required
-            >
+            <div>Valor do Pagamento:</div>
+            <div class="total-amount" id="transaction-amount">Carregando...</div>
         </div>
 
         <div class="form-group">
@@ -299,7 +300,7 @@
         <div class="form-row doc-row">
             <div class="form-col doc-type">
                 <label>Tipo de Doc.</label>
-                <select name="doc_type" required>
+                <select name="doc_type" id="doc_type" required>
                     <option value="CPF">CPF</option>
                     <option value="CNPJ">CNPJ</option>
                 </select>
@@ -307,7 +308,8 @@
         
             <div class="form-col doc-number">
                 <label>Número do Documento</label>
-                <input type="text" name="doc_number" placeholder="Somente números" required>
+                <input type="text" name="doc_number" id="doc_number" 
+                placeholder="Somente números" required>
             </div>
         </div>
 
@@ -318,10 +320,8 @@
 
         <div class="form-group">
             <label>Número de Parcelas</label>
-            <select name="installments" required>
-                <option value="1">1x sem juros</option>
-                <option value="2">2x sem juros</option>
-                <option value="3">3x sem juros</option>
+            <select name="installments" id="installments" required>
+                <option value="">Carregando parcelas...</option>
             </select>
         </div>
 
@@ -332,174 +332,398 @@
     </form>
 
     <script>
-        // Inicializar o Mercado Pago com credenciais de teste
-        const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00');
+        document.addEventListener('DOMContentLoaded', function() {
+            localStorage.setItem('valoratual', '500.00');
 
+            // Inicializar o Mercado Pago
+            const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
+                locale: 'pt-BR'
+            });
 
-        // Função para identificar a bandeira do cartão
-        function getCardType(cardNumber) {
-            const patterns = {
-                visa: /^4/,
-                mastercard: /^5[1-5]/,
-                amex: /^3[47]/,
-                elo: /^(401178|401179|431274|438935|451416|457393|457631|457632|504175|627780|636297|636368|636369|(506699|5067[0-6]\d|50677[0-8])|(50900\d|5090[1-9]\d|509[1-9]\d{2})|65003[1-3]|(65003[5-9]|65004\d|65005[0-1])|(65040[5-9]|6504[1-3]\d)|(65048[5-9]|65049\d|6505[0-2]\d|65053[0-8])|(65054[1-9]|6505[5-8]\d|65059[0-8])|(65070\d|65071[0-8])|65072[0-7]|(65090[1-9]|65091\d|650920)|(65165[2-9]|6516[6-7]\d)|(65500\d|65501\d)|(65502[1-9]|6550[3-4]\d|65505[0-8]))/,
-                hipercard: /^(606282\d{10}(\d{3})?)|(3841\d{15})/,
-                diners: /^3(?:0[0-5]|[68][0-9])[0-9]{11}/
-            };
-            
-            // Normalize os nomes das bandeiras conforme esperado pelo Mercado Pago
-            const mpBrandNames = {
-                visa: 'visa',
-                mastercard: 'master',
-                amex: 'amex',
-                elo: 'elo',
-                hipercard: 'hipercard',
-                diners: 'diners'
-            };
-            
-            for (let [brand, pattern] of Object.entries(patterns)) {
-                if (pattern.test(cardNumber)) {
-                    return mpBrandNames[brand];
+            // Carregar valor do localStorage
+            const storedAmount = localStorage.getItem('valoratual') || '0.00';
+            const amountElement = document.getElementById('transaction-amount');
+            amountElement.textContent = new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(storedAmount);
+
+            // Funções de validação de documentos
+            function validateCPF(cpf) {
+                cpf = cpf.replace(/\D/g, '');
+                if (cpf.length !== 11) return false;
+                if (/^(\d)\1{10}$/.test(cpf)) return false;
+                
+                let sum = 0;
+                for (let i = 0; i < 9; i++) {
+                    sum += parseInt(cpf.charAt(i)) * (10 - i);
+                }
+                let rev = 11 - (sum % 11);
+                if (rev === 10 || rev === 11) rev = 0;
+                if (rev !== parseInt(cpf.charAt(9))) return false;
+                
+                sum = 0;
+                for (let i = 0; i < 10; i++) {
+                    sum += parseInt(cpf.charAt(i)) * (11 - i);
+                }
+                rev = 11 - (sum % 11);
+                if (rev === 10 || rev === 11) rev = 0;
+                if (rev !== parseInt(cpf.charAt(10))) return false;
+                
+                return true;
+            }
+
+            function validateCNPJ(cnpj) {
+                cnpj = cnpj.replace(/\D/g, '');
+                if (cnpj.length !== 14) return false;
+                if (/^(\d)\1{13}$/.test(cnpj)) return false;
+                
+                let size = cnpj.length - 2;
+                let numbers = cnpj.substring(0, size);
+                let digits = cnpj.substring(size);
+                let sum = 0;
+                let pos = size - 7;
+                
+                for (let i = size; i >= 1; i--) {
+                    sum += numbers.charAt(size - i) * pos--;
+                    if (pos < 2) pos = 9;
+                }
+                
+                let result = sum % 11 < 2 ? 0 : 11 - sum % 11;
+                if (result !== parseInt(digits.charAt(0))) return false;
+                
+                size = size + 1;
+                numbers = cnpj.substring(0, size);
+                sum = 0;
+                pos = size - 7;
+                
+                for (let i = size; i >= 1; i--) {
+                    sum += numbers.charAt(size - i) * pos--;
+                    if (pos < 2) pos = 9;
+                }
+                
+                result = sum % 11 < 2 ? 0 : 11 - sum % 11;
+                if (result !== parseInt(digits.charAt(1))) return false;
+                
+                return true;
+            }
+
+            // Máscaras para documentos
+            function formatCPF(value) {
+                value = value.slice(0, 11);
+                return value
+                    .replace(/\D/g, '')
+                    .replace(/(\d{3})(\d)/, '$1.$2')
+                    .replace(/(\d{3})(\d)/, '$1.$2')
+                    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            }
+
+            function formatCNPJ(value) {
+                value = value.slice(0, 14);
+                return value
+                    .replace(/\D/g, '')
+                    .replace(/^(\d{2})(\d)/, '$1.$2')
+                    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                    .replace(/(\d{4})(\d)/, '$1-$2');
+            }
+
+            // Event listener para máscara de documento
+            const docNumberInput = document.getElementById('doc_number');
+            const docTypeSelect = document.getElementById('doc_type');
+
+            docNumberInput.addEventListener('input', function(e) {
+                const docType = docTypeSelect.value;
+                let value = e.target.value.replace(/\D/g, '');
+                
+                // Limitar o tamanho do valor baseado no tipo de documento
+                if (docType === 'CPF') {
+                    value = value.slice(0, 11);
+                } else {
+                    value = value.slice(0, 14);
+                }
+                
+                if (docType === 'CPF') {
+                    e.target.value = formatCPF(value);
+                } else {
+                    e.target.value = formatCNPJ(value);
+                }
+            });
+
+            docNumberInput.addEventListener('blur', function(e) {
+                const docType = docTypeSelect.value;
+                const value = e.target.value.replace(/\D/g, '');
+                let isValid = false;
+                
+                if (docType === 'CPF') {
+                    isValid = validateCPF(value);
+                } else {
+                    isValid = validateCNPJ(value);
+                }
+                
+                if (!isValid) {
+                    e.target.classList.add('document-error');
+                    e.target.setCustomValidity(`${docType} inválido`);
+                } else {
+                    e.target.classList.remove('document-error');
+                    e.target.setCustomValidity('');
+                }
+            });
+
+            docTypeSelect.addEventListener('change', function() {
+                docNumberInput.value = '';
+                docNumberInput.classList.remove('document-error');
+                docNumberInput.setCustomValidity('');
+            });
+
+            // Função para identificar a bandeira do cartão
+            function getCardType(cardNumber) {
+                // Remover espaços e caracteres não numéricos
+                cardNumber = cardNumber.replace(/\D/g, '');
+                
+                const patterns = {
+                    visa: /^4/,
+                    mastercard: /^(5[1-5]|2[2-7])/,
+                    amex: /^3[47]/,
+                    elo: /^(401178|401179|431274|438935|451416|457393|457631|457632|504175|627780|636297|636368|636369|(506699|5067[0-6]\d|50677[0-8])|(50900\d|5090[1-9]\d|509[1-9]\d{2})|65003[1-3]|(65003[5-9]|65004\d|65005[0-1])|(65040[5-9]|6504[1-3]\d)|(65048[5-9]|65049\d|6505[0-2]\d|65053[0-8])|(65054[1-9]|6505[5-8]\d|65059[0-8])|(65070\d|65071[0-8])|65072[0-7]|(65090[1-9]|65091\d|650920)|(65165[2-9]|6516[6-7]\d)|(65500\d|65501\d)|(65502[1-9]|6550[3-4]\d|65505[0-8]))/,
+                    hipercard: /^(606282\d{10}(\d{3})?)|(3841\d{15})/,
+                    diners: /^3(?:0[0-5]|[68][0-9])[0-9]{11}/
+                };
+                
+                const mpBrandNames = {
+                    visa: 'visa',
+                    mastercard: 'master',
+                    amex: 'amex',
+                    elo: 'elo',
+                    hipercard: 'hipercard',
+                    diners: 'diners'
+                };
+                
+                for (let [brand, pattern] of Object.entries(patterns)) {
+                    if (pattern.test(cardNumber)) {
+                        return mpBrandNames[brand];
+                    }
+                }
+                
+                return null;
+            }
+
+            // Função atualizada para obter parcelas
+            async function getInstallments(amount, paymentMethodId) {
+                try {
+                    console.log('Calculando parcelas para:', { amount, paymentMethodId });
+                    
+                    const response = await mp.getInstallments({
+                        amount: String(amount),
+                        locale: 'pt-BR',
+                        payment_method_id: paymentMethodId,
+                    });
+
+                    console.log('Resposta do getInstallments:', response);
+
+                    if (response && response.length > 0) {
+                        const installmentSelect = document.getElementById('installments');
+                        installmentSelect.innerHTML = ''; // Limpa as opções existentes
+
+                        response[0].payer_costs.forEach((cost) => {
+                            const formattedAmount = new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                            }).format(cost.installment_amount);
+
+                            const optionText = cost.recommended_message || 
+                                `${cost.installments}x de ${formattedAmount}`;
+
+                            const option = document.createElement('option');
+                            option.value = cost.installments;
+                            option.textContent = optionText;
+                            installmentSelect.appendChild(option);
+                        });
+                    } else {
+                        console.error('Nenhuma opção de parcelamento disponível');
+                        document.getElementById('installments').innerHTML = '<option value="">Nenhuma parcela disponível</option>';
+                    }
+                } catch (error) {
+                    console.error('Erro detalhado ao obter parcelas:', error);
+                    document.getElementById('installments').innerHTML = '<option value="">Erro ao carregar parcelas</option>';
                 }
             }
-            
-            return null; // Melhor retornar null do que 'unknown'
-        }    
-        
-        // Máscara para valor
-        document.getElementById('transaction-amount').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            value = (value / 100).toFixed(2).replace('.', ',');
-            e.target.value = 'R$ ' + value;
-        });
-    
-        // Máscara para número do cartão
-        document.getElementById('card-number').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-            e.target.value = value.substring(0, 19);
-        });
-    
-        // Máscara para data de validade
-        document.getElementById('expiration-date').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2, 4);
-            }
-            e.target.value = value.substring(0, 5);
-        });
-    
-        // Validação em tempo real do nome completo
-        document.querySelector('[name="card_holder_name"]').addEventListener('input', function(e) {
-            const fullName = e.target.value.trim();
-            const nameParts = fullName.split(' ').filter(part => part.length > 0);
-            
-            if (nameParts.length < 2) {
-                e.target.setCustomValidity('Por favor, insira nome e sobrenome completos');
-            } else {
-                e.target.setCustomValidity('');
-            }
-        });
 
-        document.getElementById('payment-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            try {
-                // Validação do nome completo
-                const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
+            // Atualização do listener do número do cartão
+            document.getElementById('card-number').addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+                e.target.value = value.substring(0, 19);
+
+                // Atualizar parcelas quando tiver 6 ou mais dígitos
+                const cardNumber = value.replace(/\s/g, ''); // Remove espaços
+                if (cardNumber.length >= 6) {
+                    const bin = cardNumber.substring(0, 6); // Pega os primeiros 6 dígitos
+                    const cardType = getCardType(cardNumber);
+                    if (cardType) {
+                        console.log('Bandeira identificada:', cardType);
+                        console.log('BIN:', bin);
+                        const storedAmount = localStorage.getItem('valoratual');
+                        if (storedAmount) {
+                            const amount = parseFloat(storedAmount);
+                            if (!isNaN(amount)) {
+                                // Chama getInstallments com o bin
+                                mp.getInstallments({
+                                    amount: String(amount),
+                                    locale: 'pt-BR',
+                                    payment_method_id: cardType,
+                                    bin: bin
+                                }).then((response) => {
+                                    console.log('Resposta do getInstallments:', response);
+                                    if (response && response.length > 0) {
+                                        const installmentSelect = document.getElementById('installments');
+                                        installmentSelect.innerHTML = ''; // Limpa as opções existentes
+
+                                        response[0].payer_costs.forEach((cost) => {
+                                            const formattedAmount = new Intl.NumberFormat('pt-BR', {
+                                                style: 'currency',
+                                                currency: 'BRL'
+                                            }).format(cost.installment_amount);
+
+                                            const optionText = cost.recommended_message || 
+                                                `${cost.installments}x de ${formattedAmount}`;
+
+                                            const option = document.createElement('option');
+                                            option.value = cost.installments;
+                                            option.textContent = optionText;
+                                            installmentSelect.appendChild(option);
+                                        });
+                                    }
+                                }).catch((error) => {
+                                    console.error('Erro ao obter parcelas:', error);
+                                    document.getElementById('installments').innerHTML = '<option value="">Erro ao carregar parcelas</option>';
+                                });
+                            }
+                        }
+                    }
+                } else {
+                    // Reseta o select de parcelas se não tiver números suficientes
+                    document.getElementById('installments').innerHTML = '<option value="">Digite mais números do cartão...</option>';
+                }
+            });       
+
+            // Máscara para data de validade
+            document.getElementById('expiration-date').addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value.substring(0, 5);
+            });
+        
+            // Validação do nome completo
+            document.querySelector('[name="card_holder_name"]').addEventListener('input', function(e) {
+                const fullName = e.target.value.trim();
                 const nameParts = fullName.split(' ').filter(part => part.length > 0);
                 
                 if (nameParts.length < 2) {
-                    throw new Error('Por favor, insira nome e sobrenome completos');
-                }
-                
-                const firstName = nameParts[0];
-                const lastName = nameParts.slice(1).join(' ');
-                
-                // Validação e obtenção do número do cartão
-                const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-                const cardType = getCardType(cardNumber);
-                
-                // Validação do payment_method_id (cardType)
-                if (!cardType) {
-                    throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
-                }
-                
-                // Obter o valor limpo (sem R$ e vírgula)
-                const amountInput = document.getElementById('transaction-amount');
-                const amount = parseFloat(amountInput.value.replace('R$ ', '').replace(',', '.'));
-
-                console.log('Criando token do cartão...');
-                const cardFormData = {
-                    cardNumber: cardNumber,
-                    cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
-                    cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
-                    securityCode: document.getElementById('security-code').value,
-                    cardholderName: fullName
-                };
-
-                console.log('Dados do cartão:', cardFormData);
-                
-                const cardToken = await mp.createCardToken(cardFormData);
-                console.log('Token gerado:', cardToken);
-
-                if (!cardToken.id) {
-                    throw new Error('Não foi possível gerar o token do cartão');
-                }
-
-                const paymentData = {
-                    transaction_amount: amount,
-                    token: cardToken.id,
-                    description: document.querySelector('[name="description"]').value,
-                    installments: parseInt(document.querySelector('[name="installments"]').value),
-                    payment_method_id: cardType,
-                    payer: {
-                        email: document.querySelector('[name="email"]').value,
-                        identification: {
-                            type: document.querySelector('[name="doc_type"]').value,
-                            number: document.querySelector('[name="doc_number"]').value
-                        },
-                        first_name: firstName,
-                        last_name: lastName
-                    }
-                };
-
-                console.log('Enviando dados para o servidor:', paymentData);
-                
-                const response = await fetch('/process_payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('Resposta do servidor:', data);
-
-                if (data.status === "approved") {
-                    alert('Pagamento processado com sucesso!');
+                    e.target.setCustomValidity('Por favor, insira nome e sobrenome completos');
                 } else {
-                    alert(`Status do pagamento: ${data.status}`);
+                    e.target.setCustomValidity('');
                 }
-            } catch (error) {
-                console.error('Erro detalhado:', error);
-                // Melhorando a experiência do usuário com mensagens mais amigáveis
-                let errorMessage = error.message;
-                if (errorMessage.includes('token')) {
-                    errorMessage = 'Erro ao processar o cartão. Por favor, verifique os dados informados.';
+            });
+
+            // Manipulador do envio do formulário
+            document.getElementById('payment-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                try {
+                    // Validação do nome completo
+                    const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
+                    const nameParts = fullName.split(' ').filter(part => part.length > 0);
+                    
+                    if (nameParts.length < 2) {
+                        throw new Error('Por favor, insira nome e sobrenome completos');
+                    }
+                    
+                    const firstName = nameParts[0];
+                    const lastName = nameParts.slice(1).join(' ');
+                    
+                    // Validação e obtenção do número do cartão
+                    const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+                    const cardType = getCardType(cardNumber);
+                    
+                    if (!cardType) {
+                        throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
+                    }
+
+                    console.log('Criando token do cartão...');
+                    const cardFormData = {
+                        cardNumber: cardNumber,
+                        cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
+                        cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
+                        securityCode: document.getElementById('security-code').value,
+                        cardholderName: fullName
+                    };
+
+                    console.log('Dados do cartão:', cardFormData);
+                    
+                    const cardToken = await mp.createCardToken(cardFormData);
+                    console.log('Token gerado:', cardToken);
+
+                    if (!cardToken.id) {
+                        throw new Error('Não foi possível gerar o token do cartão');
+                    }
+
+                    // Obter número do documento sem máscara
+                    const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
+
+                    const paymentData = {
+                        transaction_amount: parseFloat(storedAmount),
+                        token: cardToken.id,
+                        description: document.querySelector('[name="description"]').value,
+                        installments: parseInt(document.querySelector('[name="installments"]').value),
+                        payment_method_id: cardType,
+                        payer: {
+                            email: document.querySelector('[name="email"]').value,
+                            identification: {
+                                type: document.querySelector('[name="doc_type"]').value,
+                                number: docNumber
+                            },
+                            first_name: firstName,
+                            last_name: lastName
+                        }
+                    };
+
+                    console.log('Enviando dados para o servidor:', paymentData);
+                    
+                    const response = await fetch('/process_payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(paymentData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('Resposta do servidor:', data);
+
+                    if (data.status === "approved") {
+                        alert('Pagamento processado com sucesso!');
+                    } else {
+                        alert(`Status do pagamento: ${data.status}`);
+                    }
+                } catch (error) {
+                    console.error('Erro detalhado:', error);
+                    let errorMessage = error.message;
+                    if (errorMessage.includes('token')) {
+                        errorMessage = 'Erro ao processar o cartão. Por favor, verifique os dados informados.';
+                    }
+                    alert(`Erro ao processar pagamento: ${errorMessage}`);
                 }
-                alert(`Erro ao processar pagamento: ${errorMessage}`);
-            }
+            });
         });
-
-
     </script>
 </body>
 </html>
