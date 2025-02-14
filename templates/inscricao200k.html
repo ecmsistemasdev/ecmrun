@@ -573,15 +573,17 @@
                         valortotal: valorTotal,
                         valortaxa: valorTaxa,
                         user_name: localStorage.getItem('user_name'),
+                        user_cpf: localStorage.getItem('user_cpf'),
                         user_email: localStorage.getItem('user_email'),
                         user_idatleta: localStorage.getItem('user_idatleta')
                     });
 
                     // Validar se todos os campos necessários estão presentes
-                    if (!valorTotal || !localStorage.getItem('user_name') || !localStorage.getItem('user_email')) {
+                    if (!valorTotal || !localStorage.getItem('user_name') || !localStorage.getItem('user_cpf') || !localStorage.getItem('user_email')) {
                         console.error('Dados obrigatórios faltando:', {
                             valorTotal,
                             userName: localStorage.getItem('user_name'),
+                            userCPF: localStorage.getItem('user_cpf'),
                             userEmail: localStorage.getItem('user_email')
                         });
                         alert('Dados incompletos. Por favor, verifique se todos os campos estão preenchidos.');
@@ -594,45 +596,79 @@
                         valortaxa: valorTaxa,
                         user_name: localStorage.getItem('user_name'),
                         user_email: localStorage.getItem('user_email'),
+                        user_cpf: localStorage.getItem('user_cpf'),
                         user_idatleta: localStorage.getItem('user_idatleta')
                     };
+
+                    console.log('Dados sendo enviados:', requestData);
                     
-                    // Fazer requisição para criar preferência no Mercado Pago
-                    fetch('/criar_preferencia', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestData)
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            // Log detalhado do erro
-                            return response.text().then(text => {
-                                console.error('Erro na resposta:', {
-                                    status: response.status,
-                                    statusText: response.statusText,
-                                    body: text
-                                });
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Resposta do servidor:', data);
-                        if (data.init_point) {
-                            // Redirecionar para a página de pagamento do Mercado Pago
-                            window.location.href = data.init_point;
-                        } else {
-                            console.error('init_point não encontrado na resposta:', data);
-                            alert('Erro ao processar pagamento. Por favor, tente novamente.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro detalhado:', error);
-                        alert('Erro ao processar pagamento. Por favor, tente novamente.');
-                    });
+                    window.location.href = '/checkout';
+                    // // Fazer requisição para criar preferência no Mercado Pago
+                    // fetch('/criar_preferencia', {
+                    //     method: 'POST',
+                    //     headers: {
+                    //         'Content-Type': 'application/json',
+                    //     },
+                    //     body: JSON.stringify(requestData)
+                    // })
+                    // .then(response => {
+                    //     if (!response.ok) {
+                    //         // Log detalhado do erro
+                    //         return response.text().then(text => {
+                    //             console.error('Erro na resposta:', {
+                    //                 status: response.status,
+                    //                 statusText: response.statusText,
+                    //                 body: text
+                    //             });
+                    //             throw new Error(`HTTP error! status: ${response.status}`);
+                    //         });
+                    //     }
+                    //     return response.json();
+                    // })
+                    // .then(data => {
+                    //     console.log('Resposta do servidor:', data);
+                    //     if (data.init_point) {
+                    //         // Armazenar o ID do pagamento
+                    //         localStorage.setItem('lastPaymentId', data.id);
+
+                    //         // Redirecionar para a página de pagamento do Mercado Pago
+                    //         window.location.href = data.init_point;
+
+
+                    //         // Configurar um intervalo para verificar o status do pagamento
+                    //         const checkPaymentStatus = setInterval(() => {
+                    //             const paymentId = localStorage.getItem('lastPaymentId');
+                    //             if (!paymentId) {
+                    //                 clearInterval(checkPaymentStatus);
+                    //                 return;
+                    //             }
+
+                    //             fetch(`/verificar-pagamento-cartao/${paymentId}`)
+                    //                 .then(response => response.json())
+                    //                 .then(statusData => {
+                    //                     if (statusData.status === 'approved') {
+                    //                         clearInterval(checkPaymentStatus);
+                    //                         // Redirecionar para o comprovante
+                    //                         window.location.href = `/comprovante/${paymentId}`;
+                    //                     } else if (['rejected', 'cancelled'].includes(statusData.status)) {
+                    //                         clearInterval(checkPaymentStatus);
+                    //                         alert('Pagamento não aprovado. Por favor, tente novamente.');
+                    //                     }
+                    //                 })
+                    //                 .catch(error => {
+                    //                     console.error('Erro ao verificar status:', error);
+                    //                     clearInterval(checkPaymentStatus);
+                    //                 });
+                    //         }, 5000); // Verificar a cada 5 segundos
+                    //     } else {
+                    //         throw new Error('init_point não encontrado na resposta');
+                    //     }
+                    // })
+                    // .catch(error => {
+                    //     console.error('Erro ao processar pagamento:', error);
+                    //     alert('Erro ao processar pagamento. Por favor, tente novamente.');
+                    // });
+
                 } else if (paymentMethod === 'pix') {
                     // Código existente para PIX...
                     let percentualDesconto = 5;
