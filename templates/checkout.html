@@ -435,12 +435,14 @@
             });
 
             // Carregar valor do localStorage
+            console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
             const storedAmount = localStorage.getItem('valortotal') || '0.00';
             const amountElement = document.getElementById('transaction-amount');
             amountElement.textContent = new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
                 currency: 'BRL'
             }).format(storedAmount);
+            
 
 
             // Adicionar listener para o checkbox
@@ -456,6 +458,8 @@
                     const storedName = localStorage.getItem('user_name');
                     const storedCPF = localStorage.getItem('user_cpf');
                     const storedEmail = localStorage.getItem('user_email');
+                    
+                    console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
 
                     if (storedName && storedCPF && storedEmail) {
                         cardHolderName.value = storedName;
@@ -831,6 +835,7 @@
 
                     const paymentData = {
                         transaction_amount: Number(parseFloat(storedAmount).toFixed(2)),
+                        //transaction_amount: parseFloat(storedAmount),
                         token: cardToken.id,
                         description: document.querySelector('[name="description"]').value,
                         installments: parseInt(document.querySelector('[name="installments"]').value),
@@ -868,7 +873,7 @@
                     if (data.status === "approved") {                        
                         try {
                             // Fazer a chamada para verificar o pagamento
-                            const verificationResponse = await fetch(`/verificar-pagamento/${data.id}`, {
+                            const verificationResponse = await fetch(`/lanca-pagamento-cartao/${data.id}`, {
                                 method: 'GET',
                                 headers: {
                                     'Accept': 'application/json'
