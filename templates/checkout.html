@@ -2,36 +2,236 @@
 <html>
 <head>
     <title>Mercado Pago Checkout</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            max-width: 500px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f5f5f5;
         }
+
+        form {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-control {
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px;
+            background-color: white;
+            font-size: 14px;
+            width: 100%;
+        }        
+
         .form-group {
             margin-bottom: 15px;
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
         }
-        .form-group input, 
-        .form-group select {
+
+        .form-col {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .form-row.doc-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            width: 100%; /* Garante que ocupe toda a largura disponível */
+        }
+
+        /* Tipo de documento */
+        .form-col.doc-type {
+            flex: 1; /* Mudamos de um valor fixo para proporção */
+            min-width: 140px; /* Aumentamos a largura mínima */
+            max-width: 140px; /* Aumentamos a largura máxima */
+        }
+
+        /* Número do documento */
+        .form-col.doc-number {
+            flex: 3; /* Aumentamos a proporção em relação ao tipo */
+        }
+
+        /* Garante que os inputs e selects dentro desses campos mantenham o tamanho correto */
+        .form-row.doc-row input,
+        .form-row.doc-row select {
             width: 100%;
+            height: 40px;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
         }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            height: 40px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
         button {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .card-fields-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }        
+
+        .card-field-col {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .expiry-field,
+        .cvv-field {
+            flex: 1;
+        }
+        
+        /* Garante que todos os inputs e selects tenham a mesma altura */
+        .form-group input,
+        .form-group select,
+        input#expiration-date,
+        input#security-code {
+            width: 100%;
+            height: 40px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }        
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            form {
+                padding: 15px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .form-col {
+                width: 100%;
+            }
+
+            .card-fields-row {
+                flex-direction: row;
+                gap: 15px;
+            }
+            
+            /* Mantém os campos de documento lado a lado */
+            .form-row.doc-row {
+                flex-direction: row; /* Mantém lado a lado */
+                width: 100%;
+            }
+
+            .form-col.doc-type {
+                flex: 1;
+                min-width: 120px; /* Ligeiramente menor em mobile */
+                max-width: 120px;
+            }           
+
+            .form-col.doc-number {
+                flex: 2; /* Proporção um pouco menor em mobile */
+            }
+
+            .form-group label {
+                font-size: 16px;
+            }
+
+            .form-group input, 
+            .form-group select,
+            .form-control {
+                font-size: 16px;
+                height: 44px;
+            }
+
+            button {
+                padding: 14px;
+                font-size: 18px;
+            }
+        }
+
+        .form-group input:invalid,
+        .form-group select:invalid {
+            border-color: #dc3545;
+        }
+
+        .document-error {
+            border-color: #dc3545 !important;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
         }
     </style>
 </head>
@@ -50,7 +250,12 @@
 
         <div class="form-group">
             <label>Nome no Cartão</label>
-            <input type="text" name="card_holder_name" placeholder="Nome completo" required>
+            <input 
+                type="text" 
+                name="card_holder_name" 
+                placeholder="Nome completo" 
+                required
+            >
         </div>
 
         <div class="form-group">
@@ -65,41 +270,45 @@
             >
         </div>
 
-        <div class="form-group">
-            <label>Data de Validade</label>
-            <input 
-                type="text" 
-                id="expiration-date" 
-                placeholder="MM/AA" 
-                maxlength="5" 
-                pattern="\d{2}/\d{2}"
-                required
-            >
+        <div class="card-fields-row">
+            <div class="form-col expiry-field">
+                <label>Data de Validade</label>
+                <input 
+                    type="text" 
+                    id="expiration-date" 
+                    placeholder="MM/AA" 
+                    maxlength="5" 
+                    pattern="\d{2}/\d{2}"
+                    required
+                >
+            </div>
+        
+            <div class="form-col cvv-field">
+                <label>CVV</label>
+                <input 
+                    type="text" 
+                    id="security-code" 
+                    placeholder="CVV" 
+                    maxlength="4"
+                    pattern="\d{3,4}"
+                    required
+                >
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>Código de Segurança (CVV)</label>
-            <input 
-                type="text" 
-                id="security-code" 
-                placeholder="CVV" 
-                maxlength="4"
-                pattern="\d{3,4}"
-                required
-            >
-        </div>
-
-        <div class="form-group">
-            <label>Tipo de Documento</label>
-            <select name="doc_type" required>
-                <option value="CPF">CPF</option>
-                <option value="CNPJ">CNPJ</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>Número do Documento</label>
-            <input type="text" name="doc_number" placeholder="Somente números" required>
+        <div class="form-row doc-row">
+            <div class="form-col doc-type">
+                <label>Tipo de Doc.</label>
+                <select name="doc_type" required>
+                    <option value="CPF">CPF</option>
+                    <option value="CNPJ">CNPJ</option>
+                </select>
+            </div>
+        
+            <div class="form-col doc-number">
+                <label>Número do Documento</label>
+                <input type="text" name="doc_number" placeholder="Somente números" required>
+            </div>
         </div>
 
         <div class="form-group">
@@ -115,6 +324,7 @@
                 <option value="3">3x sem juros</option>
             </select>
         </div>
+
         <input type="hidden" name="description" value="Inscrição Desafio 200k">
         <input type="hidden" name="item_description" value="Categoria Solo 200k">
         <input type="hidden" name="token" id="token">
