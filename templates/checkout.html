@@ -123,10 +123,8 @@
 
     <script>
         // Inicializar o Mercado Pago com credenciais de teste
-        //const mp = new MercadoPago('APP_USR-a6e4ee4d-cbc3-44b3-b782-234e74767bbb');
-        //const mp = new MercadoPago('TEST-bfb1b3b9-1368-44a9-a283-14d91cc6e6a1');
-        //const mp = new MercadoPago('APP_USR-93175be3-4b17-4b81-9c58-41cc29962a9f');
         const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00');
+
 
         // Função para identificar a bandeira do cartão
         function getCardType(cardNumber) {
@@ -239,28 +237,32 @@
                     throw new Error('Não foi possível gerar o token do cartão');
                 }
 
-                const formData = new FormData();
-                formData.append('transaction_amount', amount);
-                formData.append('token', cardToken.id);
-                formData.append('description', 'Produto de teste');
-                formData.append('installments', document.querySelector('[name="installments"]').value);
-                formData.append('payment_method_id', cardType);
-                formData.append('doc_type', document.querySelector('[name="doc_type"]').value);
-                formData.append('doc_number', document.querySelector('[name="doc_number"]').value);
-                formData.append('email', document.querySelector('[name="email"]').value);
-                formData.append('first_name', firstName);
-                formData.append('last_name', lastName);
-                formData.append('card_holder_name', fullName);
+                const paymentData = {
+                    transaction_amount: amount,
+                    token: cardToken.id,
+                    description: document.querySelector('[name="description"]').value,
+                    installments: parseInt(document.querySelector('[name="installments"]').value),
+                    payment_method_id: cardType,
+                    payer: {
+                        email: document.querySelector('[name="email"]').value,
+                        identification: {
+                            type: document.querySelector('[name="doc_type"]').value,
+                            number: document.querySelector('[name="doc_number"]').value
+                        },
+                        first_name: firstName,
+                        last_name: lastName
+                    }
+                };
 
-                console.log('Enviando dados para o servidor...');
-                console.log('Bandeira do cartão detectada:', cardType);
+                console.log('Enviando dados para o servidor:', paymentData);
                 
                 const response = await fetch('/process_payment', {
                     method: 'POST',
-                    body: formData,
                     headers: {
+                        'Content-Type': 'application/json',
                         'Accept': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify(paymentData)
                 });
 
                 if (!response.ok) {
