@@ -73,13 +73,23 @@ def fn_email(valor):
 def index():
     return render_template("index.html")
 
+# @app.route("/checkout2")
+# def checkout2():
+#     return render_template("checkout2.html")
+
+
 @app.route("/checkout")
 def checkout():
-    return render_template("checkout.html")
 
-@app.route("/checkout2")
-def checkout2():
-    return render_template("checkout2.html")
+    # Get values from session
+    vlinscricao = session.get('valoratual', 0)
+    vltaxa = session.get('valortaxa', 0)
+    valor_total = float(vlinscricao) + float(vltaxa)
+    
+    return render_template('checkout.html', 
+                         valor_inscricao=vlinscricao,
+                         valor_taxa=vltaxa,
+                         valor_total=valor_total)
 
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
@@ -87,8 +97,28 @@ def process_payment():
         app.logger.info("Dados recebidos:")
         payment_data = request.json
         app.logger.info(payment_data)
-        session['formaPagto'] = 'CARTAO'
         
+        data = request.get_json()
+        # Round to 2 decimal places to avoid floating point precision issues
+        valor_total = round(float(data.get('valor_total', 0)), 2)
+        valor_atual = round(float(data.get('valor_atual', 0)), 2)
+        valor_taxa = round(float(data.get('valor_taxa', 0)), 2)
+        camisa = data.get('camiseta')
+        apoio = data.get('apoio')
+        equipe = data.get('equipe')
+        equipe200 = data.get('nome_equipe')
+        integrantes = data.get('integrantes')
+
+        session['valorTotal'] = valor_total
+        session['valorAtual'] = valor_atual
+        session['valorTaxa'] = valor_taxa
+        session['formaPagto'] = 'CARTÃO DE CRÉDITO'
+        session['Camisa'] = camisa
+        session['Equipe'] = equipe
+        session['Apoio'] = apoio
+        session['Equipe200'] = equipe200
+        session['Integrantes'] = integrantes
+
         # Validar dados recebidos
         required_fields = [
             'token', 
@@ -1082,7 +1112,6 @@ def gerar_pix():
         equipe = data.get('equipe')
         equipe200 = data.get('nome_equipe')
         integrantes = data.get('integrantes')
-        #valor_desconto = round(float(data.get('valor_desconto', 0)), 2)
 
         session['valorTotal'] = valor_total
         session['valorAtual'] = valor_atual
