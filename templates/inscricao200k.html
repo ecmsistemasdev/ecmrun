@@ -53,7 +53,7 @@
         }
 
         form {
-            width: 50%;
+            max-width: 650px;
             background: white;
             padding: 20px;
             border-radius: 7px;
@@ -197,10 +197,13 @@
 
         
         .footer {
+            width: 650px;
             background-color: white;
             padding: 20px 0;
             margin-top: auto;
             text-align: center;
+            align-items: center;
+            justify-self: center;
         }
 
         .footer-logo {
@@ -351,7 +354,7 @@
             <div class="cartoes" align="center">      
                 <!--Selo do Mercado--->
                 <div>
-                    <img src="https://ecmrun.com.br/static/img/seloseguro.png" style="width:60%; margin-top: 3px;">
+                    <img src="https://ecmrun.com.br/static/img/seloseguro.png" style="width:70%; margin-top: 10px;">
                 </div>
             </div>
             <!--Final do selo -->
@@ -582,71 +585,6 @@
                     console.log('Dados sendo enviados:', requestData);
                     
                     window.location.href = '/checkout';
-                    // // Fazer requisição para criar preferência no Mercado Pago
-                    // fetch('/criar_preferencia', {
-                    //     method: 'POST',
-                    //     headers: {
-                    //         'Content-Type': 'application/json',
-                    //     },
-                    //     body: JSON.stringify(requestData)
-                    // })
-                    // .then(response => {
-                    //     if (!response.ok) {
-                    //         // Log detalhado do erro
-                    //         return response.text().then(text => {
-                    //             console.error('Erro na resposta:', {
-                    //                 status: response.status,
-                    //                 statusText: response.statusText,
-                    //                 body: text
-                    //             });
-                    //             throw new Error(`HTTP error! status: ${response.status}`);
-                    //         });
-                    //     }
-                    //     return response.json();
-                    // })
-                    // .then(data => {
-                    //     console.log('Resposta do servidor:', data);
-                    //     if (data.init_point) {
-                    //         // Armazenar o ID do pagamento
-                    //         localStorage.setItem('lastPaymentId', data.id);
-
-                    //         // Redirecionar para a página de pagamento do Mercado Pago
-                    //         window.location.href = data.init_point;
-
-
-                    //         // Configurar um intervalo para verificar o status do pagamento
-                    //         const checkPaymentStatus = setInterval(() => {
-                    //             const paymentId = localStorage.getItem('lastPaymentId');
-                    //             if (!paymentId) {
-                    //                 clearInterval(checkPaymentStatus);
-                    //                 return;
-                    //             }
-
-                    //             fetch(`/verificar-pagamento-cartao/${paymentId}`)
-                    //                 .then(response => response.json())
-                    //                 .then(statusData => {
-                    //                     if (statusData.status === 'approved') {
-                    //                         clearInterval(checkPaymentStatus);
-                    //                         // Redirecionar para o comprovante
-                    //                         window.location.href = `/comprovante/${paymentId}`;
-                    //                     } else if (['rejected', 'cancelled'].includes(statusData.status)) {
-                    //                         clearInterval(checkPaymentStatus);
-                    //                         alert('Pagamento não aprovado. Por favor, tente novamente.');
-                    //                     }
-                    //                 })
-                    //                 .catch(error => {
-                    //                     console.error('Erro ao verificar status:', error);
-                    //                     clearInterval(checkPaymentStatus);
-                    //                 });
-                    //         }, 5000); // Verificar a cada 5 segundos
-                    //     } else {
-                    //         throw new Error('init_point não encontrado na resposta');
-                    //     }
-                    // })
-                    // .catch(error => {
-                    //     console.error('Erro ao processar pagamento:', error);
-                    //     alert('Erro ao processar pagamento. Por favor, tente novamente.');
-                    // });
 
                 } else if (paymentMethod === 'pix') {
                     // Código existente para PIX...
