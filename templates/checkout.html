@@ -18,7 +18,43 @@
             background-color: #f5f5f5;
         }
 
-        .form-title {
+        .logo-container {
+            width: 100%;
+            height: 60px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            margin-right: 15px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+            text-align: left;
+            flex: 1;
+        }
+
+        .title-h1 {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+            margin-bottom: 10px;
+            text-align: center;
+            flex: 1;
+        }
+
+
+
+        /* .form-title {
             background-color: #647e99;
             color: white;
             padding: 10px;
@@ -27,7 +63,7 @@
             font-weight: bold;
             font-size: 18px;
             text-align: center;
-        }
+        } */
 
         form {
             max-width: 500px;
@@ -45,7 +81,7 @@
             margin: 10px 0;
             padding: 10px;
             border-radius: 4px;
-            background-color: #f8f9fa;
+            background-color: #d2e3f5;
             text-align: center;
         }
 
@@ -202,10 +238,91 @@
             cursor: not-allowed;
         }
 
+        .selo-container {
+            width: 100%;
+            margin: 20px 0;
+            padding: 0 15px;
+        }
+
+        .selo-imagem {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .selo-imagem img {
+            width: 60%;
+            max-width: 200px;
+        }
+
+        .selo-texto-container {
+            width: 100%;
+        }
+
+        .selo-texto-container p {
+            font-size: 12px;
+            line-height: 1.4;
+            text-align: justify;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+        }
+
+        .form-group input:invalid,
+        .form-group select:invalid {
+            border-color: #dc3545;
+        }
+
+        .document-error {
+            border-color: #dc3545 !important;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .footer {
+            width: 500px;
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+            align-items: center;
+            justify-self: center;
+        }
+
+        .footer-logo {
+            height: 50px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }        
 
         @media (max-width: 600px) {
             body {
                 padding: 10px;
+            }
+
+            .logo-container {
+                padding: 0 15px;
+            }
+            
+            .header-title .title-h1{
+                font-size: 16px;
             }
 
             form {
@@ -255,75 +372,39 @@
             button {
                 padding: 14px;
                 font-size: 18px;
-            }           
+            }
+
+            .selo-container {
+                padding: 0 10px;
+            }
+            
+            .selo-texto-container p {
+                font-size: 12px;
+            }
         }
-
-        .form-group input:invalid,
-        .form-group select:invalid {
-            border-color: #dc3545;
-        }
-
-        .document-error {
-            border-color: #dc3545 !important;
-        }
-
-        .error-message {
-            color: #dc3545;
-            font-size: 12px;
-            margin-top: 4px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .footer {
-            width: 500px;
-            background-color: white;
-            padding: 20px 0;
-            margin-top: auto;
-            text-align: center;
-            align-items: center;
-            justify-self: center;
-        }
-
-        .footer-logo {
-            height: 50px;
-            width: auto;
-            margin-bottom: 10px;
-        }
-
-        .footer-text {
-            font-size: 0.7em;
-            color: #333;
-            margin: 2px 0;
-        }        
-
-        .selo-text {
-            font-size: 0.6em;
-            text-align: justify;
-            color: #333;
-            margin: 2px 0;
-        }        
-
 
     </style>
 </head>
 <body>
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+        <h1 class="header-title">4º Desafio 200k - Porto Velho-Humaitá</h1>
+    </div>
+
+    <h1 class="title-h1">Pagamento com Cartão de Crédito</h1>
+
     <form id="payment-form">
-        <div class="form-title">Pagamento com Cartão de Crédito</div>
+
+        <div class="form-group">
+            <div>Valor do Pagamento:</div>
+            <div class="total-amount" id="transaction-amount">Carregando...</div>
+        </div>
 
         <div class="form-group">
             <label class="checkbox-container">
                 <input type="checkbox" id="same-user-data" name="same_user_data">
                 <span class="checkbox-text">Utilizar os mesmos dados da inscrição para o pagamento</span>
             </label>
-        </div>
-
-        <div class="form-group">
-            <div>Valor do Pagamento:</div>
-            <div class="total-amount" id="transaction-amount">Carregando...</div>
         </div>
 
         <div class="form-group">
@@ -408,14 +489,14 @@
         <button type="submit">Finalizar Pagamento</button>
 
         <!--Início do selo -->
-        <div class="cartoes" align="center">      
-            <!--Selo do Mercado--->
-            <div>
-                <img src="https://ecmrun.com.br/static/img/seloseguro.png" style="width:60%; margin-top: 3px;">
+        <div class="selo-container">
+            <div class="selo-imagem">
+                <img src="https://ecmrun.com.br/static/img/seloseguro.png" alt="Selo de Segurança">
+            </div>
+            <div class="selo-texto-container">
+                <p>A sua segurança é nossa prioridade. Ao realizar pagamentos com cartão de crédito através do nosso aplicativo, garantimos que todas as informações fornecidas são protegidas e criptografadas. Utilizamos tecnologias avançadas para proteger seus dados contra fraudes e acessos não autorizados.</p>
             </div>
         </div>
-        <!--Final do selo -->
-        <p class="selo-text"></p>A sua segurança é nossa prioridade. Ao realizar pagamentos com cartão de crédito através do nosso aplicativo, garantimos que todas as informações fornecidas são protegidas e criptografadas. Utilizamos tecnologias avançadas para proteger seus dados contra fraudes e acessos não autorizados.</p>
 
     </form>
 
@@ -831,6 +912,7 @@
                         valor_taxa: vltaxa,
                         valor_total: totalValue
                     };
+                    console.log('userData: ', userData);
 
                     const cardFormData = {
                         cardNumber: cardNumber,

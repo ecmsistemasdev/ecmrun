@@ -22,17 +22,36 @@
 
         .logo-container {
             width: 100%;
-            height: 70px;
+            height: 60px;
             background-color: white;
             display: flex;
-            justify-content: center;
             align-items: center;
+            padding: 0 20px;
             margin-bottom: 20px;
+            box-sizing: border-box;
         }
 
         .logo {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
+            margin-right: 15px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+            text-align: left;
+            flex: 1;
+        }
+
+        .title-h1 {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+            margin-bottom: 10px;
+            text-align: center;
+            flex: 1;
         }
 
         .payment-container {
@@ -74,7 +93,7 @@
             box-shadow: none;
         }
 
-        .form-title {
+        /* .form-title {
             background-color: #647e99;
             color: white;
             padding: 15px;
@@ -83,7 +102,7 @@
             text-align: center;
             font-size: 18px;
             font-weight: bold;
-        }
+        } */
 
         .payment-info {
             text-align: center;
@@ -204,9 +223,17 @@
         /* FIM >>  adicionado 01/02 */
 
         @media (max-width: 480px) {
+            .logo-container {
+                padding: 0 15px;
+            }
+            
             .qr-code {
                 width: 230px;
                 height: 230px;
+            }
+
+            .header-title .title-h1 {
+                font-size: 14px;
             }
 
             .payment-container {
@@ -294,12 +321,13 @@
     </style>
 </head>
 <body>
-    <!--<div class="logo-container">
+    <div class="logo-container">
         <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
-    </div>-->
+        <h1 class="header-title">4º Desafio 200k - Porto Velho-Humaitá</h1>
+    </div>
+    <h1 class="title-h1">Pagamento via PIX</h1>
 
     <div class="payment-container" id="pixForm">
-        <div class="form-title">Pagamento via PIX</div>  
         <div class="payment-info">
             <div>Valor total a pagar:</div>
             <div class="total-amount" id="totalAmount">Carregando...</div>
@@ -493,20 +521,6 @@
                     alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
                 }
             }
-
-            // // Função para realizar o redirecionamento
-            // function redirectToReceipt(paymentId) {
-            //     console.log('Iniciando redirecionamento para comprovante...');
-            //     clearAllNonEssentialLocalStorage();
-            //     sessionStorage.removeItem('paymentData');
-                
-            //     // Garantir que o redirecionamento aconteça
-            //     setTimeout(() => {
-            //         console.log('Redirecionando para:', `/comprovante/${paymentId}`);
-            //         window.location.replace(`/comprovante/${paymentId}`);
-            //     }, 1000);
-            // }
-
 
             // Adicione esta função que estava faltando
             function clearPaymentRelatedLocalStorage() {
