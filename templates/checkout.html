@@ -735,6 +735,53 @@
                 return null;
             }
 
+            document.getElementById('installments').addEventListener('change', function(e) {
+                const selectedInstallments = e.target.value;
+                const bin = document.getElementById('card-number').value.replace(/\s/g, '').substring(0, 6);
+                const amount = parseFloat(localStorage.getItem('valortotal'));
+                
+                if (bin.length >= 6 && !isNaN(amount)) {
+                    mp.getInstallments({
+                        amount: String(amount),
+                        locale: 'pt-BR',
+                        bin: bin
+                    }).then((response) => {
+                        if (response && response.length > 0) {
+                            updateTotalAmount(response[0]);
+                        }
+                    }).catch(error => {
+                        console.error('Erro ao atualizar valor com juros:', error);
+                    });
+                }
+            });
+
+
+            // Função para atualizar o valor total com juros
+            function updateTotalAmount(installmentData) {
+                const amountElement = document.getElementById('transaction-amount');
+                const selectedInstallment = document.getElementById('installments').value;
+                
+                // Encontrar os dados da parcela selecionada
+                const selectedOption = installmentData.payer_costs.find(
+                    cost => cost.installments === parseInt(selectedInstallment)
+                );
+                
+                if (selectedOption) {
+                    // Calcular o valor total com juros
+                    const totalWithInterest = selectedOption.total_amount;
+                    
+                    // Atualizar o display
+                    amountElement.textContent = new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }).format(totalWithInterest);
+                    
+                    // Atualizar o valor no localStorage para uso posterior
+                    localStorage.setItem('valorTotalComJuros', totalWithInterest);
+                }
+            }
+
+
             // Função atualizada para obter parcelas
             async function getInstallments(amount, paymentMethodId) {
                 try {
@@ -936,8 +983,8 @@
                     const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
 
                     const paymentData = {
-                        transaction_amount: Number(parseFloat(storedAmount).toFixed(2)),
-                        //transaction_amount: parseFloat(storedAmount),
+                        transaction_amount: Number(parseFloat(localStorage.getItem('valorTotalComJuros') || storedAmount).toFixed(2)),
+                        //transaction_amount: Number(parseFloat(storedAmount).toFixed(2)),
                         token: cardToken.id,
                         description: document.querySelector('[name="description"]').value,
                         installments: parseInt(document.querySelector('[name="installments"]').value),
