@@ -98,7 +98,9 @@ def process_payment():
         payment_data = request.json
         app.logger.info(payment_data)
         
-        #data = request.get_json()
+        installments = payment_data.get('installments', 1)
+        transaction_amount = payment_data.get('transaction_amount', 0)
+        
         # Round to 2 decimal places to avoid floating point precision issues
         valor_total = round(float(payment_data.get('valor_total', 0)), 2)
         valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
@@ -109,7 +111,10 @@ def process_payment():
         equipe200 = payment_data.get('nome_equipe')
         integrantes = payment_data.get('integrantes')
 
-        session['valorTotal'] = valor_total
+        session['valorTotal'] = transaction_amount #valor_total
+        session['numeroParcelas'] = installments
+        session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
+        session['valorTotalsemJuros'] = valor_total
         session['valorAtual'] = valor_atual
         session['valorTaxa'] = valor_taxa
         session['formaPagto'] = 'CARTÃO DE CRÉDITO'
@@ -160,7 +165,7 @@ def process_payment():
             "transaction_amount": float(payment_data['transaction_amount']),
             "token": payment_data['token'],
             "description": payment_data.get('description', 'Produto'),
-            "installments": int(payment_data['installments']),
+            "installments": installments,      #"installments": int(payment_data['installments']),
             "payment_method_id": payment_data['payment_method_id'],
             "external_reference": external_reference,
             "notification_url": "https://ecmrun.com.br/webhook",
