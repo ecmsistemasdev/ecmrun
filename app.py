@@ -370,7 +370,7 @@ def vercomprovante(payment_id):
         app.logger.info("Dados da Inscrição:")
         app.logger.info(receipt_data)
 
-        return render_template('comprovante_insc.html', **receipt_data_dict)
+        return render_template('vercomprovante.html', **receipt_data_dict)
 
     except Exception as e:
         app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
@@ -757,6 +757,186 @@ def verificar_codigo():
             'message': 'Erro ao verificar código'
         }), 500
 
+################################
+
+# Email sending function
+def send_verification_email(email, code):
+    try:
+        
+        if not email:
+            return jsonify({'success': False, 'message': 'Email não fornecido'}), 400
+
+        # Gerar código de verificação
+        #verification_code = str(random.randint(1000, 9999))
+        
+        # Armazenar na sessão
+        session['code'] = code
+        session['verif_email'] = email
+        
+        # Simplificar o remetente
+        #sender = 'adm@ecmrun.com.br'
+        sender = "ECM RUN <adm@ecmrun.com.br>"
+
+        # Criar mensagem com configuração mais simples
+        msg = Message(
+            'Redefinição de Senha - ECM Run',
+            sender=sender,
+            recipients=[email]
+        )
+
+        # Template HTML do email
+        msg.html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
+            <p>Olá,</p>
+            <p>Seu código de verificação para redefinição de senha é::</p>
+            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{code}</h1>
+            <p>Este código é válido por 10 minutos.</p>
+            <p>Se você não solicitou este código, por favor ignore este email.</p>
+            <br>
+            <p>Atenciosamente,<br>Equipe ECM Run</p>
+        </div>
+        """
+
+        # Adicionar logs para debug
+        print(f'Tentando enviar email para: {email}')
+        print(f'Código de verificação: {code}')
+        
+        # Enviar email com tratamento de erro específico
+        try:
+            mail.send(msg)
+            print('Email enviado com sucesso')
+        except Exception as mail_error:
+            print(f'Erro ao enviar email: {str(mail_error)}')
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao enviar email: {str(mail_error)}'
+            }), 500
+
+        return jsonify({
+            'success': True,
+            'message': 'Código de verificação enviado com sucesso'
+        })
+        
+    except Exception as e:
+        print(f"Erro geral na rota: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao processar requisição: {str(e)}'
+        }), 500
+
+
+@app.route('/recuperar-senha', methods=['GET'])
+def recuperar_senha():
+    return render_template('recuperar_senha.html')
+
+@app.route('/verificar-usuario', methods=['POST'])
+def verificar_usuario():
+    cpf_email = request.json.get('cpf_email')
+
+    cur = mysql.connection.cursor()    
+    if '@' in cpf_email:
+        # Query for email
+        cur.execute("""
+            SELECT IDATLETA, EMAIL 
+            FROM ATLETA_TT 
+            WHERE EMAIL = %s OR CPF = %s
+            """, (cpf_email, cpf_email))
+    else:
+        # Remove non-numeric characters from CPF
+        cpf = ''.join(filter(str.isdigit, cpf_email))    
+        cur.execute("""
+            SELECT IDATLETA, EMAIL 
+            FROM ATLETA_TT 
+            WHERE EMAIL = %s OR CPF = %s
+            """, (cpf, cpf))
+
+    result = cur.fetchone()
+    print(f'SQL: {result}')
+        
+
+    if result:
+        # Generate verification code
+        verification_code = str(random.randint(1000, 9999))
+        
+        # Store the code and user ID in session
+        session['code'] = verification_code
+        session['user_id'] = result[0]
+        
+        print(f'CODIGO: {verification_code}')
+        print(f'IDATLETA: {result[0]}')
+        
+        # Send verification code via email
+        if send_verification_email(result[1], verification_code):
+            return jsonify({
+                'success': True,
+                'message': 'Código de verificação enviado para seu email.'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Erro ao enviar email. Tente novamente.'
+            })
+    
+    return jsonify({
+        'success': False,
+        'message': 'Usuário não encontrado.'
+    })
+
+
+@app.route('/verificar-codigo2', methods=['POST'])
+def verificar_codigo2():
+    codigo = request.json.get('codigo')
+    stored_code = session.get('code')
+    print(f'CODIGO DIGITADO: {codigo}')
+    print(f'STORED CODE:  {stored_code}')
+    
+    if codigo == stored_code:
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'message': 'Código inválido.'})
+
+
+@app.route('/alterar-senha', methods=['POST'])
+def alterar_senha():
+    nova_senha = request.json.get('senha')
+    user_id = session.get('user_id')
+    senha_hash = hashlib.sha256(nova_senha.encode()).hexdigest()
+    
+    if not user_id:
+        return jsonify({
+            'success': False,
+            'message': 'Sessão expirada. Tente novamente.'
+        })
+        
+    try:
+
+        cur = mysql.connection.cursor()    
+        cur.execute("""
+            UPDATE ATLETA_TT 
+            SET SENHA = %s 
+            WHERE IDATLETA = %s
+            """, (senha_hash, user_id))
+
+        mysql.connection.commit()
+        
+        # Clear session
+        session.pop('code', None)
+        session.pop('user_id', None)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Senha alterada com sucesso!'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao alterar senha. Tente novamente.'
+        })
+    finally:
+        cur.close()
+
+####################################
+
 
 @app.route('/estados')
 def estados():
@@ -953,7 +1133,8 @@ def autenticar_login():
                     COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
                     COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
                     COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
-                    E.DTINICIO
+                    E.DTINICIO, 
+                    COALESCE(E.DESCRICAO, '') AS EVENTO
                 FROM ecmrun.ATLETA_TT A
                 JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
                 LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
@@ -985,7 +1166,8 @@ def autenticar_login():
                     COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
                     COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
                     COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
-                    E.DTINICIO
+                    E.DTINICIO,
+                    COALESCE(E.DESCRICAO, '') AS EVENTO
                 FROM ecmrun.ATLETA_TT A
                 JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
                 LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
@@ -1016,6 +1198,7 @@ def autenticar_login():
             formapgto = result[18]
             idpagamento = result[19]
             dtinicio = result[20]
+            evento = result[21]
 
             # Converta as strings para objetos datetime
             dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
@@ -1048,6 +1231,7 @@ def autenticar_login():
             session['insc_dtpagamento'] = dtpagamento
             session['insc_formapgto'] = formapgto
             session['insc_idpagamento'] = idpagamento
+            session['insc_evento'] = evento
         
             return jsonify({
                 'success': True,
@@ -1070,7 +1254,8 @@ def autenticar_login():
                 'dtpagamento': dtpagamento,
                 'formapgto': formapgto,
                 'idpagamento': idpagamento,
-                'dataevendo': dtinicio
+                'dataevendo': dtinicio,
+                'evento': evento
             })
         else:
             return jsonify({
