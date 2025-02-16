@@ -14,7 +14,6 @@ import random
 import json
 import uuid
 import logging
-import locale
 
 load_dotenv()  # Carrega as variáveis do arquivo .env
 
@@ -73,11 +72,6 @@ def fn_email(valor):
 @app.route("/")
 def index():
     return render_template("index.html")
-
-# @app.route("/checkout2")
-# def checkout2():
-#     return render_template("checkout2.html")
-
 
 @app.route("/checkout")
 def checkout():
@@ -208,8 +202,8 @@ def get_receipt_data(payment_id):
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
                 I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
-            FROM ecmrun.INSCRICAO_TT I
-            JOIN ecmrun.ATLETA_TT A ON A.IDATLETA = I.IDATLETA
+            FROM ecmrun.INSCRICAO I
+            JOIN ecmrun.ATLETA A ON A.IDATLETA = I.IDATLETA
             JOIN ecmrun.EVENTO E ON E.IDEVENTO = I.IDEVENTO
             JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
             WHERE I.IDPAGAMENTO = %s
@@ -255,7 +249,7 @@ def comprovante(payment_id):
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
                 I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO, I.FLMAIL, I.IDINSCRICAO
-            FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
+            FROM ecmrun.INSCRICAO I, ecmrun.ATLETA A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
             AND E.IDEVENTO = I.IDEVENTO
@@ -307,7 +301,7 @@ def comprovante(payment_id):
 
             cur1 = mysql.connection.cursor()
             cur1.execute('''
-                UPDATE ecmrun.INSCRICAO_TT SET FLMAIL = 'S'
+                UPDATE ecmrun.INSCRICAO SET FLMAIL = 'S'
                 WHERE IDINSCRICAO = %s
             ''', (id_inscricao,))
 
@@ -335,7 +329,7 @@ def vercomprovante(payment_id):
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
                 I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO, I.FLMAIL, I.IDINSCRICAO
-            FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
+            FROM ecmrun.INSCRICAO I, ecmrun.ATLETA A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
             AND E.IDEVENTO = I.IDEVENTO
@@ -396,7 +390,7 @@ def comprovanteemail(payment_id):
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
                 I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
-            FROM ecmrun.INSCRICAO_TT I, ecmrun.ATLETA_TT A, 
+            FROM ecmrun.INSCRICAO I, ecmrun.ATLETA A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
             AND E.IDEVENTO = I.IDEVENTO
@@ -606,7 +600,7 @@ def salvar_cadastro():
         
         # Preparar query e parâmetros
         query = """
-        INSERT INTO ecmrun.ATLETA_TT (
+        INSERT INTO ecmrun.ATLETA (
             CPF, NOME, SOBRENOME, DTNASCIMENTO, NRCELULAR, SEXO, 
             EMAIL, ID_ENDERECO, TEL_EMERGENCIA, 
             CONT_EMERGENCIA, SENHA, ATIVO, DTCADASTRO
@@ -767,8 +761,6 @@ def verificar_codigo():
             'message': 'Erro ao verificar código'
         }), 500
 
-################################
-
 # Email sending function
 def send_verification_email(email, code):
     try:
@@ -849,7 +841,7 @@ def verificar_usuario():
         # Query for email
         cur.execute("""
             SELECT IDATLETA, EMAIL 
-            FROM ATLETA_TT 
+            FROM ATLETA
             WHERE EMAIL = %s OR CPF = %s
             """, (cpf_email, cpf_email))
     else:
@@ -857,7 +849,7 @@ def verificar_usuario():
         cpf = ''.join(filter(str.isdigit, cpf_email))    
         cur.execute("""
             SELECT IDATLETA, EMAIL 
-            FROM ATLETA_TT 
+            FROM ATLETA
             WHERE EMAIL = %s OR CPF = %s
             """, (cpf, cpf))
 
@@ -893,7 +885,6 @@ def verificar_usuario():
         'message': 'Usuário não encontrado.'
     })
 
-
 @app.route('/verificar-codigo2', methods=['POST'])
 def verificar_codigo2():
     codigo = request.json.get('codigo')
@@ -922,7 +913,7 @@ def alterar_senha():
 
         cur = mysql.connection.cursor()    
         cur.execute("""
-            UPDATE ATLETA_TT 
+            UPDATE ATLETA
             SET SENHA = %s 
             WHERE IDATLETA = %s
             """, (senha_hash, user_id))
@@ -944,9 +935,6 @@ def alterar_senha():
         })
     finally:
         cur.close()
-
-####################################
-
 
 @app.route('/estados')
 def estados():
@@ -1017,7 +1005,7 @@ def verificar_cpf_existente():
 
     try:
         cur = mysql.connection.cursor()
-        cur.execute('SELECT IDATLETA FROM ecmrun.ATLETA_TT WHERE CPF = %s', (cpf,))
+        cur.execute('SELECT IDATLETA FROM ecmrun.ATLETA WHERE CPF = %s', (cpf,))
         result = cur.fetchone()
         cur.close()
         
@@ -1032,8 +1020,8 @@ def send_email(receipt_data):
         cur = mysql.connection.cursor()
         cur.execute('''
             SELECT A.EMAIL
-            FROM ecmrun.ATLETA_TT A
-            JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA
+            FROM ecmrun.ATLETA A
+            JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA
             WHERE I.IDPAGAMENTO = %s
         ''', (receipt_data['inscricao'],))
         
@@ -1145,9 +1133,9 @@ def autenticar_login():
                     COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
                     E.DTINICIO, 
                     COALESCE(E.DESCRICAO, '') AS EVENTO
-                FROM ecmrun.ATLETA_TT A
+                FROM ecmrun.ATLETA A
                 JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
-                LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
+                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
                 LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
                 WHERE A.EMAIL = %s AND A.SENHA = %s AND A.ATIVO = 'S'
             """, (cpf_email, senha_hash))
@@ -1178,9 +1166,9 @@ def autenticar_login():
                     COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
                     E.DTINICIO,
                     COALESCE(E.DESCRICAO, '') AS EVENTO
-                FROM ecmrun.ATLETA_TT A
+                FROM ecmrun.ATLETA A
                 JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
-                LEFT JOIN ecmrun.INSCRICAO_TT I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
+                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
                 LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
                 WHERE A.CPF = %s AND A.SENHA = %s AND A.ATIVO = 'S'
             """, (cpf, senha_hash))
@@ -1475,7 +1463,7 @@ def verificar_pagamento(payment_id):
         if payment["status"] == "approved":
             # Verificar se já não foi processado antes
             cur = mysql.connection.cursor()
-            cur.execute("SELECT * FROM ecmrun.INSCRICAO_TT WHERE IDPAGAMENTO = %s", (payment_id,))
+            cur.execute("SELECT * FROM ecmrun.INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
             existing_record = cur.fetchone()
             
             if not existing_record:
@@ -1503,7 +1491,7 @@ def verificar_pagamento(payment_id):
                 
                 # Insert payment record
                 query = """
-                INSERT INTO ecmrun.INSCRICAO_TT (
+                INSERT INTO ecmrun.INSCRICAO (
                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                     NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
                     VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
@@ -1676,7 +1664,7 @@ def lanca_pagamento_cartao(payment_id):
     try:    
         # Verificar se já não foi processado antes
         cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM ecmrun.INSCRICAO_TT WHERE IDPAGAMENTO = %s", (payment_id,))
+        cur.execute("SELECT * FROM ecmrun.INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
         existing_record = cur.fetchone()
         
         if not existing_record:
@@ -1704,7 +1692,7 @@ def lanca_pagamento_cartao(payment_id):
             
             # Insert payment record
             query = """
-            INSERT INTO ecmrun.INSCRICAO_TT (
+            INSERT INTO ecmrun.INSCRICAO (
                 IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                 NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
                 VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
@@ -1838,7 +1826,7 @@ def inscricao_copum(id_cupom):
             
             # Query de inserção
             query = """
-            INSERT INTO ecmrun.INSCRICAO_TT (
+            INSERT INTO ecmrun.INSCRICAO (
                 IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                 NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
                 VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
@@ -1907,5 +1895,3 @@ def inscricao_copum(id_cupom):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
-
