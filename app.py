@@ -1479,7 +1479,7 @@ def verificar_pagamento(payment_id):
                 taxa = float(session.get('valorTaxa', 0))
                 valoratual = valor + taxa
                 valor_pgto = float(session.get('valorTotal', 0))
-                desconto = valor_pgto - valoratual
+                desconto = valoratual - valor_pgto
                 formaPagto = session.get('formaPagto')
                 camiseta = session.get('Camisa')
                 equipe = session.get('Equipe')
@@ -1680,7 +1680,7 @@ def lanca_pagamento_cartao(payment_id):
             taxa = float(session.get('valorTaxa', 0))
             valoratual = valor + taxa
             valor_pgto = float(session.get('valorTotal', 0))
-            desconto = valor_pgto - valoratual
+            desconto = valoratual - valor_pgto 
             formaPagto = 'CARTÃO DE CRÉDITO'
             camiseta = session.get('Camisa')
             equipe = session.get('Equipe')
@@ -1759,6 +1759,145 @@ def lanca_pagamento_cartao(payment_id):
             'status': 'error'
         }), 500
 
+@app.route('/pesquisa-cupom/<int:categoria_id>/<cpf>/<cupom>')
+def pesquisa_cupom(categoria_id, cpf, cupom):
+    try:
+        print(f"Recebido pedido de validação - Categoria: {categoria_id}, CPF: {cpf}, Cupom: {cupom}")
+        
+        cur = mysql.connection.cursor()
+        query = "SELECT IDCUPOM, IDPAGAMENTO FROM ecmrun.CUPOM WHERE UTILIZADO = 'N' AND IDMODALIDADE = %s AND CPF = %s AND CUPOM = %s"
+        
+        print(f"Executando query: {query} com parâmetros: {(categoria_id, cpf, cupom)}")
+        
+        cur.execute(query, (categoria_id, cpf, cupom))
+        result = cur.fetchone()
+        
+        print(f"Resultado da query: {result}")
+        
+        cur.close()
+
+        if result:
+            return jsonify({
+                'success': True,
+                'idcupom': result[0],
+                'idpagamento': result[1]
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Número do cupom não encontrado ou não vinculado a este CPF e/ou Modalidade selecionada. Verifique e tente novamente.'
+            })
+    except Exception as e:
+        print(f"Erro na validação do cupom: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+@app.route('/inscricao-copum/<id_cupom>', methods=['POST'])
+def inscricao_copum(id_cupom):
+    try:    
+        cur = mysql.connection.cursor()
+        query = "SELECT * FROM ecmrun.CUPOM WHERE IDCUPOM = %s"
+        print(f"Executando query: {query} com parâmetros: {id_cupom}")
+        
+        cur.execute(query, id_cupom)
+        result = cur.fetchone()
+        print(f"Resultado da query: {result}")
+        
+        if result:
+            # Extraindo dados do cupom
+            cupom = result[1]
+            cpf = result[2]
+            idpagamento = result[3]
+            formaPagto = result[4]
+            data_pagamento = result[5]
+            
+            # Corrigindo a conversão dos valores decimais
+            valor = float(result[6])
+            taxa = float(result[7])
+            valor_pgto = float(result[8])
+            valoratual = valor + taxa
+            iditem = result[9]
+            desconto = valoratual - valor_pgto 
+            
+            # Obtendo dados da sessão
+            camiseta = request.form.get('camiseta')
+            equipe = request.form.get('equipe')
+            apoio = request.form.get('apoio')
+            equipe200 = request.form.get('equipe200')
+            integrantes = request.form.get('integrantes')
+        
+            idatleta = session.get('user_idatleta')
+            
+            # Query de inserção
+            query = """
+            INSERT INTO ecmrun.INSCRICAO_TT (
+                IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
+                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                IDPAGAMENTO, FLMAIL, EQUIPE, CUPOM
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            """
+            
+            params = (
+                idatleta,          # IDATLETA
+                cpf,               # CPF
+                1,                 # IDEVENTO (hardcoded as 1 for this event)
+                iditem,            # IDITEM
+                camiseta,          # CAMISETA
+                apoio,             # APOIO
+                equipe200,         # NOME_EQUIPE
+                integrantes,       # INTEGRANTES
+                valor,             # VALOR
+                taxa,              # TAXA
+                desconto,          # DESCONTO
+                valor_pgto,        # VALOR_PGTO
+                data_pagamento,    # DTPAGAMENTO
+                'CONFIRMADO',      # STATUS
+                formaPagto,        # FORMAPGTO
+                idpagamento,       # IDPAGAMENTO
+                'N',              # FLMAIL
+                equipe,           # EQUIPE
+                cupom             # CUPOM
+            )
+
+            print(f"INSERT: {query}")
+            print(f"Parametros: {params}")
+                    
+            cur.execute(query, params)
+            mysql.connection.commit()
+            
+            print("Registro de pagamento inserido com sucesso!")
+            
+            # Atualizando status do cupom
+            query = "UPDATE ecmrun.CUPOM SET UTILIZADO = 'S' WHERE IDCUPOM = %s"
+            print(f"Executando Update: {query} com parâmetros: {id_cupom}")
+            cur.execute(query, id_cupom)
+            mysql.connection.commit()
+            
+            cur.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Inscrição processada com sucesso'
+            })
+        else:
+            print("Lancamento já processado anteriormente")
+            return jsonify({
+                'success': True,
+                'message': 'Inscrição processada anteriormente'
+            })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao processar inscrição: {str(e)}'
+        }), 500
+    
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
