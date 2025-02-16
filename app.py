@@ -499,7 +499,7 @@ def desafio200k():
             SELECT E.IDEVENTO, E.DESCRICAO, E.DTINICIO, E.DTFIM, E.HRINICIO,
                 E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
                 M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
-                M.VLINSCRICAO, M.VLMEIA, M.VLTAXA
+                M.VLINSCRICAO, M.VLMEIA, M.VLTAXA, E.INICIO_INSCRICAO_EXT, E.FIM_INSCRICAO_EXT
             FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDEVENTO = E.IDEVENTO
                 AND E.IDEVENTO = 1
@@ -516,9 +516,12 @@ def desafio200k():
         vl200 = f'R$ {results[0][13]:,.2f}'
         vl100 = f'R$ {results[1][13]:,.2f}' 
         vl50 = f'R$ {results[2][13]:,.2f}'
-        vl25 = f'R$ {results[3][13]:,.2f}'        
+        vl25 = f'R$ {results[3][13]:,.2f}'
+        inicioinsc = results[0][16]
+        fiminsc = results[0][17]        
         return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades,
-                               vlSolo=vl200, vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25)
+                               vlSolo=vl200, vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, 
+                               inicio_insc=inicioinsc, fim_insc=fiminsc)
         
     except Exception as e:
         print(f"Erro ao carregar página: {str(e)}")
