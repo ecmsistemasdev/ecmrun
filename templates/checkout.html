@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -947,121 +946,8 @@
                     cardBrandIcon.style.display = 'none';
                     document.getElementById('installments').innerHTML = 
                         '<option value="">Digite mais números do cartão...</option>';
-                }                
-                
-                
-                
-                // let value = e.target.value.replace(/\D/g, '');
-                // value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-                // e.target.value = value.substring(0, 19);
-
-                // const cardBrandIcon = document.getElementById('card-brand-icon');
-                
-                // // Atualizar parcelas quando tiver 6 ou mais dígitos
-                // const cardNumber = value.replace(/\s/g, ''); // Remove espaços
-                
-                // if (cardNumber.length >= 6) {
-                //     const bin = cardNumber.substring(0, 6);
-                //     const cardTypeInfo = getCardType(cardNumber);
-                //     if (cardTypeInfo) {
-                //         cardBrandIcon.src = cardTypeInfo.icon;
-                //         cardBrandIcon.style.display = 'block';
-                        
-                //         // Resto da lógica de parcelas...
-                //         const bin = cardNumber.substring(0, 6);
-                //         const storedAmount = localStorage.getItem('valortotal');
-                //         if (storedAmount) {
-                //             const amount = parseFloat(storedAmount);
-                //             if (!isNaN(amount)) {
-                //                 // Chama getInstallments com o bin
-                //                 mp.getInstallments({
-                //                     amount: String(amount),
-                //                     locale: 'pt-BR',
-                //                     payment_method_id: cardType,
-                //                     bin: bin
-                //                 }).then((response) => {
-                //                     console.log('Resposta do getInstallments:', response);
-                //                     if (response && response.length > 0) {
-                //                         const installmentSelect = document.getElementById('installments');
-                //                         installmentSelect.innerHTML = ''; // Limpa as opções existentes
-
-                //                         response[0].payer_costs.forEach((cost) => {
-                //                             const formattedAmount = new Intl.NumberFormat('pt-BR', {
-                //                                 style: 'currency',
-                //                                 currency: 'BRL'
-                //                             }).format(cost.installment_amount);
-
-                //                             const optionText = cost.recommended_message || 
-                //                                 `${cost.installments}x de ${formattedAmount}`;
-
-                //                             const option = document.createElement('option');
-                //                             option.value = cost.installments;
-                //                             option.textContent = optionText;
-                //                             installmentSelect.appendChild(option);
-                //                         });
-                //                     }
-                //                 }).catch((error) => {
-                //                     console.error('Erro ao obter parcelas:', error);
-                //                     document.getElementById('installments').innerHTML = '<option value="">Erro ao carregar parcelas</option>';
-                //                 });
-                //             }
-                //         }
-                //     }
-                // } else {
-                //     // Esconder o ícone se não houver cartão identificado
-                //     cardBrandIcon.style.display = 'none';
-                //     //document.getElementById('installments').innerHTML = '<option value="">Digite mais números do cartão...</option>';
-                // }                
-                
-                
-                // if (cardNumber.length >= 6) {
-                //     const bin = cardNumber.substring(0, 6); // Pega os primeiros 6 dígitos
-                //     const cardType = getCardType(cardNumber);
-                //     if (cardType) {
-                //         console.log('Bandeira identificada:', cardType);
-                //         console.log('BIN:', bin);
-                //         const storedAmount = localStorage.getItem('valortotal');
-                //         if (storedAmount) {
-                //             const amount = parseFloat(storedAmount);
-                //             if (!isNaN(amount)) {
-                //                 // Chama getInstallments com o bin
-                //                 mp.getInstallments({
-                //                     amount: String(amount),
-                //                     locale: 'pt-BR',
-                //                     payment_method_id: cardType,
-                //                     bin: bin
-                //                 }).then((response) => {
-                //                     console.log('Resposta do getInstallments:', response);
-                //                     if (response && response.length > 0) {
-                //                         const installmentSelect = document.getElementById('installments');
-                //                         installmentSelect.innerHTML = ''; // Limpa as opções existentes
-
-                //                         response[0].payer_costs.forEach((cost) => {
-                //                             const formattedAmount = new Intl.NumberFormat('pt-BR', {
-                //                                 style: 'currency',
-                //                                 currency: 'BRL'
-                //                             }).format(cost.installment_amount);
-
-                //                             const optionText = cost.recommended_message || 
-                //                                 `${cost.installments}x de ${formattedAmount}`;
-
-                //                             const option = document.createElement('option');
-                //                             option.value = cost.installments;
-                //                             option.textContent = optionText;
-                //                             installmentSelect.appendChild(option);
-                //                         });
-                //                     }
-                //                 }).catch((error) => {
-                //                     console.error('Erro ao obter parcelas:', error);
-                //                     document.getElementById('installments').innerHTML = '<option value="">Erro ao carregar parcelas</option>';
-                //                 });
-                //             }
-                //         }
-                //     }
-                // } else {
-                //     // Reseta o select de parcelas se não tiver números suficientes
-                //     document.getElementById('installments').innerHTML = '<option value="">Digite mais números do cartão...</option>';
-                // }
+                }                 
+               
             });       
 
             // Máscara para data de validade
@@ -1225,7 +1111,7 @@
                             console.log('Verificação do pagamento:', verificationData);
                             
                             // Se tudo correr bem, mostra mensagem de sucesso
-                            alert('Pagamento processado e verificado com sucesso!');
+                            alert('Pagamento processado com sucesso!');
 
                             // Executa o redirecionamento
                             redirectToReceipt(data.id);
