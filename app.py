@@ -14,7 +14,7 @@ import random
 import json
 import uuid
 import logging
-#import locale
+import locale
 
 load_dotenv()  # Carrega as variáveis do arquivo .env
 
@@ -495,8 +495,7 @@ def get_evento_data():
     except Exception as e:
         print(f"Erro ao buscar dados do evento: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
-#locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+    
 
 @app.route('/desafio200k')
 def desafio200k():
@@ -520,17 +519,12 @@ def desafio200k():
             
         evento_titulo = results[0][1]  # DESCRICAO do evento
         modalidades = [{'id': row[9], 'descricao': row[10]} for row in results]
-        #vl200 = results[0][13]
-        #vl100 = results[1][13]
-        #vl50 = results[2][13]
-        #vl25 = results[3][13]
-        #vlSolo = locale.currency(vl200, grouping=True)
-        #vlDupla = locale.currency(vl200, grouping=True)
-        #vlQuarteto = locale.currency(vl50, grouping=True)
-        #vlOcteto = locale.currency(vl25, grouping=True)
-        
-        return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades)
-                               #vlSolo=vlSolo, vlDupla=vlDupla, vlQuarteto=vlQuarteto, vlOcteto=vlOcteto)
+        vl200 = f'R$ {results[0][13]:,.2f}'
+        vl100 = f'R$ {results[1][13]:,.2f}' 
+        vl50 = f'R$ {results[2][13]:,.2f}'
+        vl25 = f'R$ {results[3][13]:,.2f}'        
+        return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades,
+                               vlSolo=vl200, vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25)
         
     except Exception as e:
         print(f"Erro ao carregar página: {str(e)}")
