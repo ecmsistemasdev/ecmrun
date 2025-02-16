@@ -6,6 +6,18 @@
     <title>4º Desafio 200k</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script>
+        $("#cupom").on("input", function() {
+            var input = $(this);
+            var val = input.val();
+            var regex = /[^A-Z]/g; // Apenas letras maiúsculas
+
+            // Remove caracteres não permitidos
+            var new_val = val.toUpperCase().replace(regex, '');
+            input.val(new_val);
+        });
+    </script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -186,7 +198,11 @@
             background-color: #3665a0;
         }
 
-        /* Footer styles */
+        #valorAtualizado {
+            display: none;
+        }      
+
+            /* Footer styles */
         .footer {
             width: 100%;
             max-width: 650px;
@@ -278,7 +294,7 @@
         <div class="form-group">
             <label>Camiseta:</label>
             <div class="radio-group">
-                <label><input type="radio" name="camiseta" value="PP"> PP</label>
+                <label><input type="radio" name="camiseta" value="PP" required> PP</label>
                 <label><input type="radio" name="camiseta" value="P"> P</label>
                 <label><input type="radio" name="camiseta" value="M"> M</label>
                 <label><input type="radio" name="camiseta" value="G"> G</label>
@@ -308,12 +324,17 @@
 
         <div class="divider"></div>
 
+        <div class="form-group">
+            <label for="cupom">Cupom:</label>
+            <input type="text" id="cupom" name="cupom" maxlength="5" style="text-transform: uppercase;">
+        </div>
+
         <form id="inscricaoForm">
             <!-- Previous form content remains the same until payment section -->
                 
             <div class="form-group">
                 <label>Termo de Responsabilidade:</label>
-                <div style="height: 200px; overflow-y: auto; font-size: 13px; text-align: justify; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;">
+                <div style="height: 240px; overflow-y: auto; font-size: 13px; text-align: justify; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;">
                     <div id="termoContent">
                         Eu, *NameCompleto*, declaro que estou ciente e concordo com os termos e condições estabelecidos no Regulamento para a participação neste Desafio, a ser realizada nos dias 04, 05 e 06/07/2025 em Porto Velho/RO.<br><br>
                         1. Declaração de Saúde <br><br>
@@ -333,7 +354,7 @@
                 <div style="margin-top: 10px;">
                     <label style="display: flex; align-items: center; gap: 10px;">
                         <input type="checkbox" id="aceitoTermos" name="aceitoTermos" required>
-                        <span>Confirmo que li e aceito o Termo de Responsabilidade</span>
+                        <span><b>Confirmo que li e aceito o Termo de Responsabilidade</b></span>
                     </label>
                 </div>
             </div>
@@ -399,7 +420,10 @@
             const dataEvento = localStorage.getItem('user_dataevento');
             
             console.info('Valor Original:',valorinsc);
-
+            
+            localStorage.removeItem('idcupom');
+            localStorage.removeItem('idpagamento');
+            
             // Calculate the actual value based on age and format display
             const calculateValues = () => {
                 // Determine valoratual based on age
@@ -479,20 +503,49 @@
             console.log('Idade:', idade);
             console.log('Valor Original:', valorinsc);
 
-
-           // Habilitar/desabilitar botão de submit baseado no checkbox
-            $('#aceitoTermos').on('change', function() {
-                if (this.checked) {
-                    $('#submitButton').prop('disabled', false).addClass('active');
+            // Controle unificado do botão submit baseado no checkbox
+            function updateSubmitButton() {
+                const termsAccepted = $('#aceitoTermos').is(':checked');
+                const cupom = localStorage.getItem('idcupom');
+                
+                if (termsAccepted) {
+                    $('#submitButton')
+                        .prop('disabled', false)
+                        .addClass('active');
+                    
+                    // Atualiza o texto do botão baseado se tem cupom ou não
+                    if (cupom) {
+                        $('#submitButton').text('Confirmar');
+                    } else {
+                        $('#submitButton').text('Seguir pra Pagamento');
+                    }
                 } else {
-                    $('#submitButton').prop('disabled', true).removeClass('active');
+                    $('#submitButton')
+                        .prop('disabled', true)
+                        .removeClass('active');
                 }
+            }
+
+            // Atualizar controle de visibilidade do valor
+            function updateValorVisibility() {
+                const paymentSelected = $('input[name="pagamento"]:checked').val();
+                if (paymentSelected) {
+                    $('#valorAtualizado').show();
+                } else {
+                    $('#valorAtualizado').hide();
+                }
+            }
+
+            $('#aceitoTermos').on('change', function() {
+                updateSubmitButton();
             });
-            
+                   
             $('input[name="pagamento"]').on('change', function() {
                 let vlinsc = parseFloat(localStorage.getItem('valoratual')) || 0;
                 let tx = parseFloat(localStorage.getItem('valortaxa')) || 0;
                 let vl_total;
+
+                $('#valorAtualizado').show(); 
 
                 if (this.value === 'pix') {
                     let percDesconto = 5;
@@ -500,36 +553,129 @@
                     const vl_comdesconto = vlinsc - vlDesconto;
                     vl_total = vl_comdesconto + tx;
 
-                    //localStorage.setItem('valoratual', vlinscricao.toString());
-                    //localStorage.setItem('vlinscricao', vlinscricao.toString());
-                    //localStorage.setItem('valortotal', vl_total.toString());
-
                     const displayValueA = `Valor: ${formatCurrency(vl_comdesconto)} + ${formatCurrency(tx)} = Total a pagar: ${formatCurrency(vl_total)}`;
-                    console.info('Valor Display atualizado:', displayValueA);
-
-                    // Atualiza a exibição
                     $('#valorAtualizado').text(displayValueA);
                 } else {
                     vl_total = vlinsc + tx;
-
-                    //localStorage.setItem('valoratual', vlinscricao.toString());
-                    //localStorage.setItem('vlinscricao', vlinscricao.toString());
-                    //localStorage.setItem('valortotal', vl_total.toString());
-
                     const displayValueA = `Valor: ${formatCurrency(vlinsc)} + ${formatCurrency(tx)} = Total a pagar: ${formatCurrency(vl_total)}`;
-                    console.info('Valor Display atualizado:', displayValueA);
-
-                    // Atualiza a exibição
                     $('#valorAtualizado').text(displayValueA);
+                }
+
+            });
+        
+            $('#cupom').on('input', function() {
+                const cupom = $(this).val();
+                if (cupom.length === 5) {
+                    const cpf = localStorage.getItem('user_cpf');
+                    const categoriaId = localStorage.getItem('categoria_id');
+
+                    console.log('Validando cupom:', {
+                        cupom: cupom.toUpperCase(),
+                        cpf: cpf,
+                        categoriaId: categoriaId
+                    });
+                                        
+                    $.get(`/pesquisa-cupom/${categoriaId}/${cpf}/${cupom.toUpperCase()}`)
+                        .done(function(response) {
+                            if (response.success) {
+                                // Armazenar tanto o idcupom quanto o idpagamento
+                                localStorage.setItem('idcupom', response.idcupom);
+                                localStorage.setItem('idpagamento', response.idpagamento);
+                                
+                                $('#cupom').prop('disabled', true);
+                                $('input[name="pagamento"]').prop('disabled', true);
+                                $('#valorAtualizado').hide();
+
+                                updateSubmitButton();
+                                    
+                                alert('Cupom válido!');
+                            } else {
+                                $('#cupom').val('');
+                                alert(response.message);
+                                updateValorVisibility();
+                                updateSubmitButton();
+
+                            }
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            console.error('Erro na requisição:', {
+                                status: jqXHR.status,
+                                textStatus: textStatus,
+                                errorThrown: errorThrown,
+                                responseText: jqXHR.responseText
+                            });
+                            alert('Erro ao validar cupom. Por favor, tente novamente.');
+                            $('#cupom').val(''); 
+                        });
                 }
             });
 
-        
+            // Função para verificar e aplicar estado inicial do cupom
+            function checkInitialCupomState() {
+                const idcupom = localStorage.getItem('idcupom');
+                if (idcupom) {
+                    $('#cupom').prop('disabled', true);
+                    $('input[name="pagamento"]').prop('disabled', true);
+                    $('#valorAtualizado').hide();
+                }
+            }            
+           
+            // Inicialização
+            $('#valorAtualizado').hide();
+            updateSubmitButton();
+
+            function redirectToReceipt(paymentId) {
+                try {
+                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+                    window.location.replace(`/comprovante/${paymentId}`);
+                } catch (error) {
+                    console.error('Erro ao redirecionar:', error);
+                    alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
+                }
+            }           
+           
             // Form submission handler
             $('#inscricaoForm').on('submit', function(e) {
                 e.preventDefault();
                 
+                const idcupom = localStorage.getItem('idcupom');
+                            
+                if (idcupom) {
+                    // Capturar os valores dos campos
+                    const formData = {
+                        camiseta: $('input[name="camiseta"]:checked').val(),
+                        equipe: $('#equipe').val(),
+                        apoio: $('#apoio').val(),
+                        equipe200: $('#nome_equipe').val(),
+                        integrantes: $('#integrantes').val()
+                    };
 
+                    // Fazer a requisição para processar o cupom
+                    $.ajax({
+                        url: `/inscricao-copum/${idcupom}`,
+                        method: 'POST',
+                        data: formData,
+                        success: function(response) {
+                            if (response.success) {
+                                const idpagamento = localStorage.getItem('idpagamento');
+                                if (idpagamento) {
+                                    redirectToReceipt(idpagamento);
+                                } else {
+                                    console.error('IDPAGAMENTO não encontrado no localStorage');
+                                    alert('Erro ao recuperar informações do pagamento. Por favor, tente novamente.');
+                                }
+                            } else {
+                                alert(response.message || 'Erro ao processar cupom');
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.error('Erro ao processar cupom:', errorThrown);
+                            alert('Erro ao processar cupom. Por favor, tente novamente.');
+                        }
+                    });
+                    return;
+                }               
+                
                 sessionStorage.removeItem('paymentData');
                 localStorage.removeItem('lastPaymentId');
 
@@ -607,7 +753,6 @@
                     
                     localStorage.setItem('valoratual', vlinscricao.toString());
                     localStorage.setItem('vlinscricao', vlinscricao.toString());
-                    //localStorage.setItem('vldesconto', valorDesconto.toString());
                     localStorage.setItem('valortotal', valor_total.toString());
                 
                     
