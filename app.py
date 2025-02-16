@@ -496,7 +496,7 @@ def get_evento_data():
         print(f"Erro ao buscar dados do evento: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+#locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 @app.route('/desafio200k')
 def desafio200k():
@@ -520,17 +520,17 @@ def desafio200k():
             
         evento_titulo = results[0][1]  # DESCRICAO do evento
         modalidades = [{'id': row[9], 'descricao': row[10]} for row in results]
-        vl200 = results[0][13]
-        vl100 = results[1][13]
-        vl50 = results[2][13]
-        vl25 = results[3][13]
-        vlSolo = locale.currency(vl200, grouping=True)
-        vlDupla = locale.currency(vl200, grouping=True)
-        vlQuarteto = locale.currency(vl50, grouping=True)
-        vlOcteto = locale.currency(vl25, grouping=True)
+        #vl200 = results[0][13]
+        #vl100 = results[1][13]
+        #vl50 = results[2][13]
+        #vl25 = results[3][13]
+        #vlSolo = locale.currency(vl200, grouping=True)
+        #vlDupla = locale.currency(vl200, grouping=True)
+        #vlQuarteto = locale.currency(vl50, grouping=True)
+        #vlOcteto = locale.currency(vl25, grouping=True)
         
-        return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades,
-                               vlSolo=vlSolo, vlDupla=vlDupla, vlQuarteto=vlQuarteto, vlOcteto=vlOcteto)
+        return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades)
+                               #vlSolo=vlSolo, vlDupla=vlDupla, vlQuarteto=vlQuarteto, vlOcteto=vlOcteto)
         
     except Exception as e:
         print(f"Erro ao carregar página: {str(e)}")
