@@ -14,7 +14,7 @@ import random
 import json
 import uuid
 import logging
-import locale
+#import locale
 
 load_dotenv()  # Carrega as variáveis do arquivo .env
 
