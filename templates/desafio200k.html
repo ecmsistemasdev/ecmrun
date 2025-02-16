@@ -9,7 +9,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
-    <script>
+    <!-- <script>
         function sendEmail() {
             // Faz uma requisição POST para enviar o email
             fetch('/send-email2', {
@@ -21,7 +21,7 @@
                 }
             });
         }
-    </script>
+    </script> -->
 
     <style>
         body {
@@ -380,7 +380,7 @@
                     📍 Saída: Início do Espaço Alternativo - Av. Jorge Teixeira (Praia)
                     <br><br>
                     💲 Valor da Inscrição:<br> 
-                    Solo: R$ 500,00; Dupla: R$400,00; Quarteto: R$ 350,00; Octeto: 300,00<br>
+                    Solo: {{ vlSolo }}; Dupla: {{ vlDupla }}; Quarteto: {{ vlQuarteto }}; Octeto: {{ vlOcteto }}<br>
                     Valor da inscrição é individual no caso de Modalidade em Equipe<br><br>
                     ✍️ <b>Período de Inscrição:</b><br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -491,13 +491,13 @@
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         8.2 - O VALOR DA INSCRIÇÃO:<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            • Solo: R$ 500,00; <br>
+                            • Solo: {{ vlSolo }}; <br>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            • Dupla: R$400,00; <br>
+                            • Dupla: {{ vlDupla }}; <br>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            • Quarteto: R$ 350,00; <br>
+                            • Quarteto: {{ vlQuarteto }}; <br>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            • Octeto: 300,00<br>
+                            • Octeto: {{ vlOcteto }}<br>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                             + taxa administrativa da plataforma.<br>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
