@@ -29,18 +29,62 @@
             padding: 0;
             font-family: Arial, sans-serif;
         }
-
+/*
         .logo-container {
             width: 100%;
             height: 60px;
             background-color: white;
             display: flex;
-            justify-content: flex-start; /* Changed from center to flex-start */
-            padding-left: 20px; /* Added padding to the left */
+            justify-content: flex-start; 
+            padding-left: 20px; 
             align-items: center;
             margin-bottom: 0px;
-        }        
+        }  */      
 
+        .logo-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 20px;
+        }
+    
+        .login-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    
+        .user-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    
+        .login-link {
+            color: #4376ac;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    
+        .login-link:hover {
+            text-decoration: underline;
+        }
+    
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+    
+        .modal-button.confirm {
+            background-color: #4376ac;
+        }
+    
+        .modal-button.cancel {
+            background-color: #6c757d;
+        }
+            
         .logo {
             width: 60px;
             height: 60px;
@@ -335,6 +379,20 @@
 <body>
     <div class="logo-container">
         <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+        <div class="login-controls">
+            <span id="userNameDisplay" class="user-name"></span>
+            <a href="#" id="loginLink" class="login-link">Entrar</a>
+        </div>
+    </div>
+    
+    <div id="logoutModal" class="modal">
+        <div class="modal-content">
+            <p>Deseja sair da sua conta?</p>
+            <div class="modal-buttons">
+                <button onclick="confirmLogout()" class="modal-button confirm">Sim</button>
+                <button onclick="closeLogoutModal()" class="modal-button cancel">Não</button>
+            </div>
+        </div>
     </div>
 
     <div class="header">
@@ -687,106 +745,54 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const modalidadeSelect = document.getElementById('modalidade');
-            const valorDiv = document.querySelector('.form-field div');
+            const userNameDisplay = document.getElementById('userNameDisplay');
+            const loginLink = document.getElementById('loginLink');
+            const logoutModal = document.getElementById('logoutModal');
             const continueButton = document.querySelector('.submit-btn');
-
-            // Variáveis para armazenar os valores atuais
-            let currentModalidade = {
-                id: null,
-                descricao: '',
-                valor: '',
-                valorFormatted: ''
-            };
-            /// ADICIONADO POR MIM            
-            // Function to clear specific payment-related localStorage items
-            function clearPaymentRelatedLocalStorage() {
-                const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
-                
-                itemsToRemove.forEach(item => {
-                    localStorage.removeItem(item);
-                });
-            }
-
-            /// FIM >> ADICIONADO POR MIM
-
-            modalidadeSelect.addEventListener('change', function() {
-                const iditem = this.value;
-
-                if (!iditem) {
-                    valorDiv.innerHTML = '<a>Valor:</a>';
-                    currentModalidade = {
-                        id: null,
-                        descricao: '',
-                        valor: '',
-                        valorFormatted: ''
-                    };
-                    return;
-                }
-                
-                // Armazena a descrição da modalidade selecionada
-                const selectedOption = modalidadeSelect.options[modalidadeSelect.selectedIndex];                
-                
-                currentModalidade.id = iditem;
-                currentModalidade.descricao = selectedOption.text;
-                
-                fetch(`/get_modalidade_valores/${iditem}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            valorDiv.innerHTML = '<a>Erro ao carregar valores</a>';
-                            return;
-                        }
-                        
-                        const vlinscricao = data.vlinscricao.toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                        });
-                        const vltaxa = data.vltaxa.toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                        });
-
-                        // Armazena os valores formatados
-                        currentModalidade.valorFormatted = `${vlinscricao} + ${vltaxa} = Total: ${(data.vlinscricao + data.vltaxa).toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                        })}`;
-                        
-                        valorDiv.innerHTML = `<a>Valor: ${vlinscricao} + (${vltaxa} de taxa)</a>`;
-
-                        // 'add 1' - adicionado por mim
-                        localStorage.setItem('cat_vlinscricao', data.vlinscricao);
-                        localStorage.setItem('cat_vltaxa', data.vltaxa);
-                        localStorage.setItem('cat_iditem', data.iditem);    
     
-                        function startPaymentCheck() {
-                            
-        if (checkInterval) {
-            clearInterval(checkInterval);
-        }
-        checkInterval = setInterval(checkPaymentStatus, 5000);
-    }
-
-                        const vlInscricao = localStorage.getItem('cat_vlinscricao');
-                        const vlTaxa = localStorage.getItem('cat_vltaxa');
-                        const idItem = localStorage.getItem('cat_iditem');
-                        
-                        // Log para diagnóstico
-                        console.log('Dados do localStorage:', {
-                            vlInscricao,
-                            vlTaxa
-                        });            
-                        // fim 'add 1'                        
-                        
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        valorDiv.innerHTML = '<a>Erro ao carregar valores</a>';
-                    });
-            });
-            
-            // Evento do botão Continuar
+            function updateLoginControls() {
+                const isLoggedIn = localStorage.getItem('logado') === 'sim';
+                if (isLoggedIn) {
+                    userNameDisplay.textContent = localStorage.getItem('user_name');
+                    loginLink.textContent = 'Sair';
+                    loginLink.onclick = showLogoutModal;
+                } else {
+                    userNameDisplay.textContent = '';
+                    loginLink.textContent = 'Entrar';
+                    loginLink.onclick = () => {
+                        localStorage.setItem('login_origin', 'header');
+                        window.location.href = '/login';
+                    };
+                }
+            }
+    
+            function showLogoutModal() {
+                logoutModal.style.display = 'flex';
+            }
+    
+            function closeLogoutModal() {
+                logoutModal.style.display = 'none';
+            }
+    
+            window.confirmLogout = function() {
+                // Clear login-related localStorage items
+                const loginItems = [
+                    'user_name', 'user_email', 'user_cpf', 'user_dtnascimento',
+                    'user_idade', 'user_celular', 'user_sexo', 'user_idatleta',
+                    'insc_modalidade', 'insc_apoio', 'insc_equipe200', 'insc_integrantes',
+                    'insc_camiseta', 'insc_valor', 'insc_taxa', 'insc_valortotal',
+                    'insc_dtpagamento', 'insc_formapgto', 'insc_idpagamento'
+                ];
+                loginItems.forEach(item => localStorage.removeItem(item));
+                
+                localStorage.setItem('logado', 'nao');
+                closeLogoutModal();
+                updateLoginControls();
+            }
+    
+            window.closeLogoutModal = closeLogoutModal;
+    
+            // Update the continue button click handler
             continueButton.addEventListener('click', function(e) {
                 e.preventDefault();
                 
@@ -794,23 +800,27 @@
                     alert('Por favor, selecione uma modalidade antes de continuar.');
                     return;
                 }
-                
-                // Armazenar os dados no localStorage
+    
+                // Store category information
                 localStorage.setItem('categoria_id', currentModalidade.id);
                 localStorage.setItem('categoria', currentModalidade.descricao);
                 localStorage.setItem('valor', currentModalidade.valorFormatted);
-
-                console.log('Dados salvos:', {
-                    categoria_id: localStorage.getItem('categoria_id'),
-                    categoria: localStorage.getItem('categoria'),
-                    valor: localStorage.getItem('valor')
-                });                
-
-                // Redirecionar para a página de login
-                window.location.href = '/login';
+    
+                if (localStorage.getItem('logado') === 'sim') {
+                    // Check idPagamento to determine redirect
+                    const idPagamento = localStorage.getItem('insc_idpagamento');
+                    window.location.href = (!idPagamento || idPagamento === 'none') 
+                        ? '/inscricao200k' 
+                        : '/formulario200k';
+                } else {
+                    localStorage.setItem('login_origin', 'continue');
+                    window.location.href = '/login';
+                }
             });
+    
+            // Initialize login controls
+            updateLoginControls();
         });
     </script>
-
 </body>
 </html>
