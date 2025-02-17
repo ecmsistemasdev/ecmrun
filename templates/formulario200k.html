@@ -255,8 +255,7 @@
                 <tr>
                     <td>
                         <div class="table-content">
-                            <div><b>4º Desafio 200k Porto Velho-Humaitá</b></div>
-                            
+                            <div id="evento"><b></b></div>
                             <div id="modalidade"></div>
                         </div>
                     </td>
@@ -283,14 +282,14 @@
             // Get user data from localStorage
             const userName = localStorage.getItem('user_name');
             const userEmail = localStorage.getItem('user_email');
-            const evento = localStorage.getItem('insc_evento');
+            const inscEvento = localStorage.getItem('insc_evento');
             const Modalidade = localStorage.getItem('insc_modalidade');
             const idpagamento = localStorage.getItem('insc_idpagamento');
 
             // Update the display values
             $('#nome_completo').text(userName);
             $('#email').text(userEmail);
-            $('#evento').text(evento);
+            $('#evento').text(inscEvento);
             $('#modalidade').text(Modalidade);
 
             if (idpagamento) {
