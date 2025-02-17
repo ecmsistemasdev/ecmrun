@@ -794,11 +794,111 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const modalidadeSelect = document.getElementById('modalidade');
+            const valorDiv = document.querySelector('.form-field div');
+            const continueButton = document.querySelector('.submit-btn');
+            
             const userNameDisplay = document.getElementById('userNameDisplay');
             const loginLink = document.getElementById('loginLink');
             const logoutModal = document.getElementById('logoutModal');
             const continueButton = document.querySelector('.submit-btn');
+
+            // Variáveis para armazenar os valores atuais
+            let currentModalidade = {
+                id: null,
+                descricao: '',
+                valor: '',
+                valorFormatted: ''
+            };
+            /// ADICIONADO POR MIM            
+            // Function to clear specific payment-related localStorage items
+            function clearPaymentRelatedLocalStorage() {
+                const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
+                
+                itemsToRemove.forEach(item => {
+                    localStorage.removeItem(item);
+                });
+            }
+            
+            ////  17/02/2025
+            modalidadeSelect.addEventListener('change', function() {
+                const iditem = this.value;
+
+                if (!iditem) {
+                    valorDiv.innerHTML = '<a>Valor:</a>';
+                    currentModalidade = {
+                        id: null,
+                        descricao: '',
+                        valor: '',
+                        valorFormatted: ''
+                    };
+                    return;
+                }
+                
+                // Armazena a descrição da modalidade selecionada
+                const selectedOption = modalidadeSelect.options[modalidadeSelect.selectedIndex];                
+                
+                currentModalidade.id = iditem;
+                currentModalidade.descricao = selectedOption.text;
+                
+                fetch(`/get_modalidade_valores/${iditem}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            valorDiv.innerHTML = '<a>Erro ao carregar valores</a>';
+                            return;
+                        }
+                        
+                        const vlinscricao = data.vlinscricao.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        });
+                        const vltaxa = data.vltaxa.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        });
+
+                        // Armazena os valores formatados
+                        currentModalidade.valorFormatted = `${vlinscricao} + ${vltaxa} = Total: ${(data.vlinscricao + data.vltaxa).toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        })}`;
+                        
+                        valorDiv.innerHTML = `<a>Valor: ${vlinscricao} + (${vltaxa} de taxa)</a>`;
+
+                        // 'add 1' - adicionado por mim
+                        localStorage.setItem('cat_vlinscricao', data.vlinscricao);
+                        localStorage.setItem('cat_vltaxa', data.vltaxa);
+                        localStorage.setItem('cat_iditem', data.iditem);    
     
+                        function startPaymentCheck() {
+                            
+                            if (checkInterval) {
+                                clearInterval(checkInterval);
+                            }
+                            checkInterval = setInterval(checkPaymentStatus, 5000);
+                        }
+
+                        const vlInscricao = localStorage.getItem('cat_vlinscricao');
+                        const vlTaxa = localStorage.getItem('cat_vltaxa');
+                        const idItem = localStorage.getItem('cat_iditem');
+                        
+                        // Log para diagnóstico
+                        console.log('Dados do localStorage:', {
+                            vlInscricao,
+                            vlTaxa
+                        });            
+                        // fim 'add 1'                        
+                        
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        valorDiv.innerHTML = '<a>Erro ao carregar valores</a>';
+                    });
+            });
+
+            //////////  FIM  17/02/2025
+            
             function updateLoginControls() {
                 const isLoggedIn = localStorage.getItem('logado') === 'sim';
                 const userName = localStorage.getItem('user_name');
