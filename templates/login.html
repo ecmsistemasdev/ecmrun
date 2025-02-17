@@ -357,6 +357,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        localStorage.setItem('logado', 'sim');
                         // Store user data in localStorage
                         localStorage.setItem('user_name', data.nome);
                         localStorage.setItem('user_email', data.email);
@@ -378,7 +379,11 @@
                         localStorage.setItem('insc_formapgto', data.formapgto);
                         localStorage.setItem('insc_idpagamento', data.idpagamento);
                         
-
+                        // Adicionando log para debug
+                        console.log('Login realizado com sucesso');
+                        console.log('Estado do login:', localStorage.getItem('logado'));
+                        console.log('Nome do usuário:', localStorage.getItem('user_name'));
+                        
                         const loginOrigin = localStorage.getItem('login_origin');
                         localStorage.removeItem('login_origin'); // Clear the origin after using it
         
