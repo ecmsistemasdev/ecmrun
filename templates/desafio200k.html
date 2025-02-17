@@ -9,6 +9,20 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 
+    <!-- <script>
+        function sendEmail() {
+            // Faz uma requisição POST para enviar o email
+            fetch('/send-email2', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url; // Redireciona para a página inicial após o envio
+                }
+            });
+        }
+    </script> -->
+
     <style>
         body {
             margin: 0;
@@ -119,8 +133,9 @@
         
         .modal-button.cancel {
             background-color: #6c757d;
-        }      
-
+        }
+        
+            
         .logo {
             width: 60px;
             height: 60px;
@@ -430,7 +445,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="header">
         <img src="/static/img/img_200k.jpg" alt="Logo" class="center-image">
     </div>
@@ -783,7 +798,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             const modalidadeSelect = document.getElementById('modalidade');
             const valorDiv = document.querySelector('.form-field div');
-            
             const userNameDisplay = document.getElementById('userNameDisplay');
             const loginLink = document.getElementById('loginLink');
             const logoutModal = document.getElementById('logoutModal');
@@ -805,9 +819,8 @@
                     localStorage.removeItem(item);
                 });
             }
-
-            /// FIM >> ADICIONADO POR MIM
-
+            
+            ////  17/02/2025
             modalidadeSelect.addEventListener('change', function() {
                 const iditem = this.value;
 
@@ -883,8 +896,57 @@
                         valorDiv.innerHTML = '<a>Erro ao carregar valores</a>';
                     });
             });
+
+            //////////  FIM  17/02/2025
             
-            // Evento do botão Continuar
+            function updateLoginControls() {
+                const isLoggedIn = localStorage.getItem('logado') === 'sim';
+                const userName = localStorage.getItem('user_name');
+                
+                if (isLoggedIn && userName) {
+                    userNameDisplay.textContent = userName;
+                    loginLink.textContent = 'Sair';
+                    loginLink.onclick = showLogoutModal;
+                } else {
+                    userNameDisplay.textContent = '';
+                    loginLink.textContent = 'Entrar';
+                    loginLink.onclick = () => {
+                        localStorage.setItem('login_origin', 'header');
+                        window.location.href = '/login';
+                    };
+                }
+            }
+    
+            function showLogoutModal() {
+                logoutModal.style.display = 'flex';
+            }
+    
+            function closeLogoutModal() {
+                logoutModal.style.display = 'none';
+            }
+    
+            window.confirmLogout = function() {
+                // Clear login-related localStorage items
+                const loginItems = [
+                    'user_name', 'user_email', 'user_cpf', 'user_dtnascimento',
+                    'user_idade', 'user_celular', 'user_sexo', 'user_idatleta',
+                    'insc_modalidade', 'insc_apoio', 'insc_equipe200', 'insc_integrantes',
+                    'insc_camiseta', 'insc_valor', 'insc_taxa', 'insc_valortotal',
+                    'insc_dtpagamento', 'insc_formapgto', 'insc_idpagamento'
+                ];
+                loginItems.forEach(item => localStorage.removeItem(item));
+                
+                localStorage.setItem('logado', 'nao');
+                closeLogoutModal();
+                updateLoginControls();
+            }
+    
+            window.closeLogoutModal = closeLogoutModal;
+
+            // Check login state on page load
+            updateLoginControls();
+    
+            // Update the continue button click handler
             continueButton.addEventListener('click', function(e) {
                 e.preventDefault();
                 
@@ -892,23 +954,26 @@
                     alert('Por favor, selecione uma modalidade antes de continuar.');
                     return;
                 }
-                
-                // Armazenar os dados no localStorage
+    
+                // Store category information
                 localStorage.setItem('categoria_id', currentModalidade.id);
                 localStorage.setItem('categoria', currentModalidade.descricao);
                 localStorage.setItem('valor', currentModalidade.valorFormatted);
-
-                console.log('Dados salvos:', {
-                    categoria_id: localStorage.getItem('categoria_id'),
-                    categoria: localStorage.getItem('categoria'),
-                    valor: localStorage.getItem('valor')
-                });                
-
-                // Redirecionar para a página de login
-                window.location.href = '/login';
+    
+                if (localStorage.getItem('logado') === 'sim') {
+                    const idPagamento = localStorage.getItem('insc_idpagamento');
+                    window.location.href = (!idPagamento || idPagamento === 'none') 
+                        ? '/inscricao200k' 
+                        : '/formulario200k';
+                } else {
+                    localStorage.setItem('login_origin', 'continue');
+                    window.location.href = '/login';
+                }
             });
+    
+            // Initialize login controls
+            updateLoginControls();
         });
     </script>
-
-</body>  
+</body>
 </html>
