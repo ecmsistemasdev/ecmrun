@@ -490,6 +490,42 @@ def get_evento_data():
         print(f"Erro ao buscar dados do evento: {str(e)}")
         return jsonify({'error': str(e)}), 500
     
+@app.route('/cupom200k')
+def cupom200k():
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute('''
+            SELECT E.IDEVENTO, E.DESCRICAO, E.DTINICIO, E.DTFIM, E.HRINICIO,
+                E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
+                M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
+                M.VLINSCRICAO, M.VLMEIA, M.VLTAXA, E.INICIO_INSCRICAO_EXT, E.FIM_INSCRICAO_EXT
+            FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+            WHERE M.IDEVENTO = E.IDEVENTO
+                AND E.IDEVENTO = 1
+        ''')
+        
+        results = cur.fetchall()
+        cur.close()
+        
+        if not results:
+            return render_template('desafio200k.html', titulo="Evento não encontrado", modalidades=[])
+            
+        evento_titulo = results[0][1]  # DESCRICAO do evento
+        modalidades = [{'id': row[9], 'descricao': row[10]} for row in results]
+        vl200 = f'R$ {results[0][13]:,.2f}'
+        vl100 = f'R$ {results[1][13]:,.2f}' 
+        vl50 = f'R$ {results[2][13]:,.2f}'
+        vl25 = f'R$ {results[3][13]:,.2f}'
+        inicioinsc = results[0][16]
+        fiminsc = results[0][17]        
+        return render_template('cupom200k.html', titulo=evento_titulo, modalidades=modalidades,
+                               vlSolo=vl200, vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, 
+                               inicio_insc=inicioinsc, fim_insc=fiminsc)
+        
+    except Exception as e:
+        print(f"Erro ao carregar página: {str(e)}")
+        return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
+
 
 @app.route('/desafio200k')
 def desafio200k():
