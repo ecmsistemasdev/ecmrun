@@ -379,15 +379,18 @@
                         localStorage.setItem('insc_idpagamento', data.idpagamento);
                         
 
-                        // Check the value of insc_idpagamento
-                        const idPagamento = localStorage.getItem('insc_idpagamento');
-                        
-                        if (!idPagamento || idPagamento === 'none') {
-                            // Redirect to inscription page if idpagamento is empty or 'none'
-                            window.location.href = '/inscricao200k';
-                        } else {
-                            // Redirect to form page if idpagamento has a value
+                        const loginOrigin = localStorage.getItem('login_origin');
+                        localStorage.removeItem('login_origin'); // Clear the origin after using it
+        
+                        if (loginOrigin === 'header') {
+                            // If login was initiated from header, go to formulario200k
                             window.location.href = '/formulario200k';
+                        } else {
+                            // If login was initiated from continue button, check idPagamento
+                            const idPagamento = data.idpagamento;
+                            window.location.href = (!idPagamento || idPagamento === 'none') 
+                                ? '/inscricao200k' 
+                                : '/formulario200k';
                         }
 
                     } else {
