@@ -389,7 +389,13 @@
         
                         if (loginOrigin === 'header') {
                             // If login was initiated from header, go to formulario200k
-                            window.location.href = '/formulario200k';
+                            //window.location.href = '/formulario200k';
+                            const idPagamento = data.idpagamento;
+                            window.location.href = (!idPagamento || idPagamento === 'none') 
+                                ? '/desafio200k'
+                                : '/formulario200k';
+                            
+
                         } else {
                             // If login was initiated from continue button, check idPagamento
                             const idPagamento = data.idpagamento;
