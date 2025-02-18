@@ -340,6 +340,14 @@
             const Modalidade = localStorage.getItem('insc_modalidade');
             const idpagamento = localStorage.getItem('insc_idpagamento');
 
+            $('#cpf').mask('000.000.000-00');
+            $('#idpagamento').mask('000000000000');
+
+            $('#vlinscricao, #vltaxa, #vlpago').mask('#.##0,00', {
+                reverse: true,
+                placeholder: '0,00'
+            });   
+            
             let currentModalidade = {
                 id: null,
                 descricao: '',
@@ -361,7 +369,7 @@
                 const vltaxaField = document.getElementById('vltaxa');
                 const vlpagoField = document.getElementById('vlpago');
                 const temBonificacao = $('#bonifica').is(':checked');
-                                const fields = [idpagamentoField, formapgtoField, vlinscricaoField, vltaxaField, vlpagoField]
+                const fields = [idpagamentoField, formapgtoField, vlinscricaoField, vltaxaField, vlpagoField];
                 const label = $(`label[for="{fields}"]`);
                 
                 if (temBonificacao) {
@@ -376,7 +384,7 @@
                     vlinscricaoField.style.backgroundColor = '#f0f0f0';
                     vltaxaField.style.backgroundColor = '#f0f0f0';
                     vlpagoField.style.backgroundColor = '#f0f0f0';
-                    fields.style.backgroundColor = '#333'
+                    label.style.backgroundColor = '#333'
                 
                 } else {
                     
@@ -390,7 +398,7 @@
                     vlinscricaoField.style.backgroundColor = '';
                     vltaxaField.style.backgroundColor = '';
                     vlpagoField.style.backgroundColor = ''; 
-                    fields.style.backgroundColor = 'black'                   
+                    label .style.backgroundColor = black                   
                 }
 
             }
