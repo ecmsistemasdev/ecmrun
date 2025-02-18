@@ -392,12 +392,14 @@
                     vlpagoField.style.backgroundColor = '';                    
                 }
             }
-
+    
+            $('#bonifica').on('change', function() {
+                updateBonifica();
+            });
+        
         });
 
-        $('#bonifica').on('change', function() {
-            updateBonifica();
-        });
+
 
         //$('#bonifica').prop('checked', false);
 
