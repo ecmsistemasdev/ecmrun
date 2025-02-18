@@ -340,12 +340,6 @@
             const Modalidade = localStorage.getItem('insc_modalidade');
             const idpagamento = localStorage.getItem('insc_idpagamento');
 
-            // Update the display values
-            //$('#nome_completo').text(userName);
-            //$('#email').text(userEmail);
-            //$('#evento').text(inscEvento);
-            //$('#modalidade').text(Modalidade);
-
             let currentModalidade = {
                 id: null,
                 descricao: '',
@@ -361,41 +355,30 @@
             //}
 
             function updateBonifica() {
-                const idpagamentoField = document.getElementById('idpagamento');
-                const formapgtoField = document.getElementById('formapgto');
-                const vlinscricaoField = document.getElementById('vlinscricao');
-                const vltaxaField = document.getElementById('vltaxa');
-                const vlpagoField = document.getElementById('vlpago');
+                const fields = ['idpagamento', 'formapgto', 'vlinscricao', 'vltaxa', 'vlpago'];
                 const temBonificacao = $('#bonifica').is(':checked');
                 
-                if (temBonificacao) {
-                    idpagamentoField.disabled = true;
-                    formapgtoField.disabled = true;
-                    vlinscricaoField.disabled = true;
-                    vltaxaField.disabled = true;
-                    vlpagoField.disabled = true;
-                    idpagamentoField.style.backgroundColor = '#f0f0f0';
-                    formapgtoField.style.backgroundColor = '#f0f0f0';
-                    vlinscricaoField.style.backgroundColor = '#f0f0f0';
-                    vltaxaField.style.backgroundColor = '#f0f0f0';
-                    vlpagoField.style.backgroundColor = '#f0f0f0';
-                } else {
-                    idpagamentoField.disabled = false;
-                    formapgtoField.disabled = false;
-                    vlinscricaoField.disabled = false;
-                    vltaxaField.disabled = false;
-                    vlpagoField.disabled = false;
-                    idpagamentoField.style.backgroundColor = '';
-                    formapgtoField.style.backgroundColor = '';
-                    vlinscricaoField.style.backgroundColor = '';
-                    vltaxaField.style.backgroundColor = '';
-                    vlpagoField.style.backgroundColor = '';                    
-                }
+                fields.forEach(fieldId => {
+                    const field = $(`#${fieldId}`);
+                    const label = $(`label[for="${fieldId}"]`);
+                    
+                    // Toggle field state
+                    field.prop('disabled', temBonificacao);
+                    
+                    // Toggle background color
+                    field.css('background-color', temBonificacao ? '#f0f0f0' : '');
+                    
+                    // Toggle label color
+                    label.css('color', temBonificacao ? '#999999' : '#333');
+                });
             }
-    
+
+            // Initial state
+            updateBonifica();
+        
+            // Bind change event to checkbox
             $('#bonifica').on('change', function() {
                 updateBonifica();
-            });
         
         });
 
