@@ -161,7 +161,7 @@ def get_modalidades(evento_id):
                FORMAT(VLINSCRICAO, 2) as VLINSCRICAO, 
                FORMAT(VLTAXA, 2) as VLTAXA 
         FROM EVENTO_MODALIDADE 
-        WHERE IDVENTO = %s
+        WHERE IDEVENTO = %s
     """, (evento_id,))
     modalidades = [
         {
