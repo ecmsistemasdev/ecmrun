@@ -105,12 +105,12 @@ def get_evento(evento_id):
         evento = {
             'IDEVENTO': row[0],
             'DESCRICAO': row[1],
-            #'DTINICIO': row[2].strftime('%d/%m/%Y') if row[2] else '',
-            #'DTFIM': row[3].strftime('%d/%m/%Y') if row[3] else '',
-            #'HRINICIO': row[4].strftime('%H:%M') if row[4] else '',
-            #'INICIO_INSCRICAO': row[5].strftime('%d/%m/%Y %H:%M:%S') if row[5] else '',
-            #'FIM_INSCRICAO': row[6].strftime('%d/%m/%Y %H:%M:%S') if row[6] else '',
-            #'INICIO_INSCRICAO_EXT': row[7].strftime('%d/%m/%Y %H:%M:%S') if row[7] else '',
+            'DTINICIO': row[2], # .strftime('%d/%m/%Y') if row[2] else '',
+            'DTFIM': row[3], #.strftime('%d/%m/%Y') if row[3] else '',
+            'HRINICIO': row[4], #.strftime('%H:%M') if row[4] else '',
+            'INICIO_INSCRICAO': row[5], #.strftime('%d/%m/%Y %H:%M:%S') if row[5] else '',
+            'FIM_INSCRICAO': row[6], #.strftime('%d/%m/%Y %H:%M:%S') if row[6] else '',
+            'INICIO_INSCRICAO_EXT': row[7], #.strftime('%d/%m/%Y %H:%M:%S') if row[7] else '',
             'FIM_INSCRICAO_EXT': row[8] #.strftime('%d/%m/%Y %H:%M:%S') if row[8] else ''
         }
         return jsonify(evento)
@@ -122,13 +122,13 @@ def update_evento():
     data = request.json
     
     # Converter as datas do formato brasileiro para o formato do MySQL
-    dtinicio = datetime.strptime(data['DTINICIO'], '%d/%m/%Y').strftime('%Y-%m-%d')
-    dtfim = datetime.strptime(data['DTFIM'], '%d/%m/%Y').strftime('%Y-%m-%d')
+    dtinicio = data['DTINICIO'] #datetime.strptime(data['DTINICIO'], '%d/%m/%Y').strftime('%Y-%m-%d')
+    dtfim = data['DTFIM'] #datetime.strptime(data['DTFIM'], '%d/%m/%Y').strftime('%Y-%m-%d')
     hrinicio = data['HRINICIO']
-    inicio_inscricao = datetime.strptime(data['INICIO_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-    fim_inscricao = datetime.strptime(data['FIM_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-    inicio_inscricao_ext = datetime.strptime(data['INICIO_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-    fim_inscricao_ext = datetime.strptime(data['FIM_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+    inicio_inscricao = data['INICIO_INSCRICAO'] #datetime.strptime(data['INICIO_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+    fim_inscricao = data['FIM_INSCRICAO'] #datetime.strptime(data['FIM_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+    inicio_inscricao_ext = data['INICIO_INSCRICAO_EXT'] #datetime.strptime(data['INICIO_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+    fim_inscricao_ext = data['FIM_INSCRICAO_EXT'] #datetime.strptime(data['FIM_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
     
     cur = mysql.connection.cursor()
     cur.execute("""
