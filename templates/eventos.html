@@ -29,6 +29,11 @@
             margin-bottom: 10px;
         }        
 
+        .logo {
+            width: 60px;
+            height: 60px;
+        }
+
         form {
             width: 50%;
             background: white;
@@ -36,6 +41,17 @@
             border-radius: 7px;
             min-width: 300px;
             margin-bottom: 20px;
+        }
+
+        .form-title {
+            background-color: #647e99;
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 7px 7px 0 0;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
         }
 
         @media (max-width: 768px) {
@@ -49,7 +65,8 @@
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            padding-top: 5px;
         }
 
         input[type="text"],
@@ -66,10 +83,9 @@
 
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
             color: #333;
             font-size: 14px;
-            font-weight: bold;
         }
 
         .info-table {
@@ -92,14 +108,23 @@
             font-size: 14px;
         }
 
+        .divider {
+            height: 1px;
+            background-color: #4376ac;
+            margin: 25px 0;
+        }
+
         button {
             background-color: #4376ac;
             color: white;
+            margin-top: 25px;
             padding: 12px 30px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
+            width: auto;
+            display: inline-block;
         }
 
         button:hover {
@@ -115,6 +140,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
         }
 
         .modal-content {
@@ -124,24 +150,60 @@
             border-radius: 5px;
             width: 80%;
             max-width: 500px;
+            position: relative;
         }
 
         .close {
-            float: right;
+            position: absolute;
+            right: 20px;
+            top: 10px;
             cursor: pointer;
             font-size: 28px;
+        }
+
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+            width: 100%;
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }
+
+        a {
+            color: #4376ac;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="logo-container">
-        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+        <img src="/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
     </div>
 
     <form id="eventoForm">
+        <div class="form-title">Gerenciamento de Eventos</div>
+        
         <div class="form-group">
             <label for="evento">Selecione o Evento:</label>
-            <select id="evento" name="evento"></select>
+            <select id="evento" name="evento">
+                <option value="">Selecione um evento</option>
+            </select>
         </div>
 
         <div id="eventoDetails" style="display: none;">
@@ -187,6 +249,8 @@
 
             <button type="button" id="saveEvento">Salvar Alterações</button>
 
+            <div class="divider"></div>
+
             <div class="table-container">
                 <table class="info-table">
                     <thead>
@@ -208,7 +272,7 @@
     <div id="editModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Editar Modalidade</h2>
+            <div class="form-title">Editar Modalidade</div>
             <form id="modalidadeForm">
                 <input type="hidden" id="editIditem">
                 <div class="form-group">
@@ -228,38 +292,61 @@
         </div>
     </div>
 
+    <footer class="footer">
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+
     <script>
         $(document).ready(function() {
             // Apply masks
             $('#dtinicio, #dtfim').mask('00/00/0000');
             $('#hrinicio').mask('00:00');
             $('#inicio_inscricao, #fim_inscricao, #inicio_inscricao_ext, #fim_inscricao_ext').mask('00/00/0000 00:00:00');
-            $('#editVlinscricao, #editVltaxa').mask('000.000.000,00', {reverse: true});
+            $('#editVlinscricao, #editVltaxa').mask('#.##0,00', {reverse: true});
 
             // Load eventos
-            $.get('/api/eventos', function(data) {
-                const select = $('#evento');
-                select.append('<option value="">Selecione um evento</option>');
-                data.forEach(evento => {
-                    select.append(`<option value="${evento.IDEVENTO}">${evento.DESCRICAO}</option>`);
-                });
+            $.ajax({
+                url: '/api/eventos',
+                method: 'GET',
+                success: function(data) {
+                    const select = $('#evento');
+                    select.empty();
+                    select.append('<option value="">Selecione um evento</option>');
+                    data.forEach(evento => {
+                        select.append(`<option value="${evento.IDEVENTO}">${evento.DESCRICAO}</option>`);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro ao carregar eventos:', error);
+                    alert('Erro ao carregar eventos. Por favor, tente novamente.');
+                }
             });
 
             // Handle evento selection
             $('#evento').change(function() {
                 const eventoId = $(this).val();
                 if (eventoId) {
-                    $.get(`/api/eventos/${eventoId}`, function(data) {
-                        $('#descricao').val(data.DESCRICAO);
-                        $('#dtinicio').val(data.DTINICIO);
-                        $('#dtfim').val(data.DTFIM);
-                        $('#hrinicio').val(data.HRINICIO);
-                        $('#inicio_inscricao').val(data.INICIO_INSCRICAO);
-                        $('#fim_inscricao').val(data.FIM_INSCRICAO);
-                        $('#inicio_inscricao_ext').val(data.INICIO_INSCRICAO_EXT);
-                        $('#fim_inscricao_ext').val(data.FIM_INSCRICAO_EXT);
-                        $('#eventoDetails').show();
-                        loadModalidades(eventoId);
+                    $.ajax({
+                        url: `/api/eventos/${eventoId}`,
+                        method: 'GET',
+                        success: function(data) {
+                            $('#descricao').val(data.DESCRICAO);
+                            $('#dtinicio').val(data.DTINICIO);
+                            $('#dtfim').val(data.DTFIM);
+                            $('#hrinicio').val(data.HRINICIO);
+                            $('#inicio_inscricao').val(data.INICIO_INSCRICAO);
+                            $('#fim_inscricao').val(data.FIM_INSCRICAO);
+                            $('#inicio_inscricao_ext').val(data.INICIO_INSCRICAO_EXT);
+                            $('#fim_inscricao_ext').val(data.FIM_INSCRICAO_EXT);
+                            $('#eventoDetails').show();
+                            loadModalidades(eventoId);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro ao carregar evento:', error);
+                            alert('Erro ao carregar dados do evento. Por favor, tente novamente.');
+                        }
                     });
                 } else {
                     $('#eventoDetails').hide();
@@ -267,19 +354,27 @@
             });
 
             function loadModalidades(eventoId) {
-                $.get(`/api/modalidades/${eventoId}`, function(data) {
-                    const tbody = $('#modalidadesTable');
-                    tbody.empty();
-                    data.forEach(modalidade => {
-                        tbody.append(`
-                            <tr>
-                                <td>${modalidade.DESCRICAO}</td>
-                                <td>R$ ${modalidade.VLINSCRICAO}</td>
-                                <td>R$ ${modalidade.VLTAXA}</td>
-                                <td><a href="#" class="edit-modalidade" data-id="${modalidade.IDITEM}">Editar</a></td>
-                            </tr>
-                        `);
-                    });
+                $.ajax({
+                    url: `/api/modalidades/${eventoId}`,
+                    method: 'GET',
+                    success: function(data) {
+                        const tbody = $('#modalidadesTable');
+                        tbody.empty();
+                        data.forEach(modalidade => {
+                            tbody.append(`
+                                <tr>
+                                    <td>${modalidade.DESCRICAO}</td>
+                                    <td>R$ ${modalidade.VLINSCRICAO}</td>
+                                    <td>R$ ${modalidade.VLTAXA}</td>
+                                    <td><a href="#" class="edit-modalidade" data-id="${modalidade.IDITEM}">Editar</a></td>
+                                </tr>
+                            `);
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro ao carregar modalidades:', error);
+                        alert('Erro ao carregar modalidades. Por favor, tente novamente.');
+                    }
                 });
             }
 
@@ -287,12 +382,20 @@
             $(document).on('click', '.edit-modalidade', function(e) {
                 e.preventDefault();
                 const iditem = $(this).data('id');
-                $.get(`/api/modalidade/${iditem}`, function(data) {
-                    $('#editIditem').val(data.IDITEM);
-                    $('#editDescricao').val(data.DESCRICAO);
-                    $('#editVlinscricao').val(data.VLINSCRICAO);
-                    $('#editVltaxa').val(data.VLTAXA);
-                    $('#editModal').show();
+                $.ajax({
+                    url: `/api/modalidade/${iditem}`,
+                    method: 'GET',
+                    success: function(data) {
+                        $('#editIditem').val(data.IDITEM);
+                        $('#editDescricao').val(data.DESCRICAO);
+                        $('#editVlinscricao').val(data.VLINSCRICAO);
+                        $('#editVltaxa').val(data.VLTAXA);
+                        $('#editModal').show();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro ao carregar modalidade:', error);
+                        alert('Erro ao carregar dados da modalidade. Por favor, tente novamente.');
+                    }
                 });
             });
 
@@ -320,8 +423,12 @@
                     method: 'PUT',
                     data: JSON.stringify(eventoData),
                     contentType: 'application/json',
-                    success: function() {
+                    success: function(response) {
                         alert('Evento atualizado com sucesso!');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro ao atualizar evento:', error);
+                        alert('Erro ao atualizar evento. Por favor, tente novamente.');
                     }
                 });
             });
@@ -331,8 +438,8 @@
                 const modalidadeData = {
                     IDITEM: $('#editIditem').val(),
                     DESCRICAO: $('#editDescricao').val(),
-                    VLINSCRICAO: $('#editVlinscricao').val(),
-                    VLTAXA: $('#editVltaxa').val()
+                    VLINSCRICAO: $('#editVlinscricao').val().replace('R$ ', ''),
+                    VLTAXA: $('#editVltaxa').val().replace('R$ ', '')
                 };
 
                 $.ajax({
@@ -340,11 +447,36 @@
                     method: 'PUT',
                     data: JSON.stringify(modalidadeData),
                     contentType: 'application/json',
-                    success: function() {
+                    success: function(response) {
                         $('#editModal').hide();
                         loadModalidades($('#evento').val());
+                        alert('Modalidade atualizada com sucesso!');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro ao atualizar modalidade:', error);
+                        alert('Erro ao atualizar modalidade. Por favor, tente novamente.');
                     }
                 });
+            });
+
+            // Close modal when clicking outside
+            $(window).click(function(event) {
+                if ($(event.target).is('.modal')) {
+                    $('.modal').hide();
+                }
+            });
+
+            // Prevent form submission on enter
+            $('form').on('submit', function(e) {
+                e.preventDefault();
+                return false;
+            });
+
+            // Add error handling for masks
+            $('.money').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                value = (value / 100).toFixed(2);
+                $(this).val(value);
             });
         });
     </script>
