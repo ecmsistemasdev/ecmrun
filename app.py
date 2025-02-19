@@ -105,13 +105,13 @@ def get_evento(evento_id):
         evento = {
             'IDEVENTO': row[0],
             'DESCRICAO': row[1],
-            'DTINICIO': row[2].strftime('%d/%m/%Y') if row[2] else '',
-            'DTFIM': row[3].strftime('%d/%m/%Y') if row[3] else '',
-            'HRINICIO': row[4].strftime('%H:%M') if row[4] else '',
-            'INICIO_INSCRICAO': row[5].strftime('%d/%m/%Y %H:%M:%S') if row[5] else '',
-            'FIM_INSCRICAO': row[6].strftime('%d/%m/%Y %H:%M:%S') if row[6] else '',
-            'INICIO_INSCRICAO_EXT': row[7].strftime('%d/%m/%Y %H:%M:%S') if row[7] else '',
-            'FIM_INSCRICAO_EXT': row[8].strftime('%d/%m/%Y %H:%M:%S') if row[8] else ''
+            #'DTINICIO': row[2].strftime('%d/%m/%Y') if row[2] else '',
+            #'DTFIM': row[3].strftime('%d/%m/%Y') if row[3] else '',
+            #'HRINICIO': row[4].strftime('%H:%M') if row[4] else '',
+            #'INICIO_INSCRICAO': row[5].strftime('%d/%m/%Y %H:%M:%S') if row[5] else '',
+            #'FIM_INSCRICAO': row[6].strftime('%d/%m/%Y %H:%M:%S') if row[6] else '',
+            #'INICIO_INSCRICAO_EXT': row[7].strftime('%d/%m/%Y %H:%M:%S') if row[7] else '',
+            'FIM_INSCRICAO_EXT': row[8] #.strftime('%d/%m/%Y %H:%M:%S') if row[8] else ''
         }
         return jsonify(evento)
     return jsonify(None)
