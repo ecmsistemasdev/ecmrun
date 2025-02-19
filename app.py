@@ -73,6 +73,37 @@ def fn_email(valor):
 def index():
     return render_template("index.html")
 
+
+@app.route('/api/eventos')
+def get_eventos():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO ORDER BY DTINICIO DESC")
+    eventos = cur.fetchall()
+    cur.close()
+    return jsonify(eventos)
+
+# Get specific evento
+@app.route('/api/eventos/<int:evento_id>')
+def get_evento(evento_id):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT * FROM EVENTO WHERE IDEVENTO = %s
+    """, (evento_id,))
+    evento = cursor.fetchone()
+    cur.close()
+    
+    # Format dates
+    if evento:
+        evento['DTINICIO'] = evento['DTINICIO'].strftime('%d/%m/%Y')
+        evento['DTFIM'] = evento['DTFIM'].strftime('%d/%m/%Y')
+        evento['HRINICIO'] = evento['HRINICIO'].strftime('%H:%M')
+        evento['INICIO_INSCRICAO'] = evento['INICIO_INSCRICAO'].strftime('%d/%m/%Y %H:%M:%S')
+        evento['FIM_INSCRICAO'] = evento['FIM_INSCRICAO'].strftime('%d/%m/%Y %H:%M:%S')
+        evento['INICIO_INSCRICAO_EXT'] = evento['INICIO_INSCRICAO_EXT'].strftime('%d/%m/%Y %H:%M:%S')
+        evento['FIM_INSCRICAO_EXT'] = evento['FIM_INSCRICAO_EXT'].strftime('%d/%m/%Y %H:%M:%S')
+    
+    return jsonify(evento)
+
 @app.route("/checkout")
 def checkout():
 
