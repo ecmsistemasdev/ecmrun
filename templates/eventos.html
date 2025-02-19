@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Eventos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 15px;
+            background-color: #f0f0f0;
+            min-height: 100vh;
+        }
+        
+        .logo-container {
+            width: 100%;
+            height: 60px;
+            background-color: white;
+            display: flex;
+            justify-content: flex-start;
+            padding-left: 20px;
+            align-items: center;
+            margin-bottom: 10px;
+        }        
+
+        form {
+            width: 50%;
+            background: white;
+            padding: 20px;
+            border-radius: 7px;
+            min-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            form {
+                width: calc(100% - 35px);
+                margin: 0px 20px 20px 20px;
+            }
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            height: 40px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .info-table th {
+            background-color: #647e99;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .info-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #4376ac;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    </div>
+
+    <form id="eventoForm">
+        <div class="form-group">
+            <label for="evento">Selecione o Evento:</label>
+            <select id="evento" name="evento"></select>
+        </div>
+
+        <div id="eventoDetails" style="display: none;">
+            <div class="form-group">
+                <label for="descricao">Descrição:</label>
+                <input type="text" id="descricao" name="descricao">
+            </div>
+
+            <div class="form-group">
+                <label for="dtinicio">Data Início:</label>
+                <input type="text" id="dtinicio" name="dtinicio">
+            </div>
+
+            <div class="form-group">
+                <label for="dtfim">Data Fim:</label>
+                <input type="text" id="dtfim" name="dtfim">
+            </div>
+
+            <div class="form-group">
+                <label for="hrinicio">Hora Início:</label>
+                <input type="text" id="hrinicio" name="hrinicio">
+            </div>
+
+            <div class="form-group">
+                <label for="inicio_inscricao">Início Inscrição:</label>
+                <input type="text" id="inicio_inscricao" name="inicio_inscricao">
+            </div>
+
+            <div class="form-group">
+                <label for="fim_inscricao">Fim Inscrição:</label>
+                <input type="text" id="fim_inscricao" name="fim_inscricao">
+            </div>
+
+            <div class="form-group">
+                <label for="inicio_inscricao_ext">Início Inscrição Estendida:</label>
+                <input type="text" id="inicio_inscricao_ext" name="inicio_inscricao_ext">
+            </div>
+
+            <div class="form-group">
+                <label for="fim_inscricao_ext">Fim Inscrição Estendida:</label>
+                <input type="text" id="fim_inscricao_ext" name="fim_inscricao_ext">
+            </div>
+
+            <button type="button" id="saveEvento">Salvar Alterações</button>
+
+            <div class="table-container">
+                <table class="info-table">
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Valor Inscrição</th>
+                            <th>Taxa</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalidadesTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+
+    <!-- Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Modalidade</h2>
+            <form id="modalidadeForm">
+                <input type="hidden" id="editIditem">
+                <div class="form-group">
+                    <label for="editDescricao">Descrição:</label>
+                    <input type="text" id="editDescricao" name="editDescricao">
+                </div>
+                <div class="form-group">
+                    <label for="editVlinscricao">Valor Inscrição:</label>
+                    <input type="text" id="editVlinscricao" name="editVlinscricao">
+                </div>
+                <div class="form-group">
+                    <label for="editVltaxa">Taxa:</label>
+                    <input type="text" id="editVltaxa" name="editVltaxa">
+                </div>
+                <button type="button" id="saveModalidade">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Apply masks
+            $('#dtinicio, #dtfim').mask('00/00/0000');
+            $('#hrinicio').mask('00:00');
+            $('#inicio_inscricao, #fim_inscricao, #inicio_inscricao_ext, #fim_inscricao_ext').mask('00/00/0000 00:00:00');
+            $('#editVlinscricao, #editVltaxa').mask('000.000.000,00', {reverse: true});
+
+            // Load eventos
+            $.get('/api/eventos', function(data) {
+                const select = $('#evento');
+                select.append('<option value="">Selecione um evento</option>');
+                data.forEach(evento => {
+                    select.append(`<option value="${evento.IDEVENTO}">${evento.DESCRICAO}</option>`);
+                });
+            });
+
+            // Handle evento selection
+            $('#evento').change(function() {
+                const eventoId = $(this).val();
+                if (eventoId) {
+                    $.get(`/api/eventos/${eventoId}`, function(data) {
+                        $('#descricao').val(data.DESCRICAO);
+                        $('#dtinicio').val(data.DTINICIO);
+                        $('#dtfim').val(data.DTFIM);
+                        $('#hrinicio').val(data.HRINICIO);
+                        $('#inicio_inscricao').val(data.INICIO_INSCRICAO);
+                        $('#fim_inscricao').val(data.FIM_INSCRICAO);
+                        $('#inicio_inscricao_ext').val(data.INICIO_INSCRICAO_EXT);
+                        $('#fim_inscricao_ext').val(data.FIM_INSCRICAO_EXT);
+                        $('#eventoDetails').show();
+                        loadModalidades(eventoId);
+                    });
+                } else {
+                    $('#eventoDetails').hide();
+                }
+            });
+
+            function loadModalidades(eventoId) {
+                $.get(`/api/modalidades/${eventoId}`, function(data) {
+                    const tbody = $('#modalidadesTable');
+                    tbody.empty();
+                    data.forEach(modalidade => {
+                        tbody.append(`
+                            <tr>
+                                <td>${modalidade.DESCRICAO}</td>
+                                <td>R$ ${modalidade.VLINSCRICAO}</td>
+                                <td>R$ ${modalidade.VLTAXA}</td>
+                                <td><a href="#" class="edit-modalidade" data-id="${modalidade.IDITEM}">Editar</a></td>
+                            </tr>
+                        `);
+                    });
+                });
+            }
+
+            // Handle modalidade edit
+            $(document).on('click', '.edit-modalidade', function(e) {
+                e.preventDefault();
+                const iditem = $(this).data('id');
+                $.get(`/api/modalidade/${iditem}`, function(data) {
+                    $('#editIditem').val(data.IDITEM);
+                    $('#editDescricao').val(data.DESCRICAO);
+                    $('#editVlinscricao').val(data.VLINSCRICAO);
+                    $('#editVltaxa').val(data.VLTAXA);
+                    $('#editModal').show();
+                });
+            });
+
+            // Close modal
+            $('.close').click(function() {
+                $('#editModal').hide();
+            });
+
+            // Save evento changes
+            $('#saveEvento').click(function() {
+                const eventoData = {
+                    IDEVENTO: $('#evento').val(),
+                    DESCRICAO: $('#descricao').val(),
+                    DTINICIO: $('#dtinicio').val(),
+                    DTFIM: $('#dtfim').val(),
+                    HRINICIO: $('#hrinicio').val(),
+                    INICIO_INSCRICAO: $('#inicio_inscricao').val(),
+                    FIM_INSCRICAO: $('#fim_inscricao').val(),
+                    INICIO_INSCRICAO_EXT: $('#inicio_inscricao_ext').val(),
+                    FIM_INSCRICAO_EXT: $('#fim_inscricao_ext').val()
+                };
+
+                $.ajax({
+                    url: '/api/eventos',
+                    method: 'PUT',
+                    data: JSON.stringify(eventoData),
+                    contentType: 'application/json',
+                    success: function() {
+                        alert('Evento atualizado com sucesso!');
+                    }
+                });
+            });
+
+            // Save modalidade changes
+            $('#saveModalidade').click(function() {
+                const modalidadeData = {
+                    IDITEM: $('#editIditem').val(),
+                    DESCRICAO: $('#editDescricao').val(),
+                    VLINSCRICAO: $('#editVlinscricao').val(),
+                    VLTAXA: $('#editVltaxa').val()
+                };
+
+                $.ajax({
+                    url: '/api/modalidade',
+                    method: 'PUT',
+                    data: JSON.stringify(modalidadeData),
+                    contentType: 'application/json',
+                    success: function() {
+                        $('#editModal').hide();
+                        loadModalidades($('#evento').val());
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
