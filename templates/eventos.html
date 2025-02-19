@@ -131,16 +131,26 @@
             height: 100%;
             background-color: rgba(0,0,0,0.5);
             z-index: 1000;
+            padding: 15px;
+            box-sizing: border-box;
         }
 
         .modal-content {
             background-color: white;
             margin: 10% auto;
-            padding: 5px;
+            padding: 20px;
             border-radius: 5px;
-            width: 80%;
-            max-width: 500px;
+            width: 90%;
+            max-width: 400px;
             position: relative;
+        }
+
+        .modal-content .form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-content input[type="text"] {
+            margin-bottom: 10px;
         }
 
         @media (max-width: 768px) {
@@ -153,15 +163,22 @@
             }
 
             .modal {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: calc(100% - 35px);
-                height: calc(100% - 35px);
-                background-color: rgba(0,0,0,0.5);
-                z-index: 1000;
-            }            
+                padding: 10px;
+            }
+
+            .modal-content {
+                margin: 5% auto;
+                padding: 15px;
+                width: 95%;
+            }
+
+            .modal-content .form-group {
+                margin-bottom: 10px;
+            }
+
+            .modal-content input[type="text"] {
+                margin-bottom: 5px;
+            }         
         }
         
         .close {
@@ -315,7 +332,20 @@
             $('#dtinicio, #dtfim').mask('00/00/0000');
             $('#hrinicio').mask('00:00');
             $('#inicio_inscricao, #fim_inscricao, #inicio_inscricao_ext, #fim_inscricao_ext').mask('00/00/0000 00:00:00');
-            $('#editVlinscricao, #editVltaxa').mask('#.##0,00', {reverse: true});
+            //$('#editVlinscricao, #editVltaxa').mask('#.##0,00', {reverse: true});
+            $('#editVlinscricao, #editVltaxa').mask('#.##0,00', {
+                reverse: true,
+                onChange: function(value, e) {
+                    // Formata o valor quando sair do campo
+                    var cleanValue = value.replace(/\D/g, '');
+                    if (cleanValue.length === 1) {
+                        cleanValue = '00' + cleanValue;
+                    } else if (cleanValue.length === 2) {
+                        cleanValue = '0' + cleanValue;
+                    }
+                    return cleanValue;
+                }
+            });            
 
             // Load eventos
             $.ajax({
@@ -372,11 +402,15 @@
                         const tbody = $('#modalidadesTable');
                         tbody.empty();
                         data.forEach(modalidade => {
+                            // Formata os valores para exibição
+                            const vlInscricao = formatarValorBRL(modalidade.VLINSCRICAO);
+                            const vlTaxa = formatarValorBRL(modalidade.VLTAXA);
+                            
                             tbody.append(`
                                 <tr>
                                     <td>${modalidade.DESCRICAO}</td>
-                                    <td>R$ ${modalidade.VLINSCRICAO}</td>
-                                    <td>R$ ${modalidade.VLTAXA}</td>
+                                    <td>R$ ${vlInscricao}</td>
+                                    <td>R$ ${vlTaxa}</td>
                                     <td><a href="#" class="edit-modalidade" data-id="${modalidade.IDITEM}">Editar</a></td>
                                 </tr>
                             `);
@@ -389,6 +423,14 @@
                 });
             }
 
+            // Função para formatar valores em BRL
+            function formatarValorBRL(valor) {
+                if (typeof valor === 'string') {
+                    valor = parseFloat(valor);
+                }
+                return valor.toFixed(2).replace('.', ',');
+            }
+
             // Handle modalidade edit
             $(document).on('click', '.edit-modalidade', function(e) {
                 e.preventDefault();
@@ -399,8 +441,9 @@
                     success: function(data) {
                         $('#editIditem').val(data.IDITEM);
                         $('#editDescricao').val(data.DESCRICAO);
-                        $('#editVlinscricao').val(data.VLINSCRICAO);
-                        $('#editVltaxa').val(data.VLTAXA);
+                        // Formata os valores para exibição
+                        $('#editVlinscricao').val(formatarValorBRL(data.VLINSCRICAO));
+                        $('#editVltaxa').val(formatarValorBRL(data.VLTAXA));
                         $('#editModal').show();
                     },
                     error: function(xhr, status, error) {
@@ -446,11 +489,14 @@
 
             // Save modalidade changes
             $('#saveModalidade').click(function() {
+                const vlInscricao = $('#editVlinscricao').val().replace(/\./g, '').replace(',', '.');
+                const vlTaxa = $('#editVltaxa').val().replace(/\./g, '').replace(',', '.');
+
                 const modalidadeData = {
                     IDITEM: $('#editIditem').val(),
                     DESCRICAO: $('#editDescricao').val(),
-                    VLINSCRICAO: $('#editVlinscricao').val().replace('R$ ', ''),
-                    VLTAXA: $('#editVltaxa').val().replace('R$ ', '')
+                    VLINSCRICAO: vlInscricao,
+                    VLTAXA: vlTaxa
                 };
 
                 $.ajax({
