@@ -74,11 +74,17 @@ def index():
     return render_template("index.html")
 
 
+# Rota para renderizar a página eventos.html
+@app.route('/eventos')
+def eventos():
+    return render_template('eventos.html')
+
+# Get all eventos
 @app.route('/api/eventos')
 def get_eventos():
     cur = mysql.connection.cursor()
     cur.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO ORDER BY DTINICIO DESC")
-    eventos = cur.fetchall()
+    eventos = [{'IDEVENTO': row[0], 'DESCRICAO': row[1]} for row in cur.fetchall()]
     cur.close()
     return jsonify(eventos)
 
@@ -87,22 +93,131 @@ def get_eventos():
 def get_evento(evento_id):
     cur = mysql.connection.cursor()
     cur.execute("""
-        SELECT * FROM EVENTO WHERE IDEVENTO = %s
+        SELECT IDEVENTO, DESCRICAO, DTINICIO, DTFIM, HRINICIO, 
+               INICIO_INSCRICAO, FIM_INSCRICAO, 
+               INICIO_INSCRICAO_EXT, FIM_INSCRICAO_EXT 
+        FROM EVENTO WHERE IDEVENTO = %s
     """, (evento_id,))
-    evento = cursor.fetchone()
+    row = cur.fetchone()
     cur.close()
     
-    # Format dates
-    if evento:
-        evento['DTINICIO'] = evento['DTINICIO'].strftime('%d/%m/%Y')
-        evento['DTFIM'] = evento['DTFIM'].strftime('%d/%m/%Y')
-        evento['HRINICIO'] = evento['HRINICIO'].strftime('%H:%M')
-        evento['INICIO_INSCRICAO'] = evento['INICIO_INSCRICAO'].strftime('%d/%m/%Y %H:%M:%S')
-        evento['FIM_INSCRICAO'] = evento['FIM_INSCRICAO'].strftime('%d/%m/%Y %H:%M:%S')
-        evento['INICIO_INSCRICAO_EXT'] = evento['INICIO_INSCRICAO_EXT'].strftime('%d/%m/%Y %H:%M:%S')
-        evento['FIM_INSCRICAO_EXT'] = evento['FIM_INSCRICAO_EXT'].strftime('%d/%m/%Y %H:%M:%S')
+    if row:
+        evento = {
+            'IDEVENTO': row[0],
+            'DESCRICAO': row[1],
+            'DTINICIO': row[2].strftime('%d/%m/%Y') if row[2] else '',
+            'DTFIM': row[3].strftime('%d/%m/%Y') if row[3] else '',
+            'HRINICIO': row[4].strftime('%H:%M') if row[4] else '',
+            'INICIO_INSCRICAO': row[5].strftime('%d/%m/%Y %H:%M:%S') if row[5] else '',
+            'FIM_INSCRICAO': row[6].strftime('%d/%m/%Y %H:%M:%S') if row[6] else '',
+            'INICIO_INSCRICAO_EXT': row[7].strftime('%d/%m/%Y %H:%M:%S') if row[7] else '',
+            'FIM_INSCRICAO_EXT': row[8].strftime('%d/%m/%Y %H:%M:%S') if row[8] else ''
+        }
+        return jsonify(evento)
+    return jsonify(None)
+
+# Update evento
+@app.route('/api/eventos', methods=['PUT'])
+def update_evento():
+    data = request.json
     
-    return jsonify(evento)
+    # Converter as datas do formato brasileiro para o formato do MySQL
+    dtinicio = datetime.strptime(data['DTINICIO'], '%d/%m/%Y').strftime('%Y-%m-%d')
+    dtfim = datetime.strptime(data['DTFIM'], '%d/%m/%Y').strftime('%Y-%m-%d')
+    hrinicio = data['HRINICIO']
+    inicio_inscricao = datetime.strptime(data['INICIO_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+    fim_inscricao = datetime.strptime(data['FIM_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+    inicio_inscricao_ext = datetime.strptime(data['INICIO_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+    fim_inscricao_ext = datetime.strptime(data['FIM_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+    
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE EVENTO 
+        SET DESCRICAO = %s, 
+            DTINICIO = %s,
+            DTFIM = %s,
+            HRINICIO = %s,
+            INICIO_INSCRICAO = %s,
+            FIM_INSCRICAO = %s,
+            INICIO_INSCRICAO_EXT = %s,
+            FIM_INSCRICAO_EXT = %s
+        WHERE IDEVENTO = %s
+    """, (
+        data['DESCRICAO'], dtinicio, dtfim, hrinicio,
+        inicio_inscricao, fim_inscricao,
+        inicio_inscricao_ext, fim_inscricao_ext,
+        data['IDEVENTO']
+    ))
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({'message': 'Evento atualizado com sucesso'})
+
+# Get modalidades for evento
+@app.route('/api/modalidades/<int:evento_id>')
+def get_modalidades(evento_id):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT IDITEM, DESCRICAO, 
+               FORMAT(VLINSCRICAO, 2) as VLINSCRICAO, 
+               FORMAT(VLTAXA, 2) as VLTAXA 
+        FROM EVENTO_MODALIDADE 
+        WHERE IDVENTO = %s
+    """, (evento_id,))
+    modalidades = [
+        {
+            'IDITEM': row[0],
+            'DESCRICAO': row[1],
+            'VLINSCRICAO': row[2],
+            'VLTAXA': row[3]
+        } for row in cur.fetchall()
+    ]
+    cur.close()
+    return jsonify(modalidades)
+
+# Get specific modalidade
+@app.route('/api/modalidade/<int:iditem>')
+def get_modalidade(iditem):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT IDITEM, DESCRICAO, 
+               FORMAT(VLINSCRICAO, 2) as VLINSCRICAO, 
+               FORMAT(VLTAXA, 2) as VLTAXA 
+        FROM EVENTO_MODALIDADE 
+        WHERE IDITEM = %s
+    """, (iditem,))
+    row = cur.fetchone()
+    cur.close()
+    
+    if row:
+        modalidade = {
+            'IDITEM': row[0],
+            'DESCRICAO': row[1],
+            'VLINSCRICAO': row[2],
+            'VLTAXA': row[3]
+        }
+        return jsonify(modalidade)
+    return jsonify(None)
+
+# Update modalidade
+@app.route('/api/modalidade', methods=['PUT'])
+def update_modalidade():
+    data = request.json
+    
+    # Converter valores monetários (remove R$ e vírgulas)
+    vlinscricao = float(data['VLINSCRICAO'].replace('R$', '').replace('.', '').replace(',', '.').strip())
+    vltaxa = float(data['VLTAXA'].replace('R$', '').replace('.', '').replace(',', '.').strip())
+    
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE EVENTO_MODALIDADE 
+        SET DESCRICAO = %s,
+            VLINSCRICAO = %s,
+            VLTAXA = %s
+        WHERE IDITEM = %s
+    """, (data['DESCRICAO'], vlinscricao, vltaxa, data['IDITEM']))
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({'message': 'Modalidade atualizada com sucesso'})
 
 @app.route("/checkout")
 def checkout():
