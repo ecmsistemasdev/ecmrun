@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lançamento Backyard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 15px;
+            background-color: #f0f0f0;
+            min-height: 100vh;
+        }
+
+        .logo {
+            height: 60px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin: 10px 0 20px 0;
+            text-align: center;
+        }
+
+        form {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 7px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.peito {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group.chegada {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 25px; /* Espaço adicional após o nome do atleta */
+        }
+
+        .chegada-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            height: 35px;
+        }
+
+        #nrpeito {
+            width: 80px;
+        }
+
+        #chegada {
+            width: 200px; /* Reduzido para alinhar com o botão atualizar */
+        }
+
+        button {
+            background-color: #4376ac;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .athlete-name {
+            font-size: 16px;
+            color: #333;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            width: 100%;
+            min-height: 20px;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 480px) {
+            form {
+                padding: 15px;
+            }
+
+            .form-group.peito {
+                gap: 5px;
+            }
+
+            button {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            input[type="text"] {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img src="https://ecmrun.com.br/static/img/backyard_logo.png" alt="Backyard Logo" class="logo">
+    <h1>Registro de chegada</h1>
+    
+    <form id="backyardForm">
+        <div class="form-group peito">
+            <label for="nrpeito">Nº de Peito:</label>
+            <input type="text" id="nrpeito" name="nrpeito" maxlength="3" autocomplete="off">
+            <button type="button" onclick="pesquisarAtleta()">Pesquisar</button>
+        </div>
+        
+        <span id="athleteName" class="athlete-name"></span>
+        
+        <div class="form-group chegada">
+            <label for="chegada">Chegada:</label>
+            <div class="chegada-container">
+                <input type="text" id="chegada" name="chegada" readonly>
+                <button type="button" onclick="atualizarHora()">Atualizar</button>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button type="button" onclick="lancar()">Lançar</button>
+            <button type="button" class="btn-secondary" onclick="cancelar()">Cancelar</button>
+        </div>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            $('#nrpeito').mask('000');
+            $('#chegada').mask('00/00/0000 00:00:00');
+            $('#nrpeito').focus();
+
+            $('#nrpeito').keypress(function(e) {
+                if(e.which == 13) {
+                    pesquisarAtleta();
+                }
+            });
+        });
+
+        function atualizarHora() {
+            const now = new Date();
+            const dia = String(now.getDate()).padStart(2, '0');
+            const mes = String(now.getMonth() + 1).padStart(2, '0');
+            const ano = now.getFullYear();
+            const hora = String(now.getHours()).padStart(2, '0');
+            const minuto = String(now.getMinutes()).padStart(2, '0');
+            const segundo = String(now.getSeconds()).padStart(2, '0');
+            
+            const formatted = `${dia}/${mes}/${ano} ${hora}:${minuto}:${segundo}`;
+            $('#chegada').val(formatted);
+        }
+
+        function pesquisarAtleta() {
+            const nrpeito = $('#nrpeito').val();
+            if (!nrpeito) {
+                $('#athleteName').text('Digite o número do peito');
+                return;
+            }
+
+            fetch(`/backyard/pesquisar_atleta/${nrpeito}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.atleta) {
+                        $('#athleteName').text(data.atleta);
+                        atualizarHora();
+                    } else {
+                        $('#athleteName').text('Atleta não encontrado');
+                        $('#chegada').val('');
+                        $('#nrpeito').select();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    $('#athleteName').text('Erro ao pesquisar atleta');
+                    $('#chegada').val('');
+                });
+        }
+
+        function lancar() {
+            const nrpeito = $('#nrpeito').val();
+            const chegada = $('#chegada').val();
+            
+            if (!nrpeito || !chegada) {
+                alert('Preencha todos os campos');
+                return;
+            }
+
+            fetch('/backyard/lancar_chegada', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nrpeito: nrpeito,
+                    chegada: chegada
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cancelar();
+                } else {
+                    alert('Erro ao lançar chegada: ' + (data.error || 'Erro desconhecido'));
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao processar requisição');
+            });
+        }
+
+        function cancelar() {
+            $('#nrpeito').val('');
+            $('#chegada').val('');
+            $('#athleteName').text('');
+            $('#nrpeito').focus();
+        }
+    </script>
+</body>
+</html>
