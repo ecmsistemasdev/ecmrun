@@ -73,6 +73,151 @@ def fn_email(valor):
 def index():
     return render_template("index.html")
 
+# Funções auxiliares do backyard
+def calculate_seconds_difference(start_time_str, end_time_str):
+    start_time = datetime.strptime(start_time_str, '%d/%m/%Y %H:%M:%S')
+    end_time = datetime.strptime(end_time_str, '%d/%m/%Y %H:%M:%S')
+    return (end_time - start_time).total_seconds()
+
+def format_time_difference(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds = int(seconds % 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+# Rotas do backyard
+@app.route('/backyard/lancamento')
+def backyard_lancamento():
+    return render_template('backyardlancamento.html')
+
+@app.route('/backyard/pesquisar_atleta/<nrpeito>')
+def pesquisar_atleta(nrpeito):
+    try:
+        cur = mysql.connection.cursor()
+
+        query = """
+            SELECT la.id, la.idlargada, a.idatleta, a.nome, a.nrpeito,
+                la.largada, a.tipo_corrida, la.nulargada, la.parcial, la.chegada,
+                CONCAT(LPAD(CAST(a.nrpeito AS CHAR(3)),3,'0'),' - ', a.nome) as atleta
+            FROM bm_largadas_atletas la, bm_atletas a
+            WHERE (la.chegada = '' OR la.chegada IS NULL)
+                AND la.idlargada = (
+                    SELECT MAX(idlargada) 
+                    FROM bm_largadas_atletas
+                    WHERE (chegada = '' OR chegada IS NULL)
+                    AND idatleta = a.idatleta
+                )
+                AND la.idatleta = a.idatleta
+                AND a.nrpeito = %s
+        """
+        
+        cur.execute(query, (nrpeito,))
+        result = cur.fetchone()
+        
+        if result:
+            columns = [desc[0] for desc in cur.description]
+            result_dict = dict(zip(columns, result))
+            
+            return jsonify({
+                'success': True,
+                'atleta': result_dict['atleta'],
+                'data': result_dict
+            })
+        else:
+            cur.execute("SELECT * FROM bm_atletas WHERE nrpeito = %s", (nrpeito,))
+            atleta_exists = cur.fetchone()
+            
+            return jsonify({
+                'success': False,
+                'message': 'Atleta não encontrado'
+            })
+            
+    except Exception as e:
+        print(f"Erro na consulta: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+    finally:
+        cur.close()
+
+@app.route('/backyard/lancar_chegada', methods=['POST'])
+def lancar_chegada():
+    try:
+        #data = request.get_json()
+        #nrpeito = data['nrpeito']
+        #chegada = data['chegada']
+        
+        data = request.get_json()
+        nrpeito = data['nrpeito']
+        chegada = data['chegada'].replace(', ', ' ')  # Remove a vírgula e mantém apenas um espaço
+
+
+        cur = mysql.connection.cursor()
+        
+        # Buscar dados do atleta
+        cur.execute("""
+            SELECT la.*, a.tipo_corrida 
+            FROM bm_largadas_atletas la, bm_atletas a
+            WHERE la.idatleta = a.idatleta
+            AND a.nrpeito = %s
+            AND (la.chegada = '' OR la.chegada IS NULL)
+        """, (nrpeito,))
+        
+        result = cur.fetchone()
+        if not result:
+            return jsonify({
+                'success': False,
+                'error': 'Atleta não encontrado'
+            })
+            
+        columns = [desc[0] for desc in cur.description]
+        atleta = dict(zip(columns, result))
+        
+        # Próxima ordem de chegada
+        cur.execute("""
+            SELECT COALESCE(MAX(ordem_chegada),0) as ID 
+            FROM bm_largadas_atletas 
+            WHERE idlargada = %s
+        """, (atleta['idlargada'],))
+        
+        result = cur.fetchone()
+        ordem_chegada = (result[0] or 0) + 1
+        
+        # Cálculo de tempo e status
+        segundos = calculate_seconds_difference(atleta['largada'], chegada)
+        tempo_chegada = format_time_difference(segundos)
+        
+        vstatus = 'D' if segundos > 3599 else 'A'
+        
+        if atleta['idlargada'] == 3 and atleta['tipo_corrida'] == 'Três voltas':
+            vstatus = 'D'
+            
+        # Atualizar registro
+        cur.execute("""
+            UPDATE bm_largadas_atletas
+            SET 
+                chegada = %s,
+                tempochegada = %s,
+                ordem_chegada = %s,
+                usuario_chegada = %s
+            WHERE id = %s
+        """, (chegada, tempo_chegada, ordem_chegada, 'ADM', atleta['id']))
+        
+        mysql.connection.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Chegada lançada com sucesso'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+    finally:
+        cur.close()
 
 # Rota para renderizar a página eventos.html
 @app.route('/eventos')
