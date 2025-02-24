@@ -1008,7 +1008,7 @@ def salvar_cadastro():
         query = """
         INSERT INTO ecmrun.ATLETA (
             CPF, NOME, SOBRENOME, DTNASCIMENTO, NRCELULAR, SEXO, EMAIL, TEL_EMERGENCIA, 
-            CONT_EMERGENCIA, SENHA, ATIVO, DTCADASTRO, ESTADO, CIDADE
+            CONT_EMERGENCIA, SENHA, ATIVO, DTCADASTRO, ESTADO, ID_CIDADE
         ) VALUES (
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
