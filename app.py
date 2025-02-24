@@ -73,6 +73,82 @@ def fn_email(valor):
 def index():
     return render_template("index.html")
 
+@app.route('/listar-estados', methods=['GET'])
+def listar_estados():
+    try:
+        cursor = mysql.connection.cursor()
+        
+        cursor.execute("""
+            SELECT uf, nome 
+            FROM estado 
+            ORDER BY nome
+        """)
+        
+        estados_tuplas = cursor.fetchall()
+        
+        estados = []
+        for estado in estados_tuplas:
+            estados.append({
+                'uf': estado[0],
+                'nome': estado[1]
+            })
+            
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'estados': estados
+        })
+    except Exception as e:
+        app.logger.error(f"Erro ao buscar estados: {e}")
+        return jsonify({
+            'success': False,
+            'mensagem': 'Erro ao buscar estados'
+        }), 500
+
+@app.route('/listar-cidades', methods=['GET'])
+def listar_cidades():
+    try:
+        uf = request.args.get('uf')
+        
+        if not uf:
+            return jsonify({
+                'success': False,
+                'mensagem': 'UF não fornecida'
+            }), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        cursor.execute("""
+            SELECT c.id_cidade, c.descricao
+            FROM cidade c
+            JOIN estado e ON c.uf = e.uf
+            WHERE e.uf = %s
+            ORDER BY c.descricao
+        """, (uf,))
+        
+        cidades_tuplas = cursor.fetchall()  # Armazene os resultados primeiro
+        
+        cidades = []
+        for cidade in cidades_tuplas:
+            cidades.append({
+                'id_cidade': cidade[0],
+                'descricao': cidade[1]
+            })
+            
+        cursor.close()  # Feche o cursor depois de processar os resultados
+
+        return jsonify({
+            'success': True,
+            'cidades': cidades
+        })
+    except Exception as e:
+        app.logger.error(f"Erro ao buscar cidades para UF {uf}: {e}")
+        return jsonify({
+            'success': False,
+            'mensagem': f'Erro ao buscar cidades para UF {uf}'
+        }), 500
+
 # Funções auxiliares do backyard
 def calculate_seconds_difference(start_time_str, end_time_str):
     start_time = datetime.strptime(start_time_str, '%d/%m/%Y %H:%M:%S')
@@ -931,11 +1007,10 @@ def salvar_cadastro():
         # Preparar query e parâmetros
         query = """
         INSERT INTO ecmrun.ATLETA (
-            CPF, NOME, SOBRENOME, DTNASCIMENTO, NRCELULAR, SEXO, 
-            EMAIL, ID_ENDERECO, TEL_EMERGENCIA, 
-            CONT_EMERGENCIA, SENHA, ATIVO, DTCADASTRO
+            CPF, NOME, SOBRENOME, DTNASCIMENTO, NRCELULAR, SEXO, EMAIL, TEL_EMERGENCIA, 
+            CONT_EMERGENCIA, SENHA, ATIVO, DTCADASTRO, ESTADO, CIDADE
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         """
         
@@ -952,12 +1027,13 @@ def salvar_cadastro():
             celular_limpo,
             data.get('sexo'),
             data.get('email'),
-            data.get('id_logradouro'),  # ID obtido na pesquisa do CEP
             tel_emergencia_limpo,
             data.get('contato_emergencia').upper() if data.get('contato_emergencia') else None,
             senha_hash,
             'S',  # ATIVO
-            data_cadastro
+            data_cadastro,
+            data.get('estado'),
+            data.get('cidade')
         )
 
         #data.get('equipe').upper() if data.get('equipe') else None,
