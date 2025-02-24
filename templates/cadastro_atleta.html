@@ -216,37 +216,6 @@
             margin: 2px 0;
         }
 
-        /* Updated CEP container styles */
-        .cep-container {
-            display: flex;
-            align-items: stretch; /* Changed from center to stretch */
-            gap: 10px;
-        }
-        
-        .cep-input {
-            flex: 1;
-        }
-        
-        .cep-button {
-            height: auto; /* Changed from fixed height */
-            padding: 0 15px;
-            background-color: #4376ac;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 0; /* Added to ensure no unexpected margins */
-        }
-
-        .cep-button:hover {
-            background-color: #3665a0;
-        }
-
-        .cep-button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
         .modal {
             display: none;
             position: fixed;
@@ -302,8 +271,6 @@
             }
         }
 
-        /*     */
-
         #verificacaoForm {
             width: 50%;
             background: white;
@@ -352,15 +319,6 @@
             color: #666;
         }
 
-        #verificacaoForm {
-            width: 50%;
-            background: white;
-            padding: 20px;
-            border-radius: 7px;
-            min-width: 300px;
-            margin: 0 auto 20px auto;
-        }
-
         @media (max-width: 768px) {
             #verificacaoForm {
                 width: calc(100% - 35px);
@@ -375,7 +333,6 @@
     </style>
 </head>
 <body>
-    <!-- Modal and logo container remain the same -->
     <div id="cepModal" class="modal">
         <div class="modal-content">
             <p id="modalMessage"></p>
@@ -390,7 +347,6 @@
     <form id="cadastroForm">
         <div class="form-title">Formulário de Cadastro</div>
 
-        <!-- Name fields remain the same -->
         <div class="form-row">
             <div class="form-field">
                 <label for="primeiro_nome">Nome:</label>
@@ -402,7 +358,6 @@
             </div>
         </div>
 
-        <!-- Gender selection remains the same -->
         <div class="form-group">
             <label>Sexo:</label>
             <div class="radio-group">
@@ -415,7 +370,6 @@
             </div>
         </div>
 
-        <!-- Updated CPF and birth date fields  -->
         <div class="form-row">
             <div class="form-field">
                 <label for="cpf">CPF:</label>
@@ -446,10 +400,8 @@
                     </select>
                 </div>
             </div>
-
         </div>
 
-        <!-- Rest of the form remains the same -->
         <div class="form-row">
             <div class="form-field">
                 <label for="celular">Celular:</label>
@@ -468,48 +420,18 @@
 
         <div class="form-row">
             <div class="form-field">
-                <label for="cep">CEP:</label>
-                <div class="cep-container"> 
-                    <input type="text" id="cep" name="cep" class="cep-input" maxlength="9" inputmode="numeric" required>
-                    <button type="button" id="buscarCep" class="cep-button">Buscar</button>
-                </div>
-            </div>
-            <div class="form-field-readonly">
-                <label for="rua">Rua:</label>
-                <input type="text" id="rua" name="rua" readonly="true" required>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-field">
-                <label for="numero">Número:</label>
-                <input type="text" id="numero" maxlength="10" name="numero">
-            </div>
-            <div class="form-field">
-                <label for="complemento">Complemento:</label>
-                <input type="text" id="complemento" name="complemento">
-            </div>
-            <div class="form-field-readonly">
-                <label for="bairro">Bairro:</label>
-                <input type="text" id="bairro" name="bairro" readonly="true" required>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-field-readonly">
-                <label for="cidade">Cidade:</label>
-                <input type="text" id="cidade" name="cidade" readonly="true" required>
-            </div>
-            <div class="form-field-readonly">
                 <label for="estado">Estado:</label>
-                <input type="text" id="estado" name="estado" readonly="true" required>
+                <select id="estado" name="estado" required>
+                    <option value="" disabled selected>Selecione um estado</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="cidade">Cidade:</label>
+                <select id="cidade" name="cidade" required disabled>
+                    <option value="" disabled selected>Selecione um estado primeiro</option>
+                </select>
             </div>
         </div>
-
-        <!--<div class="form-group">
-            <label for="equipe">Equipe:</label>
-            <input type="text" id="equipe" name="equipe" class="uppercase">
-        </div>-->
 
         <div class="divider"></div>
 
@@ -578,8 +500,6 @@
         </div>
     </form>
 
-
-
     <footer class="footer">
         <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
         <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
@@ -610,7 +530,6 @@
             $('#cpf').mask('000.000.000-00');
             $('#celular').mask('(00) 00000-0000');
             $('#telefone_emergencia').mask('(00) 00000-0000');
-            $('#cep').mask('00000-000');
 
             // Converter para maiúsculo os campos com classe uppercase
             $('.uppercase').on('input', function() {
@@ -734,7 +653,6 @@
             // Atualizar dias quando o mês for alterado
             $('#mes-nasc').on('change', updateDays);            
                     
-                  
             // Habilitar/desabilitar botão de submit baseado no checkbox
             $('#concordar').on('change', function() {
                 if (this.checked) {
@@ -744,67 +662,68 @@
                 }
             });
 
-            // Função para buscar CEP
-            $('#buscarCep').click(function() {
-                const cep = $('#cep').val().replace(/\D/g, '');
-                
-                if (cep.length !== 8) {
-                    showModal('CEP inválido. Por favor, digite um CEP válido.');
-                    return;
-                }
-
-                // Adiciona loading spinner ao botão
-                $(this).prop('disabled', true).html('<div class="loading"></div>');
-
-                fetch(`/pesquisarCEP?cep=${cep}`)
+            // Carregar estados
+            function carregarEstados() {
+                fetch('/listar-estados')
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            $('#rua').val(data.data.descricao_sem_numero);
-                            $('#bairro').val(data.data.descricao_bairro);
-                            $('#cidade').val(data.data.descricao_cidade);
-                            $('#estado').val(data.data.estado);
-                            // Store the id_logradouro
-                            window.idLogradouro = data.data.id_logradouro;
+                            const selectEstado = $('#estado');
+                            selectEstado.empty().append('<option value="" disabled selected>Selecione um estado</option>');
+                            
+                            data.estados.forEach(estado => {
+                                selectEstado.append(`<option value="${estado.uf}">${estado.nome} (${estado.uf})</option>`);
+                            });
                         } else {
-                            showModal('CEP não encontrado.');
-                            $('#rua, #bairro, #cidade, #estado').val('');
-                            window.idLogradouro = null;
+                            showModal('Erro ao carregar estados');
                         }
                     })
-                    .finally(() => {
-                        // Reabilita o botão e remove o loading
-                        $('#buscarCep').prop('disabled', false).text('Buscar');
+                    .catch(error => {
+                        console.error('Erro ao carregar estados:', error);
+                        showModal('Erro ao carregar estados. Tente novamente.');
                     });
+            }
 
-            });
-
-            // Permitir busca de CEP ao pressionar Enter no campo
-            $('#cep').keypress(function(e) {
-                if (e.which === 13) {
-                    e.preventDefault();
-                    $('#buscarCep').click();
-                }
-            });
-
-            // Validação do formulário antes de enviar
-            $('#termoForm').on('submit', function(e) {
-                e.preventDefault();
+            // Carregar cidades quando selecionar um estado
+            $('#estado').on('change', function() {
+                const uf = $(this).val();
+                if (!uf) return;
                 
-                // Verificar se todos os campos obrigatórios estão preenchidos
-                const cadastroForm = $('#cadastroForm')[0];
-                if (!cadastroForm.checkValidity()) {
-                    showModal('Por favor, preencha todos os campos obrigatórios.');
-                    return;
-                }
-
+                // Adiciona loading spinner
+                const cidadeSelect = $('#cidade');
+                cidadeSelect.prop('disabled', true);
+                cidadeSelect.empty().append('<option value="" disabled selected>Carregando cidades...</option>');
+                
+                fetch(`/listar-cidades?uf=${uf}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        cidadeSelect.empty();
+                        cidadeSelect.append('<option value="" disabled selected>Selecione uma cidade</option>');
+                        
+                        if (data.success) {
+                            data.cidades.forEach(cidade => {
+                                cidadeSelect.append(`<option value="${cidade.id_cidade}">${cidade.descricao}</option>`);
+                            });
+                            cidadeSelect.prop('disabled', false);
+                        } else {
+                            cidadeSelect.append('<option value="" disabled selected>Erro ao carregar cidades</option>');
+                            showModal('Erro ao carregar cidades');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao carregar cidades:', error);
+                        cidadeSelect.empty().append('<option value="" disabled selected>Erro ao carregar cidades</option>');
+                        showModal('Erro ao carregar cidades. Tente novamente.');
+                    });
             });
+
+            // Carregar estados quando a página carregar
+            carregarEstados();
 
             // Máscara para o código de verificação (apenas números)
             $('#codigoVerificacao').on('input', function() {
                 this.value = this.value.replace(/\D/g, '');
             });
-
 
             // Quando clicar no botão Continuar
             $('#submitBtn').click(function() {
@@ -870,7 +789,6 @@
                 console.error('Formulário de verificação não encontrado');
             }
 
-
             // Atualizar a validação do formulário de verificação
             $('#verificacaoForm').on('submit', function(e) {
                 e.preventDefault();
@@ -932,12 +850,12 @@
                             ano_nasc: $('#ano-nasc').val(),
                             sexo: $('input[name="sexo"]:checked').val(),
                             celular: $('#celular').val(),
+                            estado: $('#estado').val(),        // Corrigido - estava usando valor do celular
+                            cidade: $('#cidade').val(),        // Adicionado o campo cidade que contém o id_cidade
                             telefone_emergencia: $('#telefone_emergencia').val(),
                             contato_emergencia: $('#contato_emergencia').val(),
                             email: $('#email').val(),
-                            senha: senha,
-                            //equipe: $('#equipe').val(),
-                            id_logradouro: window.idLogradouro, // Precisamos armazenar isso quando buscarmos o CEP
+                            senha: senha // Precisamos armazenar isso quando buscarmos o CEP
                         };
 
                         return fetch('/salvar-cadastro', {
