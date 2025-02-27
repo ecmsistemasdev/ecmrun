@@ -796,21 +796,35 @@
             const loginLink = document.getElementById('loginLink');
             const logoutModal = document.getElementById('logoutModal');
             const continueButton = document.querySelector('.submit-btn');
-
-            // Obter as datas de inscrição do template
-            const inicioInsc = "{{ dt_inicio_insc }}";
-            const fimInsc = "{{ dt_fim_insc }}";
-
-            console.log("Data início:", inicioInsc);
-            console.log("Data fim:", fimInsc);
-
+        
+            // Variáveis para armazenar os valores atuais
+            let currentModalidade = {
+                id: null,
+                descricao: '',
+                valor: '',
+                valorFormatted: ''
+            };
+        
+            // Obter as datas de inscrição
+            const inicioInsc = "{{ inicio_insc }}";
+            const fimInsc = "{{ fim_insc }}";
+        
             // Função para verificar o período de inscrição e atualizar o botão
             function updateButtonState() {
+                if (!inicioInsc || !fimInsc) {
+                    console.log("Datas de inscrição não disponíveis");
+                    return;
+                }
+        
                 const now = new Date();
                 
                 // Converter as strings de data para objetos Date
                 const dtInicio = convertBrazilianDateToJsDate(inicioInsc);
                 const dtFim = convertBrazilianDateToJsDate(fimInsc);
+                
+                console.log("Agora:", now);
+                console.log("Início:", dtInicio);
+                console.log("Fim:", dtFim);
                 
                 // Verificar em qual período estamos
                 if (now < dtInicio) {
@@ -835,34 +849,27 @@
             function convertBrazilianDateToJsDate(dateStr) {
                 if (!dateStr) return new Date(0); // Data mínima se não houver data
                 
-                // Formato esperado: dd/mm/yyyy hh:mm:ss
-                const parts = dateStr.split(' ');
-                const dateParts = parts[0].split('/');
-                const timeParts = parts[1] ? parts[1].split(':') : ['00', '00', '00'];
-                
-                // Mês em JavaScript é 0-indexed (jan=0, fev=1, etc)
-                return new Date(
-                    parseInt(dateParts[2]), // ano
-                    parseInt(dateParts[1]) - 1, // mês (0-11)
-                    parseInt(dateParts[0]), // dia
-                    parseInt(timeParts[0]), // hora
-                    parseInt(timeParts[1]), // minuto
-                    parseInt(timeParts[2])  // segundo
-                );
+                try {
+                    // Formato esperado: dd/mm/yyyy hh:mm:ss
+                    const parts = dateStr.split(' ');
+                    const dateParts = parts[0].split('/');
+                    const timeParts = parts[1] ? parts[1].split(':') : ['00', '00', '00'];
+                    
+                    // Mês em JavaScript é 0-indexed (jan=0, fev=1, etc)
+                    return new Date(
+                        parseInt(dateParts[2]), // ano
+                        parseInt(dateParts[1]) - 1, // mês (0-11)
+                        parseInt(dateParts[0]), // dia
+                        parseInt(timeParts[0]), // hora
+                        parseInt(timeParts[1]), // minuto
+                        parseInt(timeParts[2])  // segundo
+                    );
+                } catch (e) {
+                    console.error("Erro ao converter data:", e);
+                    return new Date();
+                }
             }
-            
-            // Verificar o estado do botão quando a página carrega
-            updateButtonState();
-
-
-            // Variáveis para armazenar os valores atuais
-            let currentModalidade = {
-                id: null,
-                descricao: '',
-                valor: '',
-                valorFormatted: ''
-            };
-            /// ADICIONADO POR MIM            
+        
             // Function to clear specific payment-related localStorage items
             function clearPaymentRelatedLocalStorage() {
                 const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
@@ -872,10 +879,10 @@
                 });
             }
             
-            ////  17/02/2025
+            // Preservando o event listener original do select
             modalidadeSelect.addEventListener('change', function() {
                 const iditem = this.value;
-
+        
                 if (!iditem) {
                     valorDiv.innerHTML = '<a>Valor:</a>';
                     currentModalidade = {
@@ -909,7 +916,7 @@
                             style: 'currency',
                             currency: 'BRL'
                         });
-
+        
                         // Armazena os valores formatados
                         currentModalidade.valorFormatted = `${vlinscricao} + ${vltaxa} = Total: ${(data.vlinscricao + data.vltaxa).toLocaleString('pt-BR', {
                             style: 'currency',
@@ -917,20 +924,12 @@
                         })}`;
                         
                         valorDiv.innerHTML = <a>Valor: ${vlinscricao} + (${vltaxa} de taxa)</a>;
-
-                        // 'add 1' - adicionado por mim
+        
+                        // Armazenar no localStorage
                         localStorage.setItem('cat_vlinscricao', data.vlinscricao);
                         localStorage.setItem('cat_vltaxa', data.vltaxa);
                         localStorage.setItem('cat_iditem', data.iditem);    
-    
-                        function startPaymentCheck() {
-                            
-                            if (checkInterval) {
-                                clearInterval(checkInterval);
-                            }
-                            checkInterval = setInterval(checkPaymentStatus, 5000);
-                        }
-
+        
                         const vlInscricao = localStorage.getItem('cat_vlinscricao');
                         const vlTaxa = localStorage.getItem('cat_vltaxa');
                         const idItem = localStorage.getItem('cat_iditem');
@@ -940,16 +939,12 @@
                             vlInscricao,
                             vlTaxa
                         });            
-                        // fim 'add 1'                        
-                        
                     })
                     .catch(error => {
                         console.error('Erro:', error);
                         valorDiv.innerHTML = '<a>Erro ao carregar valores</a>';
                     });
             });
-
-            //////////  FIM  17/02/2025
             
             function updateLoginControls() {
                 const isLoggedIn = localStorage.getItem('logado') === 'sim';
@@ -968,15 +963,15 @@
                     };
                 }
             }
-    
+        
             function showLogoutModal() {
                 logoutModal.style.display = 'flex';
             }
-    
+        
             function closeLogoutModal() {
                 logoutModal.style.display = 'none';
             }
-    
+        
             window.confirmLogout = function() {
                 // Clear login-related localStorage items
                 const loginItems = [
@@ -992,12 +987,12 @@
                 closeLogoutModal();
                 updateLoginControls();
             }
-    
+        
             window.closeLogoutModal = closeLogoutModal;
-
+        
             // Check login state on page load
             updateLoginControls();
-    
+        
             // Update the continue button click handler
             continueButton.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1006,12 +1001,12 @@
                     alert('Por favor, selecione uma modalidade antes de continuar.');
                     return;
                 }
-    
+        
                 // Store category information
                 localStorage.setItem('categoria_id', currentModalidade.id);
                 localStorage.setItem('categoria', currentModalidade.descricao);
                 localStorage.setItem('valor', currentModalidade.valorFormatted);
-    
+        
                 if (localStorage.getItem('logado') === 'sim') {
                     const idPagamento = localStorage.getItem('insc_idpagamento');
                     window.location.href = (!idPagamento || idPagamento === 'none') 
@@ -1022,10 +1017,15 @@
                     window.location.href = '/login';
                 }
             });
-    
+        
+            // Verificar o estado do botão quando a página carrega
+            updateButtonState();
+            
             // Initialize login controls
             updateLoginControls();
         });
+            
+                                  
     </script>
 </body>
 </html>
