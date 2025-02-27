@@ -441,7 +441,7 @@
     </div>
 
     <div class="header">
-        <img src="https://ecmrun.com.br/static/img/img_200k.jpg" alt="Logo" class="center-image">
+        <img src="/static/img/img_200k.jpg" alt="Logo" class="center-image">
     </div>
     
     <h1 class="main-title">{{ titulo }}</h1>
@@ -834,7 +834,6 @@
                 
                 currentModalidade.id = iditem;
                 currentModalidade.descricao = selectedOption.text;
-                console.log('iditem',currentModalidade.id)
                 
                 fetch(/get_modalidade_valores/${iditem})
                     .then(response => response.json())
