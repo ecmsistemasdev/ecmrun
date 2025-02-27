@@ -832,16 +832,28 @@
                     continueButton.textContent = "Em Breve";
                     continueButton.disabled = true;
                     continueButton.style.backgroundColor = "#FFA500"; // Laranja
+                   
+                    // Garantir que o contador esteja visível
+                    const contador = document.getElementById('contador-regressivo');
+                    if (contador) contador.style.display = 'block';                    
                 } else if (now > dtFim) {
                     // Após o período de inscrição
                     continueButton.textContent = "Encerrado";
                     continueButton.disabled = true;
                     continueButton.style.backgroundColor = "#FF6666"; // Vermelho claro
+      
+                    // Ocultar o contador
+                    const contador = document.getElementById('contador-regressivo');
+                    if (contador) contador.style.display = 'none';      
                 } else {
                     // Durante o período de inscrição
                     continueButton.textContent = "Continuar";
                     continueButton.disabled = false;
                     continueButton.style.backgroundColor = "#1d72cc"; // Cor original azul
+                    
+                    // Ocultar o contador
+                    const contador = document.getElementById('contador-regressivo');
+                    if (contador) contador.style.display = 'none';      
                 }
             }
             
@@ -878,7 +890,92 @@
                     localStorage.removeItem(item);
                 });
             }
-            
+
+
+            // Adicione essa função ao seu script existente
+            function adicionarContadorRegressivo() {
+                // Criar elemento para o contador
+                const contadorDiv = document.createElement('div');
+                contadorDiv.id = 'contador-regressivo';
+                contadorDiv.style.textAlign = 'center';
+                contadorDiv.style.marginTop = '10px';
+                contadorDiv.style.marginBottom = '10px';
+                contadorDiv.style.fontSize = '14px';
+                contadorDiv.style.fontWeight = 'bold';
+                contadorDiv.style.color = '#1d72cc';
+                
+                // Inserir o contador após o botão
+                const submitBtn = document.querySelector('.submit-btn');
+                submitBtn.parentNode.insertBefore(contadorDiv, submitBtn.nextSibling);
+                
+                // Função para atualizar o contador
+                function atualizarContador() {
+                    if (!inicioInsc) {
+                    contadorDiv.textContent = "Data de início não definida";
+                    return;
+                    }
+                    
+                    const agora = new Date();
+                    const dtInicio = convertBrazilianDateToJsDate(inicioInsc);
+                    
+                    // Se já passou da data de início, esconda o contador
+                    if (agora >= dtInicio) {
+                    contadorDiv.style.display = 'none';
+                    updateButtonState(); // Atualizar o estado do botão
+                    return;
+                    }
+                    
+                    // Calcular a diferença de tempo
+                    const diferenca = dtInicio - agora;
+                    
+                    // Calcular dias, horas, minutos e segundos
+                    const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
+                    const horas = Math.floor((diferenca % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutos = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
+                    const segundos = Math.floor((diferenca % (1000 * 60)) / 1000);
+                    
+                    // Formatação inteligente para ocultar unidades zeradas
+                    let contadorTexto = "Inscrições começam em: ";
+                    let tempoAdicionado = false;
+                    
+                    if (dias > 0) {
+                    contadorTexto += `${dias}d `;
+                    tempoAdicionado = true;
+                    }
+                    
+                    if (horas > 0 || tempoAdicionado) {
+                    contadorTexto += `${horas}h `;
+                    tempoAdicionado = true;
+                    }
+                    
+                    if (minutos > 0 || tempoAdicionado) {
+                    contadorTexto += `${minutos}m `;
+                    tempoAdicionado = true;
+                    }
+                    
+                    // Sempre mostrar os segundos
+                    contadorTexto += `${segundos}s`;
+                    
+                    // Atualizar o texto do contador
+                    contadorDiv.innerHTML = contadorTexto;
+                    
+                    // Atualizar o botão se necessário
+                    updateButtonState();
+                }
+                
+                // Atualizar o contador a cada segundo
+                const intervalId = setInterval(atualizarContador, 1000);
+                
+                // Executar imediatamente para não esperar o primeiro intervalo
+                atualizarContador();
+                
+                // Armazenar o ID do intervalo para limpeza posterior se necessário
+                return intervalId;
+            }
+
+
+            adicionarContadorRegressivo();
+
             ////  17/02/2025
             modalidadeSelect.addEventListener('change', function() {
                 const iditem = this.value;
@@ -1031,7 +1128,7 @@
             });
     
             updateButtonState();
-            
+
             // Initialize login controls
             updateLoginControls();
         });
