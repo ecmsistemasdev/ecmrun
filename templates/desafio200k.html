@@ -804,7 +804,72 @@
                 valor: '',
                 valorFormatted: ''
             };
-            /// ADICIONADO POR MIM            
+            
+            // Obter as datas de inscrição
+            const inicioInsc = "{{ dt_inicio_insc }}";
+            const fimInsc = "{{ dt_fim_insc }}";            
+            
+            // Função para verificar o período de inscrição e atualizar o botão
+            function updateButtonState() {
+                if (!inicioInsc || !fimInsc) {
+                    console.log("Datas de inscrição não disponíveis");
+                    return;
+                }
+
+                const now = new Date();
+                
+                // Converter as strings de data para objetos Date
+                const dtInicio = convertBrazilianDateToJsDate(inicioInsc);
+                const dtFim = convertBrazilianDateToJsDate(fimInsc);
+                
+                console.log("Agora:", now);
+                console.log("Início:", dtInicio);
+                console.log("Fim:", dtFim);
+                
+                // Verificar em qual período estamos
+                if (now < dtInicio) {
+                    // Antes do período de inscrição
+                    continueButton.textContent = "Em Breve";
+                    continueButton.disabled = true;
+                    continueButton.style.backgroundColor = "#FFA500"; // Laranja
+                } else if (now > dtFim) {
+                    // Após o período de inscrição
+                    continueButton.textContent = "Encerrado";
+                    continueButton.disabled = true;
+                    continueButton.style.backgroundColor = "#FF6666"; // Vermelho claro
+                } else {
+                    // Durante o período de inscrição
+                    continueButton.textContent = "Continuar";
+                    continueButton.disabled = false;
+                    continueButton.style.backgroundColor = "#1d72cc"; // Cor original azul
+                }
+            }
+            
+            // Função para converter data no formato brasileiro para objeto Date do JavaScript
+            function convertBrazilianDateToJsDate(dateStr) {
+                if (!dateStr) return new Date(0); // Data mínima se não houver data
+                
+                try {
+                    // Formato esperado: dd/mm/yyyy hh:mm:ss
+                    const parts = dateStr.split(' ');
+                    const dateParts = parts[0].split('/');
+                    const timeParts = parts[1] ? parts[1].split(':') : ['00', '00', '00'];
+                    
+                    // Mês em JavaScript é 0-indexed (jan=0, fev=1, etc)
+                    return new Date(
+                        parseInt(dateParts[2]), // ano
+                        parseInt(dateParts[1]) - 1, // mês (0-11)
+                        parseInt(dateParts[0]), // dia
+                        parseInt(timeParts[0]), // hora
+                        parseInt(timeParts[1]), // minuto
+                        parseInt(timeParts[2])  // segundo
+                    );
+                } catch (e) {
+                    console.error("Erro ao converter data:", e);
+                    return new Date();
+                }
+            }
+                        
             // Function to clear specific payment-related localStorage items
             function clearPaymentRelatedLocalStorage() {
                 const itemsToRemove = ['apoio', 'nome_equipe', 'integrantes', 'camiseta', 'vlinscricao', 'vltaxa'];
@@ -965,6 +1030,8 @@
                 }
             });
     
+            updateButtonState();
+            
             // Initialize login controls
             updateLoginControls();
         });
