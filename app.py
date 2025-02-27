@@ -970,11 +970,14 @@ def desafio200k():
         vl50 = f'R$ {results[2][13]:,.2f}'
         vl25 = f'R$ {results[3][13]:,.2f}'
         inicioinsc = results[0][16]
-        fiminsc = results[0][17]        
-        return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades,
-                               vlSolo=vl200, vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, 
-                               inicio_insc=inicioinsc, fim_insc=fiminsc)
+        fiminsc = results[0][17]      
+        dt_inicioinsc = results[0][7]
+        dt_fiminsc = results[0][8]     
         
+        return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades, vlSolo=vl200, 
+                               vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, inicio_insc=inicioinsc, fim_insc=fiminsc, 
+                               dt_inicio_insc=dt_inicioinsc, dt_fim_insc=dt_fiminsc)
+
     except Exception as e:
         print(f"Erro ao carregar página: {str(e)}")
         return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
