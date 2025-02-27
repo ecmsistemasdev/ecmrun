@@ -834,6 +834,7 @@
                 
                 currentModalidade.id = iditem;
                 currentModalidade.descricao = selectedOption.text;
+                console.log('iditem',currentModalidade.id)
                 
                 fetch(/get_modalidade_valores/${iditem})
                     .then(response => response.json())
