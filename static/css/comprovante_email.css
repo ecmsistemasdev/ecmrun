@@ -1,0 +1,280 @@
+:root {
+    --page-padding: 2cm;
+    --content-bg-color: rgb(203, 216, 226);
+    --content-border-color: rgb(153, 166, 176);
+}
+
+@page {
+    size: A4;
+    margin: 1cm;
+}
+
+@media print {
+    body {
+        width: 21cm;
+        height: 29.7cm;
+        margin: 0;
+        padding: 1cm;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Wrapper principal para controlar a largura */
+.email-wrapper {
+    max-width: 800px;
+    width: 60%;
+    min-width: 600px;
+    margin: 0 auto;
+    background-color: white;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+/* Container interno para o conteúdo */
+.inner-container {
+    padding: var(--page-padding);
+    box-sizing: border-box;
+}
+
+.header {
+    margin-bottom: 3em;
+    border-bottom: 2px solid #333;
+    position: relative;
+    width: 100%;
+}
+
+.logo-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    margin-bottom: 1em;
+}
+
+.logo {
+    width: 100px;
+    height: 100px;
+    background-color: #f5f5f5;
+    flex-shrink: 0;
+}
+
+.title-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-self: flex-end;
+    min-width: 0;
+    padding-left: 5px;
+}
+
+.header h1 {
+    font-size: 20pt;
+    margin: 0;
+    color: #333;
+    text-align: left;
+}
+
+.header p {
+    font-size: 10pt;
+    color: #666;
+    margin: 0.5em 0 1em 0;
+    text-align: right;
+    width: 100%;
+}
+
+.content {
+    margin-bottom: 3em;
+    padding: 1.5em;
+    border: 2px solid rgb(149, 163, 173);
+    border-radius: 8px;
+    background-color: rgb(203, 216, 226);
+}
+
+.content-section {
+    margin-bottom: 1.5em;
+}
+
+.event-info {
+    margin: 0;
+    padding: 0.5em 1em;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.event-name {
+    font-weight: bold;
+    font-size: 14pt;
+}
+
+.event-address {
+    font-size: 10pt;
+    color: #666;
+    margin-top: 0;
+}
+
+.event-date {
+    font-size: 10pt;
+    color: #666;
+    margin-top: 0;
+}
+
+.distance-value-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 1.5em;
+}
+
+.distance-value-row .info-box {
+    width: 50%;
+    flex: 0 0 calc(50% - 8px);
+}
+
+.info-box {
+    padding: 0.5em 1em;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    min-width: 120px;
+}
+
+.full-width-box {
+    width: 100%;
+    margin-bottom: 1.5em;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #444;
+    white-space: nowrap;
+    display: block;
+    margin-bottom: 0.5em;
+}
+
+.info-value {
+    color: #666;
+    text-align: left;
+    display: block;
+}
+
+.observations {
+    margin-top: 0;
+}
+
+.observations-label {
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 0.5em;
+}
+
+.observations-content {
+    color: #666;
+    padding: 1em;
+    background-color: white;
+    border-radius: 4px;
+    min-height: 50px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+    padding-top: 5px;
+}
+
+.footer {
+    background-color: white;
+    padding: 20px 0;
+    margin-top: auto;
+    text-align: center;
+}
+
+.footer-logo {
+    height: 60px;
+    width: auto;
+    margin-bottom: 10px;
+}
+
+.footer-text {
+    font-size: 0.7em;
+    color: #333;
+    margin: 2px 0;
+}
+
+@media screen and (max-width: 768px) {
+    .email-wrapper {
+        width: 100% !important;
+        min-width: unset !important;
+        padding: 10px;
+    }
+
+    .inner-container {
+        padding: 1cm 0.5cm;
+    }
+
+    .logo-title {
+        flex-direction: column;
+        align-items: start;
+    }
+
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .title-container {
+        width: 100%;
+        align-items: start;
+        padding-left: 0;
+    }
+
+    .header h1 {
+        font-size: 16pt;
+        text-align: left;
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .header p {
+        font-size: 10pt;
+        text-align: right;
+        width: 100%;
+    }
+
+    .content {
+        padding: 1em;
+    }
+
+    .event-name {
+        font-size: 12pt;
+    }
+
+    .event-address, .event-date {
+        font-size: 9pt;
+    }
+
+    .footer-logo {
+        height: 40px;
+    }
+
+    .observations-content {
+        padding: 0.5em;
+    }
+}
+
+@media screen and (max-width: 320px) {
+    .header h1 {
+        font-size: 14pt;
+    }
+
+    .logo {
+        width: 50px;
+        height: 50px;
+    }
+}

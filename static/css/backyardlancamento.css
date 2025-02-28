@@ -1,0 +1,153 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 15px;
+    background-color: #f0f0f0;
+    min-height: 100vh;
+}
+
+.logo {
+    height: 60px;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 24px;
+    color: #333;
+    margin: 10px 0 20px 0;
+    text-align: center;
+}
+
+form {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    padding: 20px;
+    border-radius: 7px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group.peito {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-group.chegada {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 25px; /* Espaço adicional após o nome do atleta */
+}
+
+.chegada-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+label {
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
+}
+
+input[type="text"] {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    height: 35px;
+}
+
+#nrpeito {
+    width: 80px;
+}
+
+#chegada {
+    width: 200px; /* Reduzido para alinhar com o botão atualizar */
+}
+
+button {
+    background-color: #4376ac;
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.athlete-name {
+    font-size: 16px;
+    color: #333;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    width: 100%;
+    min-height: 20px;
+    font-weight: bold;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.error {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+@media (max-width: 480px) {
+    form {
+        padding: 15px;
+    }
+
+    .form-group.peito {
+        gap: 5px;
+    }
+
+    button {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+
+    input[type="text"] {
+        font-size: 14px;
+    }
+}
