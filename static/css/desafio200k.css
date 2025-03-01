@@ -20,6 +20,17 @@ body {
     min-width: 150px; /* Added to ensure consistent space for login controls */
 }
 
+.instagram-link {
+    display: inline-block;
+}
+.instagram-link img {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+.instagram-link span {
+    vertical-align: middle;
+}
+
 .user-name {
     text-align: right;
     font-weight: bold;
