@@ -474,6 +474,162 @@
 
             adicionarContadorRegressivo();
 
+            function adicionarContadorRegressivoDesafio() {
+                // Data de início do evento vem do Flask
+                const dtInicioEvento = "{{ dt_inicio_evento }}";
+                
+                // Criar elemento do contador
+                const contadorContainer = document.createElement('div');
+                contadorContainer.id = 'contador-desafio';
+                contadorContainer.className = 'contador-container';
+                contadorContainer.style.textAlign = 'center';
+                contadorContainer.style.padding = '15px';
+                contadorContainer.style.margin = '20px auto';
+                contadorContainer.style.maxWidth = '500px';
+                contadorContainer.style.backgroundColor = '#f8f9fa';
+                contadorContainer.style.borderRadius = '10px';
+                contadorContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+                
+                // Título do contador
+                const contadorTitulo = document.createElement('h3');
+                contadorTitulo.textContent = 'CONTAGEM REGRESSIVA PARA O DESAFIO';
+                contadorTitulo.style.color = '#1d72cc';
+                contadorTitulo.style.margin = '0 0 10px 0';
+                contadorContainer.appendChild(contadorTitulo);
+                
+                // Div para mostrar o tempo
+                const contadorTempo = document.createElement('div');
+                contadorTempo.id = 'tempo-desafio';
+                contadorTempo.style.fontSize = '24px';
+                contadorTempo.style.fontWeight = 'bold';
+                contadorTempo.style.color = '#333';
+                contadorContainer.appendChild(contadorTempo);
+                
+                // Data do evento
+                const dataEvento = document.createElement('div');
+                dataEvento.style.marginTop = '10px';
+                dataEvento.style.fontSize = '16px';
+                dataEvento.style.color = '#666';
+                dataEvento.textContent = 'Início: 04 de Julho de 2025 às 16:00';
+                contadorContainer.appendChild(dataEvento);
+                
+                // Inserir o contador após a informação (antes do regulamento)
+                //const infoSection = document.querySelector('.info');
+                //if (infoSection) {
+                //    const mainContent = document.querySelector('.main-content');
+                //    mainContent.insertBefore(contadorContainer, document.getElementById('termoForm'));
+                //}
+
+                const registrationForm = document.querySelector('.registration-form');
+                if (registrationForm) {
+                    registrationForm.parentNode.insertBefore(contadorContainer, registrationForm.nextSibling);
+                }                
+                
+                // Função para atualizar o contador
+                function atualizarContadorDesafio() {
+                    // Data do evento (usar hora fornecida no HTML, mas também pode vir do backend)
+                    let dataEvento;
+                    
+                    if (dtInicioEvento && dtInicioEvento !== "{{ dt_inicio_evento }}") {
+                        // Se a data vier do backend no formato brasileiro dd/mm/yyyy
+                        dataEvento = convertBrazilianDateToJsDate(dtInicioEvento);
+                    } else {
+                        // Data fixa conforme informativo (04/07/2025 às 16h)
+                        dataEvento = new Date(2025, 6, 4, 16, 0, 0); // Julho é 6 (zero-based)
+                    }
+                    
+                    const agora = new Date();
+                    
+                    // Diferença em milissegundos
+                    const diferenca = dataEvento - agora;
+                    
+                    // Verificar se o evento já aconteceu
+                    if (diferenca <= 0) {
+                        contadorTempo.innerHTML = 'O DESAFIO JÁ COMEÇOU!';
+                        return;
+                    }
+                    
+                    // Calcular dias, horas, minutos e segundos
+                    const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
+                    const horas = Math.floor((diferenca % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutos = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
+                    const segundos = Math.floor((diferenca % (1000 * 60)) / 1000);
+                    
+                    // Formatar cada unidade de tempo com dois dígitos
+                    const diasFormatados = dias.toString().padStart(2, '0');
+                    const horasFormatadas = horas.toString().padStart(2, '0');
+                    const minutosFormatados = minutos.toString().padStart(2, '0');
+                    const segundosFormatados = segundos.toString().padStart(2, '0');
+                    
+                    // Atualizar o contador com divs para cada unidade de tempo
+                    contadorTempo.innerHTML = `
+                        <div class="tempo-unidade">
+                            <span class="tempo-valor">${diasFormatados}</span>
+                            <span class="tempo-label">Dias</span>
+                        </div>
+                        <span class="tempo-separador">:</span>
+                        <div class="tempo-unidade">
+                            <span class="tempo-valor">${horasFormatadas}</span>
+                            <span class="tempo-label">Horas</span>
+                        </div>
+                        <span class="tempo-separador">:</span>
+                        <div class="tempo-unidade">
+                            <span class="tempo-valor">${minutosFormatados}</span>
+                            <span class="tempo-label">Min</span>
+                        </div>
+                        <span class="tempo-separador">:</span>
+                        <div class="tempo-unidade">
+                            <span class="tempo-valor">${segundosFormatados}</span>
+                            <span class="tempo-label">Seg</span>
+                        </div>
+                    `;
+                }
+                
+                // Estilo para o contador
+                const style = document.createElement('style');
+                style.textContent = `
+                    .contador-container {
+                        background: linear-gradient(135deg, #f0f8ff 0%, #e6f2ff 100%);
+                    }
+                    #tempo-desafio {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 5px;
+                    }
+                    .tempo-unidade {
+                        display: inline-flex;
+                        flex-direction: column;
+                        align-items: center;
+                        background-color: #1d72cc;
+                        color: white;
+                        border-radius: 5px;
+                        padding: 5px;
+                        min-width: 60px;
+                    }
+                    .tempo-valor {
+                        font-size: 28px;
+                        font-weight: bold;
+                    }
+                    .tempo-label {
+                        font-size: 12px;
+                        text-transform: uppercase;
+                    }
+                    .tempo-separador {
+                        font-size: 28px;
+                        font-weight: bold;
+                        color: #1d72cc;
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                // Iniciar o contador
+                atualizarContadorDesafio();
+                setInterval(atualizarContadorDesafio, 1000);
+            }            
+            
+            adicionarContadorRegressivoDesafio();            
+            
             ////  17/02/2025
             modalidadeSelect.addEventListener('change', function() {
                 const iditem = this.value;
