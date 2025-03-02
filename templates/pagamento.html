@@ -3,322 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/css/pagamento.css"/>
     <title>Pagamento - 4º Desafio 200k</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <div id="payment-modal-root"></div>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            padding: 15px;
-            background-color: #f0f0f0;
-            min-height: 100vh;
-        }
-
-        .logo-container {
-            width: 100%;
-            height: 60px;
-            background-color: white;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-        }
-
-        .logo {
-            width: 60px;
-            height: 60px;
-            margin-right: 15px;
-        }
-
-        .header-title {
-            font-size: 20px;
-            color: #333;
-            margin: 0;
-            text-align: left;
-            flex: 1;
-        }
-
-        .title-h1 {
-            font-size: 20px;
-            color: #333;
-            margin: 0;
-            margin-bottom: 10px;
-            text-align: center;
-            flex: 1;
-        }
-
-        .payment-container {
-            width: 90%;
-            max-width: 600px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin: 0 auto; /* Centraliza o container */
-            box-sizing: border-box; /* Inclui padding e border no width */
-        }
-
-        .pix-key-container {
-            width: 100%;
-            max-width: 400px;
-            margin: 15px auto;
-            position: relative;
-        }
-        
-        .pix-key {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #f8f9fa;
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 10px;
-            word-break: break-all; /* Quebra palavras longas */
-            white-space: normal; /* Permite quebra de linha */
-            box-sizing: border-box; /* Inclui padding e border no width */
-        }
-
-        /* Correção para container duplicado */
-        #pixForm .payment-container {
-            width: 100%;
-            padding: 0;
-            box-shadow: none;
-        }
-
-        /* .form-title {
-            background-color: #647e99;
-            color: white;
-            padding: 15px;
-            margin: -20px -20px 20px -20px;
-            border-radius: 8px 8px 0 0;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-        } */
-
-        .payment-info {
-            text-align: center;
-            margin-bottom: 10px; /* Reduzido de 20px */
-            padding: 10px; /* Reduzido de 15px */
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-
-        .total-amount {
-            font-size: 24px;
-            color: #0056b3;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .total-amount {
-            font-size: 24px;
-            color: #0056b3;
-            font-weight: bold;
-            margin: 5px 0; /* Reduzido de 10px */
-        }
-
-        .qr-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 10px 0; /* Reduzido de 20px */
-        }
-        
-        .qr-container h3 {
-            margin: 5px 0; /* Adicionado para reduzir espaço */
-        }
-        
-                
-        .qr-code {
-            width: 230px;
-            height: 230px;
-            margin: 10px 0; /* Reduzido de 20px */
-            padding: 5px; /* Reduzido de 10px */
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .pix-key-container {
-            width: 100%;
-            max-width: 400px;
-            margin: 10px auto; /* Reduzido de 15px */
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .pix-key {
-            width: 100%;
-            padding: 8px; /* Reduzido de 12px */
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #f8f9fa;
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 5px; /* Reduzido de 10px */
-        }
-                
-        .pix-key-container .button {
-            margin: 5px auto; /* Centraliza o botão */
-            display: block;
-        }
-        
-        .button {
-            background-color: #4376ac;
-            color: white;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .button:hover {
-            background-color: #0056b3;
-        }
-
-        .button.secondary {
-            background-color: #6c757d;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        /* adicionado 01/02 */
-        .payment-status {
-            background-color: #fff3cd;
-            color: #8b0000; /* Vermelho escuro */
-            padding: 10px; /* Reduzido de 15px */
-            border-radius: 4px;
-            margin: 10px 0; /* Reduzido de 15px */
-            text-align: center;
-            font-weight: bold;
-            border: 1px solid #ffeeba;
-        }
-
-        .payment-status i {
-            margin-right: 8px;
-        }
-
-        /* Adicione estas classes para persistência de estado */
-        .persistent-data {
-            display: none;
-        }
-        /* FIM >>  adicionado 01/02 */
-
-        @media (max-width: 480px) {
-            .logo-container {
-                padding: 0 15px;
-            }
-            
-            .qr-code {
-                width: 230px;
-                height: 230px;
-            }
-
-            .header-title .title-h1 {
-                font-size: 14px;
-            }
-
-            .payment-container {
-                width: 95%;
-                padding: 10px;
-            }
-
-            .button {
-                width: 100%;
-                margin: 5px 0;
-            }
-
-            .button-container {
-                flex-direction: column;
-            }
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            color: #4376ac;
-            margin-bottom: 20px;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 50px;
-            height: 50px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #4376ac;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px 0;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .footer {
-            background-color: white;
-            padding: 20px 0;
-            margin-top: auto;
-            text-align: center;
-        }
-
-        .footer-logo {
-            height: 60px;
-            width: auto;
-            margin-bottom: 10px;
-        }
-
-        .footer-text {
-            font-size: 0.7em;
-            color: #333;
-            margin: 2px 0;
-        }        
-
-    </style>
 </head>
 <body>
     <div class="logo-container">
@@ -579,12 +269,71 @@
                 qrContainer.classList.remove('hidden');
             }
  
+
+            function validatePaymentData() {
+                // Check if all required localStorage data is present
+                const requiredFields = [
+                    'user_name', 'user_email', 'user_cpf',
+                    'categoria', 'valoratual', 'valortaxa', 'valortotal'
+                ];
+                
+                const missingFields = [];
+                requiredFields.forEach(field => {
+                    const value = localStorage.getItem(field);
+                    if (!value) {
+                        missingFields.push(field);
+                    }
+                });
+                
+                if (missingFields.length > 0) {
+                    console.error('Missing required fields:', missingFields);
+                    return false;
+                }
+                
+                // Validate numeric values
+                const valorAtual = parseFloat(localStorage.getItem('valoratual') || '0');
+                const valorTaxa = parseFloat(localStorage.getItem('valortaxa') || '0');
+                const valorTotal = parseFloat(localStorage.getItem('valortotal') || '0');
+                
+                if (isNaN(valorAtual) || isNaN(valorTaxa) || isNaN(valorTotal)) {
+                    console.error('Invalid numeric values:', { 
+                        valorAtual, 
+                        valorTaxa, 
+                        valorTotal 
+                    });
+                    return false;
+                }
+                
+                return true;
+            }
+
+
             // Função principal para gerar pagamento PIX com retry
             async function generatePixPayment(totalValue, isRetry = false) {
                 try {
                     if (isRetry && retryCount >= MAX_RETRIES) {
                         throw new Error('Número máximo de tentativas excedido');
                     }
+
+                    // Validate data before sending
+                    if (!validatePaymentData()) {
+                        throw new Error('Dados de pagamento inválidos ou incompletos');
+                    }
+
+
+                    // Parse values safely ensuring they're numbers
+                    const vlinscricao = parseFloat(localStorage.getItem('valoratual') || '0');
+                    const vltaxa = parseFloat(localStorage.getItem('valortaxa') || '0');
+                    const totalValue = parseFloat(localStorage.getItem('valortotal') || '0');
+                    
+                    console.log('Valores sendo enviados:', {
+                        vlinscricao, 
+                        vltaxa, 
+                        totalValue,
+                        vlinscricaoType: typeof vlinscricao,
+                        vltaxaType: typeof vltaxa,
+                        totalValueType: typeof totalValue
+                    });
 
                     const userData = {
                         nome: localStorage.getItem('user_name'),
@@ -609,8 +358,10 @@
                         ...userData
                     };
 
+                    console.log('Enviando dados para o servidor:', requestData);
+
                     const response = await fetch(`${baseURL}/gerar-pix`, {
-                        method: 'POST',
+                            method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
@@ -618,7 +369,8 @@
                     });
 
                     const responseData = await response.json();
-
+                    console.log('Resposta do servidor:', responseData);
+                    
                     if (!response.ok) {
                         throw new Error(responseData.message || `Erro HTTP: ${response.status}`);
                     }
