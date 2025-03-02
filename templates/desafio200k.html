@@ -471,6 +471,75 @@
                 return intervalId;
             }
 
+            // Adicione esta função ao seu script existente
+            function verificarEAtualizarDadosUsuario() {
+                // Verifica se o usuário está logado pelo localStorage
+                const isLoggedIn = localStorage.getItem('logado') === 'sim';
+                
+                if (isLoggedIn) {
+                    // Recupera dados básicos do usuário
+                    const userEmail = localStorage.getItem('user_email');
+                    const userCpf = localStorage.getItem('user_cpf');
+                    
+                    if (userEmail || userCpf) {
+                        // Envia solicitação para atualizar os dados do usuário
+                        fetch('/check-user-session', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                email: userEmail,
+                                cpf: userCpf
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log('Dados do usuário atualizados com sucesso');
+                                
+                                // Atualiza os dados no localStorage
+                                localStorage.setItem('user_name', data.nome);
+                                localStorage.setItem('user_email', data.email);
+                                localStorage.setItem('user_cpf', data.cpf);
+                                localStorage.setItem('user_dtnascimento', data.dtnascimento);
+                                localStorage.setItem('user_idade', data.idade);
+                                localStorage.setItem('user_celular', data.celular);
+                                localStorage.setItem('user_sexo', data.sexo);
+                                localStorage.setItem('user_idatleta', data.idatleta);
+                                localStorage.setItem('insc_modalidade', data.modalidade);
+                                localStorage.setItem('insc_apoio', data.apoio);
+                                localStorage.setItem('insc_equipe200', data.equipe200);
+                                localStorage.setItem('insc_integrantes', data.integrantes);
+                                localStorage.setItem('insc_camiseta', data.camiseta);
+                                localStorage.setItem('insc_valor', data.valor);
+                                localStorage.setItem('insc_taxa', data.taxa);
+                                localStorage.setItem('insc_valortotal', data.valortotal);
+                                localStorage.setItem('insc_dtpagamento', data.dtpagamento);
+                                localStorage.setItem('insc_formapgto', data.formapgto);
+                                localStorage.setItem('insc_idpagamento', data.idpagamento);
+                                
+                                // Atualiza os controles de login
+                                updateLoginControls();
+                            } else {
+                                console.error('Falha ao atualizar dados do usuário:', data.message);
+                                // Se o usuário não for encontrado, faz logout
+                                if (data.message === 'Usuário não encontrado ou inativo') {
+                                    localStorage.setItem('logado', 'nao');
+                                    updateLoginControls();
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro ao verificar sessão do usuário:', error);
+                        });
+                    }
+                }
+            }
+
+            verificarEAtualizarDadosUsuario();
+
+
 
             adicionarContadorRegressivo();
 
@@ -744,6 +813,7 @@
                     'insc_camiseta', 'insc_valor', 'insc_taxa', 'insc_valortotal',
                     'insc_dtpagamento', 'insc_formapgto', 'insc_idpagamento'
                 ];
+
                 loginItems.forEach(item => localStorage.removeItem(item));
                 
                 localStorage.setItem('logado', 'nao');
@@ -771,10 +841,18 @@
                 localStorage.setItem('valor', currentModalidade.valorFormatted);
     
                 if (localStorage.getItem('logado') === 'sim') {
+                    // Verificar se o idPagamento existe e não é 'none'
                     const idPagamento = localStorage.getItem('insc_idpagamento');
-                    window.location.href = (!idPagamento || idPagamento === 'none') 
-                        ? '/inscricao200k' 
-                        : '/formulario200k';
+                    console.log('ID Pagamento ao clicar em Continuar:', idPagamento);
+                    
+                    // Redirecionar com base no valor do idPagamento
+                    if (idPagamento && idPagamento !== 'none' && idPagamento !== '') {
+                        console.log('Redirecionando para /formulario200k');
+                        window.location.href = '/formulario200k';
+                    } else {
+                        console.log('Redirecionando para /inscricao200k');
+                        window.location.href = '/inscricao200k';
+                    }
                 } else {
                     localStorage.setItem('login_origin', 'continue');
                     window.location.href = '/login';
