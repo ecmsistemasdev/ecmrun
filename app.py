@@ -637,8 +637,7 @@ def send_organizer_notification(receipt_data):
         msg = Message(
             f'Nova Inscrição - 4º Desafio 200k - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'adm@ecmrun.com.br'),
-            recipients=['ecmsistemasdeveloper@gmail.com']
-            #recipients=['kelioesteves@hotmail.com']
+            recipients=['kelioesteves@hotmail.com']
         )
         
         # Render the organizer notification template with receipt data
@@ -965,6 +964,7 @@ def desafio200k():
             return render_template('desafio200k.html', titulo="Evento não encontrado", modalidades=[])
             
         evento_titulo = results[0][1]  # DESCRICAO do evento
+        dt_incio = results[0][2]     
         modalidades = [{'id': row[9], 'descricao': row[10]} for row in results]
         vl200 = f'R$ {results[0][13]:,.2f}'
         vl100 = f'R$ {results[1][13]:,.2f}' 
@@ -980,7 +980,7 @@ def desafio200k():
 
         return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades, vlSolo=vl200, 
                                vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, inicio_insc=inicioinsc, fim_insc=fiminsc, 
-                               dt_inicio_insc=dt_inicioinsc, dt_fim_insc=dt_fiminsc)
+                               dt_inicio_insc=dt_inicioinsc, dt_fim_insc=dt_fiminsc, dt_inicio_evento=dt_incio)
 
     except Exception as e:
         print(f"Erro ao carregar página: {str(e)}")
@@ -1594,7 +1594,8 @@ def autenticar_login():
                     COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
                     COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
                     E.DTINICIO, 
-                    COALESCE(E.DESCRICAO, '') AS EVENTO
+                    COALESCE(E.DESCRICAO, '') AS EVENTO,
+                    CONCAT(E.DESCRICAO,' / ', M.DESCRICAO) AS EVENTO_MODAL
                 FROM ecmrun.ATLETA A
                 JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
                 LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
@@ -1627,7 +1628,8 @@ def autenticar_login():
                     COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
                     COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
                     E.DTINICIO,
-                    COALESCE(E.DESCRICAO, '') AS EVENTO
+                    COALESCE(E.DESCRICAO, '') AS EVENTO,
+                    CONCAT(E.DESCRICAO,' / ', M.DESCRICAO) AS EVENTO_MODAL
                 FROM ecmrun.ATLETA A
                 JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
                 LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
@@ -1659,6 +1661,7 @@ def autenticar_login():
             idpagamento = result[19]
             dtinicio = result[20]
             evento = result[21]
+            evento_modal = result[22]
 
             # Converta as strings para objetos datetime
             dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
@@ -1692,7 +1695,10 @@ def autenticar_login():
             session['insc_formapgto'] = formapgto
             session['insc_idpagamento'] = idpagamento
             session['insc_evento'] = evento
-        
+            session['insc_evento_modal'] = evento_modal
+
+            print(f'ID Pagamento: {idpagamento}')
+
             return jsonify({
                 'success': True,
                 'nome': nome_completo,
@@ -1715,7 +1721,8 @@ def autenticar_login():
                 'formapgto': formapgto,
                 'idpagamento': idpagamento,
                 'dataevendo': dtinicio,
-                'evento': evento
+                'evento': evento,
+                'evento_modal': evento_modal
             })
         else:
             return jsonify({
@@ -1729,7 +1736,142 @@ def autenticar_login():
             'success': False,
             'message': 'Erro ao realizar autenticação'
         }), 500
-    
+
+
+@app.route('/check-user-session', methods=['POST'])
+def check_user_session():
+    try:
+        data = request.get_json()
+        user_email = data.get('email')
+        user_cpf = data.get('cpf')
+        
+        if not (user_email or user_cpf):
+            return jsonify({
+                'success': False,
+                'message': 'Dados de usuário não fornecidos'
+            }), 400
+        
+        cur = mysql.connection.cursor()
+        
+        # Consulta usando e-mail ou CPF, dependendo do que foi fornecido
+        if user_email:
+            query_param = user_email
+            where_clause = "A.EMAIL = %s"
+        else:
+            query_param = user_cpf
+            where_clause = "A.CPF = %s"
+        
+        # Mesma consulta da rota de autenticação, mas sem verificar a senha
+        cur.execute(f"""
+            SELECT 
+                COALESCE(A.NOME, '') AS NOME, 
+                COALESCE(A.SOBRENOME, '') AS SOBRENOME, 
+                COALESCE(A.EMAIL, '') AS EMAIL, 
+                COALESCE(A.CPF, '') AS CPF, 
+                COALESCE(A.DTNASCIMENTO, '') AS DTNASCIMENTO, 
+                COALESCE(A.NRCELULAR, '') AS NRCELULAR, 
+                COALESCE(A.SEXO, '') AS SEXO, 
+                COALESCE(A.IDATLETA, '') AS IDATLETA, 
+                COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
+                COALESCE(I.IDEVENTO, '') AS IDEVENTO, 
+                COALESCE(I.APOIO, '') AS APOIO, 
+                COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
+                COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
+                COALESCE(I.CAMISETA, '') AS CAMISETA,
+                COALESCE(I.VALOR, '') AS VALOR,
+                COALESCE(I.TAXA, '') AS TAXA,
+                COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
+                COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
+                COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
+                COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
+                E.DTINICIO, 
+                COALESCE(E.DESCRICAO, '') AS EVENTO,
+                CONCAT(substr(E.DESCRICAO,1,10),' / ', M.DESCRICAO) AS EVENTO_MODAL
+            FROM ecmrun.ATLETA A
+            JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+            LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
+            LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+            WHERE {where_clause} AND A.ATIVO = 'S'
+        """, (query_param,))
+        
+        result = cur.fetchone()
+        cur.close()
+        
+        if result:
+            nome_completo = f"{result[0]} {result[1]}"
+            email = result[2]
+            vcpf = result[3]
+            dtnascimento = result[4]
+            celular = result[5]
+            sexo = result[6]
+            idatleta = result[7]
+            modalidade = result[8]
+            apoio = result[10]
+            equipe200 = result[11]
+            integrantes = result[12]
+            camiseta = result[13]
+            valor = result[14]
+            taxa = result[15]
+            valortotal = result[16]
+            dtpagamento = result[17]
+            formapgto = result[18]
+            idpagamento = result[19]
+            dtinicio = result[20]
+            evento = result[21]
+            evento_modal = result[22]
+            
+            # Converta as strings para objetos datetime
+            dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
+            dt_inicio = datetime.strptime(dtinicio, "%d/%m/%Y")
+
+            # Calcule a idade
+            idade = dt_inicio.year - dt_nascimento.year - ((dt_inicio.month, dt_inicio.day) < (dt_nascimento.month, dt_nascimento.day))
+
+            print(result)    
+
+            evento = result[21]
+            print(f"Valor de EVENTO antes de retornar: {evento}")
+
+            return jsonify({
+                'success': True,
+                'nome': nome_completo,
+                'email': email,
+                'cpf': vcpf,
+                'dtnascimento': dtnascimento,
+                'idade': str(idade),
+                'celular': celular,
+                'sexo': sexo,
+                'idatleta': idatleta,
+                'modalidade': modalidade,
+                'apoio': apoio,
+                'equipe200': equipe200,
+                'integrantes': integrantes,
+                'camiseta': camiseta,
+                'valor': valor,
+                'taxa': taxa,
+                'valortotal': valortotal,
+                'dtpagamento': dtpagamento,
+                'formapgto': formapgto,
+                'idpagamento': idpagamento,
+                'dataevento': dtinicio,
+                'evento': evento,
+                'evento_modal': evento_modal
+            })
+            
+        else:
+            # Usuário não encontrado ou inativo
+            return jsonify({
+                'success': False,
+                'message': 'Usuário não encontrado ou inativo'
+            }), 404
+            
+    except Exception as e:
+        print(f"Erro ao verificar sessão do usuário: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao verificar sessão do usuário'
+        }), 500
+
 
 @app.route('/pagamento')
 def pagamento():
@@ -1842,7 +1984,7 @@ def gerar_pix():
         # Clean CPF format
         cpf_cleaned = re.sub(r'\D', '', cpf) if cpf else ""
         session['CPF'] = cpf_cleaned
-        
+
         print(f"Dados do pagador finais:")
         print(f"- Email: {email}")
         print(f"- Nome: {nome_completo}")
@@ -1857,6 +1999,20 @@ def gerar_pix():
 
         # Generate unique reference
         external_reference = str(uuid.uuid4())
+
+        preference_data = {
+            "items": [{
+                "id": "desafio200k_inscricao",
+                "title": "Inscrição Desafio 200k",
+                "description": "Inscrição para o 4º Desafio 200k",
+                "category_id": "sports_tickets",
+                "quantity": 1,
+                "unit_price": valor_total
+            }],
+            "statement_descriptor": "DESAFIO200K"
+        }
+        
+        preference_result = sdk.preference().create(preference_data)
 
         # Create payment data
         payment_data = {
@@ -2026,6 +2182,7 @@ def verificar_pagamento(payment_id):
                 # Get additional data from session
                 idatleta = session.get('idAtleta')
                 cpf = session.get('CPF')
+
                 
                 # Insert payment record
                 query = """
