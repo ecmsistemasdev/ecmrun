@@ -1780,6 +1780,7 @@ def gerar_pix():
         equipe = data.get('equipe')
         equipe200 = data.get('nome_equipe')
         integrantes = data.get('integrantes')
+        idatleta = data.get('idatleta')
 
         # Store in session
         session['valorTotal'] = valor_total
@@ -1791,6 +1792,7 @@ def gerar_pix():
         session['Apoio'] = apoio
         session['Equipe200'] = equipe200
         session['Integrantes'] = integrantes
+        session['idAtleta'] = idatleta
         
         # Validate minimum transaction amount
         if valor_total < 1:
@@ -1839,6 +1841,7 @@ def gerar_pix():
             
         # Clean CPF format
         cpf_cleaned = re.sub(r'\D', '', cpf) if cpf else ""
+        session['CPF'] = cpf_cleaned
         
         print(f"Dados do pagador finais:")
         print(f"- Email: {email}")
@@ -2021,8 +2024,8 @@ def verificar_pagamento(payment_id):
                 data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
                                 
                 # Get additional data from session
-                idatleta = session.get('user_idatleta')
-                cpf = session.get('user_cpf')
+                idatleta = session.get('idAtleta')
+                cpf = session.get('CPF')
                 
                 # Insert payment record
                 query = """
