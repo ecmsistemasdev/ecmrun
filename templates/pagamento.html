@@ -268,7 +268,57 @@
                 loadingContainer.classList.add('hidden');
                 qrContainer.classList.remove('hidden');
             }
- 
+            //  add 01/03/2025
+
+            // Função para salvar inscrição temporária
+            async function saveTemporaryRegistration(paymentId) {
+                if (!paymentId) {
+                    console.error('Payment ID não disponível para registro temporário');
+                    return false;
+                }
+                
+                try {
+                    const cpf = localStorage.getItem('user_cpf');
+                    if (!cpf) {
+                        console.error('CPF não disponível para registro temporário');
+                        return false;
+                    }
+                    
+                    // Armazena o payment_id no localStorage para uso posterior
+                    localStorage.setItem('payment_id', paymentId);
+                    
+                    const response = await fetch(`${baseURL}/inscricao-temp/${cpf}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payment_id: paymentId,
+                            valor_atual: parseFloat(localStorage.getItem('valoratual') || 0),
+                            valor_taxa: parseFloat(localStorage.getItem('valortaxa') || 0),
+                            valor_total: parseFloat(localStorage.getItem('valortotal') || 0),
+                            forma_pagto: 'PIX',
+                            camiseta: localStorage.getItem('camiseta'),
+                            equipe: localStorage.getItem('equipe'),
+                            apoio: localStorage.getItem('apoio'),
+                            equipe_nome: localStorage.getItem('nome_equipe'),
+                            integrantes: localStorage.getItem('integrantes'),
+                            cat_iditem: localStorage.getItem('cat_iditem')
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    console.log('Registro temporário:', result);
+                    return result.success;
+                } catch (error) {
+                    console.error('Erro ao salvar inscrição temporária:', error);
+                    return false;
+                }
+            }
+            
+            
+            //  fim add 01/03/2025
+   
             // Função principal para gerar pagamento PIX com retry
             async function generatePixPayment(totalValue, isRetry = false) {
                 try {
@@ -327,6 +377,11 @@
 
                     if (responseData.qr_code && responseData.qr_code_base64) {
                         persistPaymentData(responseData);
+
+                        if (responseData.payment_id) {
+                            await saveTemporaryRegistration(responseData.payment_id);
+                        }
+
                         displayQRCode(responseData.qr_code_base64, responseData.qr_code);
                         
                         if (responseData.payment_id) {
