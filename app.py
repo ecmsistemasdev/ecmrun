@@ -1747,16 +1747,40 @@ def pagamento():
 def gerar_pix():
     try:
         data = request.get_json()
-        # Round to 2 decimal places to avoid floating point precision issues
-        valor_total = round(float(data.get('valor_total', 0)), 2)
-        valor_atual = round(float(data.get('valor_atual', 0)), 2)
-        valor_taxa = round(float(data.get('valor_taxa', 0)), 2)
+        # Add more robust validation and logging
+        print(f"Raw data received: {data}")
+        
+        # More robust parsing with better error handling
+        try:
+            valor_total = round(float(data.get('valor_total', 0)), 2)
+            valor_atual = round(float(data.get('valor_atual', 0)), 2)
+            valor_taxa = round(float(data.get('valor_taxa', 0)), 2)
+        except (ValueError, TypeError) as e:
+            print(f"Error parsing values: {str(e)}")
+            print(f"valor_total: {data.get('valor_total')}, type: {type(data.get('valor_total'))}")
+            print(f"valor_atual: {data.get('valor_atual')}, type: {type(data.get('valor_atual'))}")
+            print(f"valor_taxa: {data.get('valor_taxa')}, type: {type(data.get('valor_taxa'))}")
+            
+            # Try to convert from string with comma to float
+            try:
+                valor_total = round(float(str(data.get('valor_total', '0')).replace(',', '.')), 2)
+                valor_atual = round(float(str(data.get('valor_atual', '0')).replace(',', '.')), 2)
+                valor_taxa = round(float(str(data.get('valor_taxa', '0')).replace(',', '.')), 2)
+                print(f"After conversion: valor_total={valor_total}, valor_atual={valor_atual}, valor_taxa={valor_taxa}")
+            except Exception as conversion_error:
+                print(f"Conversion attempt failed: {str(conversion_error)}")
+                return jsonify({
+                    'success': False,
+                    'message': 'Erro ao processar valores. Verifique se os valores são numéricos válidos.'
+                }), 400
+        
         camisa = data.get('camiseta')
         apoio = data.get('apoio')
         equipe = data.get('equipe')
         equipe200 = data.get('nome_equipe')
         integrantes = data.get('integrantes')
 
+        # Store in session
         session['valorTotal'] = valor_total
         session['valorAtual'] = valor_atual
         session['valorTaxa'] = valor_taxa
@@ -1767,7 +1791,7 @@ def gerar_pix():
         session['Equipe200'] = equipe200
         session['Integrantes'] = integrantes
         
-        # Validate minimum transaction amount (Mercado Pago usually requires >= 1)
+        # Validate minimum transaction amount
         if valor_total < 1:
             return jsonify({
                 'success': False,
@@ -1775,106 +1799,155 @@ def gerar_pix():
             }), 400
         
         print("=== DEBUG: Iniciando geração do PIX ===")
-        print(f"Valor total recebido: {valor_total}")
+        print(f"Valor total processado: {valor_total}")
         print(f"Valor atual: {valor_atual}")
         print(f"Valor taxa: {valor_taxa}")
-        print(f"Token MP configurado: {os.getenv('MP_ACCESS_TOKEN')[:10]}...")
         
-        # Dados do pagador da sessão
-        email = session.get('user_email')        
-        nome_completo = session.get('user_name', '').split()
+        # Get payer info and validate it's present
+        email = session.get('user_email')
+        nome_completo = session.get('user_name', '')
+        
+        # Fallback to data from request if session is empty
+        if not email:
+            email = data.get('email')
+            print(f"Email not found in session, using from request: {email}")
+        
+        if not nome_completo:
+            nome_completo = data.get('nome', '')
+            print(f"Nome not found in session, using from request: {nome_completo}")
+            
+        nome_parts = nome_completo.split() if nome_completo else ['', '']
+        
         cpf = session.get('user_cpf')
-
-        #alimento essa variavel global var_email pra ser usada no evio do email 
-        fn_email(email)
+        if not cpf:
+            cpf = data.get('cpf')
+            print(f"CPF not found in session, using from request: {cpf}")
+            
+        # Validate required fields
+        if not email:
+            return jsonify({
+                'success': False,
+                'message': 'Email do pagador é obrigatório'
+            }), 400
+            
+        if not cpf:
+            return jsonify({
+                'success': False,
+                'message': 'CPF do pagador é obrigatório'
+            }), 400
+            
+        # Clean CPF format
+        cpf_cleaned = re.sub(r'\D', '', cpf) if cpf else ""
         
-        print(f"Dados do pagador da sessão:")
+        print(f"Dados do pagador finais:")
         print(f"- Email: {email}")
         print(f"- Nome: {nome_completo}")
-        print(f"- CPF: {cpf}")
+        print(f"- CPF: {cpf_cleaned}")
 
-        #Gerar referência externa única
+        # Try to call email function safely
+        try:
+            fn_email(email)
+        except Exception as email_error:
+            print(f"Warning: Error in fn_email: {str(email_error)}")
+            # Continue processing even if email function fails
+
+        # Generate unique reference
         external_reference = str(uuid.uuid4())
 
-        # Added required items structure
-        preference_data = {
-            "items": [{
-                "id": "desafio200k_inscricao",
-                "title": "Inscrição Desafio 200k",
-                "description": "Inscrição para o 4º Desafio 200k",
-                "category_id": "sports_tickets",
-                "quantity": 1,
-                "unit_price": valor_total
-            }],
-            "statement_descriptor": "DESAFIO200K"
-        }
-        
-        preference_result = sdk.preference().create(preference_data)
-        
-        # Mantendo o payment_data original que já funcionava
+        # Create payment data
         payment_data = {
-            "transaction_amount": valor_total,
+            "transaction_amount": float(valor_total),  # Ensure it's a float
             "description": "Inscrição 4º Desafio 200k",
             "payment_method_id": "pix",
             "payer": {
                 "email": email,
-                "first_name": nome_completo[0] if nome_completo else "",
-                "last_name": " ".join(nome_completo[1:]) if len(nome_completo) > 1 else "",
+                "first_name": nome_parts[0] if nome_parts else "",
+                "last_name": " ".join(nome_parts[1:]) if len(nome_parts) > 1 else "",
                 "identification": {
                     "type": "CPF",
-                    "number": re.sub(r'\D', '', cpf) if cpf else ""
+                    "number": cpf_cleaned
                 }   
             },
             "notification_url": "https://ecmrun.com.br/webhook",
             "external_reference": external_reference
         }
         
-        payment_response = sdk.payment().create(payment_data)
-
         print("Dados do pagamento preparados:")
         print(json.dumps(payment_data, indent=2))
 
-        # Criar pagamento no Mercado Pago
+        # Create payment in Mercado Pago
         print("Enviando requisição para o Mercado Pago...")
-        payment_response = sdk.payment().create(payment_data)
         
-        print("Resposta do Mercado Pago:")
-        print(json.dumps(payment_response, indent=2))
-        
-        if not payment_response or "response" not in payment_response:
-            print("Erro: Resposta do Mercado Pago inválida")
+        try:
+            payment_response = sdk.payment().create(payment_data)
+        except Exception as mp_error:
+            print(f"Erro na comunicação com Mercado Pago: {str(mp_error)}")
             return jsonify({
                 'success': False,
-                'message': 'Erro na resposta do Mercado Pago'
+                'message': f'Erro na comunicação com o gateway de pagamento: {str(mp_error)}'
+            }), 500
+        
+        print("Resposta do Mercado Pago recebida")
+        
+        # Validate response structure
+        if not payment_response:
+            print("Erro: Resposta vazia do Mercado Pago")
+            return jsonify({
+                'success': False,
+                'message': 'Resposta vazia do gateway de pagamento'
+            }), 500
+            
+        if "response" not in payment_response:
+            print(f"Erro: Formato de resposta inesperado: {payment_response}")
+            return jsonify({
+                'success': False,
+                'message': 'Formato de resposta inesperado do gateway de pagamento'
             }), 500
 
         payment = payment_response["response"]
         
-        # Verificar a estrutura completa da resposta
-        print("Estrutura da resposta payment:")
-        print(json.dumps(payment, indent=2))
-        
-        # Verificar se há dados do PIX na resposta
-        if "point_of_interaction" not in payment:
-            print("Erro: point_of_interaction não encontrado na resposta")
+        # Check for error in response
+        if "error" in payment:
+            print(f"Erro retornado pelo Mercado Pago: {payment}")
             return jsonify({
                 'success': False,
-                'message': 'Dados do PIX não disponíveis - point_of_interaction não encontrado'
+                'message': f'Erro do gateway de pagamento: {payment.get("message", "Erro desconhecido")}'
+            }), 400
+        
+        # Check for QR code data
+        if "point_of_interaction" not in payment:
+            print("Erro: point_of_interaction não encontrado na resposta")
+            print(f"Resposta completa: {json.dumps(payment, indent=2)}")
+            return jsonify({
+                'success': False,
+                'message': 'Dados do PIX não disponíveis'
             }), 500
             
         if "transaction_data" not in payment["point_of_interaction"]:
             print("Erro: transaction_data não encontrado em point_of_interaction")
             return jsonify({
                 'success': False,
-                'message': 'Dados do PIX não disponíveis - transaction_data não encontrado'
+                'message': 'Dados do QR code não disponíveis'
             }), 500
 
-        # Se chegou até aqui, retorna os dados do PIX
+        # Extract QR code data
+        qr_code = payment['point_of_interaction']['transaction_data'].get('qr_code', '')
+        qr_code_base64 = payment['point_of_interaction']['transaction_data'].get('qr_code_base64', '')
+        payment_id = payment.get('id', '')
+        
+        if not qr_code or not qr_code_base64 or not payment_id:
+            print("Erro: Dados do PIX incompletos")
+            return jsonify({
+                'success': False,
+                'message': 'Dados do PIX incompletos'
+            }), 500
+
+        # Success response
         return jsonify({
             'success': True,
-            'qr_code': payment['point_of_interaction']['transaction_data']['qr_code'],
-            'qr_code_base64': payment['point_of_interaction']['transaction_data']['qr_code_base64'],
-            'payment_id': payment['id']
+            'qr_code': qr_code,
+            'qr_code_base64': qr_code_base64,
+            'payment_id': payment_id
         })
 
     except Exception as e:
