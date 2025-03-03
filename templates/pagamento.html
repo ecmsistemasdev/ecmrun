@@ -23,7 +23,7 @@
             <div class="total-amount" id="totalAmount">Carregando...</div>
             <div class="payment-status">
                 <i class="bi bi-exclamation-circle"></i>
-                Não feche está página até realizar o pagamento. Você será redirecionado após o pagamento.
+                Atenção! Não feche esta página até realizar o pagamento. Você será redirecionado para a confirmação da inscrição.
             </div>
         </div>
 
@@ -116,6 +116,10 @@
             let retryCount = 0;
             const MAX_RETRIES = 3;
 
+            const PIX_EXPIRATION_TIME = 30 * 60; // 30 minutos em segundos
+            let remainingTime = PIX_EXPIRATION_TIME;
+            let countdownInterval;
+
             const environments = {
                 development: {
                     baseURL: 'http://192.168.0.157:5000'
@@ -143,6 +147,117 @@
                     style: 'currency',
                     currency: 'BRL'
                 }).format(value);
+            }
+
+            // Função para criar e iniciar o timer regressivo
+            function startCountdownTimer() {
+                // Cria o elemento HTML do timer se não existir
+                if (!document.getElementById('pixCountdown')) {
+                    const timerElement = document.createElement('div');
+                    timerElement.id = 'pixCountdown';
+                    timerElement.className = 'pix-countdown';
+                    
+                    const timerTitle = document.createElement('div');
+                    timerTitle.className = 'countdown-title';
+                    timerTitle.innerHTML = 'Tempo restante para pagamento:';
+                    
+                    const timerDisplay = document.createElement('div');
+                    timerDisplay.className = 'countdown-display';
+                    timerDisplay.id = 'countdownDisplay';
+                    
+                    timerElement.appendChild(timerTitle);
+                    timerElement.appendChild(timerDisplay);
+                    
+                    // Insere o timer logo após o texto de "Valor total a pagar"
+                    const totalAmountDiv = document.querySelector('.total-amount');
+                    if (totalAmountDiv && totalAmountDiv.parentNode) {
+                        totalAmountDiv.parentNode.insertBefore(timerElement, totalAmountDiv.nextSibling);
+                    } else {
+                        // Fallback: insere no contêiner de pagamento
+                        document.querySelector('.payment-info').appendChild(timerElement);
+                    }
+                }
+                
+                // Função para atualizar o timer
+                function updateTimer() {
+                    if (remainingTime <= 0) {
+                        clearInterval(countdownInterval);
+                        document.getElementById('countdownDisplay').innerHTML = '00:00';
+                        document.getElementById('pixCountdown').classList.add('expired');
+                        
+                        // Exibe mensagem de expiração
+                        const expirationMsg = document.createElement('div');
+                        expirationMsg.className = 'expiration-message';
+                        expirationMsg.innerHTML = 'O tempo para pagamento expirou. <button class="button refresh-button" onclick="window.location.reload()">Gerar novo QR Code</button>';
+                        
+                        const qrContainer = document.getElementById('qrContainer');
+                        qrContainer.classList.add('expired');
+                        qrContainer.appendChild(expirationMsg);
+                        
+                        return;
+                    }
+                    
+                    const minutes = Math.floor(remainingTime / 60);
+                    const seconds = remainingTime % 60;
+                    
+                    // Formata o tempo com zeros à esquerda quando necessário
+                    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+                    const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
+                    
+                    // Atualiza o display
+                    const countdownDisplay = document.getElementById('countdownDisplay');
+                    countdownDisplay.innerHTML = `${formattedMinutes}:${formattedSeconds}`;
+                    
+                    // Adiciona classe de alerta quando restar menos de 5 minutos
+                    if (remainingTime <= 300) {
+                        countdownDisplay.classList.add('warning');
+                    }
+                    
+                    // Decrementa o tempo restante
+                    remainingTime--;
+                }
+                
+                // Inicia o timer imediatamente e depois a cada segundo
+                updateTimer();
+                countdownInterval = setInterval(updateTimer, 1000);
+                
+                // Salva o horário de início para recuperação
+                localStorage.setItem('pixTimerStart', Date.now().toString());
+                localStorage.setItem('pixExpirationDuration', PIX_EXPIRATION_TIME.toString());
+            }
+
+
+            // Função para recuperar o timer existente se a página for recarregada
+            function recoverCountdownTimer() {
+                const timerStart = localStorage.getItem('pixTimerStart');
+                const expirationDuration = localStorage.getItem('pixExpirationDuration');
+                
+                if (timerStart && expirationDuration) {
+                    const elapsed = Math.floor((Date.now() - parseInt(timerStart)) / 1000);
+                    const totalDuration = parseInt(expirationDuration);
+                    
+                    remainingTime = totalDuration - elapsed;
+                    
+                    if (remainingTime > 0) {
+                        startCountdownTimer();
+                        return true;
+                    } else {
+                        // Se já expirou, limpa os dados do timer
+                        localStorage.removeItem('pixTimerStart');
+                        localStorage.removeItem('pixExpirationDuration');
+                    }
+                }
+                
+                return false;
+            }            
+
+            // Função para limpar o timer quando o pagamento for concluído
+            function clearCountdownTimer() {
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                }
+                localStorage.removeItem('pixTimerStart');
+                localStorage.removeItem('pixExpirationDuration');
             }
 
             // Função para persistir dados do pagamento com verificação
@@ -199,6 +314,9 @@
 
             function redirectToReceipt(paymentId) {
                 try {
+                    // Limpa o timer antes de redirecionar
+                    clearCountdownTimer();
+
                     // Limpa dados do pagamento antes do redirecionamento
                     sessionStorage.removeItem('paymentData');
                     localStorage.removeItem('lastPaymentId');
@@ -256,9 +374,7 @@
                 // Garante que o valor total seja exibido
                 const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
                 const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
-                //const vldesconto = parseFloat(localStorage.getItem('vldesconto') || 0);
                 const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
-                //const totalValue = vlinscricao + vltaxa;
                 
                 totalAmount.textContent = formatCurrency(totalValue);
 
@@ -267,6 +383,12 @@
                 
                 loadingContainer.classList.add('hidden');
                 qrContainer.classList.remove('hidden');
+
+                // Inicia ou recupera o timer
+                if (!recoverCountdownTimer()) {
+                    startCountdownTimer();
+                }                
+
             }
  
 
@@ -395,6 +517,10 @@
                         if (responseData.payment_id) {
                             await startPaymentVerification(responseData.payment_id);
                         }
+
+                        if (responseData.payment_id) {
+                            await saveTemporaryRegistration(responseData.payment_id);
+                        }                        
                     } else {
                         throw new Error('Dados do QR Code incompletos');
                     }
@@ -435,6 +561,52 @@
                     }
                 }
             }
+
+            async function saveTemporaryRegistration(paymentId) {
+                if (!paymentId) {
+                    console.error('Payment ID não disponível para registro temporário');
+                    return false;
+                }
+                
+                try {
+                    const cpf = localStorage.getItem('user_cpf');
+                    if (!cpf) {
+                        console.error('CPF não disponível para registro temporário');
+                        return false;
+                    }
+                    
+                    // Armazena o payment_id no localStorage para uso posterior
+                    localStorage.setItem('payment_id', paymentId);
+                    
+                    const response = await fetch(`${baseURL}/inscricao-temp/${cpf}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payment_id: paymentId,
+                            valor_atual: parseFloat(localStorage.getItem('valoratual') || 0),
+                            valor_taxa: parseFloat(localStorage.getItem('valortaxa') || 0),
+                            valor_total: parseFloat(localStorage.getItem('valortotal') || 0),
+                            forma_pagto: 'PIX',
+                            camiseta: localStorage.getItem('camiseta'),
+                            equipe: localStorage.getItem('equipe'),
+                            apoio: localStorage.getItem('apoio'),
+                            equipe_nome: localStorage.getItem('nome_equipe'),
+                            integrantes: localStorage.getItem('integrantes'),
+                            cat_iditem: localStorage.getItem('cat_iditem')
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    console.log('Registro temporário:', result);
+                    return result.success;
+                } catch (error) {
+                    console.error('Erro ao salvar inscrição temporária:', error);
+                    return false;
+                }
+            }
+
 
             // Função para verificar pagamento
             async function startPaymentVerification(paymentId) {
@@ -495,7 +667,7 @@
                 try {
                     const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
                     const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
-                    const totalValue = parseFloat(localStorage.getItem('valortotal') || 0); //  vlinscricao + vltaxa;
+                    const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
 
                     document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
                     
