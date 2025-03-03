@@ -102,7 +102,7 @@ body {
 }
 
 .total-amount {
-    font-size: 24px;
+    font-size: 22px;
     color: #0056b3;
     font-weight: bold;
     margin: 10px 0;
@@ -210,6 +210,107 @@ body {
     display: none;
 }
 /* FIM >>  adicionado 01/02 */
+
+.pix-countdown {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 15px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.countdown-title {
+    font-size: 14px;
+    color: #495057;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.countdown-display {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0056b3;
+    letter-spacing: 2px;
+    /*font-family: 'Courier New', monospace; */
+    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.countdown-display.warning {
+    color: #dc3545;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.pix-countdown.expired {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.qr-container.expired img.qr-code {
+    opacity: 0.3;
+    filter: grayscale(100%);
+}
+
+.qr-container.expired .pix-key-container {
+    opacity: 0.5;
+}
+
+.expiration-message {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 15px 0;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.refresh-button {
+    margin-top: 8px;
+    background-color: white;
+    color: #dc3545;
+    border: none;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.refresh-button:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+}
+
+/* Efeito de transição suave para o contador */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pix-countdown {
+    animation: fadeIn 0.5s ease-out;
+}
 
 @media (max-width: 480px) {
     .logo-container {
