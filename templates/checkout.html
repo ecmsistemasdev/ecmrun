@@ -152,25 +152,39 @@
 
             // Função para gerar device ID de forma confiável
             function generateReliableDeviceId() {
-                // Método de geração de ID único baseado em múltiplos fatores
-                const timestamp = new Date().getTime();
-                const randomPart = Math.random().toString(36).substring(2);
-                const browserInfo = [
-                    navigator.userAgent,
-                    navigator.language,
-                    screen.width,
-                    screen.height
-                ].join('|');
+                try {
+                    // Múltiplas fontes de entropia
+                    const timestamp = new Date().getTime();
+                    const randomPart = Math.random().toString(36).substring(2);
+                    
+                    const browserFingerprint = [
+                        navigator.userAgent,
+                        navigator.language,
+                        screen.width,
+                        screen.height,
+                        navigator.hardwareConcurrency || 'unknown',
+                        (navigator.plugins && navigator.plugins.length) || 'unknown'
+                    ].join('|');
 
-                // Criar hash simples
-                let hash = 0;
-                for (let i = 0; i < browserInfo.length; i++) {
-                    const char = browserInfo.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash; // Converter para 32bit integer
+                    // Função de hash simples
+                    const hash = (str) => {
+                        let hash = 0;
+                        for (let i = 0; i < str.length; i++) {
+                            const char = str.charCodeAt(i);
+                            hash = ((hash << 5) - hash) + char;
+                            hash = hash & hash; // Converter para 32bit integer
+                        }
+                        return Math.abs(hash);
+                    };
+
+                    const deviceId = `device_${timestamp}_${hash(browserFingerprint)}_${randomPart}`;
+                    
+                    console.log('Device ID gerado:', deviceId);
+                    return deviceId;
+                } catch (error) {
+                    console.error('Erro na geração do device ID:', error);
+                    return `fallback_device_${new Date().getTime()}`;
                 }
-
-                return `device_${timestamp}_${Math.abs(hash)}_${randomPart}`;
             }
 
             // Função auxiliar para adicionar device ID ao formulário
@@ -202,7 +216,6 @@
             function ensureDeviceId() {
                 return new Promise((resolve, reject) => {
                     try {
-                        // Primeiro, verificar se já existe um device ID
                         let deviceIdInput = document.getElementById('device_id');
                         
                         if (deviceIdInput && deviceIdInput.value) {
@@ -211,43 +224,25 @@
                             return;
                         }
 
-                        // Se não existir, tentar criar usando Mercado Pago
-                        if (typeof MercadoPago !== 'undefined') {
-                            const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
-                                locale: 'pt-BR'
-                            });
-
-                            // Tentar método de Bricks
-                            mp.bricks().create('deviceId', {
-                                version: '2.0.0'
-                            }).then(deviceIdInstance => {
-                                const generatedDeviceId = deviceIdInstance.value;
-                                
-                                if (generatedDeviceId) {
-                                    addDeviceIdToForm(generatedDeviceId);
-                                    resolve(generatedDeviceId);
-                                } else {
-                                    throw new Error('Device ID de Bricks vazio');
-                                }
-                            }).catch(() => {
-                                // Fallback para método de geração personalizado
-                                const fallbackDeviceId = generateReliableDeviceId();
-                                addDeviceIdToForm(fallbackDeviceId);
-                                resolve(fallbackDeviceId);
-                            });
-                        } else {
-                            // Completamente sem Mercado Pago, usar método de geração personalizado
-                            const fallbackDeviceId = generateReliableDeviceId();
-                            addDeviceIdToForm(fallbackDeviceId);
-                            resolve(fallbackDeviceId);
+                        // Tentar múltiplos métodos
+                        const deviceId = generateReliableDeviceId();
+                        
+                        // Adicionar ao formulário
+                        if (!deviceIdInput) {
+                            deviceIdInput = document.createElement('input');
+                            deviceIdInput.type = 'hidden';
+                            deviceIdInput.name = 'device_id';
+                            deviceIdInput.id = 'device_id';
+                            document.getElementById('payment-form').appendChild(deviceIdInput);
                         }
+                        
+                        deviceIdInput.value = deviceId;
+                        console.log('Novo Device ID adicionado:', deviceId);
+                        
+                        resolve(deviceId);
                     } catch (error) {
                         console.error('Erro crítico na geração de device ID:', error);
-                        
-                        // Usar método de geração de fallback
-                        const fallbackDeviceId = generateReliableDeviceId();
-                        addDeviceIdToForm(fallbackDeviceId);
-                        resolve(fallbackDeviceId);
+                        reject(error);
                     }
                 });
             }
