@@ -512,8 +512,15 @@ def process_payment():
         
         # Receber dados do pagamento
         payment_data = request.json
-        app.logger.info("Dados recebidos para processamento de pagamento:")
+        app.logger.info("Dados completos recebidos:")
         app.logger.info(json.dumps(payment_data, indent=2))
+        
+        device_id = payment_data.get('device_id')
+        app.logger.info(f"Device ID recebido: {device_id}")
+
+        if not device_id:
+            app.logger.error("Device ID está ausente ou vazio")
+            return jsonify({"error": "Device ID é obrigatório"}), 400
         
         # Validação de campos obrigatórios
         required_fields = [
