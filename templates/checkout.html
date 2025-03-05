@@ -144,24 +144,31 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
             // Inicializar o Mercado Pago
             const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
                 locale: 'pt-BR'
             });
 
+            // Função para adicionar o identificador do dispositivo de forma assíncrona
+            function addDeviceId() {
+                try {
+                    const deviceId = mp.deviceId();
+                    
+                    // Criar um campo oculto para armazenar o device_id
+                    const deviceIdInput = document.createElement('input');
+                    deviceIdInput.type = 'hidden';
+                    deviceIdInput.name = 'device_id';
+                    deviceIdInput.id = 'device_id';
+                    deviceIdInput.value = deviceId;
+                    
+                    document.getElementById('payment-form').appendChild(deviceIdInput);
+                } catch (error) {
+                    console.error('Erro ao adicionar device ID:', error);
+                }
+            }
 
-            // Adicionar identificador do dispositivo
-            const deviceId = mp.deviceId();
-            
-            // Criar um campo oculto para armazenar o device_id
-            const deviceIdInput = document.createElement('input');
-            deviceIdInput.type = 'hidden';
-            deviceIdInput.name = 'device_id';
-            deviceIdInput.id = 'device_id';
-            deviceIdInput.value = deviceId;
-            
-            document.getElementById('payment-form').appendChild(deviceIdInput);
+            // Chamar a função de adicionar device ID
+            addDeviceId();
 
             // Carregar valor do localStorage
             console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
@@ -171,8 +178,6 @@
                 style: 'currency',
                 currency: 'BRL'
             }).format(storedAmount);
-            
-
 
             // Adicionar listener para o checkbox
             const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
@@ -422,7 +427,6 @@
                 }
             });
 
-
             // Função para atualizar o valor total com juros
             function updateTotalAmount(installmentData) {
                 const amountElement = document.getElementById('transaction-amount');
@@ -445,48 +449,6 @@
                     
                     // Atualizar o valor no localStorage para uso posterior
                     localStorage.setItem('valorTotalComJuros', totalWithInterest);
-                }
-            }
-
-
-            // Função atualizada para obter parcelas
-            async function getInstallments(amount, paymentMethodId) {
-                try {
-                    console.log('Calculando parcelas para:', { amount, paymentMethodId });
-                    
-                    const response = await mp.getInstallments({
-                        amount: String(amount),
-                        locale: 'pt-BR',
-                        payment_method_id: paymentMethodId,
-                    });
-
-                    console.log('Resposta do getInstallments:', response);
-
-                    if (response && response.length > 0) {
-                        const installmentSelect = document.getElementById('installments');
-                        installmentSelect.innerHTML = ''; // Limpa as opções existentes
-
-                        response[0].payer_costs.forEach((cost) => {
-                            const formattedAmount = new Intl.NumberFormat('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL'
-                            }).format(cost.installment_amount);
-
-                            const optionText = cost.recommended_message || 
-                                `${cost.installments}x de ${formattedAmount}`;
-
-                            const option = document.createElement('option');
-                            option.value = cost.installments;
-                            option.textContent = optionText;
-                            installmentSelect.appendChild(option);
-                        });
-                    } else {
-                        console.error('Nenhuma opção de parcelamento disponível');
-                        document.getElementById('installments').innerHTML = '<option value="">Nenhuma parcela disponível</option>';
-                    }
-                } catch (error) {
-                    console.error('Erro detalhado ao obter parcelas:', error);
-                    document.getElementById('installments').innerHTML = '<option value="">Erro ao carregar parcelas</option>';
                 }
             }
 
@@ -556,7 +518,6 @@
                     document.getElementById('installments').innerHTML = 
                         '<option value="">Digite mais números do cartão...</option>';
                 }                 
-               
             });       
 
             // Máscara para data de validade
@@ -567,7 +528,7 @@
                 }
                 e.target.value = value.substring(0, 5);
             });
-        
+
             // Validação do nome completo
             document.querySelector('[name="card_holder_name"]').addEventListener('input', function(e) {
                 const fullName = e.target.value.trim();
@@ -580,14 +541,8 @@
                 }
             });
 
-
             function redirectToReceipt(paymentId) {
                 try {
-                    // Limpa dados do pagamento antes do redirecionamento
-                    //sessionStorage.removeItem('paymentData');
-                    //localStorage.removeItem('lastPaymentId');
-                    
-                    // Redireciona para a página de recibo
                     console.log('Redirecionando para:', `/comprovante/${paymentId}`);
                     window.location.replace(`/comprovante/${paymentId}`);
                 } catch (error) {
@@ -617,16 +572,9 @@
                     const firstName = nameParts[0];
                     const lastName = nameParts.slice(1).join(' ');
                     
-                    // Validação e obtenção do número do cartão
-                    //const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-                    //const cardType = getCardType(cardNumber);
                     const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
                     const cardTypeInfo = getCardType(cardNumber);
                     
-                    //if (!cardType) {
-                    //    throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
-                    //}
-
                     if (!cardTypeInfo) {
                         throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
                     }                    
@@ -743,6 +691,7 @@
                 }
             });
         });
+
     </script>
 </body>
 </html>
