@@ -853,10 +853,21 @@
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                        let errorMessage = 'Erro desconhecido ao processar o pagamento';
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.error || 
+                                errorData.message || 
+                                `Erro HTTP! status: ${response.status}`;
+                        } catch (parseError) {
+                            // If response is not JSON, use status text
+                            errorMessage = response.statusText || 
+                                `Erro HTTP! status: ${response.status}`;
+                        }
+                        
+                        throw new Error(errorMessage);
                     }
-
+                    
                     const data = await response.json();
 
                     if (data.status === "approved") {                        
@@ -880,15 +891,27 @@
                             alert('Pagamento aprovado, mas houve um erro na verificação. Nosso suporte entrará em contato.');
                         }
                     } else {
-                        alert(`Status do pagamento: ${data.status}`);
+                        const statusMessage = data && data.status 
+                            ? `Status do pagamento: ${data.status}` 
+                            : 'Pagamento não processado';
+                        alert(statusMessage);
                     }
                 } catch (error) {
                     console.error('Erro detalhado:', error);
-                    let errorMessage = error.message;
-                    if (errorMessage.includes('token')) {
-                        errorMessage = 'Erro ao processar o cartão. Por favor, verifique os dados informados.';
+                    
+                    // More comprehensive error handling
+                    let errorMessage = 'Erro ao processar pagamento';
+                    if (error.message) {
+                        if (error.message.includes('token')) {
+                            errorMessage = 'Erro ao processar o cartão. Por favor, verifique os dados informados.';
+                        } else if (error.message.toLowerCase().includes('network')) {
+                            errorMessage = 'Erro de conexão. Verifique sua internet.';
+                        } else {
+                            errorMessage = error.message;
+                        }
                     }
-                    alert(`Erro ao processar pagamento: ${errorMessage}`);
+                    
+                    alert(errorMessage);
                 }
             });
 
