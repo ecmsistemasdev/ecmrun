@@ -153,7 +153,27 @@
             function addDeviceId() {
                 return new Promise((resolve, reject) => {
                     try {
+                        // Verificar se o objeto mp está definido
+                        if (typeof MercadoPago === 'undefined') {
+                            throw new Error('Mercado Pago SDK não carregado');
+                        }
+
+                        const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
+                            locale: 'pt-BR'
+                        });
+
+                        // Verificar suporte ao método deviceId
+                        if (typeof mp.deviceId !== 'function') {
+                            throw new Error('Método deviceId não suportado');
+                        }
+
+                        // Tentar obter o device ID
                         const deviceId = mp.deviceId();
+                        
+                        // Validar o device ID obtido
+                        if (!deviceId) {
+                            throw new Error('Device ID não pôde ser gerado');
+                        }
                         
                         // Criar um campo oculto para armazenar o device_id
                         const deviceIdInput = document.createElement('input');
@@ -164,20 +184,46 @@
                         
                         document.getElementById('payment-form').appendChild(deviceIdInput);
                         
+                        console.log('Device ID adicionado com sucesso:', deviceId);
                         resolve(deviceId);
                     } catch (error) {
-                        console.error('Erro ao adicionar device ID:', error);
+                        console.error('Erro detalhado ao adicionar device ID:', error);
+                        
+                        // Mensagens de erro mais específicas
+                        let userMessage = 'Erro ao preparar o dispositivo para pagamento.';
+                        
+                        if (error.message.includes('SDK não carregado')) {
+                            userMessage += ' O SDK do Mercado Pago não foi carregado corretamente.';
+                        } else if (error.message.includes('não suportado')) {
+                            userMessage += ' O método de identificação do dispositivo não é suportado.';
+                        } else if (error.message.includes('não pôde ser gerado')) {
+                            userMessage += ' Não foi possível gerar um identificador único.';
+                        }
+                        
+                        userMessage += ' Por favor, verifique sua conexão ou tente novamente.';
+                        
+                        alert(userMessage);
                         reject(error);
                     }
                 });
             }
 
-            // Adicionar o device ID assim que possível
-            addDeviceId().catch(error => {
-                console.error('Não foi possível adicionar o device ID', error);
-                alert('Erro ao preparar o dispositivo para pagamento. Por favor, tente novamente.');
-            });
-            
+            // Verificar carregamento do SDK do Mercado Pago
+            if (typeof MercadoPago === 'undefined') {
+                console.error('Mercado Pago SDK não carregado');
+                alert('Erro: SDK do Mercado Pago não carregado. Verifique sua conexão de internet.');
+                return;
+            }
+
+            // Inicializar apenas se o SDK estiver disponível
+            try {
+                addDeviceId().catch(error => {
+                    console.error('Falha na inicialização do device ID', error);
+                });
+            } catch (error) {
+                console.error('Erro durante a inicialização:', error);
+            }
+                        
             // Carregar valor do localStorage
             console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
             const storedAmount = localStorage.getItem('valortotal') || '0.00';
