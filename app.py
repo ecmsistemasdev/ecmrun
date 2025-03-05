@@ -573,8 +573,8 @@ def process_payment():
         # Preparar dados do item
         item_details = {
             "id": "DESAFIO_200K_SOLO",
-            "title": "Inscrição Desafio 200k - Categoria Solo",
-            "description": "Inscrição para corrida de 200km - Categoria Solo",
+            "title": "Inscrição Desafio 200k",
+            "description": "Inscrição para corrida de 200km",
             "category_id": "SPORTS_EVENT",
             "quantity": 1,
             "unit_price": valor_atual,
@@ -601,8 +601,8 @@ def process_payment():
         payment_info = {
             "transaction_amount": transaction_amount,
             "token": payment_data['token'],
-            "description": "Inscrição Desafio 200k - Categoria Solo",
-            "statement_descriptor": "ECMRUN DESAFIO 200K",
+            "description": "Inscrição Desafio 200k",
+            "statement_descriptor": "DESAFIO 200K",
             "installments": installments,
             "payment_method_id": payment_data['payment_method_id'],
             "device_id": payment_data.get('device_id'),
