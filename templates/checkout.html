@@ -163,35 +163,82 @@
                             locale: 'pt-BR'
                         });
 
-                        // Usar uma abordagem alternativa para gerar um device ID
-                        const deviceId = mp.bricks().create('deviceId', {
-                            version: '2.0.0'
-                        }).then(deviceIdInstance => {
-                            const generatedDeviceId = deviceIdInstance.value;
+                        // Gerar um device ID usando múltiplas estratégias
+                        function generateFallbackDeviceId() {
+                            // Combinação de timestamp, user agent e random
+                            const timestamp = new Date().getTime();
+                            const userAgent = navigator.userAgent;
+                            const randomPart = Math.random().toString(36).substring(2);
                             
-                            if (!generatedDeviceId) {
-                                throw new Error('Não foi possível gerar o device ID');
+                            return `${timestamp}-${btoa(userAgent)}-${randomPart}`;
+                        }
+
+                        // Tentar múltiplos métodos de geração de device ID
+                        function getDeviceId() {
+                            return new Promise((resolveDeviceId, rejectDeviceId) => {
+                                // Tentar método 1: Mercado Pago Bricks
+                                try {
+                                    mp.bricks().create('deviceId', {
+                                        version: '2.0.0'
+                                    }).then(deviceIdInstance => {
+                                        const generatedDeviceId = deviceIdInstance.value;
+                                        
+                                        if (generatedDeviceId) {
+                                            resolveDeviceId(generatedDeviceId);
+                                        } else {
+                                            throw new Error('Device ID de Bricks vazio');
+                                        }
+                                    }).catch(() => {
+                                        // Tentar método 2: device ID padrão
+                                        try {
+                                            const standardDeviceId = mp.deviceId();
+                                            if (standardDeviceId) {
+                                                resolveDeviceId(standardDeviceId);
+                                            } else {
+                                                throw new Error('Device ID padrão vazio');
+                                            }
+                                        } catch (standardError) {
+                                            // Método de fallback
+                                            const fallbackDeviceId = generateFallbackDeviceId();
+                                            resolveDeviceId(fallbackDeviceId);
+                                        }
+                                    });
+                                } catch (error) {
+                                    // Método de fallback se Bricks falhar completamente
+                                    const fallbackDeviceId = generateFallbackDeviceId();
+                                    resolveDeviceId(fallbackDeviceId);
+                                }
+                            });
+                        }
+
+                        // Executar geração de device ID
+                        getDeviceId().then(deviceId => {
+                            if (!deviceId) {
+                                throw new Error('Não foi possível gerar device ID');
                             }
 
-                            // Criar um campo oculto para armazenar o device_id
+                            // Criar campo oculto para device ID
+                            const existingDeviceIdInput = document.getElementById('device_id');
+                            if (existingDeviceIdInput) {
+                                existingDeviceIdInput.remove();
+                            }
+
                             const deviceIdInput = document.createElement('input');
                             deviceIdInput.type = 'hidden';
                             deviceIdInput.name = 'device_id';
                             deviceIdInput.id = 'device_id';
-                            deviceIdInput.value = generatedDeviceId;
+                            deviceIdInput.value = deviceId;
                             
                             document.getElementById('payment-form').appendChild(deviceIdInput);
                             
-                            console.log('Device ID adicionado com sucesso:', generatedDeviceId);
-                            return generatedDeviceId;
+                            console.log('Device ID adicionado com sucesso:', deviceId);
+                            resolve(deviceId);
                         }).catch(error => {
-                            console.error('Erro ao criar deviceId:', error);
-                            throw new Error('Erro ao gerar identificador do dispositivo');
+                            console.error('Erro na geração do device ID:', error);
+                            throw new Error('Falha na geração do identificador do dispositivo');
                         });
-
-                        resolve(deviceId);
                     } catch (error) {
-                        console.error('Erro detalhado ao adicionar device ID:', error);
+                        console.error('Erro crítico na inicialização do device ID:', error);
                         
                         let userMessage = 'Erro ao preparar o dispositivo para pagamento.';
                         
@@ -612,22 +659,23 @@
             document.getElementById('payment-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
-                // Verificar se o device ID foi adicionado
-                const deviceIdInput = document.getElementById('device_id');
-                if (!deviceIdInput || !deviceIdInput.value) {
-                    try {
-                        await addDeviceId();
-                    } catch (error) {
-                        alert('Não foi possível identificar o dispositivo. Por favor, tente novamente.');
-                        return;
-                    }
-                }
-
-                const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
-                const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
-                const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
-
+                // Verificar e tentar adicionar device ID
                 try {
+                    // Primeiro, tenta remover qualquer device ID existente
+                    const existingDeviceIdInput = document.getElementById('device_id');
+                    if (existingDeviceIdInput) {
+                        existingDeviceIdInput.remove();
+                    }
+
+                    // Tentar adicionar device ID
+                    await addDeviceId();
+
+                    // Verificar se o device ID foi realmente adicionado
+                    const deviceIdInput = document.getElementById('device_id');
+                    if (!deviceIdInput || !deviceIdInput.value) {
+                        throw new Error('Falha ao adicionar device ID');
+                    }
+
                     // Validação do nome completo
                     const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
                     const nameParts = fullName.split(' ').filter(part => part.length > 0);
@@ -647,6 +695,11 @@
                         throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
                     }                    
                     console.log('Criando token do cartão...');
+
+                    // Obter dados do participante do localStorage
+                    const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
+                    const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
+                    const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
 
                     const userData = {
                         equipe: localStorage.getItem('equipe'),
@@ -681,8 +734,12 @@
                     // Obter número do documento sem máscara
                     const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
 
+                    // Obter valor total com juros (se existir)
+                    const storedAmount = localStorage.getItem('valortotal');
+                    const totalAmountWithInterest = localStorage.getItem('valorTotalComJuros') || storedAmount;
+
                     const paymentData = {
-                        transaction_amount: Number(parseFloat(localStorage.getItem('valorTotalComJuros') || storedAmount).toFixed(2)),
+                        transaction_amount: Number(parseFloat(totalAmountWithInterest).toFixed(2)),
                         token: cardToken.id,
                         description: document.querySelector('[name="description"]').value,
                         installments: parseInt(document.querySelector('[name="installments"]').value),
@@ -758,6 +815,18 @@
                     alert(`Erro ao processar pagamento: ${errorMessage}`);
                 }
             });
+
+            // Função de redirecionamento para o comprovante
+            function redirectToReceipt(paymentId) {
+                try {
+                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+                    window.location.replace(`/comprovante/${paymentId}`);
+                } catch (error) {
+                    console.error('Erro ao redirecionar:', error);
+                    alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
+                }
+            }
+
         });
 
     </script>
