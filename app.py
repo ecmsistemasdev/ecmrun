@@ -5,6 +5,7 @@ from flask_mysqldb import MySQL
 from dotenv import load_dotenv
 from datetime import datetime
 from pytz import timezone
+import requests
 import mercadopago
 import hashlib
 import pdfkit
