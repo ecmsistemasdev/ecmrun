@@ -149,27 +149,35 @@
                 locale: 'pt-BR'
             });
 
-            // Função para adicionar o identificador do dispositivo de forma assíncrona
+            // Função para adicionar o identificador do dispositivo
             function addDeviceId() {
-                try {
-                    const deviceId = mp.deviceId();
-                    
-                    // Criar um campo oculto para armazenar o device_id
-                    const deviceIdInput = document.createElement('input');
-                    deviceIdInput.type = 'hidden';
-                    deviceIdInput.name = 'device_id';
-                    deviceIdInput.id = 'device_id';
-                    deviceIdInput.value = deviceId;
-                    
-                    document.getElementById('payment-form').appendChild(deviceIdInput);
-                } catch (error) {
-                    console.error('Erro ao adicionar device ID:', error);
-                }
+                return new Promise((resolve, reject) => {
+                    try {
+                        const deviceId = mp.deviceId();
+                        
+                        // Criar um campo oculto para armazenar o device_id
+                        const deviceIdInput = document.createElement('input');
+                        deviceIdInput.type = 'hidden';
+                        deviceIdInput.name = 'device_id';
+                        deviceIdInput.id = 'device_id';
+                        deviceIdInput.value = deviceId;
+                        
+                        document.getElementById('payment-form').appendChild(deviceIdInput);
+                        
+                        resolve(deviceId);
+                    } catch (error) {
+                        console.error('Erro ao adicionar device ID:', error);
+                        reject(error);
+                    }
+                });
             }
 
-            // Chamar a função de adicionar device ID
-            addDeviceId();
-
+            // Adicionar o device ID assim que possível
+            addDeviceId().catch(error => {
+                console.error('Não foi possível adicionar o device ID', error);
+                alert('Erro ao preparar o dispositivo para pagamento. Por favor, tente novamente.');
+            });
+            
             // Carregar valor do localStorage
             console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
             const storedAmount = localStorage.getItem('valortotal') || '0.00';
@@ -555,6 +563,17 @@
             document.getElementById('payment-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
+                // Verificar se o device ID foi adicionado
+                const deviceIdInput = document.getElementById('device_id');
+                if (!deviceIdInput || !deviceIdInput.value) {
+                    try {
+                        await addDeviceId();
+                    } catch (error) {
+                        alert('Não foi possível identificar o dispositivo. Por favor, tente novamente.');
+                        return;
+                    }
+                }
+
                 const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
                 const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
                 const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
