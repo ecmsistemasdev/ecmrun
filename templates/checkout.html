@@ -153,43 +153,46 @@
             function addDeviceId() {
                 return new Promise((resolve, reject) => {
                     try {
-                        // Verificar se o objeto mp está definido
+                        // Verificar se o objeto MercadoPago está definido
                         if (typeof MercadoPago === 'undefined') {
                             throw new Error('Mercado Pago SDK não carregado');
                         }
 
+                        // Criar uma instância do Mercado Pago
                         const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
                             locale: 'pt-BR'
                         });
 
-                        // Verificar suporte ao método deviceId
-                        if (typeof mp.deviceId !== 'function') {
-                            throw new Error('Método deviceId não suportado');
-                        }
+                        // Usar uma abordagem alternativa para gerar um device ID
+                        const deviceId = mp.bricks().create('deviceId', {
+                            version: '2.0.0'
+                        }).then(deviceIdInstance => {
+                            const generatedDeviceId = deviceIdInstance.value;
+                            
+                            if (!generatedDeviceId) {
+                                throw new Error('Não foi possível gerar o device ID');
+                            }
 
-                        // Tentar obter o device ID
-                        const deviceId = mp.deviceId();
-                        
-                        // Validar o device ID obtido
-                        if (!deviceId) {
-                            throw new Error('Device ID não pôde ser gerado');
-                        }
-                        
-                        // Criar um campo oculto para armazenar o device_id
-                        const deviceIdInput = document.createElement('input');
-                        deviceIdInput.type = 'hidden';
-                        deviceIdInput.name = 'device_id';
-                        deviceIdInput.id = 'device_id';
-                        deviceIdInput.value = deviceId;
-                        
-                        document.getElementById('payment-form').appendChild(deviceIdInput);
-                        
-                        console.log('Device ID adicionado com sucesso:', deviceId);
+                            // Criar um campo oculto para armazenar o device_id
+                            const deviceIdInput = document.createElement('input');
+                            deviceIdInput.type = 'hidden';
+                            deviceIdInput.name = 'device_id';
+                            deviceIdInput.id = 'device_id';
+                            deviceIdInput.value = generatedDeviceId;
+                            
+                            document.getElementById('payment-form').appendChild(deviceIdInput);
+                            
+                            console.log('Device ID adicionado com sucesso:', generatedDeviceId);
+                            return generatedDeviceId;
+                        }).catch(error => {
+                            console.error('Erro ao criar deviceId:', error);
+                            throw new Error('Erro ao gerar identificador do dispositivo');
+                        });
+
                         resolve(deviceId);
                     } catch (error) {
                         console.error('Erro detalhado ao adicionar device ID:', error);
                         
-                        // Mensagens de erro mais específicas
                         let userMessage = 'Erro ao preparar o dispositivo para pagamento.';
                         
                         if (error.message.includes('SDK não carregado')) {
@@ -223,7 +226,7 @@
             } catch (error) {
                 console.error('Erro durante a inicialização:', error);
             }
-                        
+
             // Carregar valor do localStorage
             console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
             const storedAmount = localStorage.getItem('valortotal') || '0.00';
