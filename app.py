@@ -18,7 +18,7 @@ import logging
 
 load_dotenv()  # Carrega as variáveis do arquivo .env
 
-app = Flask(_name_)
+app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN'))
@@ -824,8 +824,8 @@ def send_organizer_notification(receipt_data):
         msg = Message(
             f'Nova Inscrição - 4º Desafio 200k - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'adm@ecmrun.com.br'),
-            recipients=['kelioesteves@hotmail.com']
-            #recipients=['ecmsistemasdeveloper@gmail.com']
+            recipients=['ecmsistemasdeveloper@gmail.com']
+            #recipients=['kelioesteves@hotmail.com']
         )
         
         # Render the organizer notification template with receipt data
@@ -1779,4 +1779,1268 @@ def autenticar_login():
                     COALESCE(I.TAXA, '') AS TAXA,
                     COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
                     COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
-                    COALESCE(I.FORMAPGTO, '') AS FO
+                    COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
+                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
+                    E.DTINICIO, 
+                    COALESCE(E.DESCRICAO, '') AS EVENTO,
+                    CONCAT(E.DESCRICAO,' / ', M.DESCRICAO) AS EVENTO_MODAL
+                FROM ecmrun.ATLETA A
+                JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
+                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+                WHERE A.EMAIL = %s AND A.SENHA = %s AND A.ATIVO = 'S'
+            """, (cpf_email, senha_hash))
+        else:
+            # Remove non-numeric characters from CPF
+            cpf = ''.join(filter(str.isdigit, cpf_email))
+            cur.execute("""
+                SELECT 
+                    COALESCE(A.NOME, '') AS NOME, 
+                    COALESCE(A.SOBRENOME, '') AS SOBRENOME, 
+                    COALESCE(A.EMAIL, '') AS EMAIL, 
+                    COALESCE(A.CPF, '') AS CPF, 
+                    COALESCE(A.DTNASCIMENTO, '') AS DTNASCIMENTO, 
+                    COALESCE(A.NRCELULAR, '') AS NRCELULAR, 
+                    COALESCE(A.SEXO, '') AS SEXO, 
+                    COALESCE(A.IDATLETA, '') AS IDATLETA, 
+                    COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
+                    COALESCE(I.IDEVENTO, '') AS IDEVENTO, 
+                    COALESCE(I.APOIO, '') AS APOIO, 
+                    COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
+                    COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
+                    COALESCE(I.CAMISETA, '') AS CAMISETA,
+                    COALESCE(I.VALOR, '') AS VALOR,
+                    COALESCE(I.TAXA, '') AS TAXA,
+                    COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
+                    COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
+                    COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
+                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
+                    E.DTINICIO,
+                    COALESCE(E.DESCRICAO, '') AS EVENTO,
+                    CONCAT(E.DESCRICAO,' / ', M.DESCRICAO) AS EVENTO_MODAL
+                FROM ecmrun.ATLETA A
+                JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
+                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+                WHERE A.CPF = %s AND A.SENHA = %s AND A.ATIVO = 'S'
+            """, (cpf, senha_hash))
+        
+        result = cur.fetchone()
+        cur.close()
+        
+        if result:
+            nome_completo = f"{result[0]} {result[1]}"
+            email = result[2]
+            vcpf = result[3]
+            dtnascimento = result[4]
+            celular = result[5]
+            sexo = result[6]
+            idatleta = result[7]
+            modalidade = result[8]
+            apoio = result[10]
+            equipe200 = result[11]
+            integrantes = result[12]
+            camiseta = result[13]
+            valor = result[14]
+            taxa = result[15]
+            valortotal = result[16]
+            dtpagamento = result[17]
+            formapgto = result[18]
+            idpagamento = result[19]
+            dtinicio = result[20]
+            evento = result[21]
+            evento_modal = result[22]
+
+            # Converta as strings para objetos datetime
+            dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
+            dt_inicio = datetime.strptime(dtinicio, "%d/%m/%Y")
+
+            # Calcule a idade
+            idade = dt_inicio.year - dt_nascimento.year - ((dt_inicio.month, dt_inicio.day) < (dt_nascimento.month, dt_nascimento.day))
+            app.logger.info(f'Idade: { idade }')
+            app.logger.info(f'Data Evento: { dtinicio }')
+                    
+        
+            # Store in session
+            session['user_name'] = nome_completo
+            session['user_email'] = email
+            session['user_cpf'] = vcpf
+            session['user_dtnascimento'] = dtnascimento
+            session['user_dataevento'] = dtinicio
+            session['user_idade'] = str(idade)
+            session['user_celular'] = celular
+            session['user_sexo'] = sexo
+            session['user_idatleta'] = idatleta
+            session['insc_modalidade'] = modalidade
+            session['insc_apoio'] = apoio
+            session['insc_equipe200'] = equipe200
+            session['insc_integrantes'] = integrantes
+            session['insc_camiseta'] = camiseta
+            session['insc_valor'] = valor
+            session['insc_taxa'] = taxa
+            session['insc_valortotal'] = valortotal
+            session['insc_dtpagamento'] = dtpagamento
+            session['insc_formapgto'] = formapgto
+            session['insc_idpagamento'] = idpagamento
+            session['insc_evento'] = evento
+            session['insc_evento_modal'] = evento_modal
+
+            print(f'ID Pagamento: {idpagamento}')
+
+            return jsonify({
+                'success': True,
+                'nome': nome_completo,
+                'email': email,
+                'cpf': vcpf,
+                'dtnascimento': dtnascimento,
+                'idade': str(idade),
+                'celular': celular,
+                'sexo': sexo,
+                'idatleta': idatleta,
+                'modalidade': modalidade,
+                'apoio': apoio,
+                'equipe200': equipe200,
+                'integrantes': integrantes,
+                'camiseta': camiseta,
+                'valor': valor,
+                'taxa': taxa,
+                'valortotal': valortotal,
+                'dtpagamento': dtpagamento,
+                'formapgto': formapgto,
+                'idpagamento': idpagamento,
+                'dataevendo': dtinicio,
+                'evento': evento,
+                'evento_modal': evento_modal
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Usuário ou senha inválidos'
+            }), 401
+            
+    except Exception as e:
+        print(f"Erro na autenticação: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao realizar autenticação'
+        }), 500
+
+
+@app.route('/check-user-session', methods=['POST'])
+def check_user_session():
+    try:
+        data = request.get_json()
+        user_email = data.get('email')
+        user_cpf = data.get('cpf')
+        
+        if not (user_email or user_cpf):
+            return jsonify({
+                'success': False,
+                'message': 'Dados de usuário não fornecidos'
+            }), 400
+        
+        cur = mysql.connection.cursor()
+        
+        # Consulta usando e-mail ou CPF, dependendo do que foi fornecido
+        if user_email:
+            query_param = user_email
+            where_clause = "A.EMAIL = %s"
+        else:
+            query_param = user_cpf
+            where_clause = "A.CPF = %s"
+        
+        # Mesma consulta da rota de autenticação, mas sem verificar a senha
+        cur.execute(f"""
+            SELECT 
+                COALESCE(A.NOME, '') AS NOME, 
+                COALESCE(A.SOBRENOME, '') AS SOBRENOME, 
+                COALESCE(A.EMAIL, '') AS EMAIL, 
+                COALESCE(A.CPF, '') AS CPF, 
+                COALESCE(A.DTNASCIMENTO, '') AS DTNASCIMENTO, 
+                COALESCE(A.NRCELULAR, '') AS NRCELULAR, 
+                COALESCE(A.SEXO, '') AS SEXO, 
+                COALESCE(A.IDATLETA, '') AS IDATLETA, 
+                COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
+                COALESCE(I.IDEVENTO, '') AS IDEVENTO, 
+                COALESCE(I.APOIO, '') AS APOIO, 
+                COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
+                COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
+                COALESCE(I.CAMISETA, '') AS CAMISETA,
+                COALESCE(I.VALOR, '') AS VALOR,
+                COALESCE(I.TAXA, '') AS TAXA,
+                COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
+                COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
+                COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
+                COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
+                E.DTINICIO, 
+                COALESCE(E.DESCRICAO, '') AS EVENTO,
+                CONCAT(substr(E.DESCRICAO,1,10),' / ', M.DESCRICAO) AS EVENTO_MODAL
+            FROM ecmrun.ATLETA A
+            JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+            LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
+            LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+            WHERE {where_clause} AND A.ATIVO = 'S'
+        """, (query_param,))
+        
+        result = cur.fetchone()
+        cur.close()
+        
+        if result:
+            nome_completo = f"{result[0]} {result[1]}"
+            email = result[2]
+            vcpf = result[3]
+            dtnascimento = result[4]
+            celular = result[5]
+            sexo = result[6]
+            idatleta = result[7]
+            modalidade = result[8]
+            apoio = result[10]
+            equipe200 = result[11]
+            integrantes = result[12]
+            camiseta = result[13]
+            valor = result[14]
+            taxa = result[15]
+            valortotal = result[16]
+            dtpagamento = result[17]
+            formapgto = result[18]
+            idpagamento = result[19]
+            dtinicio = result[20]
+            evento = result[21]
+            evento_modal = result[22]
+            
+            # Converta as strings para objetos datetime
+            dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
+            dt_inicio = datetime.strptime(dtinicio, "%d/%m/%Y")
+
+            # Calcule a idade
+            idade = dt_inicio.year - dt_nascimento.year - ((dt_inicio.month, dt_inicio.day) < (dt_nascimento.month, dt_nascimento.day))
+
+            print(result)    
+
+            evento = result[21]
+            print(f"Valor de EVENTO antes de retornar: {evento}")
+
+            return jsonify({
+                'success': True,
+                'nome': nome_completo,
+                'email': email,
+                'cpf': vcpf,
+                'dtnascimento': dtnascimento,
+                'idade': str(idade),
+                'celular': celular,
+                'sexo': sexo,
+                'idatleta': idatleta,
+                'modalidade': modalidade,
+                'apoio': apoio,
+                'equipe200': equipe200,
+                'integrantes': integrantes,
+                'camiseta': camiseta,
+                'valor': valor,
+                'taxa': taxa,
+                'valortotal': valortotal,
+                'dtpagamento': dtpagamento,
+                'formapgto': formapgto,
+                'idpagamento': idpagamento,
+                'dataevento': dtinicio,
+                'evento': evento,
+                'evento_modal': evento_modal
+            })
+            
+        else:
+            # Usuário não encontrado ou inativo
+            return jsonify({
+                'success': False,
+                'message': 'Usuário não encontrado ou inativo'
+            }), 404
+            
+    except Exception as e:
+        print(f"Erro ao verificar sessão do usuário: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao verificar sessão do usuário'
+        }), 500
+
+
+@app.route('/pagamento')
+def pagamento():
+    # Get values from session
+    vlinscricao = session.get('valoratual', 0)
+    vltaxa = session.get('valortaxa', 0)
+    valor_total = float(vlinscricao) + float(vltaxa)
+    
+    return render_template('pagamento.html', 
+                         valor_inscricao=vlinscricao,
+                         valor_taxa=vltaxa,
+                         valor_total=valor_total)
+
+
+@app.route('/gerar-pix', methods=['POST'])
+def gerar_pix():
+    try:
+        data = request.get_json()
+        # Add more robust validation and logging
+        print(f"Raw data received: {data}")
+        
+        # More robust parsing with better error handling
+        try:
+            valor_total = round(float(data.get('valor_total', 0)), 2)
+            valor_atual = round(float(data.get('valor_atual', 0)), 2)
+            valor_taxa = round(float(data.get('valor_taxa', 0)), 2)
+        except (ValueError, TypeError) as e:
+            print(f"Error parsing values: {str(e)}")
+            print(f"valor_total: {data.get('valor_total')}, type: {type(data.get('valor_total'))}")
+            print(f"valor_atual: {data.get('valor_atual')}, type: {type(data.get('valor_atual'))}")
+            print(f"valor_taxa: {data.get('valor_taxa')}, type: {type(data.get('valor_taxa'))}")
+            
+            # Try to convert from string with comma to float
+            try:
+                valor_total = round(float(str(data.get('valor_total', '0')).replace(',', '.')), 2)
+                valor_atual = round(float(str(data.get('valor_atual', '0')).replace(',', '.')), 2)
+                valor_taxa = round(float(str(data.get('valor_taxa', '0')).replace(',', '.')), 2)
+                print(f"After conversion: valor_total={valor_total}, valor_atual={valor_atual}, valor_taxa={valor_taxa}")
+            except Exception as conversion_error:
+                print(f"Conversion attempt failed: {str(conversion_error)}")
+                return jsonify({
+                    'success': False,
+                    'message': 'Erro ao processar valores. Verifique se os valores são numéricos válidos.'
+                }), 400
+        
+        camisa = data.get('camiseta')
+        apoio = data.get('apoio')
+        equipe = data.get('equipe')
+        equipe200 = data.get('nome_equipe')
+        integrantes = data.get('integrantes')
+        idatleta = data.get('idatleta')
+
+        # Store in session
+        session['valorTotal'] = valor_total
+        session['valorAtual'] = valor_atual
+        session['valorTaxa'] = valor_taxa
+        session['formaPagto'] = 'PIX'
+        session['Camisa'] = camisa
+        session['Equipe'] = equipe
+        session['Apoio'] = apoio
+        session['Equipe200'] = equipe200
+        session['Integrantes'] = integrantes
+        session['idAtleta'] = idatleta
+        
+        # Validate minimum transaction amount
+        if valor_total < 1:
+            return jsonify({
+                'success': False,
+                'message': 'Valor mínimo da transação deve ser maior que R$ 1,00'
+            }), 400
+        
+        print("=== DEBUG: Iniciando geração do PIX ===")
+        print(f"Valor total processado: {valor_total}")
+        print(f"Valor atual: {valor_atual}")
+        print(f"Valor taxa: {valor_taxa}")
+        
+        # Get payer info and validate it's present
+        email = session.get('user_email')
+        nome_completo = session.get('user_name', '')
+        
+        # Fallback to data from request if session is empty
+        if not email:
+            email = data.get('email')
+            print(f"Email not found in session, using from request: {email}")
+        
+        if not nome_completo:
+            nome_completo = data.get('nome', '')
+            print(f"Nome not found in session, using from request: {nome_completo}")
+            
+        nome_parts = nome_completo.split() if nome_completo else ['', '']
+        
+        cpf = session.get('user_cpf')
+        if not cpf:
+            cpf = data.get('cpf')
+            print(f"CPF not found in session, using from request: {cpf}")
+            
+        # Validate required fields
+        if not email:
+            return jsonify({
+                'success': False,
+                'message': 'Email do pagador é obrigatório'
+            }), 400
+            
+        if not cpf:
+            return jsonify({
+                'success': False,
+                'message': 'CPF do pagador é obrigatório'
+            }), 400
+            
+        # Clean CPF format
+        cpf_cleaned = re.sub(r'\D', '', cpf) if cpf else ""
+        session['CPF'] = cpf_cleaned
+
+        print(f"Dados do pagador finais:")
+        print(f"- Email: {email}")
+        print(f"- Nome: {nome_completo}")
+        print(f"- CPF: {cpf_cleaned}")
+
+        # Try to call email function safely
+        try:
+            fn_email(email)
+        except Exception as email_error:
+            print(f"Warning: Error in fn_email: {str(email_error)}")
+            # Continue processing even if email function fails
+
+        # Generate unique reference
+        external_reference = str(uuid.uuid4())
+
+        preference_data = {
+            "items": [{
+                "id": "desafio200k_inscricao",
+                "title": "Inscrição Desafio 200k",
+                "description": "Inscrição para o 4º Desafio 200k",
+                "category_id": "sports_tickets",
+                "quantity": 1,
+                "unit_price": valor_total
+            }],
+            "statement_descriptor": "DESAFIO200K"
+        }
+        
+        preference_result = sdk.preference().create(preference_data)
+
+        # Create payment data
+        payment_data = {
+            "transaction_amount": float(valor_total),  # Ensure it's a float
+            "description": "Inscrição 4º Desafio 200k",
+            "payment_method_id": "pix",
+            "payer": {
+                "email": email,
+                "first_name": nome_parts[0] if nome_parts else "",
+                "last_name": " ".join(nome_parts[1:]) if len(nome_parts) > 1 else "",
+                "identification": {
+                    "type": "CPF",
+                    "number": cpf_cleaned
+                }   
+            },
+            "notification_url": "https://ecmrun.com.br/webhook",
+            "external_reference": external_reference
+        }
+        
+        print("Dados do pagamento preparados:")
+        print(json.dumps(payment_data, indent=2))
+
+        # Create payment in Mercado Pago
+        print("Enviando requisição para o Mercado Pago...")
+        
+        try:
+            payment_response = sdk.payment().create(payment_data)
+        except Exception as mp_error:
+            print(f"Erro na comunicação com Mercado Pago: {str(mp_error)}")
+            return jsonify({
+                'success': False,
+                'message': f'Erro na comunicação com o gateway de pagamento: {str(mp_error)}'
+            }), 500
+        
+        print("Resposta do Mercado Pago recebida")
+        
+        # Validate response structure
+        if not payment_response:
+            print("Erro: Resposta vazia do Mercado Pago")
+            return jsonify({
+                'success': False,
+                'message': 'Resposta vazia do gateway de pagamento'
+            }), 500
+            
+        if "response" not in payment_response:
+            print(f"Erro: Formato de resposta inesperado: {payment_response}")
+            return jsonify({
+                'success': False,
+                'message': 'Formato de resposta inesperado do gateway de pagamento'
+            }), 500
+
+        payment = payment_response["response"]
+        
+        # Check for error in response
+        if "error" in payment:
+            print(f"Erro retornado pelo Mercado Pago: {payment}")
+            return jsonify({
+                'success': False,
+                'message': f'Erro do gateway de pagamento: {payment.get("message", "Erro desconhecido")}'
+            }), 400
+        
+        # Check for QR code data
+        if "point_of_interaction" not in payment:
+            print("Erro: point_of_interaction não encontrado na resposta")
+            print(f"Resposta completa: {json.dumps(payment, indent=2)}")
+            return jsonify({
+                'success': False,
+                'message': 'Dados do PIX não disponíveis'
+            }), 500
+            
+        if "transaction_data" not in payment["point_of_interaction"]:
+            print("Erro: transaction_data não encontrado em point_of_interaction")
+            return jsonify({
+                'success': False,
+                'message': 'Dados do QR code não disponíveis'
+            }), 500
+
+        # Extract QR code data
+        qr_code = payment['point_of_interaction']['transaction_data'].get('qr_code', '')
+        qr_code_base64 = payment['point_of_interaction']['transaction_data'].get('qr_code_base64', '')
+        payment_id = payment.get('id', '')
+        
+        if not qr_code or not qr_code_base64 or not payment_id:
+            print("Erro: Dados do PIX incompletos")
+            return jsonify({
+                'success': False,
+                'message': 'Dados do PIX incompletos'
+            }), 500
+
+        # Success response
+        return jsonify({
+            'success': True,
+            'qr_code': qr_code,
+            'qr_code_base64': qr_code_base64,
+            'payment_id': payment_id
+        })
+
+    except Exception as e:
+        print(f"=== ERRO CRÍTICO: ===")
+        print(f"Tipo do erro: {type(e)}")
+        print(f"Mensagem de erro: {str(e)}")
+        print(f"Stack trace:")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao gerar PIX: {str(e)}'
+        }), 500
+
+
+@app.route('/recuperar-qrcode/<payment_id>', methods=['GET'])
+def recuperar_qrcode(payment_id):
+    try:
+        # Recupera o pagamento do Mercado Pago
+        payment = sdk.payment().get(payment_id)
+        if payment['status'] == 404:
+            return jsonify({'success': False, 'message': 'Pagamento não encontrado'})
+            
+        # Extrai os dados do QR code
+        point_of_interaction = payment.get('point_of_interaction', {})
+        transaction_data = point_of_interaction.get('transaction_data', {})
+        
+        return jsonify({
+            'success': True,
+            'qr_code': transaction_data.get('qr_code'),
+            'qr_code_base64': transaction_data.get('qr_code_base64')
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+    
+
+# @app.route('/verificar-pagamento/<payment_id>')
+# def verificar_pagamento(payment_id):
+#     try:
+#         # Buscar o status diretamente do Mercado Pago
+#         payment_response = sdk.payment().get(payment_id)
+#         payment = payment_response["response"]
+
+#         print(f"Status do pagamento recebido: {payment['status']}")
+        
+#         if payment["status"] == "approved":
+#             # Verificar se já não foi processado antes
+#             cur = mysql.connection.cursor()
+#             cur.execute("SELECT * FROM ecmrun.INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+#             existing_record = cur.fetchone()
+            
+#             if not existing_record:
+#                 # Calculate valor_pgto (total payment)
+#                 valor = float(session.get('valorAtual', 0))
+#                 taxa = float(session.get('valorTaxa', 0))
+#                 valoratual = valor + taxa
+#                 valor_pgto = float(session.get('valorTotal', 0))
+#                 desconto = valoratual - valor_pgto
+#                 formaPagto = session.get('formaPagto')
+#                 camiseta = session.get('Camisa')
+#                 equipe = session.get('Equipe')
+#                 apoio = session.get('Apoio')
+#                 equipe200 = session.get('Equipe200')
+#                 integrantes = session.get('Integrantes')
+
+#                 data_e_hora_atual = datetime.now()
+#                 fuso_horario = timezone('America/Manaus')
+#                 data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+#                 data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
+                                
+#                 # Get additional data from session
+#                 idatleta = session.get('idAtleta')
+#                 cpf = session.get('CPF')
+
+                
+#                 # Insert payment record
+#                 query = """
+#                 INSERT INTO ecmrun.INSCRICAO (
+#                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+#                     NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
+#                     VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+#                     IDPAGAMENTO, FLMAIL, EQUIPE
+#                 ) VALUES (
+#                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+#                 )
+#                 """
+                
+#                 params = (
+#                     idatleta,                            # IDATLETA
+#                     cpf,                                 # CPF
+#                     1,                                   # IDEVENTO (hardcoded as 1 for this event)
+#                     session.get('cat_iditem'),           # IDITEM
+#                     camiseta,                            # CAMISETA
+#                     apoio,                               # APOIO
+#                     equipe200,                           # NOME_EQUIPE
+#                     integrantes,                         # INTEGRANTES
+#                     valor,                               # VALOR
+#                     taxa,                                # TAXA
+#                     desconto,                            # DESCONTO
+#                     valor_pgto,                          # VALOR_PGTO
+#                     data_pagamento,                      # DTPAGAMENTO
+#                     'CONFIRMADO',                        # STATUS
+#                     formaPagto,                          # FORMAPGTO
+#                     payment_id,                          # IDPAGAMENTO
+#                     'N',
+#                     equipe
+#                 )
+                
+#                 cur.execute(query, params)
+#                 mysql.connection.commit()
+#                 cur.close()
+                
+#                 print("Registro de pagamento inserido com sucesso!")
+                
+#                 return jsonify({
+#                     'success': True,
+#                     'status': 'approved',
+#                     'message': 'Pagamento processado e registrado'
+#                 })
+#             else:
+#                 print("Pagamento já processado anteriormente")
+#                 return jsonify({
+#                     'success': True,
+#                     'status': 'approved',
+#                     'message': 'Pagamento já processado'
+#                 })
+        
+#         return jsonify({
+#             'success': True,
+#             'status': payment["status"]
+#         })
+        
+#     except Exception as e:
+#         print(f"Erro ao verificar pagamento: {str(e)}")
+#         # Ensure JSON is returned even on error
+#         return jsonify({
+#             'success': False, 
+#             'message': str(e),
+#             'status': 'error'
+#         }), 500
+    
+
+@app.route('/verificar-pagamento/<payment_id>')
+def verificar_pagamento(payment_id):
+    try:
+        # Buscar o status diretamente do Mercado Pago
+        payment_response = sdk.payment().get(payment_id)
+        payment = payment_response["response"]
+
+        print(f"Status do pagamento recebido: {payment['status']}")
+        
+        if payment["status"] == "approved":
+
+            data_e_hora_atual = datetime.now()
+            fuso_horario = timezone('America/Manaus')
+            data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+            data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
+
+
+            # Verificar se já não foi processado antes
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT IDINSCRICAO FROM INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+            existing_record = cur.fetchone()
+            
+            if existing_record:
+
+                cur.execute("""
+                    UPDATE INSCRICAO SET
+                        DTPAGAMENTO = %s,
+                        STATUS = %s  
+                    WHERE IDINSCRICAO = %s
+                    """, (
+                        data_pagamento,         
+                        'CONFIRMADO',           
+                        existing_record[0]      
+
+                ))
+
+                mysql.connection.commit()
+                cur.close()
+
+                return jsonify({
+                    'success': True,
+                    'status': 'approved',
+                    'message': 'Pagamento processado e registrado'
+                })
+
+            else:
+
+                # Calculate valor_pgto (total payment)
+                valor = float(session.get('valorAtual', 0))
+                taxa = float(session.get('valorTaxa', 0))
+                valoratual = valor + taxa
+                valor_pgto = float(session.get('valorTotal', 0))
+                desconto = valoratual - valor_pgto
+                formaPagto = session.get('formaPagto')
+                camiseta = session.get('Camisa')
+                equipe = session.get('Equipe')
+                apoio = session.get('Apoio')
+                equipe200 = session.get('Equipe200')
+                integrantes = session.get('Integrantes')
+                                
+                # Get additional data from session
+                #idatleta = session.get('user_idatleta')
+                #cpf = session.get('user_cpf')
+
+                idatleta = session.get('idAtleta')
+                cpf = session.get('CPF')
+                
+                # Insert payment record
+                query = """
+                INSERT INTO INSCRICAO (
+                    IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                    NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
+                    VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                    IDPAGAMENTO, FLMAIL, EQUIPE
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                """
+                
+                params = (
+                    idatleta,                    # IDATLETA
+                    cpf,                         # CPF
+                    1,                           # IDEVENTO (hardcoded as 1 for this event)
+                    session.get('cat_iditem'),   # IDITEM
+                    camiseta,                    # CAMISETA
+                    apoio,                       # APOIO
+                    equipe200,                   # NOME_EQUIPE
+                    integrantes,                 # INTEGRANTES
+                    valor,                       # VALOR
+                    taxa,                        # TAXA
+                    desconto,                    # DESCONTO
+                    valor_pgto,                  # VALOR_PGTO
+                    data_pagamento,              # DTPAGAMENTO
+                    'CONFIRMADO',                # STATUS
+                    formaPagto,                  # FORMAPGTO
+                    payment_id,                  # IDPAGAMENTO
+                    'N',
+                    equipe
+                )
+                
+                cur.execute(query, params)
+                mysql.connection.commit()
+                cur.close()
+                
+                print("Registro de pagamento inserido com sucesso!")
+                
+                return jsonify({
+                    'success': True,
+                    'status': 'approved',
+                    'message': 'Pagamento processado e registrado'
+                })
+                    
+        return jsonify({
+            'success': True,
+            'status': payment["status"]
+        })
+        
+    except Exception as e:
+        print(f"Erro ao verificar pagamento: {str(e)}")
+        # Ensure JSON is returned even on error
+        return jsonify({
+            'success': False, 
+            'message': str(e),
+            'status': 'error'
+        }), 500
+
+
+@app.route('/inscricao-temp/<cpf>', methods=['POST'])
+def inscricao_temp(cpf):
+    try:
+        # Obter dados do request JSON em vez de session
+        data = request.json
+        # Usar dados do request JSON
+        valor = float(data.get('valor_atual', 0))
+        taxa = float(data.get('valor_taxa', 0))
+        valoratual = valor + taxa
+        valor_pgto = float(data.get('valor_total', 0))
+        desconto = valoratual - valor_pgto
+        
+        formaPagto = data.get('forma_pagto', 'PIX')
+        camiseta = data.get('camiseta')
+        equipe = data.get('equipe')
+        apoio = data.get('apoio')
+        equipe200 = data.get('equipe_nome')
+        integrantes = data.get('integrantes')
+        idpagamento = data.get('payment_id')
+        cat_iditem = data.get('cat_iditem')
+        
+        data_e_hora_atual = datetime.now()
+        fuso_horario = timezone('America/Manaus')
+        data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+        data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
+
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT IDINSCRICAO FROM INSCRICAO WHERE STATUS = 'PENDENTE' AND CPF = %s AND IDEVENTO = 1", (cpf,))
+        existing_record = cur.fetchone()
+        
+        if existing_record:
+            cur = mysql.connection.cursor()
+
+            cur.execute("""
+                UPDATE INSCRICAO 
+                SET IDITEM = %s, 
+                    CAMISETA = %s,
+                    APOIO = %s,
+                    NOME_EQUIPE = %s, 
+                    INTEGRANTES = %s,
+                    VALOR = %s,
+                    TAXA = %s,
+                    DESCONTO = %s,
+                    VALOR_PGTO = %s,
+                    DTPAGAMENTO = %s,
+                    STATUS = %s,
+                    FORMAPGTO = %s,
+                    IDPAGAMENTO = %s,
+                    FLMAIL = %s,
+                    EQUIPE = %s,  
+                WHERE IDINSCRICAO = %s
+                """, (
+                    cat_iditem,                 # IDITEM
+                    camiseta,                   # CAMISETA
+                    apoio,                      # APOIO
+                    equipe200,                  # NOME_EQUIPE
+                    integrantes,                # INTEGRANTES
+                    valor,                      # VALOR
+                    taxa,                       # TAXA
+                    desconto,                   # DESCONTO
+                    valor_pgto,                 # VALOR_PGTO
+                    data_pagamento,             # DTPAGAMENTO
+                    'PENDENTE',                 # STATUS
+                    formaPagto,                 # FORMAPGTO
+                    idpagamento,                # IDPAGAMENTO
+                    'N',                        # FLMAIL
+                    equipe,                     # EQUIPE
+                    existing_record[0]          # IDINSCRICAO
+
+            ))
+            mysql.connection.commit()
+            cur.close()
+        
+        else:
+
+            # Obter idatleta do banco baseado no CPF
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT IDATLETA FROM ecmrun.ATLETA WHERE CPF = %s", (cpf,))
+            atleta_record = cur.fetchone()
+            
+            if atleta_record:
+                idatleta = atleta_record[0]
+            else:
+                idatleta = None
+        
+            # Insert payment record
+            query = """
+            INSERT INTO INSCRICAO (
+                IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
+                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                IDPAGAMENTO, FLMAIL, EQUIPE
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            """
+            
+            params = (
+                idatleta,                   # IDATLETA
+                cpf,                        # CPF
+                1,                          # IDEVENTO (hardcoded as 1 for this event)
+                cat_iditem,                 # IDITEM
+                camiseta,                   # CAMISETA
+                apoio,                      # APOIO
+                equipe200,                  # NOME_EQUIPE
+                integrantes,                # INTEGRANTES
+                valor,                      # VALOR
+                taxa,                       # TAXA
+                desconto,                   # DESCONTO
+                valor_pgto,                 # VALOR_PGTO
+                data_pagamento,             # DTPAGAMENTO
+                'PENDENTE',                 # STATUS
+                formaPagto,                 # FORMAPGTO
+                idpagamento,                # IDPAGAMENTO
+                'N',                        # FLMAIL
+                equipe                      # EQUIPE
+            )
+            
+            cur.execute(query, params)
+            mysql.connection.commit()
+            cur.close()
+        
+        print(f"Pré-inscrição inserida com sucesso para CPF {cpf} com payment_id {idpagamento}!")
+        
+        return jsonify({
+            'success': True,
+            'status': 'inserido',
+            'message': 'registrado'
+        })
+        
+    except Exception as e:
+        print(f"Erro ao lançar pré-inscrição: {str(e)}")
+        # Ensure JSON is returned even on error
+        return jsonify({
+            'success': False, 
+            'message': str(e),
+            'status': 'error'
+        }), 500
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.json
+    app.logger.info(f"Webhook received: {data}")
+    
+    if data['type'] == 'payment':
+        payment_info = sdk.payment().get(data['data']['id'])
+        app.logger.info(f"Payment info: {payment_info}")
+    
+    return jsonify({'status': 'ok'}), 200
+
+
+@app.route('/criar_preferencia', methods=['POST'])
+def criar_preferencia():
+
+    app.logger.info("Recebendo requisição para criar preferência")
+    app.logger.debug(f"Dados recebidos: {request.get_json()}")
+    app.logger.debug(f"MP_ACCESS_TOKEN configurado: {'MP_ACCESS_TOKEN' in os.environ}")
+
+    try:
+        data = request.get_json()
+        
+        # Log dos dados recebidos
+        print("Dados recebidos:", data)
+        
+        # Get values from localStorage (sent in request)
+        valor_total = float(data.get('valortotal', 0))
+        valor_taxa = float(data.get('valortaxa', 0))
+        nome_completo = data.get('user_name', '')
+        
+        # Split full name into first and last name
+        nome_parts = nome_completo.split(' ', 1)
+        first_name = nome_parts[0]
+        last_name = nome_parts[1] if len(nome_parts) > 1 else ''
+        
+        preco_final = valor_total
+        
+        print("Preço final calculado:", preco_final)
+        
+        # Configurar URLs de retorno
+        base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
+
+        back_urls = {
+            "success": f"{base_url}/aprovado",
+            "failure": f"{base_url}/negado",
+            "pending": f"{base_url}/negado"
+        }
+
+        preference_data = {
+            "items": [
+                {
+                    "id": "200k-inscricao",
+                    "title": "Inscrição 4º Desafio 200k",
+                    "quantity": 1,
+                    "unit_price": float(preco_final),
+                    "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
+                    "category_id": "sports_tickets"
+                }
+            ],
+            "payer": {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": data.get('user_email')
+            },
+            "payment_methods": {
+                "excluded_payment_methods": [
+                    {"id": "bolbradesco"},
+                    {"id": "pix"}
+                ],
+                "excluded_payment_types": [
+                    {"id": "ticket"},
+                    {"id": "bank_transfer"}
+                ],
+                "installments": 12
+            },
+            "back_urls": back_urls,
+            "auto_return": "approved",
+            "statement_descriptor": "ECM RUN",
+            "external_reference": data.get('user_idatleta'),
+            "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
+        }
+        
+        # Log da preference antes de criar
+        print("Preference data:", preference_data)
+        
+        preference_response = sdk.preference().create(preference_data)
+        print("Resposta do MP:", preference_response)
+        
+        if "response" not in preference_response:
+            raise Exception("Erro na resposta do Mercado Pago: " + str(preference_response))
+            
+        preference = preference_response["response"]
+        
+        return jsonify({
+            "id": preference["id"],
+            "init_point": preference["init_point"]
+        })
+    
+    except Exception as e:
+        print("Erro detalhado:", str(e))
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/lanca-pagamento-cartao/<payment_id>')
+def lanca_pagamento_cartao(payment_id):
+    
+    try:    
+        # Verificar se já não foi processado antes
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT * FROM ecmrun.INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+        existing_record = cur.fetchone()
+        
+        if not existing_record:
+            # Calculate valor_pgto (total payment)
+            valor = float(session.get('valorAtual', 0))
+            taxa = float(session.get('valorTaxa', 0))
+            valoratual = valor + taxa
+            valor_pgto = float(session.get('valorTotal', 0))
+            desconto = valoratual - valor_pgto 
+            formaPagto = 'CARTÃO DE CRÉDITO'
+            camiseta = session.get('Camisa')
+            equipe = session.get('Equipe')
+            apoio = session.get('Apoio')
+            equipe200 = session.get('Equipe200')
+            integrantes = session.get('Integrantes')
+
+            data_e_hora_atual = datetime.now()
+            fuso_horario = timezone('America/Manaus')
+            data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+            data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
+                            
+            # Get additional data from session
+            idatleta = session.get('user_idatleta')
+            cpf = session.get('user_cpf')
+            
+            # Insert payment record
+            query = """
+            INSERT INTO ecmrun.INSCRICAO (
+                IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
+                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                IDPAGAMENTO, FLMAIL, EQUIPE
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            """
+            
+            params = (
+                idatleta,                            # IDATLETA
+                cpf,                                 # CPF
+                1,                                   # IDEVENTO (hardcoded as 1 for this event)
+                session.get('cat_iditem'),           # IDITEM
+                camiseta,                            # CAMISETA
+                apoio,                               # APOIO
+                equipe200,                           # NOME_EQUIPE
+                integrantes,                         # INTEGRANTES
+                valor,                               # VALOR
+                taxa,                                # TAXA
+                desconto,                            # DESCONTO
+                valor_pgto,                          # VALOR_PGTO
+                data_pagamento,                      # DTPAGAMENTO
+                'CONFIRMADO',                        # STATUS
+                formaPagto,                          # FORMAPGTO
+                payment_id,                          # IDPAGAMENTO
+                'N',
+                equipe
+            )
+            
+            cur.execute(query, params)
+            mysql.connection.commit()
+            cur.close()
+            
+            print("Registro de pagamento inserido com sucesso!")
+            
+            return jsonify({
+                'success': True,
+                'status': 'approved',
+                'message': 'Pagamento processado e registrado'
+            })
+        else:
+            print("Pagamento já processado anteriormente")
+            return jsonify({
+                'success': True,
+                'status': 'approved',
+                'message': 'Pagamento já processado'
+            })
+    
+        
+    except Exception as e:
+        print(f"Erro ao gerar lançamento: {str(e)}")
+        # Ensure JSON is returned even on error
+        return jsonify({
+            'success': False, 
+            'message': str(e),
+            'status': 'error'
+        }), 500
+
+@app.route('/pesquisa-cupom/<int:categoria_id>/<cpf>/<cupom>')
+def pesquisa_cupom(categoria_id, cpf, cupom):
+    try:
+        print(f"Recebido pedido de validação - Categoria: {categoria_id}, CPF: {cpf}, Cupom: {cupom}")
+        
+        cur = mysql.connection.cursor()
+        query = "SELECT IDCUPOM, IDPAGAMENTO FROM ecmrun.CUPOM WHERE UTILIZADO = 'N' AND IDMODALIDADE = %s AND CPF = %s AND CUPOM = %s"
+        
+        print(f"Executando query: {query} com parâmetros: {(categoria_id, cpf, cupom)}")
+        
+        cur.execute(query, (categoria_id, cpf, cupom))
+        result = cur.fetchone()
+        
+        print(f"Resultado da query: {result}")
+        
+        cur.close()
+
+        if result:
+            return jsonify({
+                'success': True,
+                'idcupom': result[0],
+                'idpagamento': result[1]
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Número do cupom não encontrado ou não vinculado a este CPF e/ou Modalidade selecionada. Verifique e tente novamente.'
+            })
+    except Exception as e:
+        print(f"Erro na validação do cupom: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+@app.route('/inscricao-copum/<id_cupom>', methods=['POST'])
+def inscricao_copum(id_cupom):
+    try:    
+        cur = mysql.connection.cursor()
+        query = "SELECT * FROM ecmrun.CUPOM WHERE IDCUPOM = %s"
+        print(f"Executando query: {query} com parâmetros: {id_cupom}")
+        
+        cur.execute(query, id_cupom)
+        result = cur.fetchone()
+        print(f"Resultado da query: {result}")
+        
+        if result:
+            # Extraindo dados do cupom
+            cupom = result[1]
+            cpf = result[2]
+            idpagamento = result[3]
+            formaPagto = result[4]
+            data_pagamento = result[5]
+            
+            # Corrigindo a conversão dos valores decimais
+            valor = float(result[6])
+            taxa = float(result[7])
+            valor_pgto = float(result[8])
+            valoratual = valor + taxa
+            iditem = result[9]
+            desconto = valoratual - valor_pgto 
+            
+            # Obtendo dados da sessão
+            camiseta = request.form.get('camiseta')
+            equipe = request.form.get('equipe')
+            apoio = request.form.get('apoio')
+            equipe200 = request.form.get('equipe200')
+            integrantes = request.form.get('integrantes')
+        
+            idatleta = session.get('user_idatleta')
+            
+            # Query de inserção
+            query = """
+            INSERT INTO ecmrun.INSCRICAO (
+                IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
+                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                IDPAGAMENTO, FLMAIL, EQUIPE, CUPOM
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            """
+            
+            params = (
+                idatleta,          # IDATLETA
+                cpf,               # CPF
+                1,                 # IDEVENTO (hardcoded as 1 for this event)
+                iditem,            # IDITEM
+                camiseta,          # CAMISETA
+                apoio,             # APOIO
+                equipe200,         # NOME_EQUIPE
+                integrantes,       # INTEGRANTES
+                valor,             # VALOR
+                taxa,              # TAXA
+                desconto,          # DESCONTO
+                valor_pgto,        # VALOR_PGTO
+                data_pagamento,    # DTPAGAMENTO
+                'CONFIRMADO',      # STATUS
+                formaPagto,        # FORMAPGTO
+                idpagamento,       # IDPAGAMENTO
+                'N',              # FLMAIL
+                equipe,           # EQUIPE
+                cupom             # CUPOM
+            )
+
+            print(f"INSERT: {query}")
+            print(f"Parametros: {params}")
+                    
+            cur.execute(query, params)
+            mysql.connection.commit()
+            
+            print("Registro de pagamento inserido com sucesso!")
+            
+            # Atualizando status do cupom
+            query = "UPDATE ecmrun.CUPOM SET UTILIZADO = 'S' WHERE IDCUPOM = %s"
+            print(f"Executando Update: {query} com parâmetros: {id_cupom}")
+            cur.execute(query, id_cupom)
+            mysql.connection.commit()
+            
+            cur.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Inscrição processada com sucesso'
+            })
+        else:
+            print("Lancamento já processado anteriormente")
+            return jsonify({
+                'success': True,
+                'message': 'Inscrição processada anteriormente'
+            })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao processar inscrição: {str(e)}'
+        }), 500
+    
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
