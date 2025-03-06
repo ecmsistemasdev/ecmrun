@@ -823,8 +823,8 @@ def send_organizer_notification(receipt_data):
         msg = Message(
             f'Nova Inscrição - 4º Desafio 200k - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'adm@ecmrun.com.br'),
-            recipients=['ecmsistemasdeveloper@gmail.com']
-            #recipients=['kelioesteves@hotmail.com']
+            recipients=['kelioesteves@hotmail.com]
+            #recipients=[receipt_data["email"]]
         )
         
         # Render the organizer notification template with receipt data
@@ -851,7 +851,8 @@ def comprovante(payment_id):
                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO, I.FLMAIL, I.IDINSCRICAO
+                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO, 
+                I.FLMAIL, I.IDINSCRICAO, E.EMAIL
             FROM ecmrun.INSCRICAO I, ecmrun.ATLETA A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
@@ -882,7 +883,8 @@ def comprovante(payment_id):
             'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[8],
             'inscricao': str(receipt_data[9]),
-            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, e após concluir: medalha e troféu. Obs: Será apenas um troféu por equipe.'
+            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, e após concluir: medalha e troféu. Obs: Será apenas um troféu por equipe.',
+            'email': str(receipt_data[12])
         }
         
         app.logger.info("Dados da Inscrição:")
