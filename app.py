@@ -852,7 +852,7 @@ def comprovante(payment_id):
                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
                 I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO, 
-                I.FLMAIL, I.IDINSCRICAO, E.EMAIL
+                I.FLMAIL, I.IDINSCRICAO
             FROM ecmrun.INSCRICAO I, ecmrun.ATLETA A, 
             ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
             WHERE M.IDITEM = I.IDITEM
@@ -883,8 +883,7 @@ def comprovante(payment_id):
             'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[8],
             'inscricao': str(receipt_data[9]),
-            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, e após concluir: medalha e troféu. Obs: Será apenas um troféu por equipe.',
-            'email': str(receipt_data[12])
+            'obs': 'Sua inscrição dá direito a: Número de peito, camiseta, viseira, sacolinha, e após concluir: medalha e troféu. Obs: Será apenas um troféu por equipe.'
         }
         
         app.logger.info("Dados da Inscrição:")
