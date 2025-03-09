@@ -660,37 +660,42 @@
                     const cardFormData = {
                         cardNumber: cardNumber,
                         cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
-                        cardExpirationYear: document.getElementById('expiration-date').value.split('/')[1],
+                        cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
                         securityCode: document.getElementById('security-code').value,
                         cardholderName: fullName
                     };
-                    // const cardFormData = {
-                    //     cardNumber: cardNumber,
-                    //     cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
-                    //     cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
-                    //     securityCode: document.getElementById('security-code').value,
-                    //     cardholderName: fullName
-                    // };
 
                     console.log('Dados do formulário:', { ...cardFormData, securityCode: '***' });
                     
+
+                    // Obter número do documento sem máscara
+                    const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
+
                     // Adicionar device ID explicitamente ao criar token do cartão
                     try {
                         const cardToken = await mp.createCardToken({
                             ...cardFormData,
-                            device_id: deviceId
+                            device_id: deviceId,
+                            cardholder: {
+                                identification: {
+                                    type: document.querySelector('[name="doc_type"]').value,
+                                    number: docNumber
+                                }
+                            }
                         });
+
+                        console.log('Token do cartão gerado com sucesso:', cardToken.id);
+
+                        // const cardToken = await mp.createCardToken({
+                        //     ...cardFormData,
+                        //     device_id: deviceId
+                        // });
 
                         console.log('Resposta completa do createCardToken:', cardToken);
 
                         if (!cardToken || !cardToken.id) {
                             throw new Error('Não foi possível gerar o token do cartão');
                         }
-
-                        console.log('Token do cartão gerado com sucesso:', cardToken.id);
-
-                        // Obter número do documento sem máscara
-                        const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
 
                         // Obter valor total com juros (se existir)
                         const storedAmount = localStorage.getItem('valortotal');
@@ -731,6 +736,7 @@
                             },
                             body: JSON.stringify(paymentData)
                         });
+                     
 
                         if (!response.ok) {
                             let errorMessage = 'Erro desconhecido ao processar o pagamento';
