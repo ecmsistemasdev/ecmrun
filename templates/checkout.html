@@ -5,6 +5,9 @@
     <title>Pagamento Cartão - 4º Desafio 200k</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script>
+        window.MP_PUBLIC_KEY = "{{ mp_public_key }}";
+    </script>
 </head>
 <body>
     <div class="logo-container">
@@ -145,10 +148,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Inicializar o Mercado Pago
-            const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
+            const mp = new MercadoPago(window.MP_PUBLIC_KEY, {
                 locale: 'pt-BR'
             });
-
+                        
+            //const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
+            //    locale: 'pt-BR'
+            //});
 
             // Função para gerar device ID de forma confiável
             function generateReliableDeviceId() {
@@ -258,9 +264,13 @@
                         }
 
                         // Criar uma instância do Mercado Pago
-                        const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
+                        const mp = new MercadoPago(window.MP_PUBLIC_KEY, {
                             locale: 'pt-BR'
                         });
+
+                        //const mp = new MercadoPago('APP_USR-10f5fc95-1316-42e6-b475-546bbbc67c00', {
+                        //    locale: 'pt-BR'
+                        //});
 
                         // Gerar um device ID usando múltiplas estratégias
                         function generateFallbackDeviceId() {
@@ -870,7 +880,7 @@
                     
                     const data = await response.json();
                     console.log('PaymentID:',data.id)
-                    
+
                     if (data.status === "approved") {                        
                         try {
                             const verificationResponse = await fetch(`/lanca-pagamento-cartao/${data.id}`, {
