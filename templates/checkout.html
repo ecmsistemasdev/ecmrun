@@ -660,10 +660,17 @@
                     const cardFormData = {
                         cardNumber: cardNumber,
                         cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
-                        cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
+                        cardExpirationYear: document.getElementById('expiration-date').value.split('/')[1],
                         securityCode: document.getElementById('security-code').value,
                         cardholderName: fullName
                     };
+                    // const cardFormData = {
+                    //     cardNumber: cardNumber,
+                    //     cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
+                    //     cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
+                    //     securityCode: document.getElementById('security-code').value,
+                    //     cardholderName: fullName
+                    // };
 
                     console.log('Dados do formulário:', { ...cardFormData, securityCode: '***' });
                     
@@ -673,6 +680,8 @@
                             ...cardFormData,
                             device_id: deviceId
                         });
+
+                        console.log('Resposta completa do createCardToken:', cardToken);
 
                         if (!cardToken || !cardToken.id) {
                             throw new Error('Não foi possível gerar o token do cartão');
@@ -770,7 +779,11 @@
                             alert(statusMessage);
                         }
                     } catch (cardTokenError) {
-                        console.error('Erro na geração do token do cartão:', cardTokenError);
+                        console.error('Erro detalhado na geração do token:', cardTokenError);
+                        console.error('Mensagem de erro:', cardTokenError.message);
+                        if (cardTokenError.cause) {
+                            console.error('Causa do erro:', cardTokenError.cause);
+                        }
                         throw new Error('Erro na validação do cartão. Verifique os dados do cartão e tente novamente.');
                     }
                 } catch (error) {
