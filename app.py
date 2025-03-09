@@ -498,10 +498,14 @@ def checkout():
     vltaxa = session.get('valortaxa', 0)
     valor_total = float(vlinscricao) + float(vltaxa)
     
+    # Obter a chave pública do Mercado Pago das variáveis de ambiente
+    mp_public_key = os.environ.get('MP_PUBLIC_KEY')
+    
     return render_template('checkout.html', 
                          valor_inscricao=vlinscricao,
                          valor_taxa=vltaxa,
-                         valor_total=valor_total)
+                         valor_total=valor_total,
+                         mp_public_key=mp_public_key)
 
 
 @app.route('/process_payment', methods=['POST'])
