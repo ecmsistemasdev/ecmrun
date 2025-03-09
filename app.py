@@ -828,8 +828,8 @@ def send_organizer_notification(receipt_data):
         msg = Message(
             f'Nova Inscrição - 4º Desafio 200k - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'adm@ecmrun.com.br'),
-            recipients=['kelioesteves@hotmail.com']
-            #recipients=['ecmsistemasdeveloper@gmail.com']
+            recipients=['ecmsistemasdeveloper@gmail.com']
+            #recipients=['kelioesteves@hotmail.com']
         )
         
         # Render the organizer notification template with receipt data
