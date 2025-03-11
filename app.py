@@ -507,7 +507,6 @@ def checkout():
                          valor_total=valor_total,
                          mp_public_key=mp_public_key)
 
-
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
     try:
@@ -519,13 +518,23 @@ def process_payment():
         app.logger.info("Dados completos recebidos:")
         app.logger.info(json.dumps(payment_data, indent=2))
         
-        device_id = payment_data.get('device_id')
-        app.logger.info(f"Device ID recebido: {device_id}")
+        # device_id = payment_data.get('device_id')
+        # app.logger.info(f"Device ID recebido: {device_id}")
 
-        if not device_id:
-            app.logger.error("Device ID está ausente ou vazio")
-            return jsonify({"error": "Device ID é obrigatório"}), 400
+        # if not device_id:
+        #     app.logger.error("Device ID está ausente ou vazio")
+        #     return jsonify({"error": "Device ID é obrigatório"}), 400
        
+        
+        # required_fields = [
+        #     'token', 
+        #     'transaction_amount', 
+        #     'installments', 
+        #     'payment_method_id',
+        #     'payer',
+        #     'device_id'
+        # ]        
+        
         
         # Validação de campos obrigatórios
         required_fields = [
@@ -533,8 +542,7 @@ def process_payment():
             'transaction_amount', 
             'installments', 
             'payment_method_id',
-            'payer',
-            'device_id'
+            'payer'
         ]
         
         for field in required_fields:
@@ -610,7 +618,7 @@ def process_payment():
             "statement_descriptor": "ECMRUN DESAFIO 200K",
             "installments": installments,
             "payment_method_id": payment_data['payment_method_id'],
-            "device_id": payment_data.get('device_id'),
+            #"device_id": payment_data.get('device_id'),
             "external_reference": external_reference,
             "notification_url": "https://ecmrun.com.br/webhook",
             "payer": {
@@ -692,6 +700,7 @@ def process_payment():
     except Exception as general_error:
         app.logger.error(f"Erro geral no processamento: {str(general_error)}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+
 
 # @app.route('/process_payment', methods=['POST'])
 # def process_payment():
