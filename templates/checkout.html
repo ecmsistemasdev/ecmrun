@@ -158,65 +158,65 @@
                 locale: 'pt-BR'
             });
 
-            // Função única para gerar device ID
-            async function generateDeviceId() {
-                try {
-                    // Tentar o método Bricks (recomendado pela documentação)
-                    try {
-                        const deviceIdInstance = await mp.bricks().create('deviceId', {
-                            version: '2.0.0'
-                        });
+            // // Função única para gerar device ID
+            // async function generateDeviceId() {
+            //     try {
+            //         // Tentar o método Bricks (recomendado pela documentação)
+            //         try {
+            //             const deviceIdInstance = await mp.bricks().create('deviceId', {
+            //                 version: '2.0.0'
+            //             });
                         
-                        if (deviceIdInstance && deviceIdInstance.value) {
-                            console.log('Device ID gerado via Bricks:', deviceIdInstance.value);
-                            return deviceIdInstance.value;
-                        }
-                    } catch (bricksError) {
-                        console.log('Erro ao gerar deviceId via Bricks, tentando método alternativo', bricksError);
-                    }
+            //             if (deviceIdInstance && deviceIdInstance.value) {
+            //                 console.log('Device ID gerado via Bricks:', deviceIdInstance.value);
+            //                 return deviceIdInstance.value;
+            //             }
+            //         } catch (bricksError) {
+            //             console.log('Erro ao gerar deviceId via Bricks, tentando método alternativo', bricksError);
+            //         }
                     
-                    // Tentar método padrão deviceId
-                    try {
-                        const standardDeviceId = mp.deviceId();
-                        if (standardDeviceId) {
-                            console.log('Device ID gerado via método padrão:', standardDeviceId);
-                            return standardDeviceId;
-                        }
-                    } catch (stdError) {
-                        console.log('Erro ao gerar deviceId padrão, usando fallback', stdError);
-                    }
+            //         // Tentar método padrão deviceId
+            //         try {
+            //             const standardDeviceId = mp.deviceId();
+            //             if (standardDeviceId) {
+            //                 console.log('Device ID gerado via método padrão:', standardDeviceId);
+            //                 return standardDeviceId;
+            //             }
+            //         } catch (stdError) {
+            //             console.log('Erro ao gerar deviceId padrão, usando fallback', stdError);
+            //         }
                     
-                    // Método fallback - gerar ID customizado
-                    const timestamp = new Date().getTime();
-                    const randomPart = Math.random().toString(36).substring(2);
-                    const browserFingerprint = [
-                        navigator.userAgent || 'unknown',
-                        navigator.language || 'unknown',
-                        screen.width || 'unknown',
-                        screen.height || 'unknown',
-                        navigator.hardwareConcurrency || 'unknown'
-                    ].join('|');
+            //         // Método fallback - gerar ID customizado
+            //         const timestamp = new Date().getTime();
+            //         const randomPart = Math.random().toString(36).substring(2);
+            //         const browserFingerprint = [
+            //             navigator.userAgent || 'unknown',
+            //             navigator.language || 'unknown',
+            //             screen.width || 'unknown',
+            //             screen.height || 'unknown',
+            //             navigator.hardwareConcurrency || 'unknown'
+            //         ].join('|');
                     
-                    // Função de hash simples
-                    const hash = (str) => {
-                        let hash = 0;
-                        for (let i = 0; i < str.length; i++) {
-                            const char = str.charCodeAt(i);
-                            hash = ((hash << 5) - hash) + char;
-                            hash = hash & hash; // Converter para 32bit integer
-                        }
-                        return Math.abs(hash);
-                    };
+            //         // Função de hash simples
+            //         const hash = (str) => {
+            //             let hash = 0;
+            //             for (let i = 0; i < str.length; i++) {
+            //                 const char = str.charCodeAt(i);
+            //                 hash = ((hash << 5) - hash) + char;
+            //                 hash = hash & hash; // Converter para 32bit integer
+            //             }
+            //             return Math.abs(hash);
+            //         };
                     
-                    const fallbackId = `device_${timestamp}_${hash(browserFingerprint)}_${randomPart}`;
-                    console.log('Usando device ID fallback:', fallbackId);
-                    return fallbackId;
-                } catch (error) {
-                    console.error('Erro crítico na geração de device ID:', error);
-                    // Retornar um ID extremamente básico em último caso
-                    return `fallback_${new Date().getTime()}`;
-                }
-            }
+            //         const fallbackId = `device_${timestamp}_${hash(browserFingerprint)}_${randomPart}`;
+            //         console.log('Usando device ID fallback:', fallbackId);
+            //         return fallbackId;
+            //     } catch (error) {
+            //         console.error('Erro crítico na geração de device ID:', error);
+            //         // Retornar um ID extremamente básico em último caso
+            //         return `fallback_${new Date().getTime()}`;
+            //     }
+            // }
 
             // Carregar valor do localStorage
             console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
@@ -605,20 +605,20 @@
                 e.preventDefault();
                 
                 try {
-                    // Gerar device ID de forma confiável
-                    const deviceId = await generateDeviceId();
-                    console.log('Device ID para pagamento:', deviceId);
+                    // // Gerar device ID de forma confiável
+                    // const deviceId = await generateDeviceId();
+                    // console.log('Device ID para pagamento:', deviceId);
                     
-                    // Adicionar device ID ao formulário
-                    let deviceIdInput = document.getElementById('device_id');
-                    if (!deviceIdInput) {
-                        deviceIdInput = document.createElement('input');
-                        deviceIdInput.type = 'hidden';
-                        deviceIdInput.name = 'device_id';
-                        deviceIdInput.id = 'device_id';
-                        document.getElementById('payment-form').appendChild(deviceIdInput);
-                    }
-                    deviceIdInput.value = deviceId;
+                    // // Adicionar device ID ao formulário
+                    // let deviceIdInput = document.getElementById('device_id');
+                    // if (!deviceIdInput) {
+                    //     deviceIdInput = document.createElement('input');
+                    //     deviceIdInput.type = 'hidden';
+                    //     deviceIdInput.name = 'device_id';
+                    //     deviceIdInput.id = 'device_id';
+                    //     document.getElementById('payment-form').appendChild(deviceIdInput);
+                    // }
+                    // deviceIdInput.value = deviceId;
 
                     // Validar nome do titular do cartão
                     const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
@@ -673,16 +673,26 @@
 
                     // Adicionar device ID explicitamente ao criar token do cartão
                     try {
+                        // const cardToken = await mp.createCardToken({
+                        //     ...cardFormData,
+                        //     device_id: deviceId,
+                        //     cardholder: {
+                        //         identification: {
+                        //             type: document.querySelector('[name="doc_type"]').value,
+                        //             number: docNumber
+                        //         }
+                        //     }
+                        // });
+
                         const cardToken = await mp.createCardToken({
                             ...cardFormData,
-                            device_id: deviceId,
                             cardholder: {
                                 identification: {
                                     type: document.querySelector('[name="doc_type"]').value,
                                     number: docNumber
                                 }
                             }
-                        });
+                        });                        
 
                         console.log('Token do cartão gerado com sucesso:', cardToken.id);
 
@@ -701,14 +711,12 @@
                         const storedAmount = localStorage.getItem('valortotal');
                         const totalAmountWithInterest = localStorage.getItem('valorTotalComJuros') || storedAmount;
 
-                        // Preparar dados do pagamento
                         const paymentData = {
                             transaction_amount: Number(parseFloat(totalAmountWithInterest).toFixed(2)),
                             token: cardToken.id,
                             description: document.querySelector('[name="description"]').value,
                             installments: parseInt(document.querySelector('[name="installments"]').value),
                             payment_method_id: cardTypeInfo.brand,
-                            device_id: deviceId,
                             payer: {
                                 email: document.querySelector('[name="email"]').value,
                                 identification: {
@@ -721,12 +729,37 @@
                             ...userData
                         };
 
+                        // // Preparar dados do pagamento
+                        // const paymentData = {
+                        //     transaction_amount: Number(parseFloat(totalAmountWithInterest).toFixed(2)),
+                        //     token: cardToken.id,
+                        //     description: document.querySelector('[name="description"]').value,
+                        //     installments: parseInt(document.querySelector('[name="installments"]').value),
+                        //     payment_method_id: cardTypeInfo.brand,
+                        //     device_id: deviceId,
+                        //     payer: {
+                        //         email: document.querySelector('[name="email"]').value,
+                        //         identification: {
+                        //             type: document.querySelector('[name="doc_type"]').value,
+                        //             number: docNumber
+                        //         },
+                        //         first_name: firstName,
+                        //         last_name: lastName
+                        //     },
+                        //     ...userData
+                        // };
+
+                        // console.log('Enviando dados para processamento:', {
+                        //     ...paymentData,
+                        //     token: '***',
+                        //     device_id: deviceId.substring(0, 10) + '...'
+                        // });
+
                         console.log('Enviando dados para processamento:', {
                             ...paymentData,
-                            token: '***',
-                            device_id: deviceId.substring(0, 10) + '...'
+                            token: '***'
                         });
-
+                                                
                         // Enviar solicitação de pagamento
                         const response = await fetch('/process_payment', {
                             method: 'POST',
