@@ -507,29 +507,229 @@ def checkout():
                          valor_total=valor_total,
                          mp_public_key=mp_public_key)
 
+# @app.route('/process_payment', methods=['POST'])
+# def process_payment():
+#     try:
+#         # Configurar log detalhado
+#         app.logger.setLevel(logging.INFO)
+        
+#         # Receber dados do pagamento
+#         payment_data = request.json
+#         app.logger.info("Dados completos recebidos:")
+#         app.logger.info(json.dumps(payment_data, indent=2))
+
+#         installments = payment_data.get('installments', 1)
+#         transaction_amount = payment_data.get('transaction_amount', 0)
+
+#         # device_id = payment_data.get('device_id')
+#         # app.logger.info(f"Device ID recebido: {device_id}")
+
+#         # if not device_id:
+#         #     app.logger.error("Device ID está ausente ou vazio")
+#         #     return jsonify({"error": "Device ID é obrigatório"}), 400
+       
+        
+#         # Validação de campos obrigatórios
+#         required_fields = [
+#             'token', 
+#             'transaction_amount', 
+#             'installments', 
+#             'payment_method_id',
+#             'payer'
+#         ]
+        
+#         for field in required_fields:
+#             if field not in payment_data:
+#                 app.logger.error(f"Campo obrigatório ausente: {field}")
+#                 raise ValueError(f"Campo obrigatório ausente: {field}")
+        
+#         # Extrair e validar dados importantes
+#         #installments = int(payment_data.get('installments', 1))
+#         #transaction_amount = round(float(payment_data['transaction_amount']), 2)
+        
+#         # Extrair dados do participante
+#         valor_total = round(float(payment_data.get('valor_total', 0)), 2)
+#         valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
+#         valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
+        
+#         # Dados adicionais do participante
+#         camisa = payment_data.get('camiseta')
+#         apoio = payment_data.get('apoio')
+#         equipe = payment_data.get('equipe')
+#         equipe200 = payment_data.get('nome_equipe')
+#         integrantes = payment_data.get('integrantes')
+        
+#         # Preparar dados da sessão
+#         session['valorTotal'] = transaction_amount
+#         session['numeroParcelas'] = installments
+#         session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
+#         session['valorTotalsemJuros'] = valor_total
+#         session['valorAtual'] = valor_atual
+#         session['valorTaxa'] = valor_taxa
+#         session['formaPagto'] = 'CARTAO DE CREDITO'
+#         session['Camisa'] = camisa
+#         session['Equipe'] = equipe
+#         session['Apoio'] = apoio
+#         session['Equipe200'] = equipe200
+#         session['Integrantes'] = integrantes
+        
+#         # Gerar referência externa única
+#         external_reference = str(uuid.uuid4())
+        
+#         # Preparar dados do item
+#         item_details = {
+#             "id": "DESAFIO_200K",
+#             "title": "Inscrição Desafio 200k",
+#             "description": "Inscrição para 4º Desafio 200km",
+#             "category_id": "SPORTS_EVENT",
+#             "quantity": 1,
+#             "currency_id": "BRL",
+#             "unit_price": valor_atual,
+#             "total_amount": transaction_amount
+#         }
+        
+#         # Preparar preferência de pagamento
+#         preference_data = {
+#             "items": [item_details],
+#             "notification_url": "https://ecmrun.com.br/webhook",
+#             "external_reference": external_reference
+#         }
+        
+#         try:
+#             preference_response = sdk.preference().create(preference_data)
+#             if "response" not in preference_response:
+#                 app.logger.error("Erro ao criar preferência de pagamento")
+#                 raise ValueError("Erro ao criar preferência de pagamento")
+#         except Exception as pref_error:
+#             app.logger.error(f"Erro na criação da preferência: {str(pref_error)}")
+#             raise
+        
+#         # Preparar dados do pagamento
+#         payment_info = {
+#             "transaction_amount": transaction_amount,
+#             "token": payment_data['token'],
+#             "description": "Inscrição Desafio 200k",
+#             "statement_descriptor": "ECMRUN DESAFIO 200K",
+#             "installments": installments,
+#             "payment_method_id": payment_data['payment_method_id'],
+#             "external_reference": external_reference,
+#             "notification_url": "https://ecmrun.com.br/webhook",
+#             "payer": {
+#                 "email": payment_data['payer']['email'],
+#                 "identification": {
+#                     "type": payment_data['payer']['identification']['type'],
+#                     "number": payment_data['payer']['identification']['number']
+#                 },
+#                 "first_name": payment_data['payer']['first_name'],
+#                 "last_name": payment_data['payer']['last_name']
+#             },
+#             "additional_info": {
+#                 "items": [item_details],
+#                 "payer": {
+#                     "first_name": payment_data['payer']['first_name'],
+#                     "last_name": payment_data['payer']['last_name'],
+#                     "registration_date": datetime.now().isoformat()
+#                 },
+#                 "ip_address": request.remote_addr,
+#                 "user_agent": str(request.user_agent)
+#             }
+#         }
+        
+#         app.logger.info("Dados do pagamento para processamento:")
+#         app.logger.info(json.dumps(payment_info, indent=2))
+        
+#         # Processar pagamento
+#         try:
+#             payment_response = sdk.payment().create(payment_info)
+            
+#             app.logger.info("Resposta do pagamento:")
+#             app.logger.info(json.dumps(payment_response, indent=2))
+            
+#             if "response" not in payment_response:
+#                 error_msg = payment_response.get("message", "Erro desconhecido")
+#                 app.logger.error(f"Erro no processamento do pagamento: {error_msg}")
+#                 return jsonify({
+#                     "error": "Erro ao processar pagamento",
+#                     "details": error_msg
+#                 }), 400
+            
+#             payment_data = payment_response["response"]
+            
+#             # Verificar status do pagamento
+#             if payment_data.get("status") == "approved":
+#                 # Lógica adicional para pagamento aprovado
+#                 try:
+#                     # Exemplo de chamada para lançar pagamento
+#                     verification_response = requests.get(
+#                         f'/lanca-pagamento-cartao/{payment_data["id"]}', 
+#                         headers={'Accept': 'application/json'}
+#                     )
+                    
+#                     if verification_response.status_code != 200:
+#                         app.logger.warning(f"Erro na verificação do pagamento: {verification_response.text}")
+                
+#                 except Exception as verification_error:
+#                     app.logger.error(f"Erro na verificação do pagamento: {str(verification_error)}")
+                
+#                 return jsonify(payment_data), 200
+#             else:
+#                 app.logger.warning(f"Pagamento não aprovado. Status: {payment_data.get('status')}")
+#                 return jsonify({
+#                     "message": "Pagamento não aprovado",
+#                     "status": payment_data.get("status")
+#                 }), 400
+        
+#         except Exception as payment_error:
+#             app.logger.error(f"Erro no processamento do pagamento: {str(payment_error)}")
+#             return jsonify({
+#                 "error": "Erro interno no processamento do pagamento",
+#                 "details": str(payment_error)
+#             }), 500
+    
+#     except ValueError as validation_error:
+#         app.logger.error(f"Erro de validação: {str(validation_error)}")
+#         return jsonify({"error": str(validation_error)}), 400
+    
+#     except Exception as general_error:
+#         app.logger.error(f"Erro geral no processamento: {str(general_error)}")
+#         return jsonify({"error": "Erro interno no servidor"}), 500
+
+####################################
+
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
     try:
-        # Configurar log detalhado
-        app.logger.setLevel(logging.INFO)
-        
-        # Receber dados do pagamento
+        app.logger.info("Dados recebidos:")
         payment_data = request.json
-        app.logger.info("Dados completos recebidos:")
-        app.logger.info(json.dumps(payment_data, indent=2))
-
+        app.logger.info(payment_data)
+        
         installments = payment_data.get('installments', 1)
         transaction_amount = payment_data.get('transaction_amount', 0)
-
-        # device_id = payment_data.get('device_id')
-        # app.logger.info(f"Device ID recebido: {device_id}")
-
-        # if not device_id:
-        #     app.logger.error("Device ID está ausente ou vazio")
-        #     return jsonify({"error": "Device ID é obrigatório"}), 400
-       
         
-        # Validação de campos obrigatórios
+        # Round to 2 decimal places to avoid floating point precision issues
+        valor_total = round(float(payment_data.get('valor_total', 0)), 2)
+        valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
+        valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
+        camisa = payment_data.get('camiseta')
+        apoio = payment_data.get('apoio')
+        equipe = payment_data.get('equipe')
+        equipe200 = payment_data.get('nome_equipe')
+        integrantes = payment_data.get('integrantes')
+
+        session['valorTotal'] = transaction_amount #valor_total
+        session['numeroParcelas'] = installments
+        session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
+        session['valorTotalsemJuros'] = valor_total
+        session['valorAtual'] = valor_atual
+        session['valorTaxa'] = valor_taxa
+        session['formaPagto'] = 'CARTÃO DE CRÉDITO'
+        session['Camisa'] = camisa
+        session['Equipe'] = equipe
+        session['Apoio'] = apoio
+        session['Equipe200'] = equipe200
+        session['Integrantes'] = integrantes
+
+        # Validar dados recebidos
         required_fields = [
             'token', 
             'transaction_amount', 
@@ -540,43 +740,12 @@ def process_payment():
         
         for field in required_fields:
             if field not in payment_data:
-                app.logger.error(f"Campo obrigatório ausente: {field}")
                 raise ValueError(f"Campo obrigatório ausente: {field}")
-        
-        # Extrair e validar dados importantes
-        #installments = int(payment_data.get('installments', 1))
-        #transaction_amount = round(float(payment_data['transaction_amount']), 2)
-        
-        # Extrair dados do participante
-        valor_total = round(float(payment_data.get('valor_total', 0)), 2)
-        valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
-        valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
-        
-        # Dados adicionais do participante
-        camisa = payment_data.get('camiseta')
-        apoio = payment_data.get('apoio')
-        equipe = payment_data.get('equipe')
-        equipe200 = payment_data.get('nome_equipe')
-        integrantes = payment_data.get('integrantes')
-        
-        # Preparar dados da sessão
-        session['valorTotal'] = transaction_amount
-        session['numeroParcelas'] = installments
-        session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
-        session['valorTotalsemJuros'] = valor_total
-        session['valorAtual'] = valor_atual
-        session['valorTaxa'] = valor_taxa
-        session['formaPagto'] = 'CARTAO DE CREDITO'
-        session['Camisa'] = camisa
-        session['Equipe'] = equipe
-        session['Apoio'] = apoio
-        session['Equipe200'] = equipe200
-        session['Integrantes'] = integrantes
-        
+
         # Gerar referência externa única
         external_reference = str(uuid.uuid4())
         
-        # Preparar dados do item
+        # Criar preferência de pagamento
         item_details = {
             "id": "DESAFIO_200K",
             "title": "Inscrição Desafio 200k",
@@ -595,16 +764,24 @@ def process_payment():
             "external_reference": external_reference
         }
         
-        try:
-            preference_response = sdk.preference().create(preference_data)
-            if "response" not in preference_response:
-                app.logger.error("Erro ao criar preferência de pagamento")
-                raise ValueError("Erro ao criar preferência de pagamento")
-        except Exception as pref_error:
-            app.logger.error(f"Erro na criação da preferência: {str(pref_error)}")
-            raise
+        # Criar preferência
+        preference_response = sdk.preference().create(preference_data)
         
+        if "response" not in preference_response:
+            raise ValueError("Erro ao criar preferência de pagamento")
+            
         # Preparar dados do pagamento
+        # payment_info = {
+        #     "transaction_amount": float(payment_data['transaction_amount']),
+        #     "token": payment_data['token'],
+        #     "description": payment_data.get('description', 'Produto'),
+        #     "installments": installments,      #"installments": int(payment_data['installments']),
+        #     "payment_method_id": payment_data['payment_method_id'],
+        #     "external_reference": external_reference,
+        #     "notification_url": "https://ecmrun.com.br/webhook",
+        #     "payer": payment_data['payer']
+        # }
+
         payment_info = {
             "transaction_amount": transaction_amount,
             "token": payment_data['token'],
@@ -634,171 +811,30 @@ def process_payment():
                 "user_agent": str(request.user_agent)
             }
         }
-        
-        app.logger.info("Dados do pagamento para processamento:")
-        app.logger.info(json.dumps(payment_info, indent=2))
+
+        app.logger.info("Dados do pagamento:")
+        app.logger.info(payment_info)
         
         # Processar pagamento
-        try:
-            payment_response = sdk.payment().create(payment_info)
-            
-            app.logger.info("Resposta do pagamento:")
-            app.logger.info(json.dumps(payment_response, indent=2))
-            
-            if "response" not in payment_response:
-                error_msg = payment_response.get("message", "Erro desconhecido")
-                app.logger.error(f"Erro no processamento do pagamento: {error_msg}")
-                return jsonify({
-                    "error": "Erro ao processar pagamento",
-                    "details": error_msg
-                }), 400
-            
-            payment_data = payment_response["response"]
-            
-            # Verificar status do pagamento
-            if payment_data.get("status") == "approved":
-                # Lógica adicional para pagamento aprovado
-                try:
-                    # Exemplo de chamada para lançar pagamento
-                    verification_response = requests.get(
-                        f'/lanca-pagamento-cartao/{payment_data["id"]}', 
-                        headers={'Accept': 'application/json'}
-                    )
-                    
-                    if verification_response.status_code != 200:
-                        app.logger.warning(f"Erro na verificação do pagamento: {verification_response.text}")
-                
-                except Exception as verification_error:
-                    app.logger.error(f"Erro na verificação do pagamento: {str(verification_error)}")
-                
-                return jsonify(payment_data), 200
-            else:
-                app.logger.warning(f"Pagamento não aprovado. Status: {payment_data.get('status')}")
-                return jsonify({
-                    "message": "Pagamento não aprovado",
-                    "status": payment_data.get("status")
-                }), 400
+        payment_response = sdk.payment().create(payment_info)
         
-        except Exception as payment_error:
-            app.logger.error(f"Erro no processamento do pagamento: {str(payment_error)}")
+        app.logger.info("Resposta do pagamento:")
+        app.logger.info(payment_response)
+        
+        if "response" not in payment_response:
             return jsonify({
-                "error": "Erro interno no processamento do pagamento",
-                "details": str(payment_error)
-            }), 500
-    
-    except ValueError as validation_error:
-        app.logger.error(f"Erro de validação: {str(validation_error)}")
-        return jsonify({"error": str(validation_error)}), 400
-    
-    except Exception as general_error:
-        app.logger.error(f"Erro geral no processamento: {str(general_error)}")
-        return jsonify({"error": "Erro interno no servidor"}), 500
-
-
-# @app.route('/process_payment', methods=['POST'])
-# def process_payment():
-#     try:
-#         app.logger.info("Dados recebidos:")
-#         payment_data = request.json
-#         app.logger.info(payment_data)
-        
-#         installments = payment_data.get('installments', 1)
-#         transaction_amount = payment_data.get('transaction_amount', 0)
-        
-#         # Round to 2 decimal places to avoid floating point precision issues
-#         valor_total = round(float(payment_data.get('valor_total', 0)), 2)
-#         valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
-#         valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
-#         camisa = payment_data.get('camiseta')
-#         apoio = payment_data.get('apoio')
-#         equipe = payment_data.get('equipe')
-#         equipe200 = payment_data.get('nome_equipe')
-#         integrantes = payment_data.get('integrantes')
-
-#         session['valorTotal'] = transaction_amount #valor_total
-#         session['numeroParcelas'] = installments
-#         session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
-#         session['valorTotalsemJuros'] = valor_total
-#         session['valorAtual'] = valor_atual
-#         session['valorTaxa'] = valor_taxa
-#         session['formaPagto'] = 'CARTÃO DE CRÉDITO'
-#         session['Camisa'] = camisa
-#         session['Equipe'] = equipe
-#         session['Apoio'] = apoio
-#         session['Equipe200'] = equipe200
-#         session['Integrantes'] = integrantes
-
-#         # Validar dados recebidos
-#         required_fields = [
-#             'token', 
-#             'transaction_amount', 
-#             'installments', 
-#             'payment_method_id',
-#             'payer'
-#         ]
-        
-#         for field in required_fields:
-#             if field not in payment_data:
-#                 raise ValueError(f"Campo obrigatório ausente: {field}")
-
-#         # Gerar referência externa única
-#         external_reference = str(uuid.uuid4())
-        
-#         # Criar preferência de pagamento
-#         preference_data = {
-#             "items": [{
-#                 "title": payment_data.get('description', 'Produto'),
-#                 "quantity": 1,
-#                 "currency_id": "BRL",
-#                 "unit_price": float(payment_data['transaction_amount']),
-#                 "description": payment_data.get('description_item', 'Produto'),
-#                 "category_id": "others"
-#             }],
-#             "notification_url": "https://ecmrun.com.br/webhook",
-#             "external_reference": external_reference
-#         }
-        
-#         # Criar preferência
-#         preference_response = sdk.preference().create(preference_data)
-        
-#         if "response" not in preference_response:
-#             raise ValueError("Erro ao criar preferência de pagamento")
+                "error": "Erro ao processar pagamento",
+                "details": payment_response.get("message", "Erro desconhecido")
+            }), 400
             
-#         # Preparar dados do pagamento
-#         payment_info = {
-#             "transaction_amount": float(payment_data['transaction_amount']),
-#             "token": payment_data['token'],
-#             "description": payment_data.get('description', 'Produto'),
-#             "installments": installments,      #"installments": int(payment_data['installments']),
-#             "payment_method_id": payment_data['payment_method_id'],
-#             "external_reference": external_reference,
-#             "notification_url": "https://ecmrun.com.br/webhook",
-#             "payer": payment_data['payer']
-#         }
-
-#         app.logger.info("Dados do pagamento:")
-#         app.logger.info(payment_info)
+        return jsonify(payment_response["response"]), 200
         
-#         # Processar pagamento
-#         payment_response = sdk.payment().create(payment_info)
-        
-#         app.logger.info("Resposta do pagamento:")
-#         app.logger.info(payment_response)
-        
-#         if "response" not in payment_response:
-#             return jsonify({
-#                 "error": "Erro ao processar pagamento",
-#                 "details": payment_response.get("message", "Erro desconhecido")
-#             }), 400
-            
-#         return jsonify(payment_response["response"]), 200
-        
-#     except ValueError as e:
-#         app.logger.error(f"Erro de validação: {str(e)}")
-#         return jsonify({"error": str(e)}), 400
-#     except Exception as e:
-#         app.logger.error(f"Erro no processamento: {str(e)}")
-#         return jsonify({"error": str(e)}), 400
+    except ValueError as e:
+        app.logger.error(f"Erro de validação: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        app.logger.error(f"Erro no processamento: {str(e)}")
+        return jsonify({"error": str(e)}), 400
 
 
 def get_receipt_data(payment_id):
