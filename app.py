@@ -1004,27 +1004,27 @@ def process_payment():
                 
             payment_data = payment_response["response"]
             # Verificar status do pagamento
-            if payment_data.get("status") == "approved":
-                try:
-                    base_url = "https://ecmrun.com.br"  
-                    verification_response = requests.get(
-                        f'{base_url}/lanca-pagamento-cartao/{payment_data["id"]}', 
-                        headers={'Accept': 'application/json'}
-                    )
+            #if payment_data.get("status") == "approved":
+            #    try:
+            #        base_url = "https://ecmrun.com.br"  
+            #        verification_response = requests.get(
+            #            f'{base_url}/lanca-pagamento-cartao/{payment_data["id"]}', 
+            #            headers={'Accept': 'application/json'}
+            #        )
                     
-                    if verification_response.status_code != 200:
-                        app.logger.warning(f"Erro na verificação do pagamento: {verification_response.text}")
+             #       if verification_response.status_code != 200:
+             #           app.logger.warning(f"Erro na verificação do pagamento: {verification_response.text}")
                 
-                except Exception as verification_error:
-                    app.logger.error(f"Erro na verificação do pagamento: {str(verification_error)}")
+             #   except Exception as verification_error:
+             #       app.logger.error(f"Erro na verificação do pagamento: {str(verification_error)}")
                     
-                return jsonify(payment_data), 200
-            else:
-                app.logger.warning(f"Pagamento não aprovado. Status: {payment_data.get('status')}")
-                return jsonify({
-                    "message": "Pagamento não aprovado",
-                    "status": payment_data.get("status")
-                }), 400            
+             #   return jsonify(payment_data), 200
+            #else:
+            #    app.logger.warning(f"Pagamento não aprovado. Status: {payment_data.get('status')}")
+            #    return jsonify({
+            #        "message": "Pagamento não aprovado",
+            #        "status": payment_data.get("status")
+            #    }), 400            
             
         except Exception as e:
             app.logger.error(f"Exceção ao processar pagamento: {str(e)}")
@@ -2949,6 +2949,147 @@ def inscricao_temp(cpf):
             'message': str(e),
             'status': 'error'
         }), 500
+
+@app.route('/inscricao-cartao/<cpf>', methods=['POST'])
+def inscricao_cartao(cpf):
+    try:
+        # Obter dados do request JSON em vez de session
+        data = request.json
+        # Usar dados do request JSON
+        valor = float(data.get('valor_atual', 0))
+        taxa = float(data.get('valor_taxa', 0))
+        valoratual = valor + taxa
+        valor_pgto = float(data.get('valor_total', 0))
+        desconto = valoratual - valor_pgto
+        
+        #formaPagto = data.get('forma_pagto', 'PIX')
+        formaPagto = data.get('forma_pagto')
+        camiseta = data.get('camiseta')
+        equipe = data.get('equipe')
+        apoio = data.get('apoio')
+        equipe200 = data.get('equipe_nome')
+        integrantes = data.get('integrantes')
+        idpagamento = data.get('payment_id')
+        cat_iditem = data.get('cat_iditem')
+        
+        data_e_hora_atual = datetime.now()
+        fuso_horario = timezone('America/Manaus')
+        data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+        data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
+
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT IDINSCRICAO FROM INSCRICAO WHERE CPF = %s AND IDEVENTO = 1", (cpf,))
+        existing_record = cur.fetchone()
+        
+        if existing_record:
+            cur = mysql.connection.cursor()
+
+            cur.execute("""
+                UPDATE INSCRICAO 
+                SET IDITEM = %s, 
+                    CAMISETA = %s,
+                    APOIO = %s,
+                    NOME_EQUIPE = %s, 
+                    INTEGRANTES = %s,
+                    VALOR = %s,
+                    TAXA = %s,
+                    DESCONTO = %s,
+                    VALOR_PGTO = %s,
+                    DTPAGAMENTO = %s,
+                    STATUS = %s,
+                    FORMAPGTO = %s,
+                    IDPAGAMENTO = %s,
+                    FLMAIL = %s,
+                    EQUIPE = %s,  
+                WHERE IDINSCRICAO = %s
+                """, (
+                    cat_iditem,                 # IDITEM
+                    camiseta,                   # CAMISETA
+                    apoio,                      # APOIO
+                    equipe200,                  # NOME_EQUIPE
+                    integrantes,                # INTEGRANTES
+                    valor,                      # VALOR
+                    taxa,                       # TAXA
+                    desconto,                   # DESCONTO
+                    valor_pgto,                 # VALOR_PGTO
+                    data_pagamento,             # DTPAGAMENTO
+                    'CONFIRMADO',               # STATUS
+                    formaPagto,                 # FORMAPGTO
+                    idpagamento,                # IDPAGAMENTO
+                    'N',                        # FLMAIL
+                    equipe,                     # EQUIPE
+                    existing_record[0]          # IDINSCRICAO
+
+            ))
+            mysql.connection.commit()
+            cur.close()
+        
+        else:
+
+            # Obter idatleta do banco baseado no CPF
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT IDATLETA FROM ecmrun.ATLETA WHERE CPF = %s", (cpf,))
+            atleta_record = cur.fetchone()
+            
+            if atleta_record:
+                idatleta = atleta_record[0]
+            else:
+                idatleta = None
+        
+            # Insert payment record
+            query = """
+            INSERT INTO INSCRICAO (
+                IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
+                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
+                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                IDPAGAMENTO, FLMAIL, EQUIPE
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            """
+            
+            params = (
+                idatleta,                   # IDATLETA
+                cpf,                        # CPF
+                1,                          # IDEVENTO (hardcoded as 1 for this event)
+                cat_iditem,                 # IDITEM
+                camiseta,                   # CAMISETA
+                apoio,                      # APOIO
+                equipe200,                  # NOME_EQUIPE
+                integrantes,                # INTEGRANTES
+                valor,                      # VALOR
+                taxa,                       # TAXA
+                desconto,                   # DESCONTO
+                valor_pgto,                 # VALOR_PGTO
+                data_pagamento,             # DTPAGAMENTO
+                'CONFIRMADO',               # STATUS
+                formaPagto,                 # FORMAPGTO
+                idpagamento,                # IDPAGAMENTO
+                'N',                        # FLMAIL
+                equipe                      # EQUIPE
+            )
+            
+            cur.execute(query, params)
+            mysql.connection.commit()
+            cur.close()
+        
+        print(f"inscrição inserida com sucesso para CPF {cpf} com payment_id {idpagamento}!")
+        
+        return jsonify({
+            'success': True,
+            'status': 'inserido',
+            'message': 'registrado'
+        })
+        
+    except Exception as e:
+        print(f"Erro ao lançar pré-inscrição: {str(e)}")
+        # Ensure JSON is returned even on error
+        return jsonify({
+            'success': False, 
+            'message': str(e),
+            'status': 'error'
+        }), 500
+
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
