@@ -777,24 +777,48 @@
                     if (responseData.status === "approved") {
                         alert('Pagamento aprovado com sucesso!');
                         
-                        saveRegistration(responseData.id);
-                    
-                        redirectToReceipt(responseData.id);
-                    } else {
-                        // Handle other statuses
-                        let statusMessage = '';
-                        switch (responseData.status) {
-                            case 'in_process':
-                                statusMessage = 'Pagamento em processamento. Aguarde a confirmação.';
-                                break;
-                            case 'rejected':
-                                statusMessage = 'Pagamento rejeitado. ' + (responseData.status_detail || '');
-                                break;
-                            default:
-                                statusMessage = `Status: ${responseData.status}`;
+                        try {
+                            // Aguarde a conclusão do saveRegistration antes de redirecionar
+                            const registrationSuccess = await saveRegistration(responseData.id);
+                            
+                            if (registrationSuccess) {
+                                redirectToReceipt(responseData.id);
+                            } else {
+                                alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
+                                // Você pode optar por redirecionar mesmo assim
+                                redirectToReceipt(responseData.id);
+                            }
+                        } catch (error) {
+                            console.error('Erro ao salvar registro:', error);
+                            alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
+                            // Você pode optar por redirecionar mesmo assim
+                            redirectToReceipt(responseData.id);
                         }
-                        alert(statusMessage);
                     }
+
+
+                   
+                    // if (responseData.status === "approved") {
+                    //     alert('Pagamento aprovado com sucesso!');
+                        
+                    //     saveRegistration(responseData.id);
+                    
+                    //     redirectToReceipt(responseData.id);
+                    // } else {
+                    //     // Handle other statuses
+                    //     let statusMessage = '';
+                    //     switch (responseData.status) {
+                    //         case 'in_process':
+                    //             statusMessage = 'Pagamento em processamento. Aguarde a confirmação.';
+                    //             break;
+                    //         case 'rejected':
+                    //             statusMessage = 'Pagamento rejeitado. ' + (responseData.status_detail || '');
+                    //             break;
+                    //         default:
+                    //             statusMessage = `Status: ${responseData.status}`;
+                    //     }
+                    //     alert(statusMessage);
+                    // }
                 } catch (error) {
                     console.error('Erro detalhado:', error);
                     alert(`Erro ao processar pagamento: ${error.message}`);
