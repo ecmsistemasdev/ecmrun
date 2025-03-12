@@ -1003,13 +1003,12 @@ def process_payment():
                 }), 400
                 
             payment_data = payment_response["response"]
-# Verificar status do pagamento
+            # Verificar status do pagamento
             if payment_data.get("status") == "approved":
-                # Lógica adicional para pagamento aprovado
                 try:
-                    # Exemplo de chamada para lançar pagamento
+                    base_url = "https://ecmrun.com.br"  
                     verification_response = requests.get(
-                        f'/lanca-pagamento-cartao/{payment_data["id"]}', 
+                        f'{base_url}/lanca-pagamento-cartao/{payment_data["id"]}', 
                         headers={'Accept': 'application/json'}
                     )
                     
@@ -1018,7 +1017,7 @@ def process_payment():
                 
                 except Exception as verification_error:
                     app.logger.error(f"Erro na verificação do pagamento: {str(verification_error)}")
-                
+                    
                 return jsonify(payment_data), 200
             else:
                 app.logger.warning(f"Pagamento não aprovado. Status: {payment_data.get('status')}")
