@@ -955,14 +955,20 @@ def process_payment():
                 "last_name": payment_data['payer']['last_name']
             },
             "additional_info": {
-                "items": [item_details],
+                "items": [{
+                    "id": "DESAFIO_200K",
+                    "title": "Inscrição Desafio 200k",
+                    "description": "Inscrição para 4º Desafio 200km",
+                    "category_id": "SPORTS_EVENT",
+                    "quantity": 1,
+                    "unit_price": valor_atual
+                }],
                 "payer": {
                     "first_name": payment_data['payer']['first_name'],
                     "last_name": payment_data['payer']['last_name'],
                     "registration_date": datetime.now().isoformat()
                 },
-                "ip_address": request.remote_addr,
-                "user_agent": str(request.user_agent)
+                "ip_address": request.remote_addr
             }
         }
 
