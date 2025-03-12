@@ -784,13 +784,15 @@
                             if (registrationSuccess) {
                                 redirectToReceipt(responseData.id);
                             } else {
-                                alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
+                                alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição, mas fique tranquilo sua inscrição esta garantida. Por favor, entre em contato com o suporte pelo WhatsApp (69) 99925-7724 ou aguarde que entraremos em contato.');
+                                 
+                                //alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
                                 // Você pode optar por redirecionar mesmo assim
                                 redirectToReceipt(responseData.id);
                             }
                         } catch (error) {
                             console.error('Erro ao salvar registro:', error);
-                            alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
+                            alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição, mas fique tranquilo sua inscrição esta garantida. Por favor, entre em contato com o suporte pelo WhatsApp (69) 99925-7724 ou aguarde que entraremos em contato.');
                             // Você pode optar por redirecionar mesmo assim
                             redirectToReceipt(responseData.id);
                         }
