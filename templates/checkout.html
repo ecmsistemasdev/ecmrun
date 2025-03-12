@@ -586,8 +586,9 @@
                 }
             }
 
-
             async function saveRegistration(paymentId) {
+                console.log('Iniciando saveRegistration com paymentId:', paymentId);
+                
                 if (!paymentId) {
                     console.error('Payment ID não disponível para registro');
                     return false;
@@ -595,6 +596,8 @@
                 
                 try {
                     const cpf = localStorage.getItem('user_cpf');
+                    console.log('CPF recuperado:', cpf ? 'Sim (mascarado)' : 'Não');
+                    
                     if (!cpf) {
                         console.error('CPF não disponível para registro');
                         return false;
@@ -603,34 +606,62 @@
                     // Armazena o payment_id no localStorage para uso posterior
                     localStorage.setItem('payment_id', paymentId);
                     
-                    const response = await fetch(`${baseURL}/inscricao-cartao/${cpf}`, {
+                    // Definir baseURL - ajuste conforme seu ambiente
+                    const baseURL = window.location.origin;
+                    console.log('Base URL:', baseURL);
+                    
+                    // Montar payload para verificação
+                    const payload = {
+                        payment_id: paymentId,
+                        valor_atual: parseFloat(localStorage.getItem('valoratual') || 0),
+                        valor_taxa: parseFloat(localStorage.getItem('valortaxa') || 0),
+                        valor_total: parseFloat(localStorage.getItem('valortotal') || 0),
+                        forma_pagto: 'CARTAO DE CREDITO',
+                        camiseta: localStorage.getItem('camiseta'),
+                        equipe: localStorage.getItem('equipe'),
+                        apoio: localStorage.getItem('apoio'),
+                        equipe_nome: localStorage.getItem('nome_equipe'),
+                        integrantes: localStorage.getItem('integrantes'),
+                        cat_iditem: localStorage.getItem('cat_iditem')
+                    };
+                    
+                    console.log('Payload (sem CPF):', payload);
+                    
+                    const url = `${baseURL}/inscricao-cartao/${cpf}`;
+                    console.log('URL da requisição:', url);
+                    
+                    console.log('Enviando requisição...');
+                    const response = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            payment_id: paymentId,
-                            valor_atual: parseFloat(localStorage.getItem('valoratual') || 0),
-                            valor_taxa: parseFloat(localStorage.getItem('valortaxa') || 0),
-                            valor_total: parseFloat(localStorage.getItem('valortotal') || 0),
-                            forma_pagto: 'CARTAO DE CREDITO',
-                            camiseta: localStorage.getItem('camiseta'),
-                            equipe: localStorage.getItem('equipe'),
-                            apoio: localStorage.getItem('apoio'),
-                            equipe_nome: localStorage.getItem('nome_equipe'),
-                            integrantes: localStorage.getItem('integrantes'),
-                            cat_iditem: localStorage.getItem('cat_iditem')
-                        })
+                        body: JSON.stringify(payload)
                     });
                     
+                    console.log('Status da resposta:', response.status);
+                    
+                    if (!response.ok) {
+                        console.error('Resposta não-OK:', response.status, response.statusText);
+                        // Tentar ler o corpo da resposta mesmo em caso de erro
+                        try {
+                            const errorBody = await response.text();
+                            console.error('Corpo da resposta de erro:', errorBody);
+                        } catch (e) {
+                            console.error('Não foi possível ler o corpo da resposta de erro');
+                        }
+                        return false;
+                    }
+                    
                     const result = await response.json();
-                    console.log('Registro:', result);
-                    return result.success;
+                    console.log('Resposta do registro:', result);
+                    return result.success === true;
                 } catch (error) {
-                    console.error('Erro ao salvar inscrição, entre em contato com o administrador do sistema: ', error);
+                    console.error('Erro detalhado ao salvar inscrição:', error);
                     return false;
                 }
             }
+
 
             // Manipulador do envio do formulário
             document.getElementById('payment-form').addEventListener('submit', async (e) => {
@@ -777,6 +808,9 @@
                     if (responseData.status === "approved") {
                         alert('Pagamento aprovado com sucesso!');
                         
+                        // Verificar se o ID está correto
+                        console.log('Payment ID:', responseData.id);
+
                         try {
                             // Aguarde a conclusão do saveRegistration antes de redirecionar
                             const registrationSuccess = await saveRegistration(responseData.id);
@@ -784,15 +818,13 @@
                             if (registrationSuccess) {
                                 redirectToReceipt(responseData.id);
                             } else {
-                                alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição, mas fique tranquilo sua inscrição esta garantida. Por favor, entre em contato com o suporte pelo WhatsApp (69) 99925-7724 ou aguarde que entraremos em contato.');
-                                 
-                                //alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
+                                alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição, mas fique tranquilo sua inscrição esta garantida. Por favor, entre em contato com o suporte pelo WhatsApp (69) 99925-7724, ou aguarde que entraremos em contato.');
                                 // Você pode optar por redirecionar mesmo assim
                                 redirectToReceipt(responseData.id);
                             }
                         } catch (error) {
                             console.error('Erro ao salvar registro:', error);
-                            alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição, mas fique tranquilo sua inscrição esta garantida. Por favor, entre em contato com o suporte pelo WhatsApp (69) 99925-7724 ou aguarde que entraremos em contato.');
+                            alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
                             // Você pode optar por redirecionar mesmo assim
                             redirectToReceipt(responseData.id);
                         }
