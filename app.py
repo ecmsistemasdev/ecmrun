@@ -982,7 +982,7 @@ def process_payment():
         safe_payment_info['payer']['identification']['number'] = '***HIDDEN***'
         app.logger.info("Dados do pagamento:")
         app.logger.info(safe_payment_info)
-        
+
         # Processar pagamento
         try:
             payment_response = sdk.payment().create(payment_info)
@@ -1003,28 +1003,15 @@ def process_payment():
                 }), 400
                 
             payment_data = payment_response["response"]
-            # Verificar status do pagamento
-            #if payment_data.get("status") == "approved":
-            #    try:
-            #        base_url = "https://ecmrun.com.br"  
-            #        verification_response = requests.get(
-            #            f'{base_url}/lanca-pagamento-cartao/{payment_data["id"]}', 
-            #            headers={'Accept': 'application/json'}
-            #        )
-                    
-             #       if verification_response.status_code != 200:
-             #           app.logger.warning(f"Erro na verificação do pagamento: {verification_response.text}")
-                
-             #   except Exception as verification_error:
-             #       app.logger.error(f"Erro na verificação do pagamento: {str(verification_error)}")
-                    
-             #   return jsonify(payment_data), 200
-            #else:
-            #    app.logger.warning(f"Pagamento não aprovado. Status: {payment_data.get('status')}")
-            #    return jsonify({
-            #        "message": "Pagamento não aprovado",
-            #        "status": payment_data.get("status")
-            #    }), 400            
+
+            # Comentado para testes, mas precisa de um retorno
+            # if payment_data.get("status") == "approved":
+            #     ...
+            # else:
+            #     ...
+            
+            # Adicione este retorno para substituir o bloco comentado
+            return jsonify(payment_data), 200        
             
         except Exception as e:
             app.logger.error(f"Exceção ao processar pagamento: {str(e)}")
