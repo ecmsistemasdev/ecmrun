@@ -595,7 +595,13 @@
                 const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
 
                 try {
-                    // Validação do nome completo
+                    // Display loading state
+                    const submitButton = e.target.querySelector('button[type="submit"]');
+                    const originalButtonText = submitButton.textContent;
+                    submitButton.textContent = 'Processando...';
+                    submitButton.disabled = true;
+                    
+                    // Validate fields
                     const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
                     const nameParts = fullName.split(' ').filter(part => part.length > 0);
                     
@@ -603,25 +609,20 @@
                         throw new Error('Por favor, insira nome e sobrenome completos');
                     }
                     
-                    const formapagto = localStorage.getItem('formaPagto');
                     const firstName = nameParts[0];
                     const lastName = nameParts.slice(1).join(' ');
                     
-                    // Validação e obtenção do número do cartão
-                    //const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-                    //const cardType = getCardType(cardNumber);
+                    // Card validation
                     const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
                     const cardTypeInfo = getCardType(cardNumber);
                     
-                    //if (!cardType) {
-                    //    throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
-                    //}
-
                     if (!cardTypeInfo) {
                         throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
-                    }                    
+                    }
+                    
                     console.log('Criando token do cartão...');
 
+                    // Get data from storage
                     const userData = {
                         equipe: localStorage.getItem('equipe'),
                         apoio: localStorage.getItem('apoio'),
@@ -632,18 +633,22 @@
                         valor_taxa: vltaxa,
                         valor_total: totalValue
                     };
+                    
                     console.log('userData: ', userData);
 
+                    // Create card token
                     const cardFormData = {
                         cardNumber: cardNumber,
                         cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
                         cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
                         securityCode: document.getElementById('security-code').value,
-                        cardholderName: fullName,
-                        ...userData
+                        cardholderName: fullName
                     };
 
-                    console.log('Dados do cartão:', cardFormData);
+                    console.log('Dados do cartão (sem número completo):', {
+                        ...cardFormData,
+                        cardNumber: cardFormData.cardNumber.substring(0, 6) + '******' + cardFormData.cardNumber.slice(-4)
+                    });
                     
                     const cardToken = await mp.createCardToken(cardFormData);
                     console.log('Token gerado:', cardToken);
@@ -652,19 +657,25 @@
                         throw new Error('Não foi possível gerar o token do cartão');
                     }
 
-                    // Obter número do documento sem máscara
+                    // Get document info
                     const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
+                    const docType = document.querySelector('[name="doc_type"]').value;
 
+                    // Calculate correct amount
+                    const finalAmount = Number(parseFloat(localStorage.getItem('valortotal') || 0).toFixed(2));
+                    const installments = parseInt(document.querySelector('[name="installments"]').value);
+
+                    // Create payment data
                     const paymentData = {
-                        transaction_amount: Number(parseFloat(localStorage.getItem('valorTotalComJuros') || storedAmount).toFixed(2)),
+                        transaction_amount: finalAmount,
                         token: cardToken.id,
-                        description: document.querySelector('[name="description"]').value,
-                        installments: parseInt(document.querySelector('[name="installments"]').value),
-                        payment_method_id: cardTypeInfo.brand,  // Usar apenas o ID da bandeira
+                        description: "Inscrição Desafio 200k",
+                        installments: installments,
+                        payment_method_id: cardTypeInfo.brand,
                         payer: {
                             email: document.querySelector('[name="email"]').value,
                             identification: {
-                                type: document.querySelector('[name="doc_type"]').value,
+                                type: docType,
                                 number: docNumber
                             },
                             first_name: firstName,
@@ -673,8 +684,12 @@
                         ...userData
                     };
 
-                    console.log('Enviando dados para o servidor:', paymentData);
+                    console.log('Enviando dados para o servidor:', {
+                        ...paymentData,
+                        token: '***HIDDEN***' // Hide sensitive token
+                    });
                     
+                    // Send payment request
                     const response = await fetch('/process_payment', {
                         method: 'POST',
                         headers: {
@@ -684,52 +699,59 @@
                         body: JSON.stringify(paymentData)
                     });
 
+                    // Parse response
+                    const responseData = await response.json();
+                    console.log('Resposta do servidor:', responseData);
+
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                        // Enhanced error handling
+                        let errorMessage = 'Erro ao processar pagamento';
+                        
+                        if (responseData.error) {
+                            errorMessage = responseData.error;
+                        }
+                        
+                        if (responseData.details) {
+                            console.error('Detalhes do erro:', responseData.details);
+                            
+                            // Try to get more readable error message
+                            if (typeof responseData.details === 'object' && responseData.details.cause) {
+                                errorMessage += `: ${responseData.details.cause[0].description || responseData.details.cause[0].code}`;
+                            }
+                        }
+                        
+                        throw new Error(errorMessage);
                     }
 
-                    const data = await response.json();
-                    console.log('Resposta do servidor:', data);
-
-                    if (data.status === "approved") {                        
-                        try {
-                            // Fazer a chamada para verificar o pagamento
-                            const verificationResponse = await fetch(`/lanca-pagamento-cartao/${data.id}`, {
-                                method: 'GET',
-                                headers: {
-                                    'Accept': 'application/json'
-                                }
-                            });
-
-                            if (!verificationResponse.ok) {
-                                throw new Error('Erro ao verificar o pagamento');
-                            }
-
-                            const verificationData = await verificationResponse.json();
-                            console.log('Verificação do pagamento:', verificationData);
-                            
-                            // Se tudo correr bem, mostra mensagem de sucesso
-                            alert('Pagamento processado com sucesso!');
-
-                            // Executa o redirecionamento
-                            redirectToReceipt(data.id);
-
-                        } catch (verificationError) {
-                            console.error('Erro na verificação do pagamento:', verificationError);
-                            alert('Pagamento aprovado, mas houve um erro na verificação e na finalização da inscrição. Mas fique tranquilo, sua inscrição está garantida, nosso suporte entrerá em contato pra finalizar seu cadastro, mas caso queira, você poderá entrar em contato com o suporte pelo WhatsApp (69)99925-7724 ou pelo e-mail adm@ecmrun.com.br. Desde já pedimos desconpas pelo ocorrido.');
-                        }
-
+                    // Handle successful response
+                    console.log('Pagamento processado com sucesso:', responseData);
+                    
+                    if (responseData.status === "approved") {
+                        alert('Pagamento aprovado com sucesso!');
+                        redirectToReceipt(responseData.id);
                     } else {
-                        alert(`Status do pagamento: ${data.status}`);
+                        // Handle other statuses
+                        let statusMessage = '';
+                        switch (responseData.status) {
+                            case 'in_process':
+                                statusMessage = 'Pagamento em processamento. Aguarde a confirmação.';
+                                break;
+                            case 'rejected':
+                                statusMessage = 'Pagamento rejeitado. ' + (responseData.status_detail || '');
+                                break;
+                            default:
+                                statusMessage = `Status: ${responseData.status}`;
+                        }
+                        alert(statusMessage);
                     }
                 } catch (error) {
                     console.error('Erro detalhado:', error);
-                    let errorMessage = error.message;
-                    if (errorMessage.includes('token')) {
-                        errorMessage = 'Erro ao processar o cartão. Por favor, verifique os dados informados.';
-                    }
-                    alert(`Erro ao processar pagamento: ${errorMessage}`);
+                    alert(`Erro ao processar pagamento: ${error.message}`);
+                } finally {
+                    // Reset button state
+                    const submitButton = document.querySelector('button[type="submit"]');
+                    submitButton.textContent = 'Finalizar Pagamento';
+                    submitButton.disabled = false;
                 }
             });
         });
