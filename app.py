@@ -517,7 +517,10 @@ def process_payment():
         payment_data = request.json
         app.logger.info("Dados completos recebidos:")
         app.logger.info(json.dumps(payment_data, indent=2))
-        
+
+        installments = payment_data.get('installments', 1)
+        transaction_amount = payment_data.get('transaction_amount', 0)
+
         # device_id = payment_data.get('device_id')
         # app.logger.info(f"Device ID recebido: {device_id}")
 
@@ -525,16 +528,6 @@ def process_payment():
         #     app.logger.error("Device ID está ausente ou vazio")
         #     return jsonify({"error": "Device ID é obrigatório"}), 400
        
-        
-        # required_fields = [
-        #     'token', 
-        #     'transaction_amount', 
-        #     'installments', 
-        #     'payment_method_id',
-        #     'payer',
-        #     'device_id'
-        # ]        
-        
         
         # Validação de campos obrigatórios
         required_fields = [
@@ -551,8 +544,8 @@ def process_payment():
                 raise ValueError(f"Campo obrigatório ausente: {field}")
         
         # Extrair e validar dados importantes
-        installments = int(payment_data.get('installments', 1))
-        transaction_amount = round(float(payment_data['transaction_amount']), 2)
+        #installments = int(payment_data.get('installments', 1))
+        #transaction_amount = round(float(payment_data['transaction_amount']), 2)
         
         # Extrair dados do participante
         valor_total = round(float(payment_data.get('valor_total', 0)), 2)
@@ -573,7 +566,7 @@ def process_payment():
         session['valorTotalsemJuros'] = valor_total
         session['valorAtual'] = valor_atual
         session['valorTaxa'] = valor_taxa
-        session['formaPagto'] = 'CARTÃO DE CRÉDITO'
+        session['formaPagto'] = 'CARTAO DE CREDITO'
         session['Camisa'] = camisa
         session['Equipe'] = equipe
         session['Apoio'] = apoio
@@ -585,11 +578,12 @@ def process_payment():
         
         # Preparar dados do item
         item_details = {
-            "id": "DESAFIO_200K_SOLO",
+            "id": "DESAFIO_200K",
             "title": "Inscrição Desafio 200k",
-            "description": "Inscrição para corrida de 200km",
+            "description": "Inscrição para 4º Desafio 200km",
             "category_id": "SPORTS_EVENT",
             "quantity": 1,
+            "currency_id": "BRL",
             "unit_price": valor_atual,
             "total_amount": transaction_amount
         }
@@ -614,11 +608,10 @@ def process_payment():
         payment_info = {
             "transaction_amount": transaction_amount,
             "token": payment_data['token'],
-            "description": "Inscrição Desafio 200k - Categoria Solo",
+            "description": "Inscrição Desafio 200k",
             "statement_descriptor": "ECMRUN DESAFIO 200K",
             "installments": installments,
             "payment_method_id": payment_data['payment_method_id'],
-            #"device_id": payment_data.get('device_id'),
             "external_reference": external_reference,
             "notification_url": "https://ecmrun.com.br/webhook",
             "payer": {
