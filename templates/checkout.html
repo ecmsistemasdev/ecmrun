@@ -586,6 +586,52 @@
                 }
             }
 
+
+            async function saveRegistration(paymentId) {
+                if (!paymentId) {
+                    console.error('Payment ID não disponível para registro');
+                    return false;
+                }
+                
+                try {
+                    const cpf = localStorage.getItem('user_cpf');
+                    if (!cpf) {
+                        console.error('CPF não disponível para registro');
+                        return false;
+                    }
+                    
+                    // Armazena o payment_id no localStorage para uso posterior
+                    localStorage.setItem('payment_id', paymentId);
+                    
+                    const response = await fetch(`${baseURL}/inscricao-cartao/${cpf}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payment_id: paymentId,
+                            valor_atual: parseFloat(localStorage.getItem('valoratual') || 0),
+                            valor_taxa: parseFloat(localStorage.getItem('valortaxa') || 0),
+                            valor_total: parseFloat(localStorage.getItem('valortotal') || 0),
+                            forma_pagto: 'CARTAO DE CREDITO',
+                            camiseta: localStorage.getItem('camiseta'),
+                            equipe: localStorage.getItem('equipe'),
+                            apoio: localStorage.getItem('apoio'),
+                            equipe_nome: localStorage.getItem('nome_equipe'),
+                            integrantes: localStorage.getItem('integrantes'),
+                            cat_iditem: localStorage.getItem('cat_iditem')
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    console.log('Registro:', result);
+                    return result.success;
+                } catch (error) {
+                    console.error('Erro ao salvar inscrição, entre em contato com o administrador do sistema: ', error);
+                    return false;
+                }
+            }
+
             // Manipulador do envio do formulário
             document.getElementById('payment-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -625,7 +671,7 @@
                     // Get data from storage
                     const userData = {
                         idAtleta: localStorage.getItem('user_idatleta'),
-                        CPF: localStorage.getItem('user_cpf'),                        
+                        CPF: localStorage.getItem('user_cpf'),
                         equipe: localStorage.getItem('equipe'),
                         apoio: localStorage.getItem('apoio'),
                         camiseta: localStorage.getItem('camiseta'),
@@ -730,6 +776,9 @@
                     
                     if (responseData.status === "approved") {
                         alert('Pagamento aprovado com sucesso!');
+                        
+                        saveRegistration(responseData.id);
+                    
                         redirectToReceipt(responseData.id);
                     } else {
                         // Handle other statuses
