@@ -2011,7 +2011,7 @@ def autenticar_login():
                     COALESCE(A.SEXO, '') AS SEXO, 
                     COALESCE(A.IDATLETA, '') AS IDATLETA, 
                     COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
-                    COALESCE(I.IDEVENTO, '') AS IDEVENTO, 
+                    COALESCE(E.IDEVENTO, '') AS IDEVENTO, 
                     COALESCE(I.APOIO, '') AS APOIO, 
                     COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
                     COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
@@ -2022,13 +2022,14 @@ def autenticar_login():
                     COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
                     COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
                     COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
-                    E.DTINICIO, 
+                    COALESCE(E.DTINICIO, '') AS DTINICIO,
                     COALESCE(E.DESCRICAO, '') AS EVENTO,
-                    CONCAT(E.DESCRICAO,' / ', M.DESCRICAO) AS EVENTO_MODAL
+                    COALESCE(CONCAT(E.DESCRICAO,' / ', M.DESCRICAO), '') AS EVENTO_MODAL,
+                    COALESCE(I.FLSTATUS, '') AS FLSTATUS
                 FROM ecmrun.ATLETA A
-                JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
-                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
-                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1 AND I.FLSTATUS = 'CONFIRMADO'
+                LEFT JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM AND I.IDATLETA IS NOT NULL
                 WHERE A.EMAIL = %s AND A.SENHA = %s AND A.ATIVO = 'S'
             """, (cpf_email, senha_hash))
         else:
@@ -2045,7 +2046,7 @@ def autenticar_login():
                     COALESCE(A.SEXO, '') AS SEXO, 
                     COALESCE(A.IDATLETA, '') AS IDATLETA, 
                     COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
-                    COALESCE(I.IDEVENTO, '') AS IDEVENTO, 
+                    COALESCE(E.IDEVENTO, '') AS IDEVENTO, 
                     COALESCE(I.APOIO, '') AS APOIO, 
                     COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
                     COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
@@ -2056,13 +2057,14 @@ def autenticar_login():
                     COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
                     COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
                     COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
-                    E.DTINICIO,
+                    COALESCE(E.DTINICIO, '') AS DTINICIO,
                     COALESCE(E.DESCRICAO, '') AS EVENTO,
-                    CONCAT(E.DESCRICAO,' / ', M.DESCRICAO) AS EVENTO_MODAL
+                    COALESCE(CONCAT(E.DESCRICAO,' / ', M.DESCRICAO), '') AS EVENTO_MODAL,
+                    COALESCE(I.FLSTATUS, '') AS FLSTATUS
                 FROM ecmrun.ATLETA A
-                JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
-                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
-                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1 AND I.FLSTATUS = 'CONFIRMADO'
+                LEFT JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM AND I.IDATLETA IS NOT NULL
                 WHERE A.CPF = %s AND A.SENHA = %s AND A.ATIVO = 'S'
             """, (cpf, senha_hash))
         
@@ -2091,7 +2093,8 @@ def autenticar_login():
             dtinicio = result[20]
             evento = result[21]
             evento_modal = result[22]
-
+            flstatus = result[23]
+            
             # Converta as strings para objetos datetime
             dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
             dt_inicio = datetime.strptime(dtinicio, "%d/%m/%Y")
@@ -2125,7 +2128,8 @@ def autenticar_login():
             session['insc_idpagamento'] = idpagamento
             session['insc_evento'] = evento
             session['insc_evento_modal'] = evento_modal
-
+            session['insc_flstatus'] = flstatus
+            
             print(f'ID Pagamento: {idpagamento}')
 
             return jsonify({
@@ -2151,7 +2155,8 @@ def autenticar_login():
                 'idpagamento': idpagamento,
                 'dataevendo': dtinicio,
                 'evento': evento,
-                'evento_modal': evento_modal
+                'evento_modal': evento_modal,
+                'flstatus': flstatus
             })
         else:
             return jsonify({
@@ -2202,7 +2207,7 @@ def check_user_session():
                 COALESCE(A.SEXO, '') AS SEXO, 
                 COALESCE(A.IDATLETA, '') AS IDATLETA, 
                 COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
-                COALESCE(I.IDEVENTO, '') AS IDEVENTO, 
+                COALESCE(E.IDEVENTO, '') AS IDEVENTO, 
                 COALESCE(I.APOIO, '') AS APOIO, 
                 COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
                 COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
@@ -2213,13 +2218,14 @@ def check_user_session():
                 COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
                 COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
                 COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
-                E.DTINICIO, 
+                COALESCE(E.DTINICIO, '') AS DTINICIO,
                 COALESCE(E.DESCRICAO, '') AS EVENTO,
-                CONCAT(substr(E.DESCRICAO,1,10),' / ', M.DESCRICAO) AS EVENTO_MODAL
+                COALESCE(CONCAT(E.DESCRICAO,' / ', M.DESCRICAO), '') AS EVENTO_MODAL,
+                COALESCE(I.FLSTATUS, '') AS FLSTATUS
             FROM ecmrun.ATLETA A
-            JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
-            LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = E.IDEVENTO
-            LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+            LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1 AND I.FLSTATUS = 'CONFIRMADO'
+            LEFT JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
+            LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM AND I.IDATLETA IS NOT NULL
             WHERE {where_clause} AND A.ATIVO = 'S'
         """, (query_param,))
         
@@ -2248,6 +2254,7 @@ def check_user_session():
             dtinicio = result[20]
             evento = result[21]
             evento_modal = result[22]
+            flstatus = result[23]
             
             # Converta as strings para objetos datetime
             dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
@@ -2284,7 +2291,8 @@ def check_user_session():
                 'idpagamento': idpagamento,
                 'dataevento': dtinicio,
                 'evento': evento,
-                'evento_modal': evento_modal
+                'evento_modal': evento_modal,
+                'flstatus': flstatus
             })
             
         else:
