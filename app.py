@@ -2614,7 +2614,7 @@ def recuperar_qrcode(payment_id):
 #                 INSERT INTO ecmrun.INSCRICAO (
 #                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
 #                     NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-#                     VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+#                     VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
 #                     IDPAGAMENTO, FLMAIL, EQUIPE
 #                 ) VALUES (
 #                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
@@ -2635,7 +2635,7 @@ def recuperar_qrcode(payment_id):
 #                     desconto,                            # DESCONTO
 #                     valor_pgto,                          # VALOR_PGTO
 #                     data_pagamento,                      # DTPAGAMENTO
-#                     'CONFIRMADO',                        # STATUS
+#                     'CONFIRMADO',                        # FLSTATUS
 #                     formaPagto,                          # FORMAPGTO
 #                     payment_id,                          # IDPAGAMENTO
 #                     'N',
@@ -2703,7 +2703,7 @@ def verificar_pagamento(payment_id):
                 cur.execute("""
                     UPDATE INSCRICAO SET
                         DTPAGAMENTO = %s,
-                        STATUS = %s  
+                        FLSTATUS = %s  
                     WHERE IDINSCRICAO = %s
                     """, (
                         data_pagamento,         
@@ -2748,7 +2748,7 @@ def verificar_pagamento(payment_id):
                 INSERT INTO INSCRICAO (
                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                     NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-                    VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                    VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
                     IDPAGAMENTO, FLMAIL, EQUIPE
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
@@ -2769,7 +2769,7 @@ def verificar_pagamento(payment_id):
                     desconto,                    # DESCONTO
                     valor_pgto,                  # VALOR_PGTO
                     data_pagamento,              # DTPAGAMENTO
-                    'CONFIRMADO',                # STATUS
+                    'CONFIRMADO',                # FLSTATUS
                     formaPagto,                  # FORMAPGTO
                     payment_id,                  # IDPAGAMENTO
                     'N',
@@ -2830,7 +2830,7 @@ def inscricao_temp(cpf):
         data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
 
         cur = mysql.connection.cursor()
-        cur.execute("SELECT IDINSCRICAO FROM INSCRICAO WHERE STATUS = 'PENDENTE' AND CPF = %s AND IDEVENTO = 1", (cpf,))
+        cur.execute("SELECT IDINSCRICAO FROM INSCRICAO WHERE FLSTATUS = 'PENDENTE' AND CPF = %s AND IDEVENTO = 1", (cpf,))
         existing_record = cur.fetchone()
         
         if existing_record:
@@ -2848,7 +2848,7 @@ def inscricao_temp(cpf):
                     DESCONTO = %s,
                     VALOR_PGTO = %s,
                     DTPAGAMENTO = %s,
-                    STATUS = %s,
+                    FLSTATUS = %s,
                     FORMAPGTO = %s,
                     IDPAGAMENTO = %s,
                     FLMAIL = %s,
@@ -2865,7 +2865,7 @@ def inscricao_temp(cpf):
                     desconto,                   # DESCONTO
                     valor_pgto,                 # VALOR_PGTO
                     data_pagamento,             # DTPAGAMENTO
-                    'PENDENTE',                 # STATUS
+                    'PENDENTE',                 # FLSTATUS
                     formaPagto,                 # FORMAPGTO
                     idpagamento,                # IDPAGAMENTO
                     'N',                        # FLMAIL
@@ -2893,7 +2893,7 @@ def inscricao_temp(cpf):
             INSERT INTO INSCRICAO (
                 IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                 NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
                 IDPAGAMENTO, FLMAIL, EQUIPE
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
@@ -2914,7 +2914,7 @@ def inscricao_temp(cpf):
                 desconto,                   # DESCONTO
                 valor_pgto,                 # VALOR_PGTO
                 data_pagamento,             # DTPAGAMENTO
-                'PENDENTE',                 # STATUS
+                'PENDENTE',                 # FLSTATUS
                 formaPagto,                 # FORMAPGTO
                 idpagamento,                # IDPAGAMENTO
                 'N',                        # FLMAIL
@@ -2988,7 +2988,7 @@ def inscricao_cartao(cpf):
                     DESCONTO = %s,
                     VALOR_PGTO = %s,
                     DTPAGAMENTO = %s,
-                    STATUS = %s,
+                    FLSTATUS = %s,
                     FORMAPGTO = %s,
                     IDPAGAMENTO = %s,
                     FLMAIL = %s,
@@ -3005,7 +3005,7 @@ def inscricao_cartao(cpf):
                     desconto,                   # DESCONTO
                     valor_pgto,                 # VALOR_PGTO
                     data_pagamento,             # DTPAGAMENTO
-                    'CONFIRMADO',               # STATUS
+                    'CONFIRMADO',               # FLSTATUS
                     formaPagto,                 # FORMAPGTO
                     idpagamento,                # IDPAGAMENTO
                     'N',                        # FLMAIL
@@ -3033,7 +3033,7 @@ def inscricao_cartao(cpf):
             INSERT INTO INSCRICAO (
                 IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                 NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
                 IDPAGAMENTO, FLMAIL, EQUIPE
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
@@ -3054,7 +3054,7 @@ def inscricao_cartao(cpf):
                 desconto,                   # DESCONTO
                 valor_pgto,                 # VALOR_PGTO
                 data_pagamento,             # DTPAGAMENTO
-                'CONFIRMADO',               # STATUS
+                'CONFIRMADO',               # FLSTATUS
                 formaPagto,                 # FORMAPGTO
                 idpagamento,                # IDPAGAMENTO
                 'N',                        # FLMAIL
@@ -3224,7 +3224,7 @@ def lanca_pagamento_cartao(payment_id):
             INSERT INTO ecmrun.INSCRICAO (
                 IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                 NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
                 IDPAGAMENTO, FLMAIL, EQUIPE
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
@@ -3245,7 +3245,7 @@ def lanca_pagamento_cartao(payment_id):
                 desconto,                            # DESCONTO
                 valor_pgto,                          # VALOR_PGTO
                 data_pagamento,                      # DTPAGAMENTO
-                'CONFIRMADO',                        # STATUS
+                'CONFIRMADO',                        # FLSTATUS
                 formaPagto,                          # FORMAPGTO
                 payment_id,                          # IDPAGAMENTO
                 'N',
@@ -3358,7 +3358,7 @@ def inscricao_copum(id_cupom):
             INSERT INTO ecmrun.INSCRICAO (
                 IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
                 NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-                VALOR_PGTO, DTPAGAMENTO, STATUS, FORMAPGTO, 
+                VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
                 IDPAGAMENTO, FLMAIL, EQUIPE, CUPOM
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
@@ -3379,7 +3379,7 @@ def inscricao_copum(id_cupom):
                 desconto,          # DESCONTO
                 valor_pgto,        # VALOR_PGTO
                 data_pagamento,    # DTPAGAMENTO
-                'CONFIRMADO',      # STATUS
+                'CONFIRMADO',      # FLSTATUS
                 formaPagto,        # FORMAPGTO
                 idpagamento,       # IDPAGAMENTO
                 'N',              # FLMAIL
