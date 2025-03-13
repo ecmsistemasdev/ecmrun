@@ -1046,7 +1046,8 @@ def get_receipt_data(payment_id):
             JOIN ecmrun.ATLETA A ON A.IDATLETA = I.IDATLETA
             JOIN ecmrun.EVENTO E ON E.IDEVENTO = I.IDEVENTO
             JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
-            WHERE I.IDPAGAMENTO = %s
+            WHERE I.FLSTATUS = 'CONFIRMADO'
+            AND I.IDPAGAMENTO = %s
         ''', (payment_id,))
         
         data = cur.fetchone()
@@ -1095,6 +1096,7 @@ def comprovante(payment_id):
             WHERE M.IDITEM = I.IDITEM
             AND E.IDEVENTO = I.IDEVENTO
             AND A.IDATLETA = I.IDATLETA
+            AND I.FLSTATUS = 'CONFIRMADO'
             AND I.IDPAGAMENTO = %s
         ''', (payment_id,))
         
@@ -1175,6 +1177,7 @@ def vercomprovante(payment_id):
             WHERE M.IDITEM = I.IDITEM
             AND E.IDEVENTO = I.IDEVENTO
             AND A.IDATLETA = I.IDATLETA
+            AND I.FLSTATUS = 'CONFIRMADO'
             AND I.IDPAGAMENTO = %s
         ''', (payment_id,))
         
@@ -1236,6 +1239,7 @@ def comprovanteemail(payment_id):
             WHERE M.IDITEM = I.IDITEM
             AND E.IDEVENTO = I.IDEVENTO
             AND A.IDATLETA = I.IDATLETA
+            AND I.FLSTATUS = 'CONFIRMADO'
             AND I.IDPAGAMENTO = %s
         ''', (payment_id,))
         
