@@ -27,10 +27,15 @@ app.secret_key = os.getenv('SECRET_KEY')
 CORS(app)
 
 # Configuração do Flask-Mail
-app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')  # Substitua pelo seu servidor SMTP
-app.config['MAIL_PORT'] = os.getenv('SMTP_PORT') 
-app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') 
-app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASSWORD') 
+#app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')  # Substitua pelo seu servidor SMTP
+#app.config['MAIL_PORT'] = os.getenv('SMTP_PORT') 
+#app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') 
+#app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASSWORD') 
+#app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')  # Substitua pelo seu servidor SMTP
+app.config['MAIL_PORT'] = os.getenv('MAIL_PORT') 
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME') 
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
@@ -1055,7 +1060,7 @@ def send_organizer_notification(receipt_data):
     try:
         msg = Message(
             f'Nova Inscrição - 4º Desafio 200k - ID {receipt_data["inscricao"]}',
-            sender=('ECM Run', 'adm@ecmrun.com.br'),
+            sender=('ECM Run', 'ecmsistemasdeveloper@gmail.com'),
             recipients=['kelioesteves@hotmail.com']
             #recipients=['ecmsistemasdeveloper@gmail.com']
         )
@@ -1550,8 +1555,8 @@ def enviar_codigo_verificacao():
         session['verification_email'] = email
         
         # Simplificar o remetente
-        #sender = 'adm@ecmrun.com.br'
-        sender = "ECM RUN <adm@ecmrun.com.br>"
+        #sender = 'ecmsistemasdeveloper@gmail.com'
+        sender = "ECM RUN <ecmsistemasdeveloper@gmail.com>"
 
         # Criar mensagem com configuração mais simples
         msg = Message(
@@ -1658,8 +1663,8 @@ def send_verification_email(email, code):
         session['verif_email'] = email
         
         # Simplificar o remetente
-        #sender = 'adm@ecmrun.com.br'
-        sender = "ECM RUN <adm@ecmrun.com.br>"
+        #sender = 'ecmsistemasdeveloper@gmail.com'
+        sender = "ECM RUN <ecmsistemasdeveloper@gmail.com>"
 
         # Criar mensagem com configuração mais simples
         msg = Message(
@@ -1918,7 +1923,7 @@ def send_email(receipt_data):
         
         msg = Message(
             f'Comprovante de Inscrição - ID {receipt_data["inscricao"]}',
-            sender=('ECM Run', 'adm@ecmrun.com.br'),
+            sender=('ECM Run', 'ecmsistemasdeveloper@gmail.com'),
             recipients=[recipient_email]
         )
         
