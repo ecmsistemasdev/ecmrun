@@ -3438,58 +3438,80 @@ def gerar_cupom():
     if not session.get('authenticated'):
         return jsonify({'error': 'Não autenticado'}), 401
     
-    # Get form data
-    data = request.form
-    modalidade = data.get('modalidade')
-    cpf = data.get('cpf', '').replace('.', '').replace('-', '')  # Remove formatting
-    bonifica = 'S' if data.get('bonifica') == 'on' else 'N'
-    idpagamento = data.get('idpagamento', '')
-    dtpagamento = data.get('dtpagamento', '')
-    formapgto = data.get('formapgto', '')
-    vlinscricao = data.get('vlinscricao', '0').replace('.', '').replace(',', '.')
-    vltaxa = data.get('vltaxa', '0').replace('.', '').replace(',', '.')
-    vlpago = data.get('vlpago', '0').replace('.', '').replace(',', '.')
-    
-    # Generate random 5-character coupon code (uppercase letters and numbers)
-    cupom = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-    
-    # Current date and time
-    #dt_pagamento = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Connect to database
-    cursor = mysql.connection.cursor()
-    
     try:
-        # Insert into database
-        query = """
-        INSERT INTO CUPOM (CUPOM, CPF, IDPAGAMENTO, FORMAPAGTO, DTPAGAMENTO, VALOR, TAXA, VALOR_PGTO, IDMODALIDADE, UTILIZADO, BONIFICA)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(query, (
-            cupom, 
-            cpf, 
-            idpagamento, 
-            formapgto, 
-            dtpagamento, 
-            float(vlinscricao), 
-            float(vltaxa), 
-            float(vlpago), 
-            int(modalidade), 
-            'N',  # Not used initially
-            bonifica
-        ))
+        # Get form data
+        data = request.form
+        modalidade = data.get('modalidade')
+        cpf = data.get('cpf', '').replace('.', '').replace('-', '')  # Remove formatting
+        bonifica = 'S' if data.get('bonifica') == 'on' else 'N'
         
-        # Commit to database
-        mysql.connection.commit()
+        # Se for bonificação, definir valores padrão para campos de pagamento
+        if bonifica == 'S':
+            idpagamento = ''
+            dtpagamento = ''
+            formapgto = ''
+            vlinscricao = '0'
+            vltaxa = '0'
+            vlpago = '0'
+        else:
+            idpagamento = data.get('idpagamento', '')
+            dtpagamento = data.get('dtpagamento', '')
+            formapgto = data.get('formapgto', '')
+            vlinscricao = data.get('vlinscricao', '0').replace('.', '').replace(',', '.')
+            vltaxa = data.get('vltaxa', '0').replace('.', '').replace(',', '.')
+            vlpago = data.get('vlpago', '0').replace('.', '').replace(',', '.')
         
-        return jsonify({'success': True, 'cupom': cupom})
-    
+        # Garantir que valores numéricos sejam válidos
+        try:
+            vlinscricao_float = float(vlinscricao) if vlinscricao else 0.0
+            vltaxa_float = float(vltaxa) if vltaxa else 0.0
+            vlpago_float = float(vlpago) if vlpago else 0.0
+        except ValueError as ve:
+            print(f"Erro de conversão de valor: {ve}")
+            return jsonify({'error': 'Valores monetários inválidos'}), 400
+        
+        # Generate random 5-character coupon code (uppercase letters and numbers)
+        cupom = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        
+        # Connect to database
+        cursor = mysql.connection.cursor()
+        
+        try:
+            # Insert into database
+            query = """
+            INSERT INTO CUPOM (CUPOM, CPF, IDPAGAMENTO, FORMAPAGTO, DTPAGAMENTO, VALOR, TAXA, VALOR_PGTO, IDMODALIDADE, UTILIZADO, BONIFICA)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (
+                cupom, 
+                cpf, 
+                idpagamento, 
+                formapgto, 
+                dtpagamento, 
+                vlinscricao_float, 
+                vltaxa_float, 
+                vlpago_float, 
+                int(modalidade), 
+                'N',  # Not used initially
+                bonifica
+            ))
+            
+            # Commit to database
+            mysql.connection.commit()
+            
+            return jsonify({'success': True, 'cupom': cupom})
+        
+        except Exception as e:
+            print(f"Database error: {e}")
+            mysql.connection.rollback()
+            return jsonify({'success': False, 'error': str(e)}), 500
+        
+        finally:
+            cursor.close()
+            
     except Exception as e:
-        print(f"Database error: {e}")
-        return jsonify({'error': str(e)}), 500
-    
-    finally:
-        cursor.close()
+        print(f"General error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/verificar_senha', methods=['POST'])
 def verificar_senha():
