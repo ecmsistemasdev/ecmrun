@@ -22,8 +22,8 @@
             height: 60px;
             background-color: white;
             display: flex;
-            justify-content: flex-start; /* Changed from center to flex-start */
-            padding-left: 20px; /* Added padding to the left */
+            justify-content: flex-start;
+            padding-left: 20px;
             align-items: center;
             margin-bottom: 0px;
         }        
@@ -125,7 +125,6 @@
         }
 
         .info-label {
-        
             padding: 0px;
             border-radius: 4px;
             display: block;
@@ -255,6 +254,60 @@
             color: #333;
             margin: 2px 0;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .modal-header {
+            background-color: #647e99;
+            color: white;
+            padding: 10px 20px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .cupom-display {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            letter-spacing: 5px;
+            color: #4376ac;
+            border: 2px dashed #4376ac;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .copy-button {
+            background-color: #28a745;
+        }
+
+        .copy-button:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 <body>
@@ -262,12 +315,38 @@
         <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
     </div>
 
+    <!-- Admin Password Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Autenticação de Administrador</div>
+            <form id="adminForm">
+                <div class="form-field">
+                    <label for="adminPassword">Senha de Administrador:</label>
+                    <input type="password" id="adminPassword" name="adminPassword" required>
+                </div>
+                <div class="center-content">
+                    <button type="submit" class="button">Entrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Coupon Display Modal -->
+    <div id="cupomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Cupom Gerado com Sucesso</div>
+            <div class="cupom-display" id="cupomDisplay"></div>
+            <div class="center-content">
+                <button id="copyButton" class="button copy-button">Copiar Cupom</button>
+                <button id="closeButton" class="button-volta">Fechar</button>
+            </div>
+        </div>
+    </div>
     
     <form id="inscricaoForm">
-
         <div class="form-field">
             <label for="modalidade">Modalidade:</label> 
-            <select name="modalidade" id="modalidade" class="form-select"> <!-- disabled="true"> --> 
+            <select name="modalidade" id="modalidade" class="form-select" required> 
                 <option selected disabled value="">Selecione uma modalidade</option>
                 {% for modalidade in modalidades %}
                 <option value="{{ modalidade.id }}">{{ modalidade.descricao }}</option>
@@ -293,8 +372,13 @@
         </div>
 
         <div class="form-field">
+            <label for="dtpagamento">Data Pagamento:</label>
+            <input type="text" id="dtpagamento" name="dtpagamento" maxlength="19" inputmode="numeric">
+        </div>
+        
+        <div class="form-field">
             <label for="formapgto">Forma Pagamento:</label> 
-            <select name="formapgto" id="formapgto" class="form-select"> <!-- disabled="true"> --> 
+            <select name="formapgto" id="formapgto" class="form-select">
                 <option selected disabled value="">Selecione...</option>
                 <option value="PIX">PIX</option>
                 <option value="CARTÃO DE CRÉDITO">CARTÃO DE CRÉDITO</option>
@@ -318,8 +402,7 @@
         </div>
 
         <button type="submit" class="button">Gerar Cupom</button>
-        <button onclick="window.location.href='/desafio200k'" type="button" class="button-volta">Voltar</button>
-
+        <button type="button" class="button-volta" onclick="window.location.href='/desafio200k'">Voltar</button>
     </form>
 
     <footer class="footer">
@@ -327,88 +410,159 @@
         <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
         <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
     </footer>
-
+    
     <script>
-     
         $(document).ready(function() {
-            // Get user data from localStorage
-            const modalidadeSelect = document.getElementById('modalidade');
-            const valorDiv = document.querySelector('.form-field div');
-            const userName = localStorage.getItem('user_name');
-            const userEmail = localStorage.getItem('user_email');
-            const inscEvento = localStorage.getItem('insc_evento');
-            const Modalidade = localStorage.getItem('insc_modalidade');
-            const idpagamento = localStorage.getItem('insc_idpagamento');
-
+            // Mask inputs
             $('#cpf').mask('000.000.000-00');
             $('#idpagamento').mask('000000000000');
-
+            $('#dtpagamento').mask('00/00/0000 00:00');
             $('#vlinscricao, #vltaxa, #vlpago').mask('#.##0,00', {
                 reverse: true,
                 placeholder: '0,00'
             });   
             
-            let currentModalidade = {
-                id: null,
-                descricao: '',
-                valor: '',
-                valorFormatted: ''
-            };
-          
-            //if (idpagamento) {
-            //    const url = `/vercomprovante/${idpagamento}`;
-            //    document.getElementById('comprovanteLink').setAttribute('href', url);
-            //} else {
-            //    console.error("ID do pagamento não encontrado no localStorage.");
-            //}
-
-            function updateBonifica() {
-                const idpagamentoField = document.getElementById('idpagamento');
-                const formapgtoField = document.getElementById('formapgto');
-                const vlinscricaoField = document.getElementById('vlinscricao');
-                const vltaxaField = document.getElementById('vltaxa');
-                const vlpagoField = document.getElementById('vlpago');
-                const temBonificacao = $('#bonifica').is(':checked');
-                const fields = [idpagamentoField, formapgtoField, vlinscricaoField, vltaxaField, vlpagoField];
-                const label = $(`label[for="{fields}"]`);
+            // Show admin modal on page load
+            {% if require_auth %}
+                $("#adminModal").css("display", "flex");
+            {% endif %}
+            
+            // Handle admin authentication
+            $("#adminForm").on("submit", function(e) {
+                e.preventDefault();
                 
-                if (temBonificacao) {
-                    
-                    idpagamentoField.disabled = true;
-                    formapgtoField.disabled = true;
-                    vlinscricaoField.disabled = true;
-                    vltaxaField.disabled = true;
-                    vlpagoField.disabled = true;
-                    idpagamentoField.style.backgroundColor = '#f0f0f0';
-                    formapgtoField.style.backgroundColor = '#f0f0f0';
-                    vlinscricaoField.style.backgroundColor = '#f0f0f0';
-                    vltaxaField.style.backgroundColor = '#f0f0f0';
-                    vlpagoField.style.backgroundColor = '#f0f0f0';
-                    label.style.backgroundColor = '#333'
-                
-                } else {
-                    
-                    idpagamentoField.disabled = false;
-                    formapgtoField.disabled = false;
-                    vlinscricaoField.disabled = false;
-                    vltaxaField.disabled = false;
-                    vlpagoField.disabled = false;
-                    idpagamentoField.style.backgroundColor = '';
-                    formapgtoField.style.backgroundColor = '';
-                    vlinscricaoField.style.backgroundColor = '';
-                    vltaxaField.style.backgroundColor = '';
-                    vlpagoField.style.backgroundColor = ''; 
-                    label .style.backgroundColor = black                   
-                }
-
-            }
-
-            $('#bonifica').on('change', function() {
-                updateBonifica();
+                $.ajax({
+                    url: "/verificar_senha",
+                    type: "POST",
+                    data: {
+                        senha: $("#adminPassword").val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $("#adminModal").css("display", "none");
+                            window.location.reload();
+                        } else {
+                            alert(response.message || "Senha incorreta");
+                        }
+                    },
+                    error: function() {
+                        alert("Erro ao verificar senha");
+                    }
+                });
             });
             
-            //$('#bonifica').prop('checked', false);
-        });
+            // Handle bonifica checkbox
+            function updateBonifica() {
+                const temBonificacao = $('#bonifica').is(':checked');
+                const fieldsToToggle = ['idpagamento', 'dtpagamento', 'formapgto', 'vlinscricao', 'vltaxa', 'vlpago'];
+                
+                fieldsToToggle.forEach(function(field) {
+                    const element = document.getElementById(field);
+                    if (temBonificacao) {
+                        element.disabled = true;
+                        element.style.backgroundColor = '#f0f0f0';
+                    } else {
+                        element.disabled = false;
+                        element.style.backgroundColor = '';
+                    }
+                });
+            }
+            
+            $('#bonifica').on('change', updateBonifica);
+            
+            // Handle form submission
+            $("#inscricaoForm").on("submit", function(e) {
+                e.preventDefault();
+                
+                // Validation
+                if (!$("#modalidade").val()) {
+                    alert("Por favor, selecione uma modalidade");
+                    return;
+                }
+                
+                if (!$("#cpf").val()) {
+                    alert("Por favor, informe o CPF");
+                    return;
+                }
+                
+                const temBonificacao = $('#bonifica').is(':checked');
+                if (!temBonificacao) {
+                    // Validate payment fields if not bonifica
+                    if (!$("#formapgto").val()) {
+                        alert("Por favor, selecione uma forma de pagamento");
+                        return;
+                    }
+                    
+                    if (!$("#vlinscricao").val() || $("#vlinscricao").val() === "0,00") {
+                        alert("Por favor, informe o valor da inscrição");
+                        return;
+                    }
+                    
+                    if (!$("#vltaxa").val()) {
+                        alert("Por favor, informe o valor da taxa");
+                        return;
+                    }
+                    
+                    if (!$("#vlpago").val() || $("#vlpago").val() === "0,00") {
+                        alert("Por favor, informe o valor pago");
+                        return;
+                    }
+                }
+                
+                // Submit form data via Ajax
+                $.ajax({
+                    url: "/gerar_cupom",
+                    type: "POST",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            // Display the coupon
+                            $("#cupomDisplay").text(response.cupom);
+                            $("#cupomModal").css("display", "flex");
+                        } else {
+                            alert("Erro ao gerar cupom: " + (response.error || "Tente novamente"));
+                        }
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            alert("Sessão expirada. Por favor, faça login novamente.");
+                            $("#adminModal").css("display", "flex");
+                        } else {
+                            alert("Erro ao gerar cupom. Por favor, tente novamente.");
+                        }
+                    }
+                });
+            });
+            
+            // Copy coupon to clipboard
+            $("#copyButton").on("click", function() {
+                const cupomText = $("#cupomDisplay").text();
+                navigator.clipboard.writeText(cupomText)
+                    .then(() => {
+                        alert("Cupom copiado para a área de transferência!");
+                    })
+                    .catch(err => {
+                        console.error('Erro ao copiar: ', err);
+                        // Fallback method for older browsers
+                        const tempInput = document.createElement("input");
+                        tempInput.value = cupomText;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(tempInput);
+                        alert("Cupom copiado para a área de transferência!");
+                    });
+            });
+            
+            // Close coupon modal
+            $("#closeButton").on("click", function() {
+                $("#cupomModal").css("display", "none");
+                window.location.href = '/desafio200k';
+            });
+            
+            // Initialize page state
+            updateBonifica();
+        });     
 
     </script>
 </body>
