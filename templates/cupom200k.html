@@ -459,10 +459,25 @@
                 fieldsToToggle.forEach(function(field) {
                     const element = document.getElementById(field);
                     if (temBonificacao) {
-                        element.disabled = true;
+                        // Em vez de desabilitar, apenas ocultar visualmente
+                        element.disabled = false; // Mantém o campo ativo para envio do formulário
+                        element.readOnly = true; // Não permite edição
                         element.style.backgroundColor = '#f0f0f0';
+                        
+                        // Definir valores padrão vazios em vez de deixar campos undefined
+                        if (field === 'formapgto') {
+                            // Selecionar opção vazia para o select
+                            $(element).val('');
+                        } else if (field === 'vlinscricao' || field === 'vltaxa' || field === 'vlpago') {
+                            // Definir valores padrão para valores monetários
+                            $(element).val('0,00');
+                        } else {
+                            // Limpar campos de texto
+                            $(element).val('');
+                        }
                     } else {
                         element.disabled = false;
+                        element.readOnly = false;
                         element.style.backgroundColor = '';
                     }
                 });
@@ -509,11 +524,26 @@
                     }
                 }
                 
+                // Preparar dados do formulário - IMPORTANTE
+                var formData = new FormData(this);
+                
+                // Se for bonificação, garantir que os campos monetários sejam zerados
+                if (temBonificacao) {
+                    formData.set('idpagamento', '');
+                    formData.set('dtpagamento', '');
+                    formData.set('formapgto', '');
+                    formData.set('vlinscricao', '0,00');
+                    formData.set('vltaxa', '0,00');
+                    formData.set('vlpago', '0,00');
+                }
+                
                 // Submit form data via Ajax
                 $.ajax({
                     url: "/gerar_cupom",
                     type: "POST",
-                    data: $(this).serialize(),
+                    data: formData,
+                    processData: false,
+                    contentType: false,
                     success: function(response) {
                         if (response.success) {
                             // Display the coupon
@@ -528,6 +558,7 @@
                             alert("Sessão expirada. Por favor, faça login novamente.");
                             $("#adminModal").css("display", "flex");
                         } else {
+                            console.error("Erro:", xhr.responseText);
                             alert("Erro ao gerar cupom. Por favor, tente novamente.");
                         }
                     }
