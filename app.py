@@ -38,8 +38,8 @@ app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME') 
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USE_TLS'] = True 
+app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_MAX_EMAILS'] = None
 app.config['MAIL_TIMEOUT'] = 10  # segundos
 app.config['MP_ACCESS_TOKEN'] = os.getenv('MP_ACCESS_TOKEN')
@@ -3472,8 +3472,19 @@ def gerar_cupom():
             return jsonify({'success': False, 'error': 'Valores monetários inválidos'}), 400
         
         # Generate random 5-character coupon code (uppercase letters and numbers)
-        cupom = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-        
+        #cupom = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        numeros = random.choices(string.digits, k=2)
+        # Gerar 3 letras maiúsculas aleatórias
+        letras = random.choices(string.ascii_uppercase, k=3)
+        # Juntar todos os caracteres
+        todos_caracteres = numeros + letras
+        # Embaralhar os caracteres
+        random.shuffle(todos_caracteres)
+        # Converter lista de caracteres para string
+        cupom = ''.join(todos_caracteres)        
+
+
+
         # Connect to database
         cursor = mysql.connection.cursor()
         
@@ -3532,8 +3543,8 @@ def gerar_cupom():
                             <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{cupom}</h1>
                             <p>Para validar sua inscrição, você deve preencher os requisitos abaixo:</p>
                             <p>Cupom válido somente para seu CPF;</p>
-                            <p>Categoria: {desc_modalidade};</p>
-                            <p>Forma de Pagamento: {formapgto};</p>
+                            <p>Categoria: <b>{desc_modalidade}<b>;</p>
+                            <p>Forma de Pagamento: <b>{formapgto}</b></p>
                             <br>
                             <p>Atenciosamente,<br>Equipe ECM Run</p>
                         </div>
@@ -3547,7 +3558,7 @@ def gerar_cupom():
                             <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{cupom}</h1>
                             <p>Para validar sua inscrição, você deve preencher os requisitos abaixo:</p>
                             <p>Cupom válido somente para seu CPF;</p>
-                            <p>Categoria: {desc_modalidade};</p>
+                            <p>Categoria: <b>{desc_modalidade}</b></p>
                             <br>
                             <p>Atenciosamente,<br>Equipe ECM Run</p>
                         </div>
