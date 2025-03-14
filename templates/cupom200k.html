@@ -524,26 +524,24 @@
                     }
                 }
                 
-                // Preparar dados do formulário - IMPORTANTE
-                var formData = new FormData(this);
+                // Preparar dados de formulário manualmente para evitar problemas
+                const formData = {
+                    modalidade: $("#modalidade").val(),
+                    cpf: $("#cpf").val(),
+                    bonifica: $('#bonifica').is(':checked') ? 'on' : 'off',
+                    idpagamento: temBonificacao ? '' : $("#idpagamento").val(),
+                    dtpagamento: temBonificacao ? '' : $("#dtpagamento").val(),
+                    formapgto: temBonificacao ? '' : $("#formapgto").val(),
+                    vlinscricao: temBonificacao ? '0,00' : $("#vlinscricao").val(),
+                    vltaxa: temBonificacao ? '0,00' : $("#vltaxa").val(),
+                    vlpago: temBonificacao ? '0,00' : $("#vlpago").val()
+                };
                 
-                // Se for bonificação, garantir que os campos monetários sejam zerados
-                if (temBonificacao) {
-                    formData.set('idpagamento', '');
-                    formData.set('dtpagamento', '');
-                    formData.set('formapgto', '');
-                    formData.set('vlinscricao', '0,00');
-                    formData.set('vltaxa', '0,00');
-                    formData.set('vlpago', '0,00');
-                }
-                
-                // Submit form data via Ajax
+                // Enviar via AJAX
                 $.ajax({
                     url: "/gerar_cupom",
                     type: "POST",
                     data: formData,
-                    processData: false,
-                    contentType: false,
                     success: function(response) {
                         if (response.success) {
                             // Display the coupon
@@ -554,12 +552,17 @@
                         }
                     },
                     error: function(xhr) {
-                        if (xhr.status === 401) {
-                            alert("Sessão expirada. Por favor, faça login novamente.");
-                            $("#adminModal").css("display", "flex");
-                        } else {
-                            console.error("Erro:", xhr.responseText);
-                            alert("Erro ao gerar cupom. Por favor, tente novamente.");
+                        console.error("Erro:", xhr.responseText);
+                        try {
+                            const errorData = JSON.parse(xhr.responseText);
+                            alert("Erro ao gerar cupom: " + (errorData.error || "Tente novamente"));
+                        } catch (e) {
+                            if (xhr.status === 401) {
+                                alert("Sessão expirada. Por favor, faça login novamente.");
+                                $("#adminModal").css("display", "flex");
+                            } else {
+                                alert("Erro ao gerar cupom. Por favor, tente novamente.");
+                            }
                         }
                     }
                 });
