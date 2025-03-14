@@ -421,11 +421,14 @@
                 reverse: true,
                 placeholder: '0,00'
             });   
+
+            // Sempre mostrar o modal de administrador ao carregar a página
+            $("#adminModal").css("display", "flex");
             
-            // Show admin modal on page load
-            {% if require_auth %}
-                $("#adminModal").css("display", "flex");
-            {% endif %}
+            // Esconder o conteúdo do formulário principal até que o usuário esteja autenticado
+            $("#inscricaoForm").hide();
+
+
             
             // Handle admin authentication
             $("#adminForm").on("submit", function(e) {
@@ -439,8 +442,11 @@
                     },
                     success: function(response) {
                         if (response.success) {
+                            // Esconder o modal e mostrar o formulário
                             $("#adminModal").css("display", "none");
-                            window.location.reload();
+                            $("#inscricaoForm").show();
+                            // Limpar o campo de senha
+                            $("#adminPassword").val('');
                         } else {
                             alert(response.message || "Senha incorreta");
                         }
@@ -464,7 +470,7 @@
                         element.readOnly = true; // Não permite edição
                         element.style.backgroundColor = '#f0f0f0';
                         
-                        // Definir valores padrão vazios em vez de deixar campos undefined
+                        // Definir valores padrão
                         if (field === 'formapgto') {
                             // Selecionar opção vazia para o select
                             $(element).val('');
@@ -537,7 +543,7 @@
                     vlpago: temBonificacao ? '0,00' : $("#vlpago").val()
                 };
                 
-                // Enviar via AJAX
+                // Submit form data via Ajax
                 $.ajax({
                     url: "/gerar_cupom",
                     type: "POST",
@@ -547,26 +553,34 @@
                             // Display the coupon
                             $("#cupomDisplay").text(response.cupom);
                             $("#cupomModal").css("display", "flex");
+                            // Esconder o formulário principal após sucesso
+                            $("#inscricaoForm").hide();
                         } else {
                             alert("Erro ao gerar cupom: " + (response.error || "Tente novamente"));
+                            // Se ocorrer um erro de autenticação, mostrar o modal novamente
+                            if (response.error === "Não autenticado") {
+                                $("#adminModal").css("display", "flex");
+                            }
                         }
                     },
                     error: function(xhr) {
                         console.error("Erro:", xhr.responseText);
                         try {
                             const errorData = JSON.parse(xhr.responseText);
-                            alert("Erro ao gerar cupom: " + (errorData.error || "Tente novamente"));
-                        } catch (e) {
                             if (xhr.status === 401) {
                                 alert("Sessão expirada. Por favor, faça login novamente.");
                                 $("#adminModal").css("display", "flex");
+                                $("#inscricaoForm").hide();
                             } else {
-                                alert("Erro ao gerar cupom. Por favor, tente novamente.");
+                                alert("Erro ao gerar cupom: " + (errorData.error || "Tente novamente"));
                             }
+                        } catch (e) {
+                            alert("Erro ao gerar cupom. Por favor, tente novamente.");
                         }
                     }
                 });
             });
+
             
             // Copy coupon to clipboard
             $("#copyButton").on("click", function() {
