@@ -3499,6 +3499,67 @@ def gerar_cupom():
             
             # Commit to database
             mysql.connection.commit()
+
+            # Verificar se existe um atleta cadastrado com esse CPF
+            cursor.execute("SELECT EMAIL FROM ATLETA WHERE CPF = %s", (cpf,))
+            resultado = cursor.fetchone()
+            
+            # Obter a descrição da modalidade
+            cursor.execute("SELECT DESCRICAO FROM EVENTO_MODALIDADE WHERE IDITEM = %s", (modalidade,))
+            modalidade_result = cursor.fetchone()
+            desc_modalidade = modalidade_result[0] if modalidade_result else "Não especificada"
+
+            # Se encontrou o atleta, enviar email
+            if resultado and resultado[0]:
+                email_atleta = resultado[0]
+                
+                # Enviar email
+                try:
+                    sender = "ECM RUN <ecmsistemasdeveloper@gmail.com>"
+                    msg = Message(
+                        'Cupom para o 4º Desafio 200k',
+                        sender=sender,
+                        recipients=[email_atleta]
+                    )
+                    
+                    # Template HTML do email
+                    if bonifica == 'N':
+                        msg.html = f"""
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
+                            <p>Olá,</p>
+                            <p>Foi gerado um cupom em seu CPF para o 4º Desafio 200k:</p>
+                            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{cupom}</h1>
+                            <p>Para validar sua inscrição, você deve preencher os requisitos abaixo:</p>
+                            <p>Cupom válido somente para seu CPF;</p>
+                            <p>Categoria: {desc_modalidade};</p>
+                            <p>Forma de Pagamento: {formapgto};</p>
+                            <br>
+                            <p>Atenciosamente,<br>Equipe ECM Run</p>
+                        </div>
+                        """
+                    else:
+                        msg.html = f"""
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
+                            <p>Olá,</p>
+                            <p>Foi gerado um cupom em seu CPF para o 4º Desafio 200k:</p>
+                            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{cupom}</h1>
+                            <p>Para validar sua inscrição, você deve preencher os requisitos abaixo:</p>
+                            <p>Cupom válido somente para seu CPF;</p>
+                            <p>Categoria: {desc_modalidade};</p>
+                            <br>
+                            <p>Atenciosamente,<br>Equipe ECM Run</p>
+                        </div>
+                        """
+                    
+                    # Enviar email
+                    mail.send(msg)
+                    print(f"Email enviado com sucesso para {email_atleta}")
+                except Exception as mail_error:
+                    print(f"Erro ao enviar email: {mail_error}")
+                    # Não retornamos erro aqui, pois o cupom já foi gerado com sucesso
+                    # O email é apenas uma notificação adicional
             
             # Limpar a autenticação após uso bem-sucedido
             session.pop('authenticated', None)
@@ -3516,6 +3577,7 @@ def gerar_cupom():
     except Exception as e:
         print(f"General error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/verificar_senha', methods=['POST'])
 def verificar_senha():
