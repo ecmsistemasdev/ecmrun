@@ -3432,6 +3432,80 @@ def inscricao_copum(id_cupom):
             'message': f'Erro ao processar inscrição: {str(e)}'
         }), 500
     
+@app.route('/gerar_cupom', methods=['POST'])
+def gerar_cupom():
+    # Check if user is authenticated (has passed the admin password check)
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    # Get form data
+    data = request.form
+    modalidade = data.get('modalidade')
+    cpf = data.get('cpf', '').replace('.', '').replace('-', '')  # Remove formatting
+    bonifica = 'S' if data.get('bonifica') == 'on' else 'N'
+    idpagamento = data.get('idpagamento', '')
+    dtpagamento = data.get('dtpagamento', '')
+    formapgto = data.get('formapgto', '')
+    vlinscricao = data.get('vlinscricao', '0').replace('.', '').replace(',', '.')
+    vltaxa = data.get('vltaxa', '0').replace('.', '').replace(',', '.')
+    vlpago = data.get('vlpago', '0').replace('.', '').replace(',', '.')
+    
+    # Generate random 5-character coupon code (uppercase letters and numbers)
+    cupom = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+    
+    # Current date and time
+    #dt_pagamento = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Connect to database
+    cursor = mysql.connection.cursor()
+    
+    try:
+        # Insert into database
+        query = """
+        INSERT INTO CUPOM200K (CUPOM, CPF, IDPAGAMENTO, FORMAPAGTO, DTPAGAMENTO, VALOR, TAXA, VALOR_PGTO, IDMODALIDADE, UTILIZADO, BONIFICA)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (
+            cupom, 
+            cpf, 
+            idpagamento, 
+            formapgto, 
+            dtpagamento, 
+            float(vlinscricao), 
+            float(vltaxa), 
+            float(vlpago), 
+            int(modalidade), 
+            'N',  # Not used initially
+            bonifica
+        ))
+        
+        # Commit to database
+        mysql.connection.commit()
+        
+        return jsonify({'success': True, 'cupom': cupom})
+    
+    except Exception as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+    finally:
+        cursor.close()
+
+@app.route('/verificar_senha', methods=['POST'])
+def verificar_senha():
+    senha = request.form.get('senha')
+    senha_adm = os.getenv('SENHA_ADM')
+    
+    if senha == senha_adm:
+        session['authenticated'] = True
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'message': 'Senha incorreta'})
+
+@app.route('/logout')
+def logout():
+    session.pop('authenticated', None)
+    return redirect(url_for('desafio200k'))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
