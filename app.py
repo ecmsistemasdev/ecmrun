@@ -12,6 +12,7 @@ import pdfkit
 import os
 import re
 import random
+import string
 import json
 import uuid
 import logging
