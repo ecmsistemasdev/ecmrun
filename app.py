@@ -3469,7 +3469,7 @@ def gerar_cupom():
             vlpago_float = float(vlpago) if vlpago else 0.0
         except ValueError as ve:
             print(f"Erro de conversão de valor: {ve}")
-            return jsonify({'error': 'Valores monetários inválidos'}), 400
+            return jsonify({'success': False, 'error': 'Valores monetários inválidos'}), 400
         
         # Generate random 5-character coupon code (uppercase letters and numbers)
         cupom = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
@@ -3500,6 +3500,9 @@ def gerar_cupom():
             # Commit to database
             mysql.connection.commit()
             
+            # Limpar a autenticação após uso bem-sucedido
+            session.pop('authenticated', None)
+            
             return jsonify({'success': True, 'cupom': cupom})
         
         except Exception as e:
@@ -3520,6 +3523,7 @@ def verificar_senha():
     senha_adm = os.getenv('SENHA_ADM')
     
     if senha == senha_adm:
+        # Criar uma autenticação temporária para esta requisição apenas
         session['authenticated'] = True
         return jsonify({'success': True})
     else:
