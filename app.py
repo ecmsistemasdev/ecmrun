@@ -1477,11 +1477,23 @@ def salvar_cadastro():
     try:
         data = request.get_json()
         
-        # Formatar a data de nascimento
-        dia = str(data.get('dia_nasc')).zfill(2)  # Adiciona zero à esquerda se necessário
-        mes = str(data.get('mes_nasc')).zfill(2)  # Converte o mês para número com dois dígitos
-        ano = data.get('ano_nasc')
-        data_nascimento = f"{dia}/{mes}/{ano}"
+        # Pegar a data no formato YYYY-MM-DD do campo input date
+        data_nascimento_iso = data.get('data_nascimento')
+        
+        # Para o campo DATANASC (tipo DATE no banco de dados)
+        # Não precisa de formatação adicional, o MySQL aceita o formato ISO YYYY-MM-DD
+        
+        # Para o campo DTNASCIMENTO (VARCHAR) - mantido por compatibilidade
+        # Converter de YYYY-MM-DD para DD/MM/YYYY
+        if data_nascimento_iso:
+            date_parts = data_nascimento_iso.split('-')
+            if len(date_parts) == 3:
+                ano, mes, dia = date_parts
+                data_nascimento_str = f"{dia}/{mes}/{ano}"  # Formato DD/MM/YYYY
+            else:
+                data_nascimento_str = ""  # caso haja algum problema com o formato
+        else:
+            data_nascimento_str = ""
         
         # Gerar data e hora atual no formato requerido
         data_cadastro = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -1493,10 +1505,23 @@ def salvar_cadastro():
         # Preparar query e parâmetros
         query = """
         INSERT INTO ecmrun.ATLETA (
-            CPF, NOME, SOBRENOME, DTNASCIMENTO, NRCELULAR, SEXO, EMAIL, TEL_EMERGENCIA, 
-            CONT_EMERGENCIA, SENHA, ATIVO, DTCADASTRO, ESTADO, ID_CIDADE
+            CPF, 
+            NOME, 
+            SOBRENOME, 
+            DTNASCIMENTO, 
+            DATANASC,
+            NRCELULAR, 
+            SEXO, 
+            EMAIL, 
+            TEL_EMERGENCIA, 
+            CONT_EMERGENCIA, 
+            SENHA, 
+            ATIVO, 
+            DTCADASTRO, 
+            ESTADO, 
+            ID_CIDADE
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         """
         
@@ -1509,7 +1534,8 @@ def salvar_cadastro():
             cpf_limpo,
             data.get('primeiro_nome').upper(),
             data.get('sobrenome').upper(),
-            data_nascimento,
+            data_nascimento_str,                # Para o campo DTNASCIMENTO (string DD/MM/YYYY)
+            data_nascimento_iso,                # Para o campo DATANASC (date YYYY-MM-DD)
             celular_limpo,
             data.get('sexo'),
             data.get('email'),
@@ -1521,8 +1547,6 @@ def salvar_cadastro():
             data.get('estado'),
             data.get('cidade')
         )
-
-        #data.get('equipe').upper() if data.get('equipe') else None,
         
         # Executar a query
         cur = mysql.connection.cursor()
