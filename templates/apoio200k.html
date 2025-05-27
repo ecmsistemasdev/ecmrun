@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://ecmrun.com.br/static/img/img_200k.jpg">
+    <title>Cadastro de Apoio - 4º Desafio 200k</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background-color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .center-image {
+            height: 80px;
+            width: auto;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            margin-top: 3px;
+            transform: scale(1.2);
+        }
+        
+        .checkbox-group label {
+            margin-bottom: 0;
+            font-weight: normal;
+            line-height: 1.4;
+        }
+        
+        .checkbox-group a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .checkbox-group a:hover {
+            text-decoration: underline;
+        }
+        
+        .btn-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .btn-salvar {
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-salvar:disabled {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .btn-salvar:enabled {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-salvar:enabled:hover {
+            background-color: #0056b3;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .footer {
+            background-color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            text-align: center;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+        
+        .footer-text {
+            font-size: 0.7em;
+            color: #333;
+            margin: 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="/static/img/img_200k.jpg" alt="Logo" class="center-image">
+    </div>
+    
+    <div class="container">
+        <h1>Cadastro de Apoio - 4º Desafio 200k</h1>
+        
+        <div class="success-message" id="successMessage">
+            Apoio cadastrado com sucesso!
+        </div>
+        
+        <form id="apoioForm">
+            <div class="form-group">
+                <label for="nome">Nome Completo *</label>
+                <input type="text" id="nome" name="nome" required>
+                <div class="error-message" id="nomeError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="celular">Celular *</label>
+                <input type="text" id="celular" name="celular" placeholder="(00) 00000-0000" required>
+                <div class="error-message" id="celularError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="veiculo">Veículo *</label>
+                <input type="text" id="veiculo" name="veiculo" required>
+                <div class="error-message" id="veiculoError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="placa">Placa *</label>
+                <input type="text" id="placa" name="placa" placeholder="ABC-1234" required>
+                <div class="error-message" id="placaError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="atleta">Atleta *</label>
+                <select id="atleta" name="atleta" required>
+                    <option value="">Selecione um atleta</option>
+                </select>
+                <div class="error-message" id="atletaError"></div>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="aceite" name="aceite">
+                <label for="aceite">
+                    Aceito as regras constantes no 
+                    <a href="https://ecmrun.com.br/desafio200k" target="_blank">Regulamento do Desafio</a>
+                </label>
+            </div>
+            
+            <div class="btn-container">
+                <button type="submit" class="btn-salvar" id="btnSalvar" disabled>Salvar</button>
+            </div>
+        </form>
+    </div>
+    
+    <footer class="footer">
+        <p><b>"Tudo posso naquele que me fortalece."</b><br> Filipenses 4:13</p>
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+        <p class="footer-text">Versão 1.2</p>
+    </footer>
+
+    <script>
+        // Máscara para celular
+        function mascaraCelular(campo) {
+            let valor = campo.value.replace(/\D/g, '');
+            valor = valor.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+            campo.value = valor;
+        }
+
+        // Máscara para placa
+        function mascaraPlaca(campo) {
+            let valor = campo.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            valor = valor.replace(/^([A-Z]{3})([0-9]{4}).*/, '$1-$2');
+            campo.value = valor;
+        }
+
+        // Converter para maiúsculo
+        function converterMaiusculo(campo) {
+            campo.value = campo.value.toUpperCase();
+        }
+
+        // Controlar botão salvar
+        function controlarBotaoSalvar() {
+            const aceite = document.getElementById('aceite');
+            const btnSalvar = document.getElementById('btnSalvar');
+            btnSalvar.disabled = !aceite.checked;
+        }
+
+        // Validar campos
+        function validarCampos() {
+            let valido = true;
+            
+            // Limpar mensagens de erro
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            
+            // Validar nome
+            const nome = document.getElementById('nome');
+            if (!nome.value.trim()) {
+                document.getElementById('nomeError').textContent = 'Nome é obrigatório';
+                document.getElementById('nomeError').style.display = 'block';
+                valido = false;
+            }
+            
+            // Validar celular
+            const celular = document.getElementById('celular');
+            const celularLimpo = celular.value.replace(/\D/g, '');
+            if (!celularLimpo || celularLimpo.length !== 11) {
+                document.getElementById('celularError').textContent = 'Celular deve ter 11 dígitos';
+                document.getElementById('celularError').style.display = 'block';
+                valido = false;
+            }
+            
+            // Validar veículo
+            const veiculo = document.getElementById('veiculo');
+            if (!veiculo.value.trim()) {
+                document.getElementById('veiculoError').textContent = 'Veículo é obrigatório';
+                document.getElementById('veiculoError').style.display = 'block';
+                valido = false;
+            }
+            
+            // Validar placa
+            const placa = document.getElementById('placa');
+            const placaLimpa = placa.value.replace(/[^A-Za-z0-9]/g, '');
+            if (!placaLimpa || placaLimpa.length !== 7) {
+                document.getElementById('placaError').textContent = 'Placa deve ter formato válido (ABC-1234)';
+                document.getElementById('placaError').style.display = 'block';
+                valido = false;
+            }
+            
+            // Validar atleta
+            const atleta = document.getElementById('atleta');
+            if (!atleta.value) {
+                document.getElementById('atletaError').textContent = 'Selecione um atleta';
+                document.getElementById('atletaError').style.display = 'block';
+                valido = false;
+            }
+            
+            return valido;
+        }
+
+        // Carregar atletas
+        async function carregarAtletas() {
+            try {
+                const response = await fetch('/api/atletas');
+                const atletas = await response.json();
+                const select = document.getElementById('atleta');
+                
+                atletas.forEach(atleta => {
+                    const option = document.createElement('option');
+                    option.value = atleta.IDATLETA;
+                    option.textContent = atleta.ATLETA;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar atletas:', error);
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarAtletas();
+            
+            // Máscaras e conversões
+            document.getElementById('nome').addEventListener('input', function() {
+                converterMaiusculo(this);
+            });
+            
+            document.getElementById('celular').addEventListener('input', function() {
+                mascaraCelular(this);
+            });
+            
+            document.getElementById('veiculo').addEventListener('input', function() {
+                converterMaiusculo(this);
+            });
+            
+            document.getElementById('placa').addEventListener('input', function() {
+                mascaraPlaca(this);
+            });
+            
+            // Controle do botão
+            document.getElementById('aceite').addEventListener('change', controlarBotaoSalvar);
+            
+            // Submit do formulário
+            document.getElementById('apoioForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (!validarCampos()) {
+                    return;
+                }
+                
+                const formData = {
+                    nome: document.getElementById('nome').value.trim(),
+                    celular: document.getElementById('celular').value.replace(/\D/g, ''),
+                    veiculo: document.getElementById('veiculo').value.trim(),
+                    placa: document.getElementById('placa').value.replace(/[^A-Za-z0-9]/g, ''),
+                    idatleta: document.getElementById('atleta').value,
+                    aceite: document.getElementById('aceite').checked ? 'S' : 'N'
+                };
+                
+                try {
+                    const response = await fetch('/api/cadastrar-apoio', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        document.getElementById('successMessage').style.display = 'block';
+                        document.getElementById('apoioForm').reset();
+                        document.getElementById('btnSalvar').disabled = true;
+                        window.scrollTo(0, 0);
+                    } else {
+                        alert('Erro: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Erro ao cadastrar apoio:', error);
+                    alert('Erro ao cadastrar apoio. Tente novamente.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
