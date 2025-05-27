@@ -3672,10 +3672,10 @@ def cadastrar_apoio():
     try:
         data = request.get_json()
         
-        # Validar dados obrigatórios
-        if not all([data.get('nome'), data.get('celular'), data.get('veiculo'), 
-                   data.get('placa'), data.get('idatleta'), data.get('aceite')]):
-            return jsonify({'message': 'Todos os campos são obrigatórios'}), 400
+        # Validar dados obrigatórios (veículo e placa agora são opcionais)
+        if not all([data.get('nome'), data.get('celular'), 
+                   data.get('idatleta'), data.get('aceite')]):
+            return jsonify({'message': 'Nome, celular, atleta e aceite são obrigatórios'}), 400
         
         # Verificar se aceite é 'S'
         if data.get('aceite') != 'S':
@@ -3712,8 +3712,8 @@ def cadastrar_apoio():
         cursor.execute(insert_query, (
             data['nome'].upper().strip(),
             data['celular'].strip(),
-            data['veiculo'].upper().strip(),
-            data['placa'].upper().strip(),
+            data.get('veiculo', '').upper().strip(),
+            data.get('placa', '').upper().strip(),
             data['idatleta'],
             data_e_hora_manaus,
             data['aceite']
