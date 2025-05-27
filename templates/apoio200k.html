@@ -191,14 +191,14 @@
             </div>
             
             <div class="form-group">
-                <label for="veiculo">Veículo *</label>
-                <input type="text" id="veiculo" name="veiculo" required>
+                <label for="veiculo">Veículo</label>
+                <input type="text" id="veiculo" name="veiculo">
                 <div class="error-message" id="veiculoError"></div>
             </div>
             
             <div class="form-group">
-                <label for="placa">Placa *</label>
-                <input type="text" id="placa" name="placa" placeholder="ABC-1234" required>
+                <label for="placa">Placa</label>
+                <input type="text" id="placa" name="placa" placeholder="ABC-1234">
                 <div class="error-message" id="placaError"></div>
             </div>
             
@@ -283,22 +283,9 @@
                 valido = false;
             }
             
-            // Validar veículo
-            const veiculo = document.getElementById('veiculo');
-            if (!veiculo.value.trim()) {
-                document.getElementById('veiculoError').textContent = 'Veículo é obrigatório';
-                document.getElementById('veiculoError').style.display = 'block';
-                valido = false;
-            }
+            // Validar veículo (removido - agora é opcional)
             
-            // Validar placa
-            const placa = document.getElementById('placa');
-            const placaLimpa = placa.value.replace(/[^A-Za-z0-9]/g, '');
-            if (!placaLimpa || placaLimpa.length !== 7) {
-                document.getElementById('placaError').textContent = 'Placa deve ter formato válido (ABC-1234)';
-                document.getElementById('placaError').style.display = 'block';
-                valido = false;
-            }
+            // Validar placa (removido - agora é opcional)
             
             // Validar atleta
             const atleta = document.getElementById('atleta');
