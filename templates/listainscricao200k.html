@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Inscrições - Coordenador</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .main-container {
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-details {
+            background: none;
+            border: none;
+            color: #007bff;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        .btn-details:hover {
+            color: #0056b3;
+        }
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .form-label {
+            font-weight: 600;
+        }
+        .currency {
+            text-align: right;
+        }
+        #authSection {
+            max-width: 400px;
+            margin: 0 auto;
+            margin-top: 100px;
+        }
+        #mainContent {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <!-- Seção de Autenticação -->
+        <div id="authSection">
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4><i class="fas fa-lock me-2"></i>Acesso do Coordenador</h4>
+                </div>
+                <div class="card-body">
+                    <form id="authForm">
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha de Acesso:</label>
+                            <input type="password" class="form-control" id="senha" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                        </button>
+                    </form>
+                    <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div id="mainContent">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <h4><i class="fas fa-running me-2"></i>Gerenciamento de Inscrições</h4>
+                            <button id="logoutBtn" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-sign-out-alt me-1"></i>Sair
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="eventoSelect" class="form-label">Selecione o Evento:</label>
+                                    <select id="eventoSelect" class="form-select">
+                                        <option value="">Selecione um evento...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="modalidadeSelect" class="form-label">Modalidade:</label>
+                                    <select id="modalidadeSelect" class="form-select" disabled>
+                                        <option value="">Todas as modalidades</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Inscrições -->
+            <div id="inscricoesSection" style="display: none;">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-list me-2"></i>Lista de Atletas Inscritos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Atleta</th>
+                                        <th>Camiseta</th>
+                                        <th>Modalidade</th>
+                                        <th style="width: 80px;">Detalhes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inscricoesTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes da Inscrição -->
+    <div class="modal fade" id="detalhesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalhes da Inscrição</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row" id="detalhesContent">
+                        <!-- Conteúdo será preenchido dinamicamente -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary me-3" role="status"></div>
+                    <span>Carregando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let loadingModal;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            
+            // Event Listeners
+            document.getElementById('authForm').addEventListener('submit', handleAuth);
+            document.getElementById('eventoSelect').addEventListener('change', handleEventoChange);
+            document.getElementById('modalidadeSelect').addEventListener('change', handleModalidadeChange);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+        });
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const senha = document.getElementById('senha').value;
+            
+            try {
+                loadingModal.show();
+                const response = await fetch('/verificar_senha', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ senha: senha })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('authSection').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    await loadEventos();
+                } else {
+                    showError(data.message || 'Senha incorreta');
+                }
+            } catch (error) {
+                showError('Erro ao verificar senha');
+            } finally {
+                loadingModal.hide();
+            }
+        }
+
+        async function loadEventos() {
+            try {
+                const response = await fetch('/api/eventos1');
+                const eventos = await response.json();
+                
+                const select = document.getElementById('eventoSelect');
+                select.innerHTML = '<option value="">Selecione um evento...</option>';
+                
+                eventos.forEach(evento => {
+                    const option = document.createElement('option');
+                    option.value = evento.IDEVENTO;
+                    option.textContent = evento.DESCRICAO;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showError('Erro ao carregar eventos');
+            }
+        }
+
+        async function handleEventoChange(e) {
+            const eventoId = e.target.value;
+            const modalidadeSelect = document.getElementById('modalidadeSelect');
+            
+            if (!eventoId) {
+                document.getElementById('inscricoesSection').style.display = 'none';
+                modalidadeSelect.disabled = true;
+                modalidadeSelect.innerHTML = '<option value="">Todas as modalidades</option>';
+                return;
+            }
+            
+            try {
+                loadingModal.show();
+                
+                // Carregar modalidades do evento
+                await loadModalidades(eventoId);
+                modalidadeSelect.disabled = false;
+                
+                // Carregar todas as inscrições do evento
+                const response = await fetch(`/api/inscricoes/${eventoId}`);
+                const inscricoes = await response.json();
+                
+                displayInscricoes(inscricoes);
+                document.getElementById('inscricoesSection').style.display = 'block';
+            } catch (error) {
+                showError('Erro ao carregar dados do evento');
+            } finally {
+                loadingModal.hide();
+            }
+        }
+
+        async function loadModalidades(eventoId) {
+            try {
+                const response = await fetch(`/api/modalidades1/${eventoId}`);
+                const modalidades = await response.json();
+                
+                const select = document.getElementById('modalidadeSelect');
+                select.innerHTML = '<option value="">Todas as modalidades</option>';
+                
+                modalidades.forEach(modalidade => {
+                    const option = document.createElement('option');
+                    option.value = modalidade.IDITEM;
+                    option.textContent = modalidade.DESCRICAO;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showError('Erro ao carregar modalidades');
+            }
+        }
+
+        async function handleModalidadeChange(e) {
+            const eventoId = document.getElementById('eventoSelect').value;
+            const modalidadeId = e.target.value;
+            
+            if (!eventoId) return;
+            
+            try {
+                loadingModal.show();
+                
+                let url = `/api/inscricoes/${eventoId}`;
+                if (modalidadeId) {
+                    url += `/${modalidadeId}`;
+                }
+                
+                const response = await fetch(url);
+                const inscricoes = await response.json();
+                
+                displayInscricoes(inscricoes);
+            } catch (error) {
+                showError('Erro ao filtrar inscrições');
+            } finally {
+                loadingModal.hide();
+            }
+        }
+
+        function displayInscricoes(inscricoes) {
+            const tbody = document.getElementById('inscricoesTableBody');
+            tbody.innerHTML = '';
+            
+            inscricoes.forEach(inscricao => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${inscricao.ATLETA}</td>
+                    <td>${inscricao.CAMISETA || '-'}</td>
+                    <td>${inscricao.DESCRICAO}</td>
+                    <td class="text-center">
+                        <button class="btn-details" onclick="showDetalhes(${inscricao.IDINSCRICAO})" title="Ver detalhes">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function showDetalhes(inscricaoId) {
+            try {
+                loadingModal.show();
+                const response = await fetch(`/api/inscricao/${inscricaoId}`);
+                const inscricao = await response.json();
+                
+                displayDetalhes(inscricao);
+                const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
+                modal.show();
+            } catch (error) {
+                showError('Erro ao carregar detalhes da inscrição');
+            } finally {
+                loadingModal.hide();
+            }
+        }
+
+        function displayDetalhes(inscricao) {
+            const content = document.getElementById('detalhesContent');
+            content.innerHTML = `
+                <div class="col-12 mb-3">
+                    <h6 class="text-primary border-bottom pb-2">Dados do Atleta</h6>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Nome Completo:</strong><br>
+                    ${inscricao.NOME_COMPLETO}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Data Nascimento:</strong><br>
+                    ${inscricao.DTNASCIMENTO || '-'}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Sexo:</strong><br>
+                    ${inscricao.SEXO === 'M' ? 'Masculino' : inscricao.SEXO === 'F' ? 'Feminino' : '-'}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Nº Celular:</strong><br>
+                    ${inscricao.NRCELULAR || '-'}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>CPF:</strong><br>
+                    ${inscricao.CPF || '-'}
+                </div>
+                
+                <div class="col-12 mb-3 mt-4">
+                    <h6 class="text-primary border-bottom pb-2">Dados da Inscrição</h6>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Modalidade:</strong><br>
+                    ${inscricao.MODALIDADE}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Camiseta:</strong><br>
+                    ${inscricao.CAMISETA || '-'}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Forma Pagamento:</strong><br>
+                    ${inscricao.FORMAPGTO || '-'}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Apoio:</strong><br>
+                    ${inscricao.APOIO || '-'}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Equipe:</strong><br>
+                    ${inscricao.EQUIPE || '-'}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Nome da Equipe:</strong><br>
+                    ${inscricao.NOME_EQUIPE || '-'}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Cupom:</strong><br>
+                    ${inscricao.CUPOM || '-'}
+                </div>
+                <div class="col-12 mb-3">
+                    <strong>Integrantes:</strong><br>
+                    ${inscricao.INTEGRANTES || '-'}
+                </div>
+                
+                <div class="col-12 mb-3 mt-4">
+                    <h6 class="text-primary border-bottom pb-2">Valores</h6>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Valor:</strong><br>
+                    R$ ${formatCurrency(inscricao.VALOR)}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Taxa:</strong><br>
+                    R$ ${formatCurrency(inscricao.TAXA)}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Desconto:</strong><br>
+                    R$ ${formatCurrency(inscricao.DESCONTO)}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Valor Pago:</strong><br>
+                    <span class="text-success fw-bold">R$ ${formatCurrency(inscricao.VALOR_PGTO)}</span>
+                </div>
+            `;
+        }
+
+        function formatCurrency(value) {
+            return (value || 0).toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/logout_coordenador', {
+                    method: 'POST'
+                });
+                
+                // Reset da interface
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('authSection').style.display = 'block';
+                document.getElementById('senha').value = '';
+                document.getElementById('eventoSelect').value = '';
+                document.getElementById('modalidadeSelect').value = '';
+                document.getElementById('modalidadeSelect').disabled = true;
+                document.getElementById('inscricoesSection').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'none';
+            } catch (error) {
+                console.error('Erro no logout:', error);
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
