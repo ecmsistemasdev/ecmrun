@@ -3735,7 +3735,7 @@ def lista_inscricao():
     return render_template('listainscricao200k.html')
 
 # Rota para verificar senha
-@app.route('/verificar_senha', methods=['POST'])
+@app.route('/verificar_senha1', methods=['POST'])
 def verificar_senha():
     data = request.get_json()
     senha_informada = data.get('senha')
