@@ -3631,6 +3631,104 @@ def logout():
     session.pop('authenticated', None)
     return redirect(url_for('desafio200k'))
 
+
+# Rota para exibir a página de cadastro
+@app.route('/apoio200k')
+def apoio_cadastro():
+    return render_template('apoio200k.html')
+
+# API para buscar atletas
+@app.route('/api/atletas')
+def get_atletas():
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+            SELECT A.IDATLETA, CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA
+            FROM INSCRICAO I, ATLETA A
+            WHERE A.IDATLETA = I.IDATLETA
+            AND I.IDEVENTO = 1
+            ORDER BY CONCAT(A.NOME,' ',A.SOBRENOME)
+        """
+        cursor.execute(query)
+        atletas = cursor.fetchall()
+        cursor.close()
+        
+        # Converter para lista de dicionários
+        atletas_list = []
+        for atleta in atletas:
+            atletas_list.append({
+                'IDATLETA': atleta[0],
+                'ATLETA': atleta[1]
+            })
+        
+        return jsonify(atletas_list)
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API para cadastrar apoio
+@app.route('/api/cadastrar-apoio', methods=['POST'])
+def cadastrar_apoio():
+    try:
+        data = request.get_json()
+        
+        # Validar dados obrigatórios
+        if not all([data.get('nome'), data.get('celular'), data.get('veiculo'), 
+                   data.get('placa'), data.get('idatleta'), data.get('aceite')]):
+            return jsonify({'message': 'Todos os campos são obrigatórios'}), 400
+        
+        # Verificar se aceite é 'S'
+        if data.get('aceite') != 'S':
+            return jsonify({'message': 'É necessário aceitar o regulamento'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Verificar se já existe apoio com mesmo nome e celular para o mesmo atleta
+        check_query = """
+            SELECT COUNT(*) FROM APOIO 
+            WHERE UPPER(NOME) = %s AND CELULAR = %s AND IDATLETA = %s
+        """
+        cursor.execute(check_query, (
+            data['nome'].upper().strip(),
+            data['celular'].strip(),
+            data['idatleta']
+        ))
+        
+        if cursor.fetchone()[0] > 0:
+            cursor.close()
+            return jsonify({'message': 'Já existe um apoio cadastrado com este nome e celular para este atleta'}), 400
+        
+        # Obter data e hora de Manaus
+        data_e_hora_atual = datetime.now()
+        fuso_horario = timezone('America/Manaus')
+        data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
+        
+        # Inserir novo apoio
+        insert_query = """
+            INSERT INTO APOIO (NOME, CELULAR, VEICULO, PLACA, IDATLETA, DT_CADASTRO, ACEITE)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        cursor.execute(insert_query, (
+            data['nome'].upper().strip(),
+            data['celular'].strip(),
+            data['veiculo'].upper().strip(),
+            data['placa'].upper().strip(),
+            data['idatleta'],
+            data_e_hora_manaus,
+            data['aceite']
+        ))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'message': 'Apoio cadastrado com sucesso'}), 200
+    
+    except Exception as e:
+        return jsonify({'message': f'Erro interno do servidor: {str(e)}'}), 500
+
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
