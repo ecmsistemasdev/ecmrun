@@ -3732,66 +3732,66 @@ def cadastrar_apoio():
 # Rota para renderizar a página principal
 @app.route('/listainscricao200k')
 def lista_inscricao():
-   return render_template('listainscricao200k.html')
+    return render_template('listainscricao200k.html')
 
 # Rota para verificar senha
 @app.route('/verificar_senha1', methods=['POST'])
 def verificar_senha1():
-   data = request.get_json()
-   senha_informada = data.get('senha')
-   senha_correta = os.getenv('SENHA_ACESSO')
-   
-   if senha_informada == senha_correta:
-       session['autenticado'] = True
-       return jsonify({'success': True})
-   else:
-       return jsonify({'success': False, 'message': 'Senha incorreta'})
+    data = request.get_json()
+    senha_informada = data.get('senha')
+    senha_correta = os.getenv('SENHA_ACESSO')
+    
+    if senha_informada == senha_correta:
+        session['autenticado'] = True
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'message': 'Senha incorreta'})
 
 # Rota para buscar eventos
 @app.route('/api/eventos1')
 def get_eventos1():
-   if not session.get('autenticado'):
-       return jsonify({'error': 'Não autenticado'}), 401
-   
-   try:
-       cursor = mysql.connection.cursor()
-       cursor.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO")
-       eventos = cursor.fetchall()
-       cursor.close()
-       
-       eventos_list = []
-       for evento in eventos:
-           eventos_list.append({
-               'IDEVENTO': evento[0],
-               'DESCRICAO': evento[1]
-           })
-       
-       return jsonify(eventos_list)
-   except Exception as e:
-       return jsonify({'error': str(e)}), 500
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO")
+        eventos = cursor.fetchall()
+        cursor.close()
+        
+        eventos_list = []
+        for evento in eventos:
+            eventos_list.append({
+                'IDEVENTO': evento[0],
+                'DESCRICAO': evento[1]
+            })
+        
+        return jsonify(eventos_list)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Rota para buscar modalidades por evento
 @app.route('/api/modalidades1/<int:evento_id>')
 def get_modalidades1(evento_id):
-   if not session.get('autenticado'):
-       return jsonify({'error': 'Não autenticado'}), 401
-   
-   try:
-       cursor = mysql.connection.cursor()
-       cursor.execute("SELECT IDITEM, DESCRICAO FROM EVENTO_MODALIDADE WHERE IDEVENTO = %s", (evento_id,))
-       modalidades = cursor.fetchall()
-       cursor.close()
-       
-       modalidades_list = []
-       for modalidade in modalidades:
-           modalidades_list.append({
-               'IDITEM': modalidade[0],
-               'DESCRICAO': modalidade[1]
-           })
-       
-       return jsonify(modalidades_list)
-   except Exception as e:
-       return jsonify({'error': str(e)}), 500
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT IDITEM, DESCRICAO FROM EVENTO_MODALIDADE WHERE IDEVENTO = %s", (evento_id,))
+        modalidades = cursor.fetchall()
+        cursor.close()
+        
+        modalidades_list = []
+        for modalidade in modalidades:
+            modalidades_list.append({
+                'IDITEM': modalidade[0],
+                'DESCRICAO': modalidade[1]
+            })
+        
+        return jsonify(modalidades_list)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Rota para buscar inscrições por evento e modalidade
 @app.route('/api/inscricoes/<int:evento_id>')
@@ -3809,7 +3809,8 @@ def get_inscricoes(evento_id, modalidade_id=None):
             SELECT CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA, 
                    I.CAMISETA,
                    EV.DESCRICAO,
-                   I.IDINSCRICAO
+                   I.IDINSCRICAO,
+                   A.SEXO
             FROM ATLETA A, INSCRICAO I, EVENTO_MODALIDADE EV
             WHERE 
             EV.IDITEM = I.IDITEM
@@ -3825,7 +3826,8 @@ def get_inscricoes(evento_id, modalidade_id=None):
             SELECT CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA, 
                    I.CAMISETA,
                    EV.DESCRICAO,
-                   I.IDINSCRICAO
+                   I.IDINSCRICAO,
+                   A.SEXO
             FROM ATLETA A, INSCRICAO I, EVENTO_MODALIDADE EV
             WHERE 
             EV.IDITEM = I.IDITEM
@@ -3844,68 +3846,69 @@ def get_inscricoes(evento_id, modalidade_id=None):
                 'ATLETA': inscricao[0],
                 'CAMISETA': inscricao[1],
                 'DESCRICAO': inscricao[2],
-                'IDINSCRICAO': inscricao[3]
+                'IDINSCRICAO': inscricao[3],
+                'SEXO': inscricao[4]
             })
         
         return jsonify(inscricoes_list)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 # Rota para buscar detalhes da inscrição
 @app.route('/api/inscricao/<int:inscricao_id>')
 def get_inscricao_detalhes(inscricao_id):
-   if not session.get('autenticado'):
-      return jsonify({'error': 'Não autenticado'}), 401
-   
-   try:
-       cursor = mysql.connection.cursor()
-       query = """
-       SELECT I.IDINSCRICAO, I.CPF, I.APOIO, I.NOME_EQUIPE, I.INTEGRANTES,
-              I.CAMISETA, I.VALOR, I.TAXA, I.DESCONTO, I.VALOR_PGTO,
-              I.FORMAPGTO, I.EQUIPE, I.CUPOM,
-              CONCAT(A.NOME,' ',A.SOBRENOME) AS NOME_COMPLETO,
-              A.DTNASCIMENTO, A.NRCELULAR, A.SEXO,
-              EV.DESCRICAO AS MODALIDADE
-       FROM INSCRICAO I
-       JOIN ATLETA A ON A.IDATLETA = I.IDATLETA
-       JOIN EVENTO_MODALIDADE EV ON EV.IDITEM = I.IDITEM
-       WHERE I.IDINSCRICAO = %s
-       """
-       cursor.execute(query, (inscricao_id,))
-       inscricao = cursor.fetchone()
-       cursor.close()
-       
-       if inscricao:
-           return jsonify({
-               'IDINSCRICAO': inscricao[0],
-               'CPF': inscricao[1],
-               'APOIO': inscricao[2],
-               'NOME_EQUIPE': inscricao[3],
-               'INTEGRANTES': inscricao[4],
-               'CAMISETA': inscricao[5],
-               'VALOR': float(inscricao[6]) if inscricao[6] else 0,
-               'TAXA': float(inscricao[7]) if inscricao[7] else 0,
-               'DESCONTO': float(inscricao[8]) if inscricao[8] else 0,
-              'VALOR_PGTO': float(inscricao[9]) if inscricao[9] else 0,
-              'FORMAPGTO': inscricao[10],
-              'EQUIPE': inscricao[11],
-              'CUPOM': inscricao[12],
-              'NOME_COMPLETO': inscricao[13],
-               'DTNASCIMENTO': inscricao[14],
-               'NRCELULAR': inscricao[15],
-               'SEXO': inscricao[16],
-              'MODALIDADE': inscricao[17]
-          })
-       else:
-           return jsonify({'error': 'Inscrição não encontrada'}), 404
-   except Exception as e:
-       return jsonify({'error': str(e)}), 500
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+        SELECT I.IDINSCRICAO, I.CPF, I.APOIO, I.NOME_EQUIPE, I.INTEGRANTES,
+               I.CAMISETA, I.VALOR, I.TAXA, I.DESCONTO, I.VALOR_PGTO,
+               I.FORMAPGTO, I.EQUIPE, I.CUPOM,
+               CONCAT(A.NOME,' ',A.SOBRENOME) AS NOME_COMPLETO,
+               A.DTNASCIMENTO, A.NRCELULAR, A.SEXO,
+               EV.DESCRICAO AS MODALIDADE
+        FROM INSCRICAO I
+        JOIN ATLETA A ON A.IDATLETA = I.IDATLETA
+        JOIN EVENTO_MODALIDADE EV ON EV.IDITEM = I.IDITEM
+        WHERE I.IDINSCRICAO = %s
+        """
+        cursor.execute(query, (inscricao_id,))
+        inscricao = cursor.fetchone()
+        cursor.close()
+        
+        if inscricao:
+            return jsonify({
+                'IDINSCRICAO': inscricao[0],
+                'CPF': inscricao[1],
+                'APOIO': inscricao[2],
+                'NOME_EQUIPE': inscricao[3],
+                'INTEGRANTES': inscricao[4],
+                'CAMISETA': inscricao[5],
+                'VALOR': float(inscricao[6]) if inscricao[6] else 0,
+                'TAXA': float(inscricao[7]) if inscricao[7] else 0,
+                'DESCONTO': float(inscricao[8]) if inscricao[8] else 0,
+                'VALOR_PGTO': float(inscricao[9]) if inscricao[9] else 0,
+                'FORMAPGTO': inscricao[10],
+                'EQUIPE': inscricao[11],
+                'CUPOM': inscricao[12],
+                'NOME_COMPLETO': inscricao[13],
+                'DTNASCIMENTO': inscricao[14],
+                'NRCELULAR': inscricao[15],
+                'SEXO': inscricao[16],
+                'MODALIDADE': inscricao[17]
+            })
+        else:
+            return jsonify({'error': 'Inscrição não encontrada'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Rota para logout
 @app.route('/logout_coordenador', methods=['POST'])
 def logout_coordenador():
-   session.pop('autenticado', None)
-   return jsonify({'success': True})
+    session.pop('autenticado', None)
+    return jsonify({'success': True})
 
 #########
 if __name__ == "__main__":
