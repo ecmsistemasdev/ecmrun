@@ -3732,32 +3732,56 @@ def cadastrar_apoio():
 # Rota para renderizar a página principal
 @app.route('/listainscricao200k')
 def lista_inscricao():
+    print("DEBUG: Renderizando página listainscricao200k.html")
     return render_template('listainscricao200k.html')
 
 # Rota para verificar senha
 @app.route('/verificar_senha1', methods=['POST'])
 def verificar_senha1():
-    data = request.get_json()
-    senha_informada = data.get('senha')
-    senha_correta = os.getenv('SENHA_ACESSO')
-    
-    if senha_informada == senha_correta:
-        session['autenticado'] = True
-        return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'message': 'Senha incorreta'})
+    print("DEBUG: Verificando senha...")
+    try:
+        data = request.get_json()
+        print(f"DEBUG: Dados recebidos: {data}")
+        
+        senha_informada = data.get('senha')
+        senha_correta = os.getenv('SENHA_ACESSO')
+        
+        print(f"DEBUG: Senha informada: {senha_informada}")
+        print(f"DEBUG: Senha do ambiente existe: {senha_correta is not None}")
+        
+        # Para teste, você pode temporariamente usar uma senha fixa:
+        # senha_correta = "123456"  # Descomente esta linha para teste
+        
+        if senha_informada == senha_correta:
+            session['autenticado'] = True
+            print("DEBUG: Autenticação bem-sucedida")
+            return jsonify({'success': True})
+        else:
+            print("DEBUG: Senha incorreta")
+            return jsonify({'success': False, 'message': 'Senha incorreta'})
+            
+    except Exception as e:
+        print(f"DEBUG: Erro na verificação da senha: {str(e)}")
+        return jsonify({'success': False, 'message': f'Erro: {str(e)}'})
 
 # Rota para buscar eventos
 @app.route('/api/eventos1')
 def get_eventos1():
+    print("DEBUG: Buscando eventos...")
+    
     if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
         return jsonify({'error': 'Não autenticado'}), 401
     
     try:
         cursor = mysql.connection.cursor()
+        print("DEBUG: Conexão com banco estabelecida")
+        
         cursor.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO")
         eventos = cursor.fetchall()
         cursor.close()
+        
+        print(f"DEBUG: Encontrados {len(eventos)} eventos")
         
         eventos_list = []
         for evento in eventos:
@@ -3766,14 +3790,20 @@ def get_eventos1():
                 'DESCRICAO': evento[1]
             })
         
+        print(f"DEBUG: Retornando eventos: {eventos_list}")
         return jsonify(eventos_list)
+        
     except Exception as e:
+        print(f"DEBUG: Erro ao buscar eventos: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # Rota para buscar modalidades por evento
 @app.route('/api/modalidades1/<int:evento_id>')
 def get_modalidades1(evento_id):
+    print(f"DEBUG: Buscando modalidades para evento {evento_id}")
+    
     if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
         return jsonify({'error': 'Não autenticado'}), 401
     
     try:
@@ -3781,6 +3811,8 @@ def get_modalidades1(evento_id):
         cursor.execute("SELECT IDITEM, DESCRICAO FROM EVENTO_MODALIDADE WHERE IDEVENTO = %s", (evento_id,))
         modalidades = cursor.fetchall()
         cursor.close()
+        
+        print(f"DEBUG: Encontradas {len(modalidades)} modalidades")
         
         modalidades_list = []
         for modalidade in modalidades:
@@ -3790,21 +3822,25 @@ def get_modalidades1(evento_id):
             })
         
         return jsonify(modalidades_list)
+        
     except Exception as e:
+        print(f"DEBUG: Erro ao buscar modalidades: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # Rota para buscar inscrições por evento e modalidade
 @app.route('/api/inscricoes/<int:evento_id>')
 @app.route('/api/inscricoes/<int:evento_id>/<int:modalidade_id>')
 def get_inscricoes(evento_id, modalidade_id=None):
+    print(f"DEBUG: Buscando inscrições para evento {evento_id}, modalidade {modalidade_id}")
+    
     if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
         return jsonify({'error': 'Não autenticado'}), 401
     
     try:
         cursor = mysql.connection.cursor()
         
         if modalidade_id:
-            # Filtrar por modalidade específica
             query = """
             SELECT CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA, 
                    I.CAMISETA,
@@ -3821,7 +3857,6 @@ def get_inscricoes(evento_id, modalidade_id=None):
             """
             cursor.execute(query, (evento_id, modalidade_id))
         else:
-            # Mostrar todas as modalidades do evento
             query = """
             SELECT CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA, 
                    I.CAMISETA,
@@ -3840,6 +3875,8 @@ def get_inscricoes(evento_id, modalidade_id=None):
         inscricoes = cursor.fetchall()
         cursor.close()
         
+        print(f"DEBUG: Encontradas {len(inscricoes)} inscrições")
+        
         inscricoes_list = []
         for inscricao in inscricoes:
             inscricoes_list.append({
@@ -3851,13 +3888,18 @@ def get_inscricoes(evento_id, modalidade_id=None):
             })
         
         return jsonify(inscricoes_list)
+        
     except Exception as e:
+        print(f"DEBUG: Erro ao buscar inscrições: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # Rota para buscar detalhes da inscrição
 @app.route('/api/inscricao/<int:inscricao_id>')
 def get_inscricao_detalhes(inscricao_id):
+    print(f"DEBUG: Buscando detalhes da inscrição {inscricao_id}")
+    
     if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
         return jsonify({'error': 'Não autenticado'}), 401
     
     try:
@@ -3879,7 +3921,7 @@ def get_inscricao_detalhes(inscricao_id):
         cursor.close()
         
         if inscricao:
-            return jsonify({
+            resultado = {
                 'IDINSCRICAO': inscricao[0],
                 'CPF': inscricao[1],
                 'APOIO': inscricao[2],
@@ -3898,17 +3940,28 @@ def get_inscricao_detalhes(inscricao_id):
                 'NRCELULAR': inscricao[15],
                 'SEXO': inscricao[16],
                 'MODALIDADE': inscricao[17]
-            })
+            }
+            print(f"DEBUG: Detalhes encontrados: {resultado}")
+            return jsonify(resultado)
         else:
+            print("DEBUG: Inscrição não encontrada")
             return jsonify({'error': 'Inscrição não encontrada'}), 404
+            
     except Exception as e:
+        print(f"DEBUG: Erro ao buscar detalhes: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # Rota para logout
 @app.route('/logout_coordenador', methods=['POST'])
 def logout_coordenador():
+    print("DEBUG: Fazendo logout")
     session.pop('autenticado', None)
     return jsonify({'success': True})
+
+# Rota de teste para verificar se o servidor está funcionando
+@app.route('/api/test')
+def test_api():
+    return jsonify({'status': 'API funcionando', 'timestamp': str(datetime.now())})
 
 #########
 if __name__ == "__main__":
