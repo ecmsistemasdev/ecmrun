@@ -24,6 +24,8 @@
             color: #007bff;
             font-size: 1.2em;
             cursor: pointer;
+            padding: 5px;
+            min-width: 35px;
         }
         .btn-details:hover {
             color: #0056b3;
@@ -46,10 +48,94 @@
         #mainContent {
             display: none;
         }
+        .filter-container {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        .filter-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        .form-check-inline {
+            margin-right: 15px;
+        }
+        .total-registros {
+            font-weight: 600;
+            color: #495057;
+        }
+        .sexo-badge {
+            font-size: 0.75em;
+            padding: 0.25rem 0.5rem;
+            margin-left: 5px;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 10px;
+            }
+            .card-body {
+                padding: 15px;
+            }
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+            .btn-details {
+                font-size: 1.1em;
+                padding: 8px;
+                min-width: 40px;
+            }
+            .filter-container {
+                padding: 10px;
+            }
+            .form-check-inline {
+                margin-right: 10px;
+                margin-bottom: 5px;
+            }
+            .modal-dialog {
+                margin: 10px;
+            }
+            .modal-body {
+                padding: 15px;
+            }
+            /* Ajuste para tabela em mobile */
+            .table td {
+                padding: 0.5rem 0.25rem;
+            }
+            .table th {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .card-header h4 {
+                font-size: 1.1rem;
+            }
+            .card-header h5 {
+                font-size: 1rem;
+            }
+            .table {
+                font-size: 0.8rem;
+            }
+            .btn-details {
+                font-size: 1em;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container main-container">
+    <div class="container-fluid main-container">
         <!-- Seção de Autenticação -->
         <div id="authSection">
             <div class="card">
@@ -84,13 +170,13 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-3">
                                     <label for="eventoSelect" class="form-label">Selecione o Evento:</label>
                                     <select id="eventoSelect" class="form-select">
                                         <option value="">Selecione um evento...</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-3">
                                     <label for="modalidadeSelect" class="form-label">Modalidade:</label>
                                     <select id="modalidadeSelect" class="form-select" disabled>
                                         <option value="">Todas as modalidades</option>
@@ -105,18 +191,67 @@
             <!-- Tabela de Inscrições -->
             <div id="inscricoesSection" style="display: none;">
                 <div class="card">
-                    <div class="card-header bg-info text-white">
-                        <h5><i class="fas fa-list me-2"></i>Lista de Atletas Inscritos</h5>
+                    <div class="card-header bg-info text-white d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                        <h5 class="mb-2 mb-md-0"><i class="fas fa-list me-2"></i>Lista de Atletas Inscritos</h5>
+                        <span class="total-registros badge bg-light text-dark" id="totalRegistros">0 atletas</span>
                     </div>
                     <div class="card-body">
+                        <!-- Filtros -->
+                        <div class="filter-container">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="filter-group">
+                                        <div class="filter-title">Sexo:</div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="sexoTodos" value="todos" checked>
+                                            <label class="form-check-label" for="sexoTodos">Todos</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="sexoM" value="M">
+                                            <label class="form-check-label" for="sexoM">Masculino</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="sexoF" value="F">
+                                            <label class="form-check-label" for="sexoF">Feminino</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="filter-group">
+                                        <div class="filter-title">Camiseta:</div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="camisetaTodos" value="todos" checked>
+                                            <label class="form-check-label" for="camisetaTodos">Todos</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="camisetaPP" value="PP">
+                                            <label class="form-check-label" for="camisetaPP">PP</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="camisetaP" value="P">
+                                            <label class="form-check-label" for="camisetaP">P</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="camisetaM" value="M">
+                                            <label class="form-check-label" for="camisetaM">M</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="camisetaG" value="G">
+                                            <label class="form-check-label" for="camisetaG">G</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Atleta</th>
-                                        <th>Camiseta</th>
-                                        <th>Modalidade</th>
-                                        <th style="width: 80px;">Detalhes</th>
+                                        <th class="d-none d-md-table-cell">Camiseta</th>
+                                        <th class="d-none d-lg-table-cell">Modalidade</th>
+                                        <th style="width: 60px;" class="text-center">Detalhes</th>
                                     </tr>
                                 </thead>
                                 <tbody id="inscricoesTableBody">
@@ -164,6 +299,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         let loadingModal;
+        let allInscricoes = []; // Array para armazenar todas as inscrições
+        let filteredInscricoes = []; // Array para inscrições filtradas
 
         document.addEventListener('DOMContentLoaded', function() {
             loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
@@ -173,7 +310,97 @@
             document.getElementById('eventoSelect').addEventListener('change', handleEventoChange);
             document.getElementById('modalidadeSelect').addEventListener('change', handleModalidadeChange);
             document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            // Event listeners para filtros
+            setupFilters();
         });
+
+        function setupFilters() {
+            // Filtros de sexo
+            const sexoFilters = ['sexoTodos', 'sexoM', 'sexoF'];
+            sexoFilters.forEach(id => {
+                document.getElementById(id).addEventListener('change', handleSexoFilter);
+            });
+            
+            // Filtros de camiseta
+            const camisetaFilters = ['camisetaTodos', 'camisetaPP', 'camisetaP', 'camisetaM', 'camisetaG'];
+            camisetaFilters.forEach(id => {
+                document.getElementById(id).addEventListener('change', handleCamisetaFilter);
+            });
+        }
+
+        function handleSexoFilter(e) {
+            if (e.target.value === 'todos') {
+                // Se "Todos" foi marcado, desmarcar os outros
+                if (e.target.checked) {
+                    document.getElementById('sexoM').checked = false;
+                    document.getElementById('sexoF').checked = false;
+                }
+            } else {
+                // Se um específico foi marcado, desmarcar "Todos"
+                if (e.target.checked) {
+                    document.getElementById('sexoTodos').checked = false;
+                }
+            }
+            applyFilters();
+        }
+
+        function handleCamisetaFilter(e) {
+            if (e.target.value === 'todos') {
+                // Se "Todos" foi marcado, desmarcar os outros
+                if (e.target.checked) {
+                    ['camisetaPP', 'camisetaP', 'camisetaM', 'camisetaG'].forEach(id => {
+                        document.getElementById(id).checked = false;
+                    });
+                }
+            } else {
+                // Se um específico foi marcado, desmarcar "Todos"
+                if (e.target.checked) {
+                    document.getElementById('camisetaTodos').checked = false;
+                }
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            // Obter filtros de sexo selecionados
+            const sexoSelecionados = [];
+            if (document.getElementById('sexoTodos').checked) {
+                sexoSelecionados.push('todos');
+            } else {
+                if (document.getElementById('sexoM').checked) sexoSelecionados.push('M');
+                if (document.getElementById('sexoF').checked) sexoSelecionados.push('F');
+            }
+
+            // Obter filtros de camiseta selecionados
+            const camisetaSelecionadas = [];
+            if (document.getElementById('camisetaTodos').checked) {
+                camisetaSelecionadas.push('todos');
+            } else {
+                ['PP', 'P', 'M', 'G'].forEach(size => {
+                    if (document.getElementById(`camiseta${size}`).checked) {
+                        camisetaSelecionadas.push(size);
+                    }
+                });
+            }
+
+            // Aplicar filtros
+            filteredInscricoes = allInscricoes.filter(inscricao => {
+                // Filtro de sexo
+                const sexoMatch = sexoSelecionados.includes('todos') || 
+                                 sexoSelecionados.includes(inscricao.SEXO) ||
+                                 sexoSelecionados.length === 0;
+
+                // Filtro de camiseta
+                const camisetaMatch = camisetaSelecionadas.includes('todos') || 
+                                     camisetaSelecionadas.includes(inscricao.CAMISETA) ||
+                                     camisetaSelecionadas.length === 0;
+
+                return sexoMatch && camisetaMatch;
+            });
+
+            displayInscricoes(filteredInscricoes);
+        }
 
         async function handleAuth(e) {
             e.preventDefault();
@@ -246,6 +473,8 @@
                 const response = await fetch(`/api/inscricoes/${eventoId}`);
                 const inscricoes = await response.json();
                 
+                allInscricoes = inscricoes;
+                filteredInscricoes = inscricoes;
                 displayInscricoes(inscricoes);
                 document.getElementById('inscricoesSection').style.display = 'block';
             } catch (error) {
@@ -291,7 +520,8 @@
                 const response = await fetch(url);
                 const inscricoes = await response.json();
                 
-                displayInscricoes(inscricoes);
+                allInscricoes = inscricoes;
+                applyFilters(); // Aplicar filtros existentes
             } catch (error) {
                 showError('Erro ao filtrar inscrições');
             } finally {
@@ -301,14 +531,28 @@
 
         function displayInscricoes(inscricoes) {
             const tbody = document.getElementById('inscricoesTableBody');
+            const totalElement = document.getElementById('totalRegistros');
+            
             tbody.innerHTML = '';
+            totalElement.textContent = `${inscricoes.length} atleta${inscricoes.length !== 1 ? 's' : ''}`;
             
             inscricoes.forEach(inscricao => {
+                const sexoBadge = inscricao.SEXO === 'M' ? 
+                    '<span class="badge bg-primary sexo-badge">M</span>' : 
+                    inscricao.SEXO === 'F' ? 
+                    '<span class="badge bg-danger sexo-badge">F</span>' : '';
+                
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${inscricao.ATLETA}</td>
-                    <td>${inscricao.CAMISETA || '-'}</td>
-                    <td>${inscricao.DESCRICAO}</td>
+                    <td>
+                        ${inscricao.ATLETA}${sexoBadge}
+                        <div class="d-md-none small text-muted">
+                            ${inscricao.CAMISETA ? `Camiseta: ${inscricao.CAMISETA}` : ''}
+                            <br class="d-lg-none">${inscricao.DESCRICAO}
+                        </div>
+                    </td>
+                    <td class="d-none d-md-table-cell">${inscricao.CAMISETA || '-'}</td>
+                    <td class="d-none d-lg-table-cell">${inscricao.DESCRICAO}</td>
                     <td class="text-center">
                         <button class="btn-details" onclick="showDetalhes(${inscricao.IDINSCRICAO})" title="Ver detalhes">
                             <i class="fas fa-eye"></i>
@@ -442,6 +686,18 @@
                 document.getElementById('modalidadeSelect').disabled = true;
                 document.getElementById('inscricoesSection').style.display = 'none';
                 document.getElementById('errorMessage').style.display = 'none';
+                
+                // Reset filtros
+                document.getElementById('sexoTodos').checked = true;
+                document.getElementById('sexoM').checked = false;
+                document.getElementById('sexoF').checked = false;
+                document.getElementById('camisetaTodos').checked = true;
+                ['PP', 'P', 'M', 'G'].forEach(size => {
+                    document.getElementById(`camiseta${size}`).checked = false;
+                });
+                
+                allInscricoes = [];
+                filteredInscricoes = [];
             } catch (error) {
                 console.error('Erro no logout:', error);
             }
