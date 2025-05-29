@@ -219,12 +219,8 @@ def format_time_difference(seconds):
 
 @app.route('/desafio200k/regulamento')
 def regulamento200k():
-    try:
-        with open('regulamento200k.html', 'r', encoding='utf-8') as file:
-            return file.read()
-    except FileNotFoundError:
-        return "Arquivo não encontrado", 404
-
+    return render_template('regulamento200k.html')
+    
 # Rotas do backyard
 @app.route('/backyard/lancamento')
 def backyard_lancamento():
