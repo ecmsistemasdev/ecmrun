@@ -3,136 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/css/listainscricao200k.css"/>
     <title>Lista de Inscrições - Coordenador</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .main-container {
-            min-height: 100vh;
-            padding: 20px 0;
-        }
-        .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .btn-details {
-            background: none;
-            border: none;
-            color: #007bff;
-            font-size: 1.2em;
-            cursor: pointer;
-            padding: 5px;
-            min-width: 35px;
-        }
-        .btn-details:hover {
-            color: #0056b3;
-        }
-        .table-responsive {
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .form-label {
-            font-weight: 600;
-        }
-        .currency {
-            text-align: right;
-        }
-        #authSection {
-            max-width: 400px;
-            margin: 0 auto;
-            margin-top: 100px;
-        }
-        #mainContent {
-            display: none;
-        }
-        .filter-container {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .filter-group {
-            margin-bottom: 15px;
-        }
-        .filter-group:last-child {
-            margin-bottom: 0;
-        }
-        .filter-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #495057;
-        }
-        .form-check-inline {
-            margin-right: 15px;
-        }
-        .total-registros {
-            font-weight: 600;
-            color: #495057;
-        }
-        .sexo-badge {
-            font-size: 0.75em;
-            padding: 0.25rem 0.5rem;
-            margin-left: 5px;
-        }
-        
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 10px;
-            }
-            .card-body {
-                padding: 15px;
-            }
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-            .btn-details {
-                font-size: 1.1em;
-                padding: 8px;
-                min-width: 40px;
-            }
-            .filter-container {
-                padding: 10px;
-            }
-            .form-check-inline {
-                margin-right: 10px;
-                margin-bottom: 5px;
-            }
-            .modal-dialog {
-                margin: 10px;
-            }
-            .modal-body {
-                padding: 15px;
-            }
-            /* Ajuste para tabela em mobile */
-            .table td {
-                padding: 0.5rem 0.25rem;
-            }
-            .table th {
-                padding: 0.5rem 0.25rem;
-                font-size: 0.85rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .card-header h4 {
-                font-size: 1.1rem;
-            }
-            .card-header h5 {
-                font-size: 1rem;
-            }
-            .table {
-                font-size: 0.8rem;
-            }
-            .btn-details {
-                font-size: 1em;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="container-fluid main-container">
@@ -261,6 +135,150 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Botão Equipes -->
+            <div class="row mt-3" id="equipesButtonSection" style="display: none;">
+                <div class="col-12">
+                    <button id="equipesBtn" class="btn btn-success">
+                        <i class="fas fa-users me-2"></i>Equipes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Principal de Equipes -->
+            <div class="modal fade" id="equipesModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title"><i class="fas fa-users me-2"></i>Equipes</h5>
+                            <button type="button" class="btn-close btn-close-white" id="closeEquipesModal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Lista Equipes</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Nome da Equipe</th>
+                                                    <th>Modalidade</th>
+                                                    <th>Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="equipesTableBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button id="montarEquipeBtn" class="btn btn-primary">
+                                            <i class="fas fa-plus me-2"></i>Montar Equipe
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Montar Equipe -->
+            <div class="modal fade" id="montarEquipeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Montar Equipe</h5>
+                            <button type="button" class="btn-close btn-close-white" id="closeMontarEquipeModal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="modalidadeEquipeSelect" class="form-label">Modalidade:</label>
+                                <select id="modalidadeEquipeSelect" class="form-select">
+                                    <option value="">Selecione uma modalidade...</option>
+                                </select>
+                            </div>
+                            
+                            <div id="atletasSection" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Atletas Disponíveis</h6>
+                                        <small class="text-muted">Obrigatório <span id="maxAtletas">0</span> atletas por equipe</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="50">Selecionar</th>
+                                                        <th>Atleta</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="atletasDisponiveisBody">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <label for="nomeEquipeInput" class="form-label">Nome da Equipe:</label>
+                                    <input type="text" class="form-control" id="nomeEquipeInput" maxlength="45">
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <button id="criarEquipeBtn" class="btn btn-success">
+                                        <i class="fas fa-save me-2"></i>Criar Equipe
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Editar Equipe -->
+            <div class="modal fade" id="editarEquipeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Equipe</h5>
+                            <button type="button" class="btn-close" id="closeEditarEquipeModal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 id="tituloEquipeEdicao">Equipe: </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Atleta</th>
+                                                    <th>Ordem</th>
+                                                    <th>KM Início</th>
+                                                    <th>KM Fim</th>
+                                                    <th>Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="atletasEquipeBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-3" id="salvarOrdemDiv" style="display: none;">
+                                        <button id="salvarOrdemBtn" class="btn btn-success">
+                                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -302,6 +320,12 @@
         let allInscricoes = []; // Array para armazenar todas as inscrições
         let filteredInscricoes = []; // Array para inscrições filtradas
 
+        let equipesModal, montarEquipeModal, editarEquipeModal;
+        let maxAtletasPorEquipe = 0;
+        let atletasSelecionados = [];
+        let equipeAtual = null;
+        let atletasEquipeAtual = [];
+
         document.addEventListener('DOMContentLoaded', function() {
             loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
             
@@ -313,6 +337,19 @@
             
             // Event listeners para filtros
             setupFilters();
+
+            // Event listeners para equipes
+            document.getElementById('equipesBtn').addEventListener('click', openEquipesModal);
+            document.getElementById('closeEquipesModal').addEventListener('click', closeEquipesModal);
+            document.getElementById('montarEquipeBtn').addEventListener('click', openMontarEquipeModal);
+            document.getElementById('closeMontarEquipeModal').addEventListener('click', closeMontarEquipeModal);
+            document.getElementById('modalidadeEquipeSelect').addEventListener('change', handleModalidadeEquipeChange);
+            document.getElementById('criarEquipeBtn').addEventListener('click', criarEquipe);
+            document.getElementById('closeEditarEquipeModal').addEventListener('click', closeEditarEquipeModal);
+            document.getElementById('salvarOrdemBtn').addEventListener('click', salvarOrdemEquipe);
+            
+            initEquipesModals();
+
         });
 
         function setupFilters() {
@@ -477,6 +514,7 @@
                 filteredInscricoes = inscricoes;
                 displayInscricoes(inscricoes);
                 document.getElementById('inscricoesSection').style.display = 'block';
+                document.getElementById('equipesButtonSection').style.display = 'block';
             } catch (error) {
                 showError('Erro ao carregar dados do evento');
             } finally {
@@ -712,6 +750,385 @@
                 errorDiv.style.display = 'none';
             }, 5000);
         }
+
+        // ===== FUNÇÕES PARA SISTEMA DE EQUIPES =====
+        // Inicializar modais
+        function initEquipesModals() {
+            equipesModal = new bootstrap.Modal(document.getElementById('equipesModal'));
+            montarEquipeModal = new bootstrap.Modal(document.getElementById('montarEquipeModal'));
+            editarEquipeModal = new bootstrap.Modal(document.getElementById('editarEquipeModal'));
+        }
+
+        // Abrir modal de equipes
+        async function openEquipesModal() {
+            const eventoId = document.getElementById('eventoSelect').value;
+            if (!eventoId) {
+                showError('Selecione um evento primeiro');
+                return;
+            }
+            
+            await loadEquipes(eventoId);
+            equipesModal.show();
+        }
+
+        // Fechar modal de equipes
+        function closeEquipesModal() {
+            equipesModal.hide();
+        }
+
+        // Carregar lista de equipes
+        async function loadEquipes(eventoId) {
+            try {
+                loadingModal.show();
+                const response = await fetch(`/api/equipes/${eventoId}`);
+                const equipes = await response.json();
+                
+                const tbody = document.getElementById('equipesTableBody');
+                tbody.innerHTML = '';
+                
+                equipes.forEach(equipe => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${equipe.IDEA}</td>
+                        <td>${equipe.NOME_EQUIPE}</td>
+                        <td>${equipe.DESCRICAO}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="abrirEditarEquipe(${equipe.IDEA})">
+                                <i class="fas fa-edit"></i> Abrir/Editar
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                showError('Erro ao carregar equipes');
+            } finally {
+                loadingModal.hide();
+            }
+        }
+
+        // Abrir modal para montar equipe
+        async function openMontarEquipeModal() {
+            const eventoId = document.getElementById('eventoSelect').value;
+            if (!eventoId) {
+                showError('Selecione um evento primeiro');
+                return;
+            }
+            
+            // Carregar modalidades no select
+            try {
+                const response = await fetch(`/api/modalidades1/${eventoId}`);
+                const modalidades = await response.json();
+                
+                const select = document.getElementById('modalidadeEquipeSelect');
+                select.innerHTML = '<option value="">Selecione uma modalidade...</option>';
+                
+                modalidades.forEach(modalidade => {
+                    const option = document.createElement('option');
+                    option.value = modalidade.IDITEM;
+                    option.textContent = modalidade.DESCRICAO;
+                    select.appendChild(option);
+                });
+                
+                // Reset form
+                document.getElementById('atletasSection').style.display = 'none';
+                document.getElementById('nomeEquipeInput').value = '';
+                atletasSelecionados = [];
+                
+                montarEquipeModal.show();
+            } catch (error) {
+                showError('Erro ao carregar modalidades');
+            }
+        }
+
+        // Fechar modal montar equipe
+        function closeMontarEquipeModal() {
+            montarEquipeModal.hide();
+        }
+
+        // Handle mudança de modalidade no form de equipe
+        async function handleModalidadeEquipeChange(e) {
+            const modalidadeId = e.target.value;
+            const eventoId = document.getElementById('eventoSelect').value;
+            
+            if (!modalidadeId) {
+                document.getElementById('atletasSection').style.display = 'none';
+                return;
+            }
+            
+            try {
+                loadingModal.show();
+                
+                // Buscar dados da modalidade (número de atletas)
+                const modalidadeResponse = await fetch(`/api/modalidade1/${modalidadeId}`);
+                const modalidadeData = await modalidadeResponse.json();
+                maxAtletasPorEquipe = modalidadeData.NU_ATLETAS;
+                
+                document.getElementById('maxAtletas').textContent = maxAtletasPorEquipe;
+                
+                // Buscar atletas disponíveis
+                const atletasResponse = await fetch(`/api/atletas-disponiveis/${eventoId}/${modalidadeId}`);
+                const atletas = await atletasResponse.json(); // CORREÇÃO AQUI
+                
+                displayAtletasDisponiveis(atletas);
+                document.getElementById('atletasSection').style.display = 'block';
+                
+            } catch (error) {
+                showError('Erro ao carregar atletas disponíveis');
+            } finally {
+                loadingModal.hide();
+            }
+        }        
+    
+        
+        // Exibir atletas disponíveis
+        function displayAtletasDisponiveis(atletas) {
+            const tbody = document.getElementById('atletasDisponiveisBody');
+            tbody.innerHTML = '';
+            
+            atletas.forEach(atleta => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="form-check-input" 
+                            id="atleta_${atleta.IDATLETA}" 
+                            value="${atleta.IDATLETA}"
+                            onchange="handleAtletaSelection(this, '${atleta.ATLETA}')">
+                    </td>
+                    <td>
+                        <label for="atleta_${atleta.IDATLETA}">${atleta.ATLETA}</label>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Handle seleção de atletas
+        function handleAtletaSelection(checkbox, nomeAtleta) {
+            if (checkbox.checked) {
+                if (atletasSelecionados.length >= maxAtletasPorEquipe) {
+                    checkbox.checked = false;
+                    showError(`Obrigatório ${maxAtletasPorEquipe} atletas por equipe`);
+                    return;
+                }
+                atletasSelecionados.push({
+                    IDATLETA: parseInt(checkbox.value),
+                    NOME: nomeAtleta
+                });
+            } else {
+                atletasSelecionados = atletasSelecionados.filter(a => a.IDATLETA !== parseInt(checkbox.value));
+            }
+        }
+
+        // Criar equipe
+        async function criarEquipe() {
+            console.log('DEBUG: Função criarEquipe chamada');
+            
+            const nomeEquipe = document.getElementById('nomeEquipeInput').value.trim();
+            const eventoId = document.getElementById('eventoSelect').value;
+            const modalidadeId = document.getElementById('modalidadeEquipeSelect').value;
+            
+            console.log('DEBUG: Valores capturados:', {
+                nomeEquipe,
+                eventoId,
+                modalidadeId,
+                atletasSelecionados,
+                maxAtletasPorEquipe
+            });
+            
+            // Validações
+            if (!nomeEquipe) {
+                console.log('DEBUG: Erro - Nome da equipe vazio');
+                showError('Nome da equipe é obrigatório');
+                return;
+            }
+            
+            if (atletasSelecionados.length !== maxAtletasPorEquipe) {
+                console.log('DEBUG: Erro - Número de atletas incorreto');
+                showError(`Selecione exatamente ${maxAtletasPorEquipe} atletas para formar a equipe`);
+                return;
+            }
+            
+            console.log('DEBUG: Validações passaram, enviando requisição...');
+            
+            try {
+                loadingModal.show();
+                
+                const response = await fetch('/api/criar-equipe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        eventoId: eventoId,
+                        modalidadeId: modalidadeId,
+                        nomeEquipe: nomeEquipe,
+                        atletas: atletasSelecionados
+                    })
+                });
+                
+                console.log('DEBUG: Response recebida:', response.status);
+                
+                const result = await response.json();
+                console.log('DEBUG: Result:', result);
+                
+                if (result.success) {
+                    montarEquipeModal.hide();
+                    await loadEquipes(eventoId);
+                    showSuccess('Equipe criada com sucesso!');
+                } else {
+                    showError(result.message || 'Erro ao criar equipe');
+                }
+                
+            } catch (error) {
+                console.log('DEBUG: Erro na requisição:', error);
+                showError('Erro ao criar equipe');
+            } finally {
+                loadingModal.hide();
+            }
+        }
+
+        // Abrir edição de equipe
+        async function abrirEditarEquipe(equipeId) {
+            try {
+                loadingModal.show();
+                
+                const response = await fetch(`/api/equipe-atletas/${equipeId}`);
+                const data = await response.json();
+                
+                equipeAtual = data.equipe;
+                atletasEquipeAtual = [...data.atletas];
+                
+                document.getElementById('tituloEquipeEdicao').textContent = `Equipe: ${equipeAtual.NOME_EQUIPE}`;
+                
+                displayAtletasEquipe(atletasEquipeAtual);
+                editarEquipeModal.show();
+                
+            } catch (error) {
+                showError('Erro ao carregar dados da equipe');
+            } finally {
+                loadingModal.hide();
+            }
+        }
+
+        // Exibir atletas da equipe
+        function displayAtletasEquipe(atletas) {
+            const tbody = document.getElementById('atletasEquipeBody');
+            tbody.innerHTML = '';
+            
+            atletas.forEach((atleta, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${atleta.ATLETA}</td>
+                    <td>${atleta.ORDEM}</td>
+                    <td>${atleta.KM_INI}</td>
+                    <td>${atleta.KM_FIM}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" 
+                                onclick="moverAtleta(${index}, 'up')"
+                                ${index === 0 ? 'disabled' : ''}>
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" 
+                                onclick="moverAtleta(${index}, 'down')"
+                                ${index === atletas.length - 1 ? 'disabled' : ''}>
+                            <i class="fas fa-arrow-down"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Mover atleta na ordem
+        function moverAtleta(index, direction) {
+            if (direction === 'up' && index > 0) {
+                // Trocar apenas os nomes dos atletas, mantendo as outras informações fixas
+                const nomeTemp = atletasEquipeAtual[index].ATLETA;
+                const idTemp = atletasEquipeAtual[index].IDATLETA;
+                
+                atletasEquipeAtual[index].ATLETA = atletasEquipeAtual[index - 1].ATLETA;
+                atletasEquipeAtual[index].IDATLETA = atletasEquipeAtual[index - 1].IDATLETA;
+                
+                atletasEquipeAtual[index - 1].ATLETA = nomeTemp;
+                atletasEquipeAtual[index - 1].IDATLETA = idTemp;
+                
+            } else if (direction === 'down' && index < atletasEquipeAtual.length - 1) {
+                // Trocar apenas os nomes dos atletas, mantendo as outras informações fixas
+                const nomeTemp = atletasEquipeAtual[index].ATLETA;
+                const idTemp = atletasEquipeAtual[index].IDATLETA;
+                
+                atletasEquipeAtual[index].ATLETA = atletasEquipeAtual[index + 1].ATLETA;
+                atletasEquipeAtual[index].IDATLETA = atletasEquipeAtual[index + 1].IDATLETA;
+                
+                atletasEquipeAtual[index + 1].ATLETA = nomeTemp;
+                atletasEquipeAtual[index + 1].IDATLETA = idTemp;
+            }
+            
+            displayAtletasEquipe(atletasEquipeAtual);
+            document.getElementById('salvarOrdemDiv').style.display = 'block';
+        }
+
+ 
+        // Salvar nova ordem dos atletas
+        async function salvarOrdemEquipe() {
+            try {
+                loadingModal.show();
+                
+                const response = await fetch('/api/salvar-ordem-equipe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        equipeId: equipeAtual.IDEA,
+                        atletas: atletasEquipeAtual.map((atleta, index) => ({
+                            ordem: index + 1,
+                            idatleta: atleta.IDATLETA
+                        }))
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('salvarOrdemDiv').style.display = 'none';
+                    showSuccess('Ordem dos atletas salva com sucesso!');
+                } else {
+                    showError(result.message || 'Erro ao salvar ordem');
+                }
+                
+            } catch (error) {
+                showError('Erro ao salvar ordem dos atletas');
+            } finally {
+                loadingModal.hide();
+            }
+        }
+
+        // Fechar modal editar equipe
+        function closeEditarEquipeModal() {
+            editarEquipeModal.hide();
+            document.getElementById('salvarOrdemDiv').style.display = 'none';
+        }
+
+        // Função para mostrar sucesso
+        function showSuccess(message) {
+            // Criar um alert de sucesso temporário
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
     </script>
 </body>
 </html>
