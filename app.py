@@ -217,7 +217,7 @@ def format_time_difference(seconds):
     seconds = int(seconds % 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-@app.route('/desafio200k/regulamento')
+@app.route('/regulamento200k')
 def regulamento200k():
     return render_template('regulamento200k.html')
 
