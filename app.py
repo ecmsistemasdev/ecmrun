@@ -3827,6 +3827,35 @@ def get_modalidades1(evento_id):
         print(f"DEBUG: Erro ao buscar modalidades: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/modalidades2/<int:evento_id>')
+def get_modalidades2(evento_id):
+    print(f"DEBUG: Buscando modalidades para evento {evento_id}")
+    
+    if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT IDITEM, DESCRICAO FROM EVENTO_MODALIDADE WHERE IDITEM <> 1 AND IDEVENTO = %s", (evento_id,))
+        modalidades = cursor.fetchall()
+        cursor.close()
+        
+        print(f"DEBUG: Encontradas {len(modalidades)} modalidades")
+        
+        modalidades_list = []
+        for modalidade in modalidades:
+            modalidades_list.append({
+                'IDITEM': modalidade[0],
+                'DESCRICAO': modalidade[1]
+            })
+        
+        return jsonify(modalidades_list)
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao buscar modalidades: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 # Rota para buscar inscrições por evento e modalidade
 @app.route('/api/inscricoes/<int:evento_id>')
 @app.route('/api/inscricoes/<int:evento_id>/<int:modalidade_id>')
