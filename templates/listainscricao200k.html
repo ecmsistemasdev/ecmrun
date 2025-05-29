@@ -817,7 +817,7 @@
             
             // Carregar modalidades no select
             try {
-                const response = await fetch(`/api/modalidades1/${eventoId}`);
+                const response = await fetch(`/api/modalidades2/${eventoId}`);
                 const modalidades = await response.json();
                 
                 const select = document.getElementById('modalidadeEquipeSelect');
