@@ -3958,12 +3958,304 @@ def logout_coordenador():
     session.pop('autenticado', None)
     return jsonify({'success': True})
 
-# Rota de teste para verificar se o servidor está funcionando
-@app.route('/api/test')
-def test_api():
-    return jsonify({'status': 'API funcionando', 'timestamp': str(datetime.now())})
-
 #########
+
+# ===== ROTAS PARA SISTEMA DE EQUIPES =====
+
+# Rota para buscar equipes por evento
+@app.route('/api/equipes/<int:evento_id>')
+def get_equipes(evento_id):
+    print(f"DEBUG: Buscando equipes para evento {evento_id}")
+    
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+        SELECT E.IDEA, E.NOME_EQUIPE, EM.DESCRICAO
+        FROM EQUIPE E, EVENTO_MODALIDADE EM
+        WHERE EM.IDITEM = E.IDITEM
+        AND E.IDEVENTO = %s
+        ORDER BY E.NOME_EQUIPE
+        """
+        cursor.execute(query, (evento_id,))
+        equipes = cursor.fetchall()
+        cursor.close()
+        
+        print(f"DEBUG: Encontradas {len(equipes)} equipes")
+        
+        equipes_list = []
+        for equipe in equipes:
+            equipes_list.append({
+                'IDEA': equipe[0],
+                'NOME_EQUIPE': equipe[1],
+                'DESCRICAO': equipe[2]
+            })
+        
+        return jsonify(equipes_list)
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao buscar equipes: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# Rota para buscar dados de uma modalidade específica
+@app.route('/api/modalidade1/<int:modalidade_id>')
+def get_modalidade1(modalidade_id):
+    print(f"DEBUG: Buscando modalidade {modalidade_id}")
+    
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+        SELECT IDITEM, IDEVENTO, DESCRICAO, DISTANCIA, KM, 
+               VLINSCRICAO, VLMEIA, VLTAXA, NU_ATLETAS
+        FROM EVENTO_MODALIDADE 
+        WHERE IDITEM = %s
+        """
+        cursor.execute(query, (modalidade_id,))
+        modalidade = cursor.fetchone()
+        cursor.close()
+        
+        if modalidade:
+            modalidade_data = {
+                'IDITEM': modalidade[0],
+                'IDEVENTO': modalidade[1],
+                'DESCRICAO': modalidade[2],
+                'DISTANCIA': modalidade[3],
+                'KM': modalidade[4],
+                'VLINSCRICAO': float(modalidade[5]) if modalidade[5] else 0,
+                'VLMEIA': float(modalidade[6]) if modalidade[6] else 0,
+                'VLTAXA': float(modalidade[7]) if modalidade[7] else 0,
+                'NU_ATLETAS': modalidade[8]
+            }
+            return jsonify(modalidade_data)
+        else:
+            return jsonify({'error': 'Modalidade não encontrada'}), 404
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao buscar modalidade: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# Rota para buscar atletas disponíveis para equipe
+@app.route('/api/atletas-disponiveis/<int:evento_id>/<int:modalidade_id>')
+def get_atletas_disponiveis(evento_id, modalidade_id):
+    print(f"DEBUG: Buscando atletas disponíveis para evento {evento_id}, modalidade {modalidade_id}")
+    
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+        SELECT A.IDATLETA, CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA
+        FROM INSCRICAO I, ATLETA A
+        WHERE NOT EXISTS (
+            SELECT 1 
+            FROM EQUIPE_ATLETAS EA 
+            WHERE EA.IDATLETA = A.IDATLETA 
+            AND EA.IDEVENTO = %s
+        )
+        AND I.IDITEM = %s
+        AND I.IDEVENTO = %s
+        AND A.IDATLETA = I.IDATLETA
+        ORDER BY CONCAT(A.NOME,' ',A.SOBRENOME)
+        """
+        cursor.execute(query, (evento_id, modalidade_id, evento_id))
+        atletas = cursor.fetchall()
+        cursor.close()
+        
+        print(f"DEBUG: Encontrados {len(atletas)} atletas disponíveis")
+        
+        atletas_list = []
+        for atleta in atletas:
+            atletas_list.append({
+                'IDATLETA': atleta[0],
+                'ATLETA': atleta[1]
+            })
+        
+        return jsonify(atletas_list)
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao buscar atletas disponíveis: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# Rota para criar equipe
+@app.route('/api/criar-equipe', methods=['POST'])
+def criar_equipe():
+    print("DEBUG: Criando nova equipe")
+    
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        data = request.json
+        evento_id = data['eventoId']
+        modalidade_id = data['modalidadeId']
+        nome_equipe = data['nomeEquipe']
+        atletas = data['atletas']
+        
+        print(f"DEBUG: Dados recebidos - Evento: {evento_id}, Modalidade: {modalidade_id}, Nome: {nome_equipe}")
+        
+        cursor = mysql.connection.cursor()
+        
+        # Buscar dados da modalidade para cálculos de KM
+        cursor.execute("SELECT KM FROM EVENTO_MODALIDADE WHERE IDITEM = %s", (modalidade_id,))
+        modalidade_data = cursor.fetchone()
+        km_modalidade = modalidade_data[0] if modalidade_data else 0
+        
+        # Inserir equipe
+        cursor.execute("""
+            INSERT INTO EQUIPE (IDEVENTO, IDITEM, NOME_EQUIPE) 
+            VALUES (%s, %s, %s)
+        """, (evento_id, modalidade_id, nome_equipe))
+        
+        equipe_id = cursor.lastrowid
+        print(f"DEBUG: Equipe criada com ID: {equipe_id}")
+        
+        # Inserir atletas da equipe
+        for ordem, atleta in enumerate(atletas, 1):
+            km_ini = (ordem - 1) * km_modalidade
+            km_fim = ordem * km_modalidade
+            
+            cursor.execute("""
+                INSERT INTO EQUIPE_ATLETAS (IDEA, IDEVENTO, IDATLETA, ORDEM, KM_INI, KM_FIM) 
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (equipe_id, evento_id, atleta['IDATLETA'], ordem, km_ini, km_fim))
+            
+            print(f"DEBUG: Atleta {atleta['NOME']} inserido - Ordem: {ordem}, KM: {km_ini}-{km_fim}")
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'success': True, 'message': 'Equipe criada com sucesso'})
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao criar equipe: {str(e)}")
+        mysql.connection.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# Rota para buscar atletas de uma equipe
+@app.route('/api/equipe-atletas/<int:equipe_id>')
+def get_equipe_atletas(equipe_id):
+    print(f"DEBUG: Buscando atletas da equipe {equipe_id}")
+    
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Buscar dados da equipe
+        cursor.execute("""
+            SELECT E.IDEA, E.NOME_EQUIPE, E.IDEVENTO, E.IDITEM, EM.DESCRICAO
+            FROM EQUIPE E, EVENTO_MODALIDADE EM
+            WHERE E.IDEA = %s AND EM.IDITEM = E.IDITEM
+        """, (equipe_id,))
+        equipe_data = cursor.fetchone()
+        
+        if not equipe_data:
+            return jsonify({'error': 'Equipe não encontrada'}), 404
+        
+        # Buscar atletas da equipe
+        cursor.execute("""
+            SELECT EA.IDATLETA, CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA, 
+                   EA.ORDEM, EA.KM_INI, EA.KM_FIM
+            FROM EQUIPE_ATLETAS EA
+            INNER JOIN ATLETA A ON A.IDATLETA = EA.IDATLETA
+            WHERE EA.IDEA = %s
+            ORDER BY EA.ORDEM
+        """, (equipe_id,))
+        atletas_data = cursor.fetchall()
+        
+        cursor.close()
+        
+        # Estruturar dados da equipe
+        equipe = {
+            'IDEA': equipe_data[0],
+            'NOME_EQUIPE': equipe_data[1],
+            'IDEVENTO': equipe_data[2],
+            'IDITEM': equipe_data[3],
+            'DESCRICAO': equipe_data[4]
+        }
+        
+        # Estruturar dados dos atletas
+        atletas = []
+        for atleta in atletas_data:
+            atletas.append({
+                'IDATLETA': atleta[0],
+                'ATLETA': atleta[1],
+                'ORDEM': atleta[2],
+                'KM_INI': atleta[3],
+                'KM_FIM': atleta[4]
+            })
+        
+        return jsonify({
+            'equipe': equipe,
+            'atletas': atletas
+        })
+        
+    except Exception as e:
+        print(f"Erro ao buscar atletas da equipe: {str(e)}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+# Rota para salvar nova ordem dos atletas
+@app.route('/api/salvar-ordem-equipe', methods=['POST'])
+def salvar_ordem_equipe():
+    print("DEBUG: Salvando nova ordem da equipe")
+    
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        data = request.get_json()
+        equipe_id = data.get('equipeId')
+        atletas = data.get('atletas')
+        
+        if not all([equipe_id, atletas]):
+            return jsonify({'error': 'Dados incompletos'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Buscar dados da equipe para pegar o KM da modalidade
+        cursor.execute("""
+            SELECT E.IDITEM, EM.KM
+            FROM EQUIPE E
+            INNER JOIN EVENTO_MODALIDADE EM ON EM.IDITEM = E.IDITEM
+            WHERE E.IDEA = %s
+        """, (equipe_id,))
+        equipe_data = cursor.fetchone()
+        
+        if not equipe_data:
+            return jsonify({'error': 'Equipe não encontrada'}), 404
+        
+        km_por_atleta = equipe_data[1]
+        
+        # Atualizar ordem dos atletas
+        for atleta in atletas:
+            ordem = atleta['ordem']
+            id_atleta = atleta['idatleta']
+            km_ini = (ordem - 1) * km_por_atleta
+            km_fim = ordem * km_por_atleta
+            
+            cursor.execute("""
+                UPDATE EQUIPE_ATLETAS 
+                SET ORDEM = %s, KM_INI = %s, KM_FIM = %s
+                WHERE IDEA = %s AND IDATLETA = %s
+            """, (ordem, km_ini, km_fim, equipe_id, id_atleta))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'success': True, 'message': 'Ordem salva com sucesso'})
+        
+    except Exception as e:
+        print(f"Erro ao salvar ordem: {str(e)}")
+        mysql.connection.rollback()
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
