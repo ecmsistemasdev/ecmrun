@@ -217,9 +217,13 @@ def format_time_difference(seconds):
     seconds = int(seconds % 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-@app.route('/regulamento200k')
+@app.route('/desafio200k/regulamento')
 def regulamento200k():
-    return render_template('regulamento200k.html')
+    file_path = os.path.join(os.getcwd(), 'regulamento200k.html')
+    if os.path.exists(file_path):
+        return send_file(file_path)
+    else:
+        return f"Arquivo não encontrado em: {file_path}", 404
 
 # Rotas do backyard
 @app.route('/backyard/lancamento')
