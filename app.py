@@ -3997,6 +3997,7 @@ def atualizar_inscricao():
     try:
         data = request.json
         inscricao_id = data['inscricaoId']
+        fpagto = data['formapagto']
         valor = float(data['valor'])
         taxa = float(data['taxa'])
         desconto = float(data['desconto'])
@@ -4006,10 +4007,10 @@ def atualizar_inscricao():
         cursor = mysql.connection.cursor()
         query = """
         UPDATE INSCRICAO 
-        SET VALOR = %s, TAXA = %s, DESCONTO = %s, VALOR_PGTO = %s, FLSTATUS = %s
+        SET FORMAPGTO = %s, VALOR = %s, TAXA = %s, DESCONTO = %s, VALOR_PGTO = %s, FLSTATUS = %s
         WHERE IDINSCRICAO = %s
         """
-        cursor.execute(query, (valor, taxa, desconto, valor_pago, status, inscricao_id))
+        cursor.execute(query, (fpagto, valor, taxa, desconto, valor_pago, status, inscricao_id))
         mysql.connection.commit()
         cursor.close()
         
