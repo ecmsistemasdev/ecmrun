@@ -668,10 +668,6 @@
                     <strong>Camiseta:</strong><br>
                     ${inscricao.CAMISETA || '-'}
                 </div>
-                <div class="col-md-3 mb-3">
-                    <strong>Forma Pagamento:</strong><br>
-                    ${inscricao.FORMAPGTO || '-'}
-                </div>
                 <div class="col-md-6 mb-3">
                     <strong>Apoio:</strong><br>
                     ${inscricao.APOIO || '-'}
@@ -719,6 +715,15 @@
                     <input type="text" class="form-control" id="valorPagoEdit" 
                         value="${formatCurrency(inscricao.VALOR_PGTO)}" readonly 
                         style="background-color: #f8f9fa;">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Forma de Pagto:</strong><br>
+                    <select class="form-select" id="fpagtoEdit">
+                        <option value="PIX" ${inscricao.FORMAPGTO === 'PIX' ? 'selected' : ''}>PIX</option>
+                        <option value="CARTAO DE CREDITO" ${inscricao.FORMAPGTO === 'CARTAO DE CREDITO' ? 'selected' : ''}>Cartão de Crédito</option>
+                        <option value="DINHEIRO" ${inscricao.FORMAPGTO === 'DINHEIRO' ? 'selected' : ''}>Dinheiro</option>
+                        <option value="OUTRO" ${inscricao.FORMAPGTO === 'OUTRO' ? 'selected' : ''}>Outro</option>
+                    </select>
                 </div>
                 <div class="col-md-6 mb-3">
                     <strong>Status da Inscrição:</strong><br>
@@ -779,6 +784,7 @@
 
         // Função para salvar alterações
         async function salvarAlteracoes(inscricaoId) {
+            const formapagto = document.getElementById('fpagtoEdit').value;
             const valor = parseFloat(document.getElementById('valorEdit').dataset.valor) || 0;
             const taxa = parseFloat(document.getElementById('taxaEdit').dataset.valor) || 0;
             const desconto = parseFloat(document.getElementById('descontoEdit').dataset.valor) || 0;
@@ -794,6 +800,7 @@
                     },
                     body: JSON.stringify({
                         inscricaoId: inscricaoId,
+                        formapagto: formapagto,
                         valor: valor,
                         taxa: taxa,
                         desconto: desconto,
