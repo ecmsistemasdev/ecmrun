@@ -572,7 +572,10 @@
             const totalElement = document.getElementById('totalRegistros');
             
             tbody.innerHTML = '';
-            totalElement.textContent = `${inscricoes.length} atleta${inscricoes.length !== 1 ? 's' : ''}`;
+            
+            // Contar apenas inscrições não canceladas
+            const inscricoesAtivas = inscricoes.filter(i => i.FLSTATUS !== 'CANCELADO');
+            totalElement.textContent = `${inscricoesAtivas.length} atleta${inscricoesAtivas.length !== 1 ? 's' : ''}`;
             
             inscricoes.forEach(inscricao => {
                 const sexoBadge = inscricao.SEXO === 'M' ? 
@@ -580,17 +583,27 @@
                     inscricao.SEXO === 'F' ? 
                     '<span class="badge bg-danger sexo-badge">F</span>' : '';
                 
+                // Definir classes CSS baseadas no status
+                let rowClass = '';
+                let textStyle = '';
+                
+                if (inscricao.FLSTATUS === 'PENDENTE') {
+                    textStyle = 'color: red;';
+                } else if (inscricao.FLSTATUS === 'CANCELADO') {
+                    textStyle = 'color: red; text-decoration: line-through;';
+                }
+                
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>
-                        ${inscricao.ATLETA}${sexoBadge}
+                        <span style="${textStyle}">${inscricao.ATLETA}</span>${sexoBadge}
                         <div class="d-md-none small text-muted">
-                            ${inscricao.CAMISETA ? `Camiseta: ${inscricao.CAMISETA}` : ''}
-                            <br class="d-lg-none">${inscricao.DESCRICAO}
+                            <span style="${textStyle}">${inscricao.CAMISETA ? `Camiseta: ${inscricao.CAMISETA}` : ''}</span>
+                            <br class="d-lg-none"><span style="${textStyle}">${inscricao.DESCRICAO}</span>
                         </div>
                     </td>
-                    <td class="d-none d-md-table-cell">${inscricao.CAMISETA || '-'}</td>
-                    <td class="d-none d-lg-table-cell">${inscricao.DESCRICAO}</td>
+                    <td class="d-none d-md-table-cell"><span style="${textStyle}">${inscricao.CAMISETA || '-'}</span></td>
+                    <td class="d-none d-lg-table-cell"><span style="${textStyle}">${inscricao.DESCRICAO}</span></td>
                     <td class="text-center">
                         <button class="btn-details" onclick="showDetalhes(${inscricao.IDINSCRICAO})" title="Ver detalhes">
                             <i class="fas fa-eye"></i>
@@ -681,27 +694,135 @@
                 </div>
                 
                 <div class="col-12 mb-3 mt-4">
-                    <h6 class="text-primary border-bottom pb-2">Valores</h6>
+                    <h6 class="text-primary border-bottom pb-2">Valores - Edição</h6>
                 </div>
                 <div class="col-md-3 mb-3">
                     <strong>Valor:</strong><br>
-                    R$ ${formatCurrency(inscricao.VALOR)}
+                    <input type="text" class="form-control valor-input" id="valorEdit" 
+                        value="${formatCurrency(inscricao.VALOR)}" 
+                        data-valor="${inscricao.VALOR}">
                 </div>
                 <div class="col-md-3 mb-3">
                     <strong>Taxa:</strong><br>
-                    R$ ${formatCurrency(inscricao.TAXA)}
+                    <input type="text" class="form-control valor-input" id="taxaEdit" 
+                        value="${formatCurrency(inscricao.TAXA)}" 
+                        data-valor="${inscricao.TAXA}">
                 </div>
                 <div class="col-md-3 mb-3">
                     <strong>Desconto:</strong><br>
-                    R$ ${formatCurrency(inscricao.DESCONTO)}
+                    <input type="text" class="form-control valor-input" id="descontoEdit" 
+                        value="${formatCurrency(inscricao.DESCONTO)}" 
+                        data-valor="${inscricao.DESCONTO}">
                 </div>
                 <div class="col-md-3 mb-3">
                     <strong>Valor Pago:</strong><br>
-                    <span class="text-success fw-bold">R$ ${formatCurrency(inscricao.VALOR_PGTO)}</span>
+                    <input type="text" class="form-control" id="valorPagoEdit" 
+                        value="${formatCurrency(inscricao.VALOR_PGTO)}" readonly 
+                        style="background-color: #f8f9fa;">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Status da Inscrição:</strong><br>
+                    <select class="form-select" id="statusEdit">
+                        <option value="CONFIRMADO" ${inscricao.FLSTATUS === 'CONFIRMADO' ? 'selected' : ''}>Confirmado</option>
+                        <option value="PENDENTE" ${inscricao.FLSTATUS === 'PENDENTE' ? 'selected' : ''}>Pendente</option>
+                        <option value="CANCELADO" ${inscricao.FLSTATUS === 'CANCELADO' ? 'selected' : ''}>Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-12 mt-3">
+                    <button type="button" class="btn btn-success" onclick="salvarAlteracoes(${inscricao.IDINSCRICAO})">
+                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                    </button>
                 </div>
             `;
+            
+            // Aplicar formatação nos inputs de valor
+            setupValorInputs();
         }
 
+        // Função para configurar inputs de valor com formatação
+        function setupValorInputs() {
+            const valorInputs = document.querySelectorAll('.valor-input');
+            
+            valorInputs.forEach(input => {
+                // Formatação ao digitar
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = (parseFloat(value) / 100).toFixed(2);
+                    e.target.value = formatCurrency(parseFloat(value));
+                    e.target.dataset.valor = parseFloat(value);
+                    calcularValorPago();
+                });
+                
+                // Formatação ao perder foco
+                input.addEventListener('blur', function(e) {
+                    const valor = parseFloat(e.target.dataset.valor) || 0;
+                    e.target.value = formatCurrency(valor);
+                });
+            });
+            
+            // Calcular valor pago inicial
+            calcularValorPago();
+        }
+
+        // Função para calcular valor pago automaticamente
+        function calcularValorPago() {
+            const valor = parseFloat(document.getElementById('valorEdit')?.dataset.valor) || 0;
+            const taxa = parseFloat(document.getElementById('taxaEdit')?.dataset.valor) || 0;
+            const desconto = parseFloat(document.getElementById('descontoEdit')?.dataset.valor) || 0;
+            
+            const valorPago = valor + taxa - desconto;
+            const valorPagoInput = document.getElementById('valorPagoEdit');
+            if (valorPagoInput) {
+                valorPagoInput.value = formatCurrency(valorPago);
+            }
+        }
+
+        // Função para salvar alterações
+        async function salvarAlteracoes(inscricaoId) {
+            const valor = parseFloat(document.getElementById('valorEdit').dataset.valor) || 0;
+            const taxa = parseFloat(document.getElementById('taxaEdit').dataset.valor) || 0;
+            const desconto = parseFloat(document.getElementById('descontoEdit').dataset.valor) || 0;
+            const status = document.getElementById('statusEdit').value;
+            
+            try {
+                loadingModal.show();
+                
+                const response = await fetch('/api/atualizar-inscricao', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        inscricaoId: inscricaoId,
+                        valor: valor,
+                        taxa: taxa,
+                        desconto: desconto,
+                        status: status
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Inscrição atualizada com sucesso!');
+                    // Fechar modal
+                    bootstrap.Modal.getInstance(document.getElementById('detalhesModal')).hide();
+                    // Recarregar lista
+                    const eventoId = document.getElementById('eventoSelect').value;
+                    if (eventoId) {
+                        await handleEventoChange({ target: { value: eventoId } });
+                    }
+                } else {
+                    showError(result.message || 'Erro ao atualizar inscrição');
+                }
+                
+            } catch (error) {
+                showError('Erro ao salvar alterações');
+            } finally {
+                loadingModal.hide();
+            }
+        }        
+        
         function formatCurrency(value) {
             return (value || 0).toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
