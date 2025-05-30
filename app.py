@@ -3879,7 +3879,8 @@ def get_inscricoes(evento_id, modalidade_id=None):
                    I.CAMISETA,
                    EV.DESCRICAO,
                    I.IDINSCRICAO,
-                   A.SEXO
+                   A.SEXO,
+                   I.FLSTATUS
             FROM ATLETA A, INSCRICAO I, EVENTO_MODALIDADE EV
             WHERE 
             EV.IDITEM = I.IDITEM
@@ -3895,7 +3896,8 @@ def get_inscricoes(evento_id, modalidade_id=None):
                    I.CAMISETA,
                    EV.DESCRICAO,
                    I.IDINSCRICAO,
-                   A.SEXO
+                   A.SEXO,
+                   I.FLSTATUS
             FROM ATLETA A, INSCRICAO I, EVENTO_MODALIDADE EV
             WHERE 
             EV.IDITEM = I.IDITEM
@@ -3917,7 +3919,8 @@ def get_inscricoes(evento_id, modalidade_id=None):
                 'CAMISETA': inscricao[1],
                 'DESCRICAO': inscricao[2],
                 'IDINSCRICAO': inscricao[3],
-                'SEXO': inscricao[4]
+                'SEXO': inscricao[4],
+                'FLSTATUS': inscricao[5]
             })
         
         return jsonify(inscricoes_list)
@@ -3939,11 +3942,11 @@ def get_inscricao_detalhes(inscricao_id):
         cursor = mysql.connection.cursor()
         query = """
         SELECT I.IDINSCRICAO, I.CPF, I.APOIO, I.NOME_EQUIPE, I.INTEGRANTES,
-               I.CAMISETA, I.VALOR, I.TAXA, I.DESCONTO, I.VALOR_PGTO,
-               I.FORMAPGTO, I.EQUIPE, I.CUPOM,
-               CONCAT(A.NOME,' ',A.SOBRENOME) AS NOME_COMPLETO,
-               A.DTNASCIMENTO, A.NRCELULAR, A.SEXO,
-               EV.DESCRICAO AS MODALIDADE
+            I.CAMISETA, I.VALOR, I.TAXA, I.DESCONTO, I.VALOR_PGTO,
+            I.FORMAPGTO, I.EQUIPE, I.CUPOM, 
+            CONCAT(A.NOME,' ',A.SOBRENOME) AS NOME_COMPLETO,
+            A.DTNASCIMENTO, A.NRCELULAR, A.SEXO,
+            EV.DESCRICAO AS MODALIDADE, I.FLSTATUS
         FROM INSCRICAO I
         JOIN ATLETA A ON A.IDATLETA = I.IDATLETA
         JOIN EVENTO_MODALIDADE EV ON EV.IDITEM = I.IDITEM
@@ -3972,7 +3975,8 @@ def get_inscricao_detalhes(inscricao_id):
                 'DTNASCIMENTO': inscricao[14],
                 'NRCELULAR': inscricao[15],
                 'SEXO': inscricao[16],
-                'MODALIDADE': inscricao[17]
+                'MODALIDADE': inscricao[17],
+                'FLSTATUS': inscricao[18]
             }
             print(f"DEBUG: Detalhes encontrados: {resultado}")
             return jsonify(resultado)
@@ -3983,6 +3987,36 @@ def get_inscricao_detalhes(inscricao_id):
     except Exception as e:
         print(f"DEBUG: Erro ao buscar detalhes: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/atualizar-inscricao', methods=['POST'])
+def atualizar_inscricao():
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        data = request.json
+        inscricao_id = data['inscricaoId']
+        valor = float(data['valor'])
+        taxa = float(data['taxa'])
+        desconto = float(data['desconto'])
+        valor_pago = valor + taxa - desconto
+        status = data['status']
+        
+        cursor = mysql.connection.cursor()
+        query = """
+        UPDATE INSCRICAO 
+        SET VALOR = %s, TAXA = %s, DESCONTO = %s, VALOR_PGTO = %s, FLSTATUS = %s
+        WHERE IDINSCRICAO = %s
+        """
+        cursor.execute(query, (valor, taxa, desconto, valor_pago, status, inscricao_id))
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'success': True, 'message': 'Inscrição atualizada com sucesso'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # Rota para logout
 @app.route('/logout_coordenador', methods=['POST'])
