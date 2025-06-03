@@ -734,6 +734,12 @@
                     </select>
                 </div>
                 
+                 <div class="col-12 mt-3">
+                    <button type="button" class="btn btn-success" onclick="salvarAlteracoes(${inscricao.IDINSCRICAO})">
+                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                    </button>
+                </div>
+               
                 <div class="col-12 mb-3 mt-4">
                     <h6 class="text-primary border-bottom pb-2">Lista de Apoios</h6>
                     <div id="apoiosContainer">
@@ -742,13 +748,7 @@
                             Carregando apoios...
                         </div>
                     </div>
-                </div>
-                
-                <div class="col-12 mt-3">
-                    <button type="button" class="btn btn-success" onclick="salvarAlteracoes(${inscricao.IDINSCRICAO})">
-                        <i class="fas fa-save me-2"></i>Salvar Alterações
-                    </button>
-                </div>
+                </div>                
             `;
             
             // Aplicar formatação nos inputs de valor
