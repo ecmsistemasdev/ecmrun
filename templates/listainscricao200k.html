@@ -733,6 +733,17 @@
                         <option value="CANCELADO" ${inscricao.FLSTATUS === 'CANCELADO' ? 'selected' : ''}>Cancelado</option>
                     </select>
                 </div>
+                
+                <div class="col-12 mb-3 mt-4">
+                    <h6 class="text-primary border-bottom pb-2">Lista de Apoios</h6>
+                    <div id="apoiosContainer">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                            Carregando apoios...
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="col-12 mt-3">
                     <button type="button" class="btn btn-success" onclick="salvarAlteracoes(${inscricao.IDINSCRICAO})">
                         <i class="fas fa-save me-2"></i>Salvar Alterações
@@ -742,6 +753,67 @@
             
             // Aplicar formatação nos inputs de valor
             setupValorInputs();
+            
+            // Carregar lista de apoios
+            loadApoios(inscricao.IDATLETA);
+        }
+
+        // Função para carregar apoios do atleta
+        async function loadApoios(atletaId) {
+            try {
+                const response = await fetch(`/api/apoios/${atletaId}`);
+                const apoios = await response.json();
+                
+                const container = document.getElementById('apoiosContainer');
+                
+                if (apoios.length === 0) {
+                    container.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>Nenhum apoio cadastrado para este atleta.
+                        </div>
+                    `;
+                } else {
+                    let apoiosHtml = `
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Celular</th>
+                                        <th>Veículo/Placa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    apoios.forEach(apoio => {
+                        apoiosHtml += `
+                            <tr>
+                                <td>${apoio.NOME}</td>
+                                <td>${apoio.CELULAR || '-'}</td>
+                                <td>${apoio.VEICULO_PLACA || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    apoiosHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    container.innerHTML = apoiosHtml;
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar apoios:', error);
+                const container = document.getElementById('apoiosContainer');
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Erro ao carregar lista de apoios.
+                    </div>
+                `;
+            }
         }
 
         // Função para configurar inputs de valor com formatação
