@@ -3945,7 +3945,7 @@ def get_inscricao_detalhes(inscricao_id):
             I.CAMISETA, I.VALOR, I.TAXA, I.DESCONTO, I.VALOR_PGTO,
             I.FORMAPGTO, I.EQUIPE, I.CUPOM, 
             CONCAT(A.NOME,' ',A.SOBRENOME) AS NOME_COMPLETO,
-            A.DTNASCIMENTO, A.NRCELULAR, A.SEXO,
+            A.DTNASCIMENTO, A.NRCELULAR, A.SEXO, A.IDATLETA,
             EV.DESCRICAO AS MODALIDADE, I.FLSTATUS
         FROM INSCRICAO I
         JOIN ATLETA A ON A.IDATLETA = I.IDATLETA
@@ -3975,8 +3975,9 @@ def get_inscricao_detalhes(inscricao_id):
                 'DTNASCIMENTO': inscricao[14],
                 'NRCELULAR': inscricao[15],
                 'SEXO': inscricao[16],
-                'MODALIDADE': inscricao[17],
-                'FLSTATUS': inscricao[18]
+                'IDATLETA': inscricao[17], 
+                'MODALIDADE': inscricao[18],
+                'FLSTATUS': inscricao[19]
             }
             print(f"DEBUG: Detalhes encontrados: {resultado}")
             return jsonify(resultado)
@@ -4323,6 +4324,48 @@ def salvar_ordem_equipe():
         print(f"Erro ao salvar ordem: {str(e)}")
         mysql.connection.rollback()
         return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@app.route('/api/apoios/<int:atleta_id>')
+def get_apoios_atleta(atleta_id):
+    print(f"DEBUG: Buscando apoios do atleta {atleta_id}")
+    
+    if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+        SELECT IDAPOIO, NOME, CELULAR, VEICULO, PLACA
+        FROM APOIO 
+        WHERE IDATLETA = %s
+        ORDER BY NOME
+        """
+        cursor.execute(query, (atleta_id,))
+        apoios = cursor.fetchall()
+        cursor.close()
+        
+        resultado = []
+        for apoio in apoios:
+            veiculo_placa = ""
+            if apoio[3] or apoio[4]:  # Se tem veículo ou placa
+                veiculo = apoio[3] or ""
+                placa = apoio[4] or ""
+                veiculo_placa = f"{veiculo} {placa}".strip()
+            
+            resultado.append({
+                'IDAPOIO': apoio[0],
+                'NOME': apoio[1],
+                'CELULAR': apoio[2],
+                'VEICULO_PLACA': veiculo_placa
+            })
+        
+        print(f"DEBUG: {len(resultado)} apoios encontrados")
+        return jsonify(resultado)
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao buscar apoios: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
