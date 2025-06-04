@@ -220,6 +220,10 @@ def format_time_difference(seconds):
 @app.route('/desafio200k/regulamento')
 def regulamento200k():
     return render_template('regulamento200k.html')
+
+@app.route('/corracomultra')
+def corracomultra():
+    return render_template('corracomultra.html')
     
 # Rotas do backyard
 @app.route('/backyard/lancamento')
