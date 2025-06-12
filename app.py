@@ -220,11 +220,12 @@ def format_time_difference(seconds):
 @app.route('/desafio200k/regulamento')
 def regulamento200k():
     return render_template('regulamento200k.html')
-
+    
 @app.route('/corracomultra')
 def corracomultra():
     return render_template('corracomultra.html')
-    
+
+
 # Rotas do backyard
 @app.route('/backyard/lancamento')
 def backyard_lancamento():
@@ -4370,6 +4371,378 @@ def get_apoios_atleta(atleta_id):
     except Exception as e:
         print(f"DEBUG: Erro ao buscar apoios: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+###########
+@app.route('/apoio_organizacao200k')
+def apoio_organizacao200k():
+    """Rota para servir a página HTML de cadastro de apoio"""
+    return render_template('apoio_organizacao200k.html')
+
+@app.route('/obter_pontos_apoio_org200k', methods=['GET'])
+def obter_pontos_apoio_org200k():
+    """Rota para obter todos os pontos de apoio disponíveis"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT IDPONTO, DE_PONTO 
+            FROM PONTO_APOIO_ORG_200k 
+            ORDER BY IDPONTO
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        
+        pontos = []
+        for row in rows:
+            pontos.append({
+                'IDPONTO': row[0],
+                'DE_PONTO': row[1]
+            })
+        
+        return jsonify(pontos)
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao obter pontos de apoio: {str(e)}'}), 500
+
+@app.route('/obter_proximo_id_apoio_org200k', methods=['GET'])
+def obter_proximo_id_apoio_org200k():
+    """Rota para obter o próximo ID disponível para APOIO_ORG_200k"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT COALESCE(MAX(IDAPOIO_ORG), 0) + 1 as proximo_id 
+            FROM APOIO_ORG_200k
+        """)
+        row = cur.fetchone()
+        cur.close()
+        
+        proximo_id = row[0] if row else 1
+        
+        return jsonify({'proximo_id': proximo_id})
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao obter próximo ID: {str(e)}'}), 500
+
+@app.route('/salvar_apoio_org200k', methods=['POST'])
+def salvar_apoio_org200k():
+    """Rota para salvar o apoio da organização e seus itens"""
+    try:
+        print("=== INICIO salvar_apoio_org200k ===")
+        
+        dados = request.get_json()
+        print(f"Dados recebidos: {dados}")
+        
+        # Validar dados recebidos
+        if not dados:
+            print("Erro: Dados não informados")
+            return jsonify({'message': 'Dados não informados'}), 400
+        
+        id_apoio_org = dados.get('idApoioOrg')
+        nome = dados.get('nome', '').strip()
+        celular = dados.get('celular', '').replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        itens = dados.get('itens', [])
+        
+        print(f"ID: {id_apoio_org}, Nome: {nome}, Celular: {celular}")
+        print(f"Itens: {itens}")
+        
+        # Validações
+        if not nome:
+            print("Erro: Nome é obrigatório")
+            return jsonify({'message': 'Nome é obrigatório'}), 400
+        
+        if not celular or len(celular) != 11:
+            print(f"Erro: Celular inválido - {celular} - tamanho: {len(celular)}")
+            return jsonify({'message': 'Celular deve ter 11 dígitos'}), 400
+        
+        if not itens:
+            print("Erro: Nenhum item de apoio")
+            return jsonify({'message': 'Pelo menos um item de apoio é obrigatório'}), 400
+        
+        if not id_apoio_org:
+            print("Erro: ID do apoio não informado")
+            return jsonify({'message': 'ID do apoio não informado'}), 400
+        
+        # Validar datas dos itens
+        print("Validando datas dos itens...")
+        data_minima = datetime(2025, 7, 4, 12, 0)
+        data_maxima = datetime(2025, 7, 6, 19, 0)
+        
+        for i, item in enumerate(itens):
+            print(f"Validando item {i}: {item}")
+            try:
+                dt_inicio = datetime.fromisoformat(item['DTHR_INICIO'].replace('T', ' '))
+                dt_final = datetime.fromisoformat(item['DTHR_FINAL'].replace('T', ' '))
+                
+                print(f"Item {i} - Início: {dt_inicio}, Final: {dt_final}")
+                
+                if dt_inicio < data_minima or dt_inicio > data_maxima:
+                    print(f"Erro: Data início fora do intervalo - {dt_inicio}")
+                    return jsonify({'message': 'Data/hora de início deve estar entre 04/07/2025 12:00 e 06/07/2025 19:00'}), 400
+                
+                if dt_final < data_minima or dt_final > data_maxima:
+                    print(f"Erro: Data final fora do intervalo - {dt_final}")
+                    return jsonify({'message': 'Data/hora final deve estar entre 04/07/2025 12:00 e 06/07/2025 19:00'}), 400
+                
+                if dt_final <= dt_inicio:
+                    print(f"Erro: Data final <= início")
+                    return jsonify({'message': 'Data/hora final deve ser posterior à data/hora inicial'}), 400
+                    
+            except ValueError as ve:
+                print(f"Erro no formato da data: {ve}")
+                return jsonify({'message': 'Formato de data/hora inválido'}), 400
+            except Exception as e:
+                print(f"Erro inesperado na validação de data: {e}")
+                return jsonify({'message': f'Erro na validação de data: {str(e)}'}), 400
+        
+        # Iniciar transação
+        print("Iniciando transação com banco de dados...")
+        cur = None
+        
+        try:
+            cur = mysql.connection.cursor()
+            print("Cursor criado com sucesso")
+            
+            # Verificar se o ID já existe
+            print(f"Verificando se ID {id_apoio_org} já existe...")
+            cur.execute("SELECT COUNT(*) FROM APOIO_ORG_200k WHERE IDAPOIO_ORG = %s", (id_apoio_org,))
+            count = cur.fetchone()[0]
+            print(f"Registros encontrados com este ID: {count}")
+            
+            if count > 0:
+                print("Erro: ID já existe")
+                return jsonify({'message': 'ID já existe, recarregue a página'}), 400
+            
+            # Inserir registro principal na APOIO_ORG_200k
+            print("Inserindo registro principal...")
+            sql_principal = """
+                INSERT INTO APOIO_ORG_200k (IDAPOIO_ORG, NOME, CELULAR, DT_CADASTRO) 
+                VALUES (%s, %s, %s, NOW())
+            """
+            parametros_principal = (id_apoio_org, nome, celular)
+            print(f"SQL: {sql_principal}")
+            print(f"Parâmetros: {parametros_principal}")
+            
+            cur.execute(sql_principal, parametros_principal)
+            print("Registro principal inserido com sucesso")
+            
+            # Inserir itens na APOIO_ORG_ITENS_200k
+            print("Inserindo itens...")
+            for i, item in enumerate(itens):
+                dt_inicio_str = item['DTHR_INICIO'].replace('T', ' ')
+                dt_final_str = item['DTHR_FINAL'].replace('T', ' ')
+                
+                # Correção: usar IDPUNTO ao invés de IDPONTO (conforme enviado do frontend)
+                id_ponto = item.get('IDPUNTO') or item.get('IDPONTO')
+                print(f"Item {i} - ID Ponto: {id_ponto}, Início: {dt_inicio_str}, Final: {dt_final_str}")
+                
+                sql_item = """
+                    INSERT INTO APOIO_ORG_ITENS_200k (IDAPOIO_ORG, IDPONTO, DTHR_INICIO, DTHR_FINAL) 
+                    VALUES (%s, %s, %s, %s)
+                """
+                parametros_item = (id_apoio_org, id_ponto, dt_inicio_str, dt_final_str)
+                print(f"SQL Item: {sql_item}")
+                print(f"Parâmetros Item: {parametros_item}")
+                
+                cur.execute(sql_item, parametros_item)
+                print(f"Item {i} inserido com sucesso")
+            
+            # Confirmar transação
+            print("Confirmando transação...")
+            mysql.connection.commit()
+            print("Transação confirmada com sucesso")
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Apoio registrado com sucesso!',
+                'id_apoio': id_apoio_org
+            })
+        
+        except Exception as e:
+            # Desfazer transação em caso de erro
+            print(f"ERRO na transação do banco: {str(e)}")
+            print(f"Tipo do erro: {type(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            if mysql.connection:
+                mysql.connection.rollback()
+                print("Rollback executado")
+            
+            return jsonify({'message': f'Erro ao salvar no banco de dados: {str(e)}'}), 500
+        
+        finally:
+            # Garantir que o cursor seja fechado
+            if cur:
+                cur.close()
+                print("Cursor fechado")
+    
+    except Exception as e:
+        print(f"ERRO GERAL na rota: {str(e)}")
+        print(f"Tipo do erro: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'message': f'Erro interno do servidor: {str(e)}'}), 500
+
+
+@app.route('/consultar_apoio_org200k/<int:id_apoio>', methods=['GET'])
+def consultar_apoio_org200k(id_apoio):
+    """Rota para consultar um apoio específico (para futura página de edição)"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Buscar dados principais
+        cur.execute("""
+            SELECT IDAPOIO_ORG, NOME, CELULAR, DT_CADASTRO 
+            FROM APOIO_ORG_200k 
+            WHERE IDAPOIO_ORG = %s
+        """, (id_apoio,))
+        
+        apoio_row = cur.fetchone()
+        if not apoio_row:
+            cur.close()
+            return jsonify({'error': 'Apoio não encontrado'}), 404
+        
+        # Buscar itens
+        cur.execute("""
+            SELECT ai.ID, ai.IDPONTO, p.DE_PONTO, ai.DTHR_INICIO, ai.DTHR_FINAL
+            FROM APOIO_ORG_ITENS_200k ai
+            INNER JOIN PONTO_APOIO_ORG_200k p ON ai.IDPONTO = p.IDPONTO
+            WHERE ai.IDAPOIO_ORG = %s
+            ORDER BY ai.DTHR_INICIO
+        """, (id_apoio,))
+        
+        itens_rows = cur.fetchall()
+        cur.close()
+        
+        # Montar resposta
+        apoio = {
+            'IDAPOIO_ORG': apoio_row[0],
+            'NOME': apoio_row[1],
+            'CELULAR': apoio_row[2],
+            'DT_CADASTRO': apoio_row[3].isoformat() if apoio_row[3] else None,
+            'itens': []
+        }
+        
+        for item_row in itens_rows:
+            apoio['itens'].append({
+                'ID': item_row[0],
+                'IDPONTO': item_row[1],
+                'DE_PONTO': item_row[2],
+                'DTHR_INICIO': item_row[3].isoformat() if item_row[3] else None,
+                'DTHR_FINAL': item_row[4].isoformat() if item_row[4] else None
+            })
+        
+        return jsonify(apoio)
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao consultar apoio: {str(e)}'}), 500
+
+@app.route('/listar_apoios_org200k', methods=['GET'])
+def listar_apoios_org200k():
+    """Rota para listar todos os apoios (para futura página de administração)"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        cur.execute("""
+            SELECT a.IDAPOIO_ORG, a.NOME, a.CELULAR, a.DT_CADASTRO,
+                   COUNT(ai.ID) as total_itens
+            FROM APOIO_ORG_200k a
+            LEFT JOIN APOIO_ORG_ITENS_200k ai ON a.IDAPOIO_ORG = ai.IDAPOIO_ORG
+            GROUP BY a.IDAPOIO_ORG, a.NOME, a.CELULAR, a.DT_CADASTRO
+            ORDER BY a.DT_CADASTRO DESC
+        """)
+        
+        rows = cur.fetchall()
+        cur.close()
+        
+        apoios = []
+        for row in rows:
+            apoios.append({
+                'IDAPOIO_ORG': row[0],
+                'NOME': row[1],
+                'CELULAR': row[2],
+                'DT_CADASTRO': row[3].isoformat() if row[3] else None,
+                'TOTAL_ITENS': row[4]
+            })
+        
+        return jsonify(apoios)
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao listar apoios: {str(e)}'}), 500
+
+# Função auxiliar para popular tabela de pontos de apoio (execute uma vez)
+@app.route('/popular_pontos_apoio_org200k', methods=['POST'])
+def popular_pontos_apoio_org200k():
+    """Rota para popular a tabela de pontos de apoio (usar apenas uma vez para configurar)"""
+    try:
+        pontos_exemplo = [
+            'Largada',
+            'KM 5',
+            'KM 10',
+            'KM 20',
+            'KM 30',
+            'KM 50',
+            'KM 70',
+            'KM 100',
+            'KM 130',
+            'KM 150',
+            'KM 170',
+            'KM 190',
+            'Chegada',
+            'Posto Médico',
+            'Hidratação',
+            'Apoio Técnico'
+        ]
+        
+        cur = mysql.connection.cursor()
+        
+        for ponto in pontos_exemplo:
+            cur.execute("""
+                INSERT INTO PONTO_APOIO_ORG_200k (DE_PONTO) 
+                VALUES (%s)
+            """, (ponto,))
+        
+        mysql.connection.commit()
+        cur.close()
+        
+        return jsonify({'success': True, 'message': 'Pontos de apoio populados com sucesso!'})
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao popular pontos de apoio: {str(e)}'}), 500
+
+# Rota para excluir um apoio (para futura página de administração)
+@app.route('/excluir_apoio_org200k/<int:id_apoio>', methods=['DELETE'])
+def excluir_apoio_org200k(id_apoio):
+    """Rota para excluir um apoio e seus itens"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        try:
+            # Excluir itens primeiro (chave estrangeira)
+            cur.execute("DELETE FROM APOIO_ORG_ITENS_200k WHERE IDAPOIO_ORG = %s", (id_apoio,))
+            
+            # Excluir apoio principal
+            cur.execute("DELETE FROM APOIO_ORG_200k WHERE IDAPOIO_ORG = %s", (id_apoio,))
+            
+            if cur.rowcount == 0:
+                mysql.connection.rollback()
+                cur.close()
+                return jsonify({'error': 'Apoio não encontrado'}), 404
+            
+            mysql.connection.commit()
+            cur.close()
+            
+            return jsonify({'success': True, 'message': 'Apoio excluído com sucesso!'})
+        
+        except Exception as e:
+            mysql.connection.rollback()
+            cur.close()
+            return jsonify({'error': f'Erro ao excluir apoio: {str(e)}'}), 500
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+
+###########
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
