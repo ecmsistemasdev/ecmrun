@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Apoio - Desafio 200k</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            margin: 10px;
+            padding: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .main-container {
+                margin: 15px auto;
+                max-width: 900px;
+                padding: 20px;
+            }
+        }
+        
+        .header-title {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .header-title {
+                font-size: 2rem;
+                margin-bottom: 25px;
+            }
+        }
+        
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            height: auto;
+            transition: all 0.3s ease;
+        }
+        
+        #selectPonto {
+            font-size: 0.95rem;
+        }        
+        
+        @media (min-width: 768px) {
+            .form-control, .form-select {
+                padding: 10px 15px;
+                font-size: 1rem;
+            }
+
+            #selectPonto {
+                font-size: 1.05rem;
+            }
+
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.15rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        @media (min-width: 768px) {
+            .form-label {
+                font-size: 0.9rem;
+                margin-bottom: 6px;
+            }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        @media (min-width: 768px) {
+            .btn-primary {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #e74c3c);
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+        
+        .itens-table {
+            background: white;
+            border-radius: 8px;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 0 -5px;
+        }
+        
+        @media (min-width: 768px) {
+            .itens-table {
+                margin: 0;
+                overflow-x: visible;
+            }
+        }
+        
+        .table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 8px 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        @media (min-width: 768px) {
+            .table th {
+                padding: 12px 15px;
+                font-size: 0.9rem;
+                white-space: normal;
+            }
+        }
+        
+        .table td {
+            padding: 8px 6px;
+            vertical-align: middle;
+            font-size: 0.75rem;
+            line-height: 1.1;
+        }
+        
+        @media (min-width: 768px) {
+            .table td {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+                line-height: 1.2;
+            }
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .success-view {
+            text-align: center;
+            padding: 20px 10px;
+        }
+        
+        .success-icon {
+            font-size: 3rem;
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .success-icon {
+                font-size: 4rem;
+                margin-bottom: 20px;
+            }
+        }
+        
+        .readonly-input {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        
+        .item-form {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .item-form {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+        }
+        
+        .mb-3 {
+            margin-bottom: 0.75rem !important;
+        }
+        
+        .mb-4 {
+            margin-bottom: 1rem !important;
+        }
+        
+        @media (min-width: 768px) {
+            .mb-3 {
+                margin-bottom: 1rem !important;
+            }
+            
+            .mb-4 {
+                margin-bottom: 1.5rem !important;
+            }
+        }
+        
+        .row.mt-3 {
+            margin-top: 0.75rem !important;
+        }
+        
+        .row.mt-4 {
+            margin-top: 1rem !important;
+        }
+        
+        @media (min-width: 768px) {
+            .row.mt-3 {
+                margin-top: 1rem !important;
+            }
+            
+            .row.mt-4 {
+                margin-top: 1.5rem !important;
+            }
+        }
+        
+        /* Mobile table responsiveness */
+        @media (max-width: 767px) {
+            .table-responsive-mobile {
+                font-size: 0.75rem;
+            }
+            
+            .table-responsive-mobile .table {
+                min-width: 500px;
+            }
+            
+            .table-responsive-mobile .table th:nth-child(1),
+            .table-responsive-mobile .table td:nth-child(1) {
+                min-width: 120px;
+                max-width: 120px;
+                word-wrap: break-word;
+                white-space: normal;
+            }
+            
+            .table-responsive-mobile .table th:nth-child(2),
+            .table-responsive-mobile .table td:nth-child(2) {
+                min-width: 80px;
+                max-width: 80px;
+                text-align: center;
+            }
+            
+            .table-responsive-mobile .table th:nth-child(3),
+            .table-responsive-mobile .table td:nth-child(3) {
+                min-width: 80px;
+                max-width: 80px;
+                text-align: center;
+            }
+            
+            .table-responsive-mobile .table th:nth-child(4),
+            .table-responsive-mobile .table td:nth-child(4) {
+                width: 60px;
+                min-width: 60px;
+                text-align: center;
+            }
+            
+            .date-mobile {
+                display: block;
+                line-height: 1.1;
+            }
+            
+            .date-mobile .date-part {
+                display: block;
+                font-size: 0.7rem;
+            }
+            
+            .date-mobile .time-part {
+                display: block;
+                font-size: 0.7rem;
+                font-weight: 600;
+            }
+        }
+        
+        h4 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            h4 {
+                font-size: 1.25rem;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <h1 class="header-title">
+                <i class="fas fa-hands-helping"></i>
+                Apoio - Desafio 200k
+            </h1>
+            
+            <div id="alertContainer"></div>
+            
+            <!-- Formulário de Cadastro -->
+            <div id="cadastroForm">
+                <form id="apoioForm">
+                    <div class="row mb-3">
+                        <div class="col-md-8 mb-3">
+                            <label for="nome" class="form-label">
+                                <i class="fas fa-user"></i> Nome Completo *
+                            </label>
+                            <input type="text" class="form-control" id="nome" name="nome" required maxlength="100" style="text-transform: uppercase;">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="celular" class="form-label">
+                                <i class="fas fa-phone"></i> Celular *
+                            </label>
+                            <input type="tel" class="form-control" id="celular" name="celular" required maxlength="15" placeholder="(00) 00000-0000" inputmode="numeric">
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h4><i class="fas fa-list"></i> Pontos de Apoio</h4>
+                    
+                    <!-- Formulário para adicionar itens -->
+                    <div class="item-form">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="selectPonto" class="form-label">Ponto de Apoio</label>
+                                <select class="form-select" id="selectPonto">
+                                    <option value="">Selecione um ponto</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="dthrInicio" class="form-label">Data/Hora Início</label>
+                                <input type="datetime-local" class="form-control" id="dthrInicio">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="dthrFinal" class="form-label">Data/Hora Final</label>
+                                <input type="datetime-local" class="form-control" id="dthrFinal">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-success" onclick="adicionarItem()">
+                                    <i class="fas fa-plus"></i> Adicionar Item
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabela de itens -->
+                    <div class="itens-table table-responsive-mobile">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Ponto de Apoio</th>
+                                    <th>Início</th>
+                                    <th>Final</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itensTableBody">
+                                <tr id="emptyRow">
+                                    <td colspan="4" class="text-center text-muted">
+                                        <i class="fas fa-info-circle"></i> Nenhum item adicionado
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar Apoio
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Visualização de Sucesso -->
+            <div id="successView" style="display: none;">
+                <div class="success-view">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 class="text-success mb-4">Apoio registrado com sucesso!</h2>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label"><strong>Nome Completo:</strong></label>
+                            <input type="text" class="form-control readonly-input" id="nomeReadonly" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><strong>Celular:</strong></label>
+                            <input type="text" class="form-control readonly-input" id="celularReadonly" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="itens-table table-responsive-mobile">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Ponto de Apoio</th>
+                                    <th>Início</th>
+                                    <th>Final</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itensReadonlyTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-primary" onclick="novoRegistro()">
+                            <i class="fas fa-plus"></i> Novo Registro
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let pontosApoio = [];
+        let itensApoio = [];
+        let idApoioOrg = null;
+        
+        // Configurar limites de data
+        const dataMinima = '2025-07-04T12:00';
+        const dataMaxima = '2025-07-06T19:00';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('dthrInicio').min = dataMinima;
+            document.getElementById('dthrInicio').max = dataMaxima;
+            document.getElementById('dthrFinal').min = dataMinima;
+            document.getElementById('dthrFinal').max = dataMaxima;
+            
+            carregarPontosApoio();
+            obterProximoId();
+            
+            // Input apenas números para celular com máscara visual
+            document.getElementById('celular').addEventListener('input', function(e) {
+                // Remove todos os caracteres não numéricos
+                let value = e.target.value.replace(/\D/g, '');
+                // Limita a 11 dígitos
+                if (value.length > 11) {
+                    value = value.substring(0, 11);
+                }
+                
+                // Aplica a máscara visual
+                let maskedValue = value;
+                if (value.length > 6) {
+                    maskedValue = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                } else if (value.length > 2) {
+                    maskedValue = value.replace(/(\d{2})(\d+)/, '($1) $2');
+                } else if (value.length > 0) {
+                    maskedValue = value.replace(/(\d+)/, '($1');
+                }
+                
+                e.target.value = maskedValue;
+                
+                // Armazena apenas números no atributo data
+                e.target.setAttribute('data-raw-value', value);
+            });
+            
+            // Força maiúscula no nome
+            document.getElementById('nome').addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+            
+            // Validação de horários
+            document.getElementById('dthrFinal').addEventListener('change', function() {
+                const inicio = document.getElementById('dthrInicio').value;
+                const final = this.value;
+                
+                if (inicio && final && new Date(final) <= new Date(inicio)) {
+                    showAlert('A data/hora final deve ser posterior à data/hora inicial!', 'danger');
+                    this.value = '';
+                }
+            });
+        });
+        
+        async function carregarPontosApoio() {
+            try {
+                const response = await fetch('/obter_pontos_apoio_org200k');
+                if (response.ok) {
+                    pontosApoio = await response.json();
+                    const select = document.getElementById('selectPonto');
+                    select.innerHTML = '<option value="">Selecione um ponto</option>';
+                    pontosApoio.forEach(ponto => {
+                        select.innerHTML += `<option value="${ponto.IDPONTO}">${ponto.DE_PONTO}</option>`;
+                    });
+                } else {
+                    showAlert('Erro ao carregar pontos de apoio', 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao conectar com o servidor', 'danger');
+            }
+            
+            // Configurar horários padrão (sempre :00)
+            const agora = new Date();
+            const horaAtual = agora.getHours();
+            const dataBase = '2025-07-04';
+
+            // Definir horário padrão para início (hora atual com minutos :00)
+            const horarioInicioPadrao = `${dataBase}T${horaAtual.toString().padStart(2, '0')}:00`;
+            document.getElementById('dthrInicio').value = horarioInicioPadrao;
+
+            // Definir horário padrão para final (1 hora depois com minutos :00)
+            const horarioFinalPadrao = `${dataBase}T${(horaAtual + 1).toString().padStart(2, '0')}:00`;
+            document.getElementById('dthrFinal').value = horarioFinalPadrao;
+        }
+        
+        async function obterProximoId() {
+            try {
+                const response = await fetch('/obter_proximo_id_apoio_org200k');
+                if (response.ok) {
+                    const data = await response.json();
+                    idApoioOrg = data.proximo_id;
+                } else {
+                    showAlert('Erro ao obter próximo ID', 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao conectar com o servidor', 'danger');
+            }
+        }
+        
+        function adicionarItem() {
+            const pontoId = document.getElementById('selectPonto').value;
+            const dthrInicio = document.getElementById('dthrInicio').value;
+            const dthrFinal = document.getElementById('dthrFinal').value;
+            
+            if (!pontoId || !dthrInicio || !dthrFinal) {
+                showAlert('Preencha todos os campos do item!', 'warning');
+                return;
+            }
+            
+            if (new Date(dthrFinal) <= new Date(dthrInicio)) {
+                showAlert('A data/hora final deve ser posterior à data/hora inicial!', 'danger');
+                return;
+            }
+            
+            const pontoNome = pontosApoio.find(p => p.IDPONTO == pontoId).DE_PONTO;
+            
+            const item = {
+                IDPUNTO: pontoId,
+                PONTO_NOME: pontoNome,
+                DTHR_INICIO: dthrInicio,
+                DTHR_FINAL: dthrFinal
+            };
+            
+            itensApoio.push(item);
+            atualizarTabelaItens();
+            limparFormularioItem();
+        }
+        
+        function removerItem(index) {
+            itensApoio.splice(index, 1);
+            atualizarTabelaItens();
+        }
+        
+        function atualizarTabelaItens() {
+            const tbody = document.getElementById('itensTableBody');
+            const emptyRow = document.getElementById('emptyRow');
+            
+            if (itensApoio.length === 0) {
+                emptyRow.style.display = '';
+                return;
+            }
+            
+            emptyRow.style.display = 'none';
+            
+            let html = '';
+            itensApoio.forEach((item, index) => {
+                const dataInicio = new Date(item.DTHR_INICIO);
+                const dataFinal = new Date(item.DTHR_FINAL);
+                
+                // Formatação para mobile com quebra de linha
+                const dataInicioMobile = `
+                    <div class="date-mobile">
+                        <span class="date-part">${dataInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                        <span class="time-part">${dataInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                `;
+                
+                const dataFinalMobile = `
+                    <div class="date-mobile">
+                        <span class="date-part">${dataFinal.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                        <span class="time-part">${dataFinal.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                `;
+                
+                // Formatação para desktop
+                const dataInicioDesktop = dataInicio.toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const dataFinalDesktop = dataFinal.toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                html += `
+                    <tr>
+                        <td>${item.PONTO_NOME}</td>
+                        <td>
+                            <span class="d-none d-md-inline">${dataInicioDesktop}</span>
+                            <span class="d-md-none">${dataInicioMobile}</span>
+                        </td>
+                        <td>
+                            <span class="d-none d-md-inline">${dataFinalDesktop}</span>
+                            <span class="d-md-none">${dataFinalMobile}</span>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removerItem(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html + '<tr id="emptyRow" style="display: none;"><td colspan="4" class="text-center text-muted"><i class="fas fa-info-circle"></i> Nenhum item adicionado</td></tr>';
+        }
+        
+        function limparFormularioItem() {
+            document.getElementById('selectPonto').value = '';
+            
+            // Definir novos horários padrão
+            const agora = new Date();
+            const horaAtual = agora.getHours();
+            const dataBase = '2025-07-04';
+            
+            const horarioInicioPadrao = `${dataBase}T${horaAtual.toString().padStart(2, '0')}:00`;
+            const horarioFinalPadrao = `${dataBase}T${(horaAtual + 1).toString().padStart(2, '0')}:00`;
+            
+            document.getElementById('dthrInicio').value = horarioInicioPadrao;
+            document.getElementById('dthrFinal').value = horarioFinalPadrao;
+        }
+
+        document.getElementById('apoioForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const nome = document.getElementById('nome').value.trim();
+            const celularInput = document.getElementById('celular');
+            const celular = celularInput.getAttribute('data-raw-value') || celularInput.value.replace(/\D/g, '');
+            
+            if (!nome || !celular) {
+                showAlert('Preencha todos os campos obrigatórios!', 'warning');
+                return;
+            }
+            
+            if (celular.length !== 11) {
+                showAlert('Celular deve ter 11 dígitos!', 'warning');
+                return;
+            }
+            
+            if (itensApoio.length === 0) {
+                showAlert('Adicione pelo menos um item de apoio!', 'warning');
+                return;
+            }
+            
+            const dados = {
+                idApoioOrg: idApoioOrg,
+                nome: nome,
+                celular: celular,
+                itens: itensApoio
+            };
+            
+            try {
+                const response = await fetch('/salvar_apoio_org200k', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dados)
+                });
+                
+                if (response.ok) {
+                    mostrarSucesso(dados);
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Erro ao salvar apoio', 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao conectar com o servidor', 'danger');
+            }
+        });
+        
+        function mostrarSucesso(dados) {
+            // Preencher dados readonly
+            document.getElementById('nomeReadonly').value = dados.nome;
+            document.getElementById('celularReadonly').value = formatarCelular(dados.celular);
+            
+            // Preencher tabela readonly
+            const tbody = document.getElementById('itensReadonlyTableBody');
+            let html = '';
+            
+            dados.itens.forEach(item => {
+                const dataInicio = new Date(item.DTHR_INICIO);
+                const dataFinal = new Date(item.DTHR_FINAL);
+                
+                // Formatação para mobile com quebra de linha
+                const dataInicioMobile = `
+                    <div class="date-mobile">
+                        <span class="date-part">${dataInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                        <span class="time-part">${dataInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                `;
+                
+                const dataFinalMobile = `
+                    <div class="date-mobile">
+                        <span class="date-part">${dataFinal.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                        <span class="time-part">${dataFinal.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                `;
+                
+                // Formatação para desktop
+                const dataInicioDesktop = dataInicio.toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const dataFinalDesktop = dataFinal.toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                html += `
+                    <tr>
+                        <td>${item.PONTO_NOME}</td>
+                        <td>
+                            <span class="d-none d-md-inline">${dataInicioDesktop}</span>
+                            <span class="d-md-none">${dataInicioMobile}</span>
+                        </td>
+                        <td>
+                            <span class="d-none d-md-inline">${dataFinalDesktop}</span>
+                            <span class="d-md-none">${dataFinalMobile}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Mostrar view de sucesso
+            document.getElementById('cadastroForm').style.display = 'none';
+            document.getElementById('successView').style.display = 'block';
+        }
+        
+        function novoRegistro() {
+            // Limpar formulário
+            document.getElementById('apoioForm').reset();
+            itensApoio = [];
+            atualizarTabelaItens();
+            obterProximoId();
+            
+            // Mostrar formulário
+            document.getElementById('successView').style.display = 'none';
+            document.getElementById('cadastroForm').style.display = 'block';
+            
+            // Limpar alerts
+            document.getElementById('alertContainer').innerHTML = '';
+        }
+        
+        function formatarCelular(celular) {
+            return celular.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        }
+        
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.appendChild(alertDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
