@@ -4851,7 +4851,7 @@ def listar_pontos_apoio002():
     """Lista todos os pontos de apoio disponíveis"""
     try:
         cur = mysql.connection.cursor()
-        cur.execute("SELECT IDPONTO, DE_PONTO FROM PONTO_APOIO_ORG_200k ORDER BY DE_PONTO")
+        cur.execute("SELECT IDPONTO, DE_PONTO FROM PONTO_APOIO_ORG_200k ORDER BY IDPONTO")
         pontos = cur.fetchall()
         cur.close()
         
