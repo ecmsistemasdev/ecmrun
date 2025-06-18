@@ -4744,6 +4744,199 @@ def excluir_apoio_org200k(id_apoio):
 
 ###########
 
+# Rotas Flask para administração do apoio organizacional
+
+@app.route('/api/apoio-admin002', methods=['GET'])
+def listar_apoio_admin002():
+    """Lista todos os registros de apoio com seus itens"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT 
+                a.IDAPOIO_ORG,
+                a.NOME,
+                a.CELULAR,
+                ai.ID as ITEM_ID,
+                ai.IDPONTO,
+                p.DE_PONTO,
+                ai.DTHR_INICIO,
+                ai.DTHR_FINAL
+            FROM APOIO_ORG_200k a
+            LEFT JOIN APOIO_ORG_ITENS_200k ai ON a.IDAPOIO_ORG = ai.IDAPOIO_ORG
+            LEFT JOIN PONTO_APOIO_ORG_200k p ON ai.IDPONTO = p.IDPONTO
+            ORDER BY a.IDAPOIO_ORG, ai.ID
+        """)
+        
+        registros = cur.fetchall()
+        cur.close()
+        
+        # Organizar dados por apoiador
+        apoiadores = {}
+        for registro in registros:
+            id_apoio = registro[0]
+            if id_apoio not in apoiadores:
+                apoiadores[id_apoio] = {
+                    'IDAPOIO_ORG': registro[0],
+                    'NOME': registro[1],
+                    'CELULAR': registro[2],
+                    'itens': []
+                }
+            
+            if registro[3]:  # Se tem item
+                apoiadores[id_apoio]['itens'].append({
+                    'ID': registro[3],
+                    'IDPONTO': registro[4],
+                    'DE_PONTO': registro[5],
+                    'DTHR_INICIO': registro[6].strftime('%Y-%m-%dT%H:%M') if registro[6] else '',
+                    'DTHR_FINAL': registro[7].strftime('%Y-%m-%dT%H:%M') if registro[7] else ''
+                })
+        
+        return jsonify(list(apoiadores.values()))
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao listar apoio: {str(e)}'}), 500
+
+# @app.route('/api/apoio-admin002', methods=['GET'])
+# def listar_apoio_admin002():
+#     """Lista todos os registros de apoio com seus itens"""
+#     try:
+#         cur = mysql.connection.cursor()
+#         cur.execute("""
+#             SELECT 
+#                 a.IDAPOIO_ORG,
+#                 a.NOME,
+#                 a.CELULAR,
+#                 ai.ID as ITEM_ID,
+#                 ai.IDPONTO,
+#                 p.DE_PONTO,
+#                 ai.DTHR_INICIO,
+#                 ai.DTHR_FINAL
+#             FROM APOIO_ORG_200k a
+#             LEFT JOIN APOIO_ORG_ITENS_200k ai ON a.IDAPOIO_ORG = ai.IDAPOIO_ORG
+#             LEFT JOIN PONTO_APOIO_ORG_200k p ON ai.IDPONTO = p.IDPONTO
+#             ORDER BY a.IDAPOIO_ORG, ai.ID
+#         """)
+        
+#         registros = cur.fetchall()
+#         cur.close()
+        
+#         # Organizar dados por apoiador
+#         apoiadores = {}
+#         for registro in registros:
+#             id_apoio = registro[0]
+#             if id_apoio not in apoiadores:
+#                 apoiadores[id_apoio] = {
+#                     'IDAPOIO_ORG': registro[0],
+#                     'NOME': registro[1],
+#                     'CELULAR': registro[2],
+#                     'itens': []
+#                 }
+            
+#             if registro[3]:  # Se tem item
+#                 apoiadores[id_apoio]['itens'].append({
+#                     'ID': registro[3],
+#                     'IDPONTO': registro[4],
+#                     'DE_PONTO': registro[5],
+#                     'DTHR_INICIO': registro[6].strftime('%Y-%m-%dT%H:%M') if registro[6] else '',
+#                     'DTHR_FINAL': registro[7].strftime('%Y-%m-%dT%H:%M') if registro[7] else ''
+#                 })
+        
+#         return jsonify(list(apoiadores.values()))
+    
+#     except Exception as e:
+#         return jsonify({'error': f'Erro ao listar apoio: {str(e)}'}), 500
+
+@app.route('/api/pontos-apoio002', methods=['GET'])
+def listar_pontos_apoio002():
+    """Lista todos os pontos de apoio disponíveis"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT IDPONTO, DE_PONTO FROM PONTO_APOIO_ORG_200k ORDER BY DE_PONTO")
+        pontos = cur.fetchall()
+        cur.close()
+        
+        pontos_list = []
+        for ponto in pontos:
+            pontos_list.append({
+                'IDPONTO': ponto[0],
+                'DE_PONTO': ponto[1]
+            })
+        
+        return jsonify(pontos_list)
+    
+    except Exception as e:
+        return jsonify({'error': f'Erro ao listar pontos: {str(e)}'}), 500
+
+@app.route('/api/apoio-item002/<int:item_id>', methods=['PUT'])
+def atualizar_item_apoio002(item_id):
+    """Atualiza um item de apoio (datas/horários e ponto)"""
+    try:
+        data = request.json
+        cur = mysql.connection.cursor()
+        
+        cur.execute("""
+            UPDATE APOIO_ORG_ITENS_200k 
+            SET IDPONTO = %s, DTHR_INICIO = %s, DTHR_FINAL = %s
+            WHERE ID = %s
+        """, (
+            data.get('IDPONTO'),
+            data.get('DTHR_INICIO') if data.get('DTHR_INICIO') else None,
+            data.get('DTHR_FINAL') if data.get('DTHR_FINAL') else None,
+            item_id
+        ))
+        
+        mysql.connection.commit()
+        cur.close()
+        
+        return jsonify({'success': 'Item atualizado com sucesso'})
+    
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': f'Erro ao atualizar item: {str(e)}'}), 500
+
+@app.route('/api/apoio-org002/<int:apoio_id>', methods=['DELETE'])
+def excluir_apoio002(apoio_id):
+    """Exclui um apoiador e todos os seus itens"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Primeiro exclui os itens
+        cur.execute("DELETE FROM APOIO_ORG_ITENS_200k WHERE IDAPOIO_ORG = %s", (apoio_id,))
+        
+        # Depois exclui o apoiador
+        cur.execute("DELETE FROM APOIO_ORG_200k WHERE IDAPOIO_ORG = %s", (apoio_id,))
+        
+        mysql.connection.commit()
+        cur.close()
+        
+        return jsonify({'success': 'Apoiador excluído com sucesso'})
+    
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': f'Erro ao excluir apoiador: {str(e)}'}), 500
+
+@app.route('/api/apoio-item002/<int:item_id>', methods=['DELETE'])
+def excluir_item_apoio002(item_id):
+    """Exclui apenas um item específico de apoio"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("DELETE FROM APOIO_ORG_ITENS_200k WHERE ID = %s", (item_id,))
+        mysql.connection.commit()
+        cur.close()
+        
+        return jsonify({'success': 'Item excluído com sucesso'})
+    
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': f'Erro ao excluir item: {str(e)}'}), 500
+
+@app.route('/admin-apoio')
+def admin_apoio002():
+    """Página de administração do apoio"""
+    return render_template('admin_apoio002.html')
+
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
