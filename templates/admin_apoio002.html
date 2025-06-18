@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Apoio Ultramaratona 200k</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .apoiador-card {
+            background: white;
+            border: 2px solid #f1f3f4;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .apoiador-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .apoiador-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .apoiador-info h3 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .apoiador-info p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .delete-apoiador {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .delete-apoiador:hover {
+            background: #ff3742;
+            transform: translateY(-2px);
+        }
+
+        .itens-container {
+            padding: 20px;
+        }
+
+        .item-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .item-card:hover {
+            background: #e9ecef;
+        }
+
+        .item-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-update {
+            background: linear-gradient(135deg, #26de81, #20bf6b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-update:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(38, 222, 129, 0.3);
+        }
+
+        .btn-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background: #ff3742;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #6c757d;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+
+        .no-data h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+                margin: -20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .apoiador-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .item-form {
+                grid-template-columns: 1fr;
+            }
+
+            .item-actions {
+                justify-content: center;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #26de81, #20bf6b);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #ff4757, #ff3742);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏃‍♂️ Admin Apoio Ultramaratona</h1>
+            <p>Desafio 200k Porto Velho - Humaitá</p>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Buscar por nome ou celular...">
+                <span class="search-icon">🔍</span>
+            </div>
+            <button class="refresh-btn" onclick="carregarDados()">
+                <span>🔄</span> Atualizar
+            </button>
+        </div>
+
+        <div class="content">
+            <div id="loadingDiv" class="loading">
+                Carregando dados... ⏳
+            </div>
+            <div id="contentDiv" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let apoiadores = [];
+        let pontos = [];
+
+        // Carregar dados iniciais
+        document.addEventListener('DOMContentLoaded', function() {
+            inicializarDados();
+        });
+
+        // Função para inicializar dados (carrega pontos primeiro, depois apoiadores)
+        async function inicializarDados() {
+            await carregarPontos();
+            await carregarDados();
+        }
+
+        // Função para carregar pontos de apoio
+        async function carregarPontos() {
+            try {
+                const response = await fetch('/api/pontos-apoio002');
+                if (!response.ok) {
+                    throw new Error('Erro na resposta da API');
+                }
+                pontos = await response.json();
+                console.log('Pontos carregados:', pontos); // Debug
+            } catch (error) {
+                console.error('Erro ao carregar pontos:', error);
+                showToast('Erro ao carregar pontos de apoio', 'error');
+            }
+        }
+
+        // Função para atualizar dados (botão refresh)
+        async function carregarDados() {
+            await carregarPontos(); // Recarrega pontos também
+            try {
+                document.getElementById('loadingDiv').style.display = 'block';
+                document.getElementById('contentDiv').style.display = 'none';
+
+                const response = await fetch('/api/apoio-admin002');
+                if (!response.ok) {
+                    throw new Error('Erro na resposta da API');
+                }
+                apoiadores = await response.json();
+                console.log('Apoiadores carregados:', apoiadores); // Debug
+
+                document.getElementById('loadingDiv').style.display = 'none';
+                document.getElementById('contentDiv').style.display = 'block';
+
+                renderizarApoiadores(apoiadores);
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                showToast('Erro ao carregar dados', 'error');
+            }
+        }
+
+        // Função para renderizar apoiadores
+        function renderizarApoiadores(dados) {
+            const contentDiv = document.getElementById('contentDiv');
+            
+            if (dados.length === 0) {
+                contentDiv.innerHTML = `
+                    <div class="no-data">
+                        <h3>Nenhum apoiador encontrado</h3>
+                        <p>Não há registros de apoio cadastrados.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            contentDiv.innerHTML = dados.map(apoiador => `
+                <div class="apoiador-card">
+                    <div class="apoiador-header">
+                        <div class="apoiador-info">
+                            <h3>${apoiador.NOME}</h3>
+                            <p>📱 ${apoiador.CELULAR}</p>
+                        </div>
+                        <button class="delete-apoiador" onclick="excluirApoiador(${apoiador.IDAPOIO_ORG})">
+                            🗑️ Excluir Apoiador
+                        </button>
+                    </div>
+                    <div class="itens-container">
+                        ${apoiador.itens.map(item => `
+                            <div class="item-card">
+                                <div class="item-form">
+                                    <div class="form-group">
+                                        <label>Ponto de Apoio</label>
+                                        <select id="ponto_${item.ID}">
+                                            ${pontos.length > 0 ? pontos.map(ponto => `
+                                                <option value="${ponto.IDPONTO}" ${ponto.IDPONTO === item.IDPONTO ? 'selected' : ''}>
+                                                    ${ponto.DE_PONTO}
+                                                </option>
+                                            `).join('') : '<option value="">Carregando pontos...</option>'}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Data/Hora Início</label>
+                                        <input type="datetime-local" id="inicio_${item.ID}" value="${item.DTHR_INICIO}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Data/Hora Final</label>
+                                        <input type="datetime-local" id="final_${item.ID}" value="${item.DTHR_FINAL}">
+                                    </div>
+                                </div>
+                                <div class="item-actions">
+                                    <button class="btn-update" onclick="atualizarItem(${item.ID})">
+                                        💾 Salvar Alterações
+                                    </button>
+                                    <button class="btn-delete" onclick="excluirItem(${item.ID})">
+                                        🗑️ Excluir Item
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${apoiador.itens.length === 0 ? '<p style="text-align: center; color: #6c757d; padding: 20px;">Nenhum item de apoio cadastrado</p>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Função para atualizar item
+        async function atualizarItem(itemId) {
+            try {
+                const data = {
+                    IDPONTO: document.getElementById(`ponto_${itemId}`).value,
+                    DTHR_INICIO: document.getElementById(`inicio_${itemId}`).value || null,
+                    DTHR_FINAL: document.getElementById(`final_${itemId}`).value || null
+                };
+
+                const response = await fetch(`/api/apoio-item002/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast('Item atualizado com sucesso!', 'success');
+                    carregarDados();
+                } else {
+                    showToast(result.error || 'Erro ao atualizar item', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar item:', error);
+                showToast('Erro ao atualizar item', 'error');
+            }
+        }
+
+        // Função para excluir apoiador
+        async function excluirApoiador(apoiadorId) {
+            if (!confirm('Tem certeza que deseja excluir este apoiador e todos os seus itens?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/apoio-org002/${apoiadorId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast('Apoiador excluído com sucesso!', 'success');
+                    carregarDados();
+                } else {
+                    showToast(result.error || 'Erro ao excluir apoiador', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir apoiador:', error);
+                showToast('Erro ao excluir apoiador', 'error');
+            }
+        }
+
+        // Função para excluir item
+        async function excluirItem(itemId) {
+            if (!confirm('Tem certeza que deseja excluir este item?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/apoio-item002/${itemId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast('Item excluído com sucesso!', 'success');
+                    carregarDados();
+                } else {
+                    showToast(result.error || 'Erro ao excluir item', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir item:', error);
+                showToast('Erro ao excluir item', 'error');
+            }
+        }
+
+        // Função de busca
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const termo = this.value.toLowerCase();
+            
+            if (termo === '') {
+                renderizarApoiadores(apoiadores);
+                return;
+            }
+
+            const filtrados = apoiadores.filter(apoiador => 
+                apoiador.NOME.toLowerCase().includes(termo) ||
+                apoiador.CELULAR.includes(termo)
+            );
+
+            renderizarApoiadores(filtrados);
+        });
+
+        // Função para mostrar toast
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
