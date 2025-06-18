@@ -145,6 +145,15 @@
                 </div>
             </div>
 
+            <!-- Botão Apoio Organização -->
+            <div class="row mt-3" id="apoioOrganizacaoButtonSection" style="display: none;">
+                <div class="col-12">
+                    <button id="apoioOrganizacaoBtn" class="btn btn-info">
+                        <i class="fas fa-hands-helping me-2"></i>Apoio Organização
+                    </button>
+                </div>
+            </div>
+
             <!-- Modal Principal de Equipes -->
             <div class="modal fade" id="equipesModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
                 <div class="modal-dialog modal-xl">
@@ -347,6 +356,9 @@
             document.getElementById('criarEquipeBtn').addEventListener('click', criarEquipe);
             document.getElementById('closeEditarEquipeModal').addEventListener('click', closeEditarEquipeModal);
             document.getElementById('salvarOrdemBtn').addEventListener('click', salvarOrdemEquipe);
+
+            // Event listeners para apoio organização
+            document.getElementById('apoioOrganizacaoBtn').addEventListener('click', openApoioOrganizacao);
             
             initEquipesModals();
 
@@ -515,6 +527,7 @@
                 displayInscricoes(inscricoes);
                 document.getElementById('inscricoesSection').style.display = 'block';
                 document.getElementById('equipesButtonSection').style.display = 'block';
+                document.getElementById('apoioOrganizacaoButtonSection').style.display = 'block';
             } catch (error) {
                 showError('Erro ao carregar dados do evento');
             } finally {
@@ -934,6 +947,8 @@
                     document.getElementById(`camiseta${size}`).checked = false;
                 });
                 
+                document.getElementById('apoioOrganizacaoButtonSection').style.display = 'none';
+                
                 allInscricoes = [];
                 filteredInscricoes = [];
             } catch (error) {
@@ -1327,6 +1342,12 @@
             setTimeout(() => {
                 alertDiv.remove();
             }, 5000);
+        }
+
+        // ===== FUNÇÃO PARA APOIO ORGANIZAÇÃO =====
+        function openApoioOrganizacao() {
+            // Abrir nova aba/janela para a página de administração do apoio
+            window.open('/admin-apoio', '_blank');
         }
 
     </script>
