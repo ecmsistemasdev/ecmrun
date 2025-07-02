@@ -3951,7 +3951,7 @@ def get_inscricao_detalhes(inscricao_id):
             I.FORMAPGTO, I.EQUIPE, I.CUPOM, 
             CONCAT(A.NOME,' ',A.SOBRENOME) AS NOME_COMPLETO,
             A.DTNASCIMENTO, A.NRCELULAR, A.SEXO, A.IDATLETA,
-            EV.DESCRICAO AS MODALIDADE, I.FLSTATUS
+            EV.DESCRICAO AS MODALIDADE, I.FLSTATUS, I.NUPEITO
         FROM INSCRICAO I
         JOIN ATLETA A ON A.IDATLETA = I.IDATLETA
         JOIN EVENTO_MODALIDADE EV ON EV.IDITEM = I.IDITEM
@@ -3982,7 +3982,8 @@ def get_inscricao_detalhes(inscricao_id):
                 'SEXO': inscricao[16],
                 'IDATLETA': inscricao[17], 
                 'MODALIDADE': inscricao[18],
-                'FLSTATUS': inscricao[19]
+                'FLSTATUS': inscricao[19],
+                'NUPEITO': inscricao[20]
             }
             print(f"DEBUG: Detalhes encontrados: {resultado}")
             return jsonify(resultado)
@@ -4009,14 +4010,15 @@ def atualizar_inscricao():
         desconto = float(data['desconto'])
         valor_pago = valor + taxa - desconto
         status = data['status']
+        npeito = data['npeito']
         
         cursor = mysql.connection.cursor()
         query = """
         UPDATE INSCRICAO 
-        SET FORMAPGTO = %s, VALOR = %s, TAXA = %s, DESCONTO = %s, VALOR_PGTO = %s, FLSTATUS = %s
+        SET FORMAPGTO = %s, VALOR = %s, TAXA = %s, DESCONTO = %s, VALOR_PGTO = %s, FLSTATUS = %s, NUPEITO = %s
         WHERE IDINSCRICAO = %s
         """
-        cursor.execute(query, (fpagto, valor, taxa, desconto, valor_pago, status, inscricao_id))
+        cursor.execute(query, (fpagto, valor, taxa, desconto, valor_pago, status, npeito, inscricao_id))
         mysql.connection.commit()
         cursor.close()
         
