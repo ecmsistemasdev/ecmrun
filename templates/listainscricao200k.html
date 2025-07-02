@@ -703,7 +703,7 @@
                 </div>
                 
                 <div class="col-12 mb-3 mt-4">
-                    <h6 class="text-primary border-bottom pb-2">Valores - Edição</h6>
+                    <h6 class="text-primary border-bottom pb-2">Edição</h6>
                 </div>
                 <div class="col-md-3 mb-3">
                     <strong>Valor:</strong><br>
@@ -746,8 +746,14 @@
                         <option value="CANCELADO" ${inscricao.FLSTATUS === 'CANCELADO' ? 'selected' : ''}>Cancelado</option>
                     </select>
                 </div>
+                <div class="col-md-3 mb-3">
+                    <strong>Nº de Peito:</strong><br>
+                    <input type="text" id="peitoEdit" 
+                        value="${inscricao.NUPEITO}" 
+                        data-valor="${inscricao.NUPEITO}">
+                </div>
                 
-                 <div class="col-12 mt-3">
+                <div class="col-12 mt-3">
                     <button type="button" class="btn btn-success" onclick="salvarAlteracoes(${inscricao.IDINSCRICAO})">
                         <i class="fas fa-save me-2"></i>Salvar Alterações
                     </button>
@@ -874,6 +880,8 @@
             const taxa = parseFloat(document.getElementById('taxaEdit').dataset.valor) || 0;
             const desconto = parseFloat(document.getElementById('descontoEdit').dataset.valor) || 0;
             const status = document.getElementById('statusEdit').value;
+            const npeito = document.getElementById('peitoEdit').value;
+            
             
             try {
                 loadingModal.show();
@@ -889,7 +897,8 @@
                         valor: valor,
                         taxa: taxa,
                         desconto: desconto,
-                        status: status
+                        status: status,
+                        npeito: npeito
                     })
                 });
                 
