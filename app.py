@@ -16,6 +16,7 @@ import string
 import json
 import uuid
 import logging
+import pytz
 
 load_dotenv()  # Carrega as variáveis do arquivo .env
 
@@ -3880,12 +3881,13 @@ def get_inscricoes(evento_id, modalidade_id=None):
         
         if modalidade_id:
             query = """
-            SELECT CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA, 
+            SELECT CONCAT(COALESCE(I.NUPEITO, ''),' ',A.NOME,' ',A.SOBRENOME) AS ATLETA, 
                    I.CAMISETA,
                    EV.DESCRICAO,
                    I.IDINSCRICAO,
                    A.SEXO,
-                   I.FLSTATUS
+                   I.FLSTATUS,
+                   I.NUPEITO
             FROM ATLETA A, INSCRICAO I, EVENTO_MODALIDADE EV
             WHERE 
             EV.IDITEM = I.IDITEM
@@ -3897,12 +3899,13 @@ def get_inscricoes(evento_id, modalidade_id=None):
             cursor.execute(query, (evento_id, modalidade_id))
         else:
             query = """
-            SELECT CONCAT(A.NOME,' ',A.SOBRENOME) AS ATLETA, 
+            SELECT CONCAT(COALESCE(I.NUPEITO, ''),' ',A.NOME,' ',A.SOBRENOME) AS ATLETA, 
                    I.CAMISETA,
                    EV.DESCRICAO,
                    I.IDINSCRICAO,
                    A.SEXO,
-                   I.FLSTATUS
+                   I.FLSTATUS,
+                   I.NUPEITO
             FROM ATLETA A, INSCRICAO I, EVENTO_MODALIDADE EV
             WHERE 
             EV.IDITEM = I.IDITEM
@@ -3925,7 +3928,8 @@ def get_inscricoes(evento_id, modalidade_id=None):
                 'DESCRICAO': inscricao[2],
                 'IDINSCRICAO': inscricao[3],
                 'SEXO': inscricao[4],
-                'FLSTATUS': inscricao[5]
+                'FLSTATUS': inscricao[5],
+                'NUPEITO': inscricao[6]
             })
         
         return jsonify(inscricoes_list)
@@ -4937,7 +4941,70 @@ def admin_apoio002():
     """Página de administração do apoio"""
     return render_template('admin_apoio002.html')
 
+#############################
+@app.route('/cronometro200k')
+def cronometro200k():
+    """Página do cronômetro da ultramaratona"""
+    return render_template('cronometro200k.html')
 
+@app.route('/api/evento-data', methods=['GET'])
+def obter_data_evento():
+    """Rota para obter a data/hora do evento"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT DATAHORAEVENTO 
+            FROM EVENTO 
+            WHERE IDEVENTO = 1
+        """)
+        row = cur.fetchone()
+        cur.close()
+        
+        if row:
+            # Converter para timestamp (assumindo que o banco está em horário local)
+            data_evento = row[0]
+            
+            # Se necessário, ajustar timezone (exemplo para Rondônia - UTC-4)
+            if data_evento.tzinfo is None:
+                # Assumir que é horário local de Rondônia
+                tz_rondonia = pytz.timezone('America/Porto_Velho')
+                data_evento = tz_rondonia.localize(data_evento)
+            
+            # Converter para timestamp em milissegundos
+            timestamp = int(data_evento.timestamp() * 1000)
+            
+            return jsonify({
+                'success': True,
+                'dataHoraEvento': data_evento.isoformat(),
+                'timestamp': timestamp
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Evento não encontrado'}), 404
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Erro ao obter data do evento: {str(e)}'}), 500
+
+@app.route('/api/iniciar-cronometro', methods=['POST'])
+def iniciar_cronometro():
+    """Rota para marcar o início da corrida (opcional - para controle manual)"""
+    try:
+        # Atualizar a data/hora do evento para agora
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            UPDATE EVENTO 
+            SET DATAHORAEVENTO = NOW() 
+            WHERE IDEVENTO = 1
+        """)
+        mysql.connection.commit()
+        cur.close()
+        
+        return jsonify({'success': True, 'message': 'Cronômetro iniciado!'})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Erro ao iniciar cronômetro: {str(e)}'}), 500
+
+
+########
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
