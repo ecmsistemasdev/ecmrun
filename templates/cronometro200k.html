@@ -275,7 +275,7 @@
                 if (data.success) {
                     dataEvento = new Date(data.dataHoraEvento);
                     document.getElementById('infoContainer').innerHTML = `
-                        <strong>Data/Hora do Evento:</strong><br>
+                        <strong>Data/Hora do Desafio:</strong><br>
                         ${dataEvento.toLocaleString('pt-BR', {
                             weekday: 'long',
                             year: 'numeric',
@@ -336,7 +336,7 @@
 
             if (agora < dataEvento) {
                 // Contagem regressiva para o início
-                labelElement.textContent = 'Tempo para início da corrida:';
+                labelElement.textContent = 'Tempo para início do Desafio:';
                 statusElement.textContent = 'Aguardando Início';
                 statusElement.className = 'status aguardando';
                 displayElement.classList.remove('pulsing');
