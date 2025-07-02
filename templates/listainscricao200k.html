@@ -123,6 +123,7 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Atleta</th>
+                                        <th class="d-none d-md-table-cell">Nº Peito</th>
                                         <th class="d-none d-md-table-cell">Camiseta</th>
                                         <th class="d-none d-lg-table-cell">Modalidade</th>
                                         <th style="width: 60px;" class="text-center">Detalhes</th>
@@ -611,10 +612,12 @@
                     <td>
                         <span style="${textStyle}">${inscricao.ATLETA}</span>${sexoBadge}
                         <div class="d-md-none small text-muted">
+                            <span style="${textStyle}">${inscricao.NUPEITO ? `Nº de Peito: ${inscricao.NUPEITO}` : ''}</span>
                             <span style="${textStyle}">${inscricao.CAMISETA ? `Camiseta: ${inscricao.CAMISETA}` : ''}</span>
                             <br class="d-lg-none"><span style="${textStyle}">${inscricao.DESCRICAO}</span>
                         </div>
                     </td>
+                    <td class="d-none d-md-table-cell"><span style="${textStyle}">${inscricao.NUPEITO || '-'}</span></td>
                     <td class="d-none d-md-table-cell"><span style="${textStyle}">${inscricao.CAMISETA || '-'}</span></td>
                     <td class="d-none d-lg-table-cell"><span style="${textStyle}">${inscricao.DESCRICAO}</span></td>
                     <td class="text-center">

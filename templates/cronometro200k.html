@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4º Desafio 200k - Porto Velho a Humaitá</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            padding-bottom: 120px; /* Espaço para o footer fixo */
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .title-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            color: #1e3c72;
+            margin: 0;
+        }
+
+        .title-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo-container {
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 200px;
+            height: 200px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 4px solid rgba(255,255,255,0.2);
+        }
+
+        .cronometro-container {
+            background: rgba(30,60,114,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 2px solid rgba(30,60,114,0.2);
+        }
+
+        .cronometro-label {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #1e3c72;
+        }
+
+        .cronometro-display {
+            font-size: 4rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: #1e3c72;
+            text-shadow: 0 0 10px rgba(30,60,114,0.3);
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+            background: rgba(30,60,114,0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(30,60,114,0.2);
+        }
+
+        .status {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 15px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .status.aguardando {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+        }
+
+        .status.correndo {
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            box-shadow: 0 5px 15px rgba(0,255,136,0.4);
+        }
+
+        .info-container {
+            background: rgba(30,60,114,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid rgba(30,60,114,0.2);
+            color: #1e3c72;
+        }
+
+        .loading {
+            font-size: 1.2rem;
+            color: #1e3c72;
+        }
+
+        .error {
+            color: #ff6b6b;
+            background: rgba(255,107,107,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid rgba(255,107,107,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .title-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .title {
+                font-size: 1.8rem;
+            }
+            
+            .title-logo {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .cronometro-display {
+                font-size: 2.5rem;
+                letter-spacing: 1px;
+            }
+            
+            .logo {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .cronometro-container {
+                padding: 20px;
+            }
+
+            .letreiro-texto {
+                font-size: 1.8rem;
+            }
+
+            .footer-letreiro {
+                height: 80px;
+            }
+
+            body {
+                padding-bottom: 100px;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .cronometro-display.pulsing {
+            animation: pulse 2s infinite;
+        }
+
+        /* Footer com letreiro */
+        .footer-letreiro {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-top: 4px solid #1e3c72;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .letreiro-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .letreiro-texto {
+            white-space: nowrap;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: scrollText 20s linear infinite;
+            padding-left: 100%;
+        }
+
+        @keyframes scrollText {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title-container">
+            <h1 class="title">4º Desafio 200k - Porto Velho a Humaitá</h1>
+            <img src="/static/img/logo_200k.png" alt="Logo 200k" class="title-logo" onerror="this.style.display='none'">
+        </div>
+        <!--
+        <div class="logo-container">
+            <img src="/static/images/logo_evento.png" alt="Logo do Evento" class="logo" onerror="this.style.display='none'">
+        </div>
+        -->
+        <div class="cronometro-container">
+            <div class="cronometro-label" id="cronometroLabel">Carregando...</div>
+            <div class="cronometro-display" id="cronometroDisplay">000:00:00</div>
+            <div class="status" id="statusEvento">Carregando dados...</div>
+        </div>
+
+        <div class="info-container" id="infoContainer">
+            <div class="loading">Obtendo informações do evento...</div>
+        </div>
+    </div>
+
+    <!-- Footer com letreiro -->
+    <div class="footer-letreiro">
+        <div class="letreiro-container">
+            <div class="letreiro-texto">PASSAGEM DOS ATLETAS NAS PARCIAIS</div>
+        </div>
+    </div>
+
+    <script>
+        let dataEvento = null;
+        let cronometroInterval = null;
+        let eventoIniciado = false;
+
+        async function carregarDadosEvento() {
+            try {
+                const response = await fetch('/api/evento-data');
+                const data = await response.json();
+                
+                if (data.success) {
+                    dataEvento = new Date(data.dataHoraEvento);
+                    document.getElementById('infoContainer').innerHTML = `
+                        <strong>Data/Hora do Evento:</strong><br>
+                        ${dataEvento.toLocaleString('pt-BR', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        })}
+                    `;
+                    iniciarCronometragem();
+                } else {
+                    throw new Error(data.error || 'Erro desconhecido');
+                }
+            } catch (error) {
+                document.getElementById('infoContainer').innerHTML = `
+                    <div class="error">
+                        <strong>Erro:</strong> ${error.message}<br>
+                        <small>Tentando reconectar...</small>
+                    </div>
+                `;
+                // Tentar novamente em 5 segundos
+                setTimeout(carregarDadosEvento, 5000);
+            }
+        }
+
+        function iniciarCronometragem() {
+            if (cronometroInterval) {
+                clearInterval(cronometroInterval);
+            }
+
+            cronometroInterval = setInterval(atualizarCronometro, 1000);
+            atualizarCronometro(); // Primeira atualização imediata
+        }
+
+        function atualizarCronometro() {
+            if (!dataEvento) return;
+
+            const agora = new Date();
+            const diferenca = Math.abs(dataEvento.getTime() - agora.getTime());
+            const segundosTotais = Math.floor(diferenca / 1000);
+
+            const horas = Math.floor(segundosTotais / 3600);
+            const minutos = Math.floor((segundosTotais % 3600) / 60);
+            const segundos = segundosTotais % 60;
+
+            const horasStr = horas.toString().padStart(2, '0');
+            const minutosStr = minutos.toString().padStart(2, '0');
+            const segundosStr = segundos.toString().padStart(2, '0');
+
+            const tempoFormatado = `${horasStr}:${minutosStr}:${segundosStr}`;
+            
+            const displayElement = document.getElementById('cronometroDisplay');
+            const labelElement = document.getElementById('cronometroLabel');
+            const statusElement = document.getElementById('statusEvento');
+
+            displayElement.textContent = tempoFormatado;
+
+            if (agora < dataEvento) {
+                // Contagem regressiva para o início
+                labelElement.textContent = 'Tempo para início da corrida:';
+                statusElement.textContent = 'Aguardando Início';
+                statusElement.className = 'status aguardando';
+                displayElement.classList.remove('pulsing');
+                eventoIniciado = false;
+            } else {
+                // Evento em andamento
+                labelElement.textContent = 'Tempo de corrida:';
+                statusElement.textContent = 'Corrida em Andamento';
+                statusElement.className = 'status correndo';
+                displayElement.classList.add('pulsing');
+                
+                if (!eventoIniciado) {
+                    eventoIniciado = true;
+                    // Som de notificação ou outras ações quando iniciar
+                    console.log('Corrida iniciada!');
+                }
+            }
+        }
+
+        function formatarDataEvento(data) {
+            const opcoes = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'America/Porto_Velho'
+            };
+            return data.toLocaleString('pt-BR', opcoes);
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarDadosEvento();
+        });
+
+        // Reconectar se a página ficar visível novamente
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && !cronometroInterval) {
+                carregarDadosEvento();
+            }
+        });
+    </script>
+</body>
+</html>
