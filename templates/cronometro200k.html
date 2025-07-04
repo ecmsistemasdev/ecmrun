@@ -124,6 +124,29 @@
             color: #1e3c72;
         }
 
+        .relogio-container {
+            background: rgba(30,60,114,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid rgba(30,60,114,0.1);
+            text-align: center;
+        }
+
+        .relogio-display {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e3c72;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 5px;
+        }
+
+        .data-display {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
         .loading {
             font-size: 1.2rem;
             color: #1e3c72;
@@ -176,7 +199,7 @@
             }
 
             body {
-                padding-bottom: 100px;
+                padding-bottom: 20px; /* Reduzido já que o letreiro não aparece inicialmente */
             }
 
             .atleta-parcial {
@@ -197,7 +220,39 @@
             animation: pulse 2s infinite;
         }
 
-        /* Footer com letreiro */
+        .info-container {
+            background: rgba(30,60,114,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid rgba(30,60,114,0.2);
+            color: #1e3c72;
+        }
+
+        .relogio-container {
+            background: rgba(30,60,114,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid rgba(30,60,114,0.1);
+            text-align: center;
+        }
+
+        .relogio-display {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e3c72;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 5px;
+        }
+
+        .data-display {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Footer com letreiro - inicialmente oculto */
         .footer-letreiro {
             position: fixed;
             bottom: 0;
@@ -211,6 +266,14 @@
             display: flex;
             align-items: center;
             z-index: 1000;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: all 0.5s ease;
+        }
+
+        .footer-letreiro.show {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .letreiro-container {
@@ -310,9 +373,14 @@
             <div class="cronometro-display" id="cronometroDisplay">000:00:00</div>
             <div class="status" id="statusEvento">Carregando dados...</div>
         </div>
-
+        <!--
         <div class="info-container" id="infoContainer">
             <div class="loading">Obtendo informações do evento...</div>
+        </div>
+        -->
+        <div class="relogio-container">
+            <div class="relogio-display" id="relogioDisplay">--:--:--</div>
+            <div class="data-display" id="dataDisplay">-- de ------ de ----</div>
         </div>
     </div>
 
@@ -337,6 +405,7 @@
         let eventoIniciado = false;
         let passagensInterval = null;
         let dadosPassagens = [];
+        let relogioInterval = null;
 
         async function carregarDadosEvento() {
             try {
@@ -345,18 +414,19 @@
                 
                 if (data.success) {
                     dataEvento = new Date(data.dataHoraEvento);
-                    document.getElementById('infoContainer').innerHTML = `
-                        <strong>Data/Hora do Desafio:</strong><br>
-                        ${dataEvento.toLocaleString('pt-BR', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit'
-                        })}
-                    `;
+
+                    //document.getElementById('infoContainer').innerHTML = `
+                    //    <strong>Data/Hora do Desafio:</strong><br>
+                    //    ${dataEvento.toLocaleString('pt-BR', {
+                    //        weekday: 'long',
+                    //        year: 'numeric',
+                    //        month: 'long',
+                    //        day: 'numeric',
+                    //        hour: '2-digit',
+                    //        minute: '2-digit',
+                    //        second: '2-digit'
+                    //    })}
+                    //`;
                     iniciarCronometragem();
                 } else {
                     throw new Error(data.error || 'Erro desconhecido');
@@ -448,6 +518,11 @@
         }
 
         function iniciarAtualizacaoPassagens() {
+            // Só inicia se o evento já tiver começado
+            if (!eventoIniciado) {
+                return;
+            }
+            
             // Carrega imediatamente
             carregarPassagensAtletas();
             
@@ -457,6 +532,60 @@
             }
             
             passagensInterval = setInterval(carregarPassagensAtletas, 40000);
+        }
+
+        function mostrarOcultarLetreiro() {
+            const letreiroElement = document.querySelector('.footer-letreiro');
+            const bodyElement = document.body;
+            
+            if (eventoIniciado) {
+                letreiroElement.classList.add('show');
+                bodyElement.style.paddingBottom = '120px';
+                // Inicia o carregamento das passagens quando mostrar o letreiro
+                if (!passagensInterval) {
+                    iniciarAtualizacaoPassagens();
+                }
+            } else {
+                letreiroElement.classList.remove('show');
+                bodyElement.style.paddingBottom = '20px';
+                // Para o carregamento das passagens quando ocultar o letreiro
+                if (passagensInterval) {
+                    clearInterval(passagensInterval);
+                    passagensInterval = null;
+                }
+            }
+        }
+
+        function atualizarRelogio() {
+            const agora = new Date();
+            
+            // Hora atual
+            const horas = agora.getHours().toString().padStart(2, '0');
+            const minutos = agora.getMinutes().toString().padStart(2, '0');
+            const segundos = agora.getSeconds().toString().padStart(2, '0');
+            
+            // Data atual
+            const opcoes = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'America/Porto_Velho'
+            };
+            
+            const dataFormatada = agora.toLocaleDateString('pt-BR', opcoes);
+            
+            document.getElementById('relogioDisplay').textContent = `${horas}:${minutos}:${segundos}`;
+            document.getElementById('dataDisplay').textContent = dataFormatada;
+        }
+
+        function iniciarRelogio() {
+            if (relogioInterval) {
+                clearInterval(relogioInterval);
+            }
+            
+            relogioInterval = setInterval(atualizarRelogio, 1000);
+            atualizarRelogio(); // Primeira atualização imediata
         }
 
         function atualizarCronometro() {
@@ -500,8 +629,13 @@
                     eventoIniciado = true;
                     // Som de notificação ou outras ações quando iniciar
                     console.log('Corrida iniciada!');
+                    // Mostra o letreiro quando a corrida iniciar
+                    mostrarOcultarLetreiro();
                 }
             }
+            
+            // Atualiza a visibilidade do letreiro
+            mostrarOcultarLetreiro();
         }
 
         function formatarDataEvento(data) {
@@ -520,7 +654,7 @@
         // Inicializar quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
             carregarDadosEvento();
-            iniciarAtualizacaoPassagens();
+            iniciarRelogio();
         });
 
         // Reconectar se a página ficar visível novamente
@@ -529,7 +663,10 @@
                 if (!cronometroInterval) {
                     carregarDadosEvento();
                 }
-                if (!passagensInterval) {
+                if (!relogioInterval) {
+                    iniciarRelogio();
+                }
+                if (eventoIniciado && !passagensInterval) {
                     iniciarAtualizacaoPassagens();
                 }
             }
