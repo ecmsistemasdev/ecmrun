@@ -5168,12 +5168,13 @@ def lanca200k_parciais():
     """Busca as parciais disponíveis"""
     print("DEBUG: Buscando parciais...")
     
-    if not session.get('autenticado'):
-        print("DEBUG: Usuário não autenticado")
-        return jsonify({'error': 'Não autenticado'}), 401
+#    if not session.get('autenticado'):
+#        print("DEBUG: Usuário não autenticado")
+#        return jsonify({'error': 'Não autenticado'}), 401
     
     try:
         cursor = mysql.connection.cursor()
+
         print("DEBUG: Conexão com banco estabelecida")
         
         cursor.execute("""
@@ -5206,9 +5207,9 @@ def lanca200k_pesquisa_atleta():
     """Pesquisa atleta por número de peito"""
     print("DEBUG: Pesquisando atleta...")
     
-    if not session.get('autenticado'):
-        print("DEBUG: Usuário não autenticado")
-        return jsonify({'error': 'Não autenticado'}), 401
+#    if not session.get('autenticado'):
+#        print("DEBUG: Usuário não autenticado")
+#        return jsonify({'error': 'Não autenticado'}), 401
     
     try:
         data = request.get_json()
@@ -5304,9 +5305,9 @@ def lanca200k_confirmar():
     """Confirma o lançamento do atleta"""
     print("DEBUG: Confirmando lançamento...")
     
-    if not session.get('autenticado'):
-        print("DEBUG: Usuário não autenticado")
-        return jsonify({'error': 'Não autenticado'}), 401
+#    if not session.get('autenticado'):
+#        print("DEBUG: Usuário não autenticado")
+#        return jsonify({'error': 'Não autenticado'}), 401
     
     try:
         data = request.get_json()
