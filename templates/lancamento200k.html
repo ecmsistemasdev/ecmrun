@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio 200k - Lançamento de Parciais</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #34495e;
+            font-size: 14px;
+        }
+
+        select, input[type="number"], input[type="datetime-local"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .peito-input {
+            flex: 1;
+        }
+
+        .peito-input input {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 48px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            color: white;
+            padding: 12px;
+            min-width: 48px;
+            justify-content: center;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn-icon {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 12px;
+            min-width: 48px;
+            max-width: 48px;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(23, 162, 184, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .atleta-info {
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+            display: none;
+        }
+
+        .atleta-info.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .atleta-nome {
+            font-weight: bold;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .datetime-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .datetime-input {
+            flex: 1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 500;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .footer.show {
+            transform: translateY(0);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content h3 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .search-group {
+                display: flex;
+                gap: 10px;
+                align-items: flex-end;
+            }
+            
+            .peito-input {
+                flex: 1;
+            }
+            
+            .btn-primary {
+                flex: 1;
+                max-width: none;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .button-group .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .datetime-group {
+                display: flex;
+                gap: 10px;
+                align-items: flex-end;
+            }
+            
+            .datetime-input {
+                flex: 1;
+            }
+            
+            .btn-icon {
+                flex-shrink: 0;
+            }
+        }
+
+        /* Ícones */
+        .icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Desafio 200k - Porto Velho a Humaitá</h1>
+        
+        <div class="form-group">
+            <label for="parcial">Parcial:</label>
+            <select id="parcial" name="parcial">
+                <option value="">Selecione a parcial...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <div class="search-group">
+                <div class="peito-input">
+                    <label for="nuPeito">Nº de Peito:</label>
+                    <input type="number" id="nuPeito" name="nuPeito" maxlength="3" max="999" min="1" placeholder="000" oninput="limitarDigitos(this, 3)">
+                </div>
+                <button class="btn btn-primary" id="btnPesquisa">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    Pesquisar
+                </button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            Pesquisando...
+        </div>
+
+        <div class="atleta-info" id="atletaInfo">
+            <div class="atleta-nome" id="atletaNome"></div>
+        </div>
+
+        <div class="form-group">
+            <div class="datetime-group">
+                <div class="datetime-input">
+                    <label for="dataHora">Data/Hora Passagem:</label>
+                    <input type="datetime-local" id="dataHora" name="dataHora">
+                </div>
+                <button class="btn btn-icon" id="btnAtualizarHora" title="Atualizar para hora atual">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39M11,14H13V8H11M15,1H9V3H15V1Z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-success" id="btnConfirmar" disabled>
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+                </svg>
+                Confirmar
+            </button>
+            <button class="btn btn-danger" id="btnCancelar" disabled title="Cancelar">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="footer" id="footer">
+        <span id="footerMessage"></span>
+    </div>
+
+    <!-- Modal para mensagens de erro -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <h3>Atenção!</h3>
+            <p id="errorMessage"></p>
+            <button class="btn btn-primary" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        let atletaEncontrado = null;
+
+        // Carregar parciais ao iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DEBUG: DOM carregado, iniciando aplicação...');
+            
+            // Pequeno delay para garantir que todos os elementos estejam prontos
+            setTimeout(() => {
+                carregarParciais();
+                atualizarDataHora();
+            }, 100);
+        });
+
+        // Carregar parciais do banco
+        async function carregarParciais() {
+            try {
+                console.log('DEBUG: Iniciando carregamento de parciais...');
+                const response = await fetch('/api/lanca200k_parciais');
+                console.log('DEBUG: Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const parciais = await response.json();
+                console.log('DEBUG: Parciais recebidas:', parciais);
+                
+                if (Array.isArray(parciais)) {
+                    const select = document.getElementById('parcial');
+                    parciais.forEach(parcial => {
+                        const option = document.createElement('option');
+                        option.value = parcial.KM;
+                        option.textContent = parcial.DEPARCIAL;
+                        option.dataset.idparcial = parcial.IDPARCIAL;
+                        select.appendChild(option);
+                    });
+                    console.log('DEBUG: Parciais carregadas com sucesso');
+                } else {
+                    console.error('DEBUG: Resposta não é um array:', parciais);
+                    if (parciais.error) {
+                        showErrorModal('Erro ao carregar parciais: ' + parciais.error);
+                    }
+                }
+            } catch (error) {
+                console.error('DEBUG: Erro ao carregar parciais:', error);
+                showErrorModal('Erro ao carregar parciais. Verifique a conexão.');
+            }
+        }
+
+        // Pesquisar atleta
+        document.getElementById('btnPesquisa').addEventListener('click', async function() {
+            const parcial = document.getElementById('parcial').value;
+            const nuPeito = document.getElementById('nuPeito').value;
+            
+            if (!parcial || !nuPeito) {
+                showErrorModal('Por favor, selecione a parcial e informe o número de peito.');
+                return;
+            }
+            
+            console.log('DEBUG: Iniciando pesquisa - Parcial:', parcial, 'Peito:', nuPeito);
+            
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('atletaInfo').classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/lanca200k_pesquisa_atleta', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        km_parcial: parcial,
+                        nu_peito: nuPeito
+                    })
+                });
+                
+                console.log('DEBUG: Response status:', response.status);
+                const result = await response.json();
+                console.log('DEBUG: Result:', result);
+                
+                if (response.ok && result.success) {
+                    atletaEncontrado = result.atleta;
+                    document.getElementById('atletaNome').textContent = result.atleta.NOME;
+                    document.getElementById('atletaInfo').classList.add('show');
+                    document.getElementById('btnConfirmar').disabled = false;
+                    document.getElementById('btnCancelar').disabled = false;
+                    atualizarDataHora();
+                    hideFooter();
+                } else {
+                    showErrorModal(result.message || 'Erro ao pesquisar atleta');
+                    limparFormulario();
+                }
+            } catch (error) {
+                console.error('DEBUG: Erro ao pesquisar atleta:', error);
+                showErrorModal('Erro de conexão. Tente novamente.');
+                limparFormulario();
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        });
+
+        // Atualizar data/hora
+        document.getElementById('btnAtualizarHora').addEventListener('click', function() {
+            atualizarDataHora();
+        });
+
+        function atualizarDataHora() {
+            const agora = new Date();
+            const dataHoraLocal = new Date(agora.getTime() - agora.getTimezoneOffset() * 60000);
+            document.getElementById('dataHora').value = dataHoraLocal.toISOString().slice(0, 16);
+        }
+
+        // Confirmar lançamento
+        document.getElementById('btnConfirmar').addEventListener('click', async function() {
+            if (!atletaEncontrado) return;
+            
+            const dataHora = document.getElementById('dataHora').value;
+            const km = document.getElementById('parcial').value;
+            
+            if (!dataHora) {
+                showErrorModal('Por favor, informe a data e hora da passagem.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/lanca200k_confirmar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        idea: atletaEncontrado.IDEA,
+                        idatleta: atletaEncontrado.IDATLETA,
+                        data_hora: dataHora,
+                        km: km
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showFooter(result.message);
+                    limparFormulario();
+                    // Limpar campo de peito e focar
+                    document.getElementById('nuPeito').value = '';
+                    document.getElementById('nuPeito').focus();
+                } else {
+                    showErrorModal(result.error || 'Erro ao confirmar lançamento');
+                }
+            } catch (error) {
+                console.error('Erro ao confirmar lançamento:', error);
+                showErrorModal('Erro de conexão. Tente novamente.');
+            }
+        });
+
+        // Cancelar
+        document.getElementById('btnCancelar').addEventListener('click', function() {
+            limparFormulario();
+        });
+
+        // Permitir pesquisa com Enter
+        document.getElementById('nuPeito').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('btnPesquisa').click();
+            }
+        });
+
+        // Funções auxiliares
+        function limitarDigitos(input, maxDigitos) {
+            if (input.value.length > maxDigitos) {
+                input.value = input.value.slice(0, maxDigitos);
+            }
+        }
+
+        function limparFormulario() {
+            atletaEncontrado = null;
+            document.getElementById('atletaInfo').classList.remove('show');
+            document.getElementById('btnConfirmar').disabled = true;
+            document.getElementById('btnCancelar').disabled = true;
+        }
+
+        function showErrorModal(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('errorModal').style.display = 'none';
+        }
+
+        function showFooter(message) {
+            document.getElementById('footerMessage').textContent = message;
+            document.getElementById('footer').classList.add('show');
+        }
+
+        function hideFooter() {
+            document.getElementById('footer').classList.remove('show');
+        }
+
+        // Fechar modal clicando fora
+        window.onclick = function(event) {
+            const modal = document.getElementById('errorModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

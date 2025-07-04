@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Desafio 200k - Porto Velho a Humaitá</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .dashboard-container {
+            padding: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-bottom: 80px; /* Espaço para o footer */
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 10px; /* Reduzido de 15px para 10px */
+            padding: 10px 0;
+        }
+
+        .dashboard-header h1 {
+            color: white;
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+
+        .dashboard-header .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 5px;
+            margin-bottom: 5px; /* Adicionado para reduzir espaço */
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-title {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-table {
+            margin: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            min-width: 1200px;
+        }
+
+        .custom-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 500;
+            padding: 8px;
+            text-align: center;
+            border: none;
+            position: relative;
+            cursor: col-resize;
+            font-size: 0.8rem;
+        }
+
+        .custom-table th:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        }
+
+        .custom-table td {
+            padding: 6px 8px;
+            text-align: center;
+            border: none;
+            vertical-align: middle;
+            font-size: 0.75rem;
+            font-weight: normal;
+        }
+
+        .custom-table td:first-child {
+            text-align: left;
+        }
+
+        /* Zebrado melhorado para as tabelas */
+        .custom-table tbody tr:nth-child(odd) {
+            background-color: rgba(102, 126, 234, 0.08);
+        }
+
+        .custom-table tbody tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 1);
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.15);
+            transform: translateY(-1px);
+            transition: all 0.15s ease;
+        }
+
+        /* Larguras específicas das colunas para ambas as tabelas */
+        .custom-table th:nth-child(1) { width: 200px; } /* Equipe/Atleta */
+        .custom-table th:nth-child(2) { width: 80px; }  /* Km 25 */
+        .custom-table th:nth-child(3) { width: 80px; }  /* Km 50 */
+        .custom-table th:nth-child(4) { width: 80px; }  /* Km 75 */
+        .custom-table th:nth-child(5) { width: 80px; }  /* Km 100 */
+        .custom-table th:nth-child(6) { width: 80px; }  /* Km 125 */
+        .custom-table th:nth-child(7) { width: 80px; }  /* Km 150 */
+        .custom-table th:nth-child(8) { width: 80px; }  /* Km 175 */
+        .custom-table th:nth-child(9) { width: 80px; }  /* Km 200 */
+        .custom-table th:nth-child(10) { width: 100px; } /* Última Parcial */
+        .custom-table th:nth-child(11) { width: 100px; } /* Tempo */
+
+        /* Aplicar as mesmas larguras às células td */
+        .custom-table td:nth-child(1) { width: 200px; } /* Equipe/Atleta */
+        .custom-table td:nth-child(2) { width: 80px; }  /* Km 25 */
+        .custom-table td:nth-child(3) { width: 80px; }  /* Km 50 */
+        .custom-table td:nth-child(4) { width: 80px; }  /* Km 75 */
+        .custom-table td:nth-child(5) { width: 80px; }  /* Km 100 */
+        .custom-table td:nth-child(6) { width: 80px; }  /* Km 125 */
+        .custom-table td:nth-child(7) { width: 80px; }  /* Km 150 */
+        .custom-table td:nth-child(8) { width: 80px; }  /* Km 175 */
+        .custom-table td:nth-child(9) { width: 80px; }  /* Km 200 */
+        .custom-table td:nth-child(10) { width: 100px; } /* Última Parcial */
+        .custom-table td:nth-child(11) { width: 100px; } /* Tempo */
+
+        .equipes-table {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .auth-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header h2 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .auth-header p {
+            color: #7f8c8d;
+            margin: 0;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(45deg, #218838, #1ba085);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .spinner-border {
+            width: 2rem;
+            height: 2rem;
+            border-width: 0.2rem;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+        }
+
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+        }
+
+        .refresh-indicator .progress-ring {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: conic-gradient(#667eea 0deg, #764ba2 180deg, #e9ecef 360deg);
+            animation: spin 1s linear infinite;
+        }
+
+        .refresh-indicator .progress-ring.paused {
+            animation-play-state: paused;
+        }
+
+        .refresh-indicator .inner-circle {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-indicator .countdown {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-indicator .progress-ring {
+            /* ... outras propriedades ... */
+            animation: spin 60s linear infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+                padding-bottom: 80px;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .dashboard-header .subtitle {
+                font-size: 0.8rem;
+            }
+            
+            .table-container {
+                padding: 10px;
+            }
+            
+            .custom-table {
+                min-width: 800px;
+            }
+            
+            .custom-table th,
+            .custom-table td {
+                padding: 4px 6px;
+                font-size: 0.7rem;
+            }
+            
+            .table-title {
+                font-size: 1rem;
+            }
+
+            .refresh-indicator {
+                width: 40px;
+                height: 40px;
+                top: 15px;
+                right: 15px;
+            }
+
+            .refresh-indicator .progress-ring {
+                width: 36px;
+                height: 36px;
+            }
+
+            .refresh-indicator .inner-circle {
+                width: 28px;
+                height: 28px;
+            }
+
+            .refresh-indicator .countdown {
+                font-size: 0.6rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .custom-table {
+                min-width: 600px;
+            }
+            
+            .custom-table th,
+            .custom-table td {
+                padding: 3px 4px;
+                font-size: 0.65rem;
+            }
+            
+            .auth-card {
+                padding: 25px;
+            }
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        }
+    </style>
+</head>
+<body>
+    <!-- Seção de Autenticação -->
+    <div id="authSection" class="auth-section">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2><i class="fas fa-lock"></i> Acesso Restrito</h2>
+                <p>Dashboard - Desafio 200k</p>
+            </div>
+            <form id="authForm">
+                <div class="mb-3">
+                    <label for="senha" class="form-label">Senha de Acesso:</label>
+                    <input type="password" class="form-control" id="senha" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                </button>
+            </form>
+            <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div id="mainContent" class="dashboard-container" style="display: none;">
+        <!-- Header Simplificado -->
+        <div class="dashboard-header">
+            <h1>Desafio 200k - Porto Velho a Humaitá</h1>
+            <p class="subtitle">Dashboard em Tempo Real</p>
+        </div>
+
+        <!-- Tabela de Equipes -->
+        <div class="table-container">
+            <h3 class="table-title">
+                <i class="fas fa-users text-primary"></i>
+                Equipes
+            </h3>
+            <div class="table-wrapper">
+                <div class="equipes-table">
+                    <table class="table custom-table" id="equipesTable">
+                        <thead>
+                            <tr>
+                                <th>Equipe</th>
+                                <th>Km 25</th>
+                                <th>Km 50</th>
+                                <th>Km 75</th>
+                                <th>Km 100</th>
+                                <th>Km 125</th>
+                                <th>Km 150</th>
+                                <th>Km 175</th>
+                                <th>Km 200</th>
+                                <th>Última Parcial</th>
+                                <th>Tempo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipesTableBody">
+                            <tr>
+                                <td colspan="11" class="loading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Carregando...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Atletas Solo -->
+        <div class="table-container">
+            <h3 class="table-title">
+                <i class="fas fa-user text-success"></i>
+                Atletas Solo
+            </h3>
+            <div class="table-wrapper">
+                <table class="table custom-table" id="atletasTable">
+                    <thead>
+                        <tr>
+                            <th>Atleta</th>
+                            <th>Km 25</th>
+                            <th>Km 50</th>
+                            <th>Km 75</th>
+                            <th>Km 100</th>
+                            <th>Km 125</th>
+                            <th>Km 150</th>
+                            <th>Km 175</th>
+                            <th>Km 200</th>
+                            <th>Última Parcial</th>
+                            <th>Tempo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="atletasTableBody">
+                        <tr>
+                            <td colspan="11" class="loading">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicador de Atualização -->
+    <div id="refreshIndicator" class="refresh-indicator" style="display: none;">
+        <div class="progress-ring" id="progressRing"></div>
+        <div class="inner-circle">
+            <div class="countdown" id="countdown">60</div>
+        </div>
+    </div>
+
+    <!-- Footer fixo -->
+    <div class="footer" id="footer" style="display: none;">
+        <button type="button" class="btn btn-success" id="lancamentosBtn">
+            <i class="fas fa-plus-circle me-2"></i>Lançamentos
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variáveis globais
+        let resizeTimeout;
+        let currentResizeColumn = null;
+        let startX = 0;
+        let startWidth = 0;
+        let refreshCountdown = 60;
+        let refreshInterval;
+        let countdownInterval;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('authForm').addEventListener('submit', handleAuth);
+            document.getElementById('lancamentosBtn').addEventListener('click', handleLancamentos);
+            
+            // Adicionar funcionalidade de redimensionamento de colunas
+            addColumnResizeListeners();
+        });
+
+        // Função de autenticação
+        async function handleAuth(e) {
+            e.preventDefault();
+            const senha = document.getElementById('senha').value;
+            
+            try {
+                showLoading();
+                const response = await fetch('/verificar_senha1', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ senha: senha })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('authSection').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    document.getElementById('refreshIndicator').style.display = 'flex';
+                    document.getElementById('footer').style.display = 'block';
+                    await loadDashboardData();
+                    startAutoRefresh();
+                } else {
+                    showError(data.message || 'Senha incorreta');
+                }
+            } catch (error) {
+                showError('Erro ao verificar senha');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Carregar dados do dashboard
+        async function loadDashboardData() {
+            try {
+                await Promise.all([
+                    loadEquipes(),
+                    loadAtletas()
+                ]);
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                showError('Erro ao carregar dados do dashboard');
+            }
+        }
+
+        // Carregar equipes
+        async function loadEquipes() {
+            try {
+                const response = await fetch('/dashboard_api/equipes');
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar equipes');
+                }
+                
+                const equipes = await response.json();
+                displayEquipes(equipes);
+            } catch (error) {
+                console.error('Erro ao carregar equipes:', error);
+                document.getElementById('equipesTableBody').innerHTML = 
+                    '<tr><td colspan="11" class="text-danger">Erro ao carregar dados das equipes</td></tr>';
+            }
+        }
+
+        // Carregar atletas
+        async function loadAtletas() {
+            try {
+                const response = await fetch('/dashboard_api/atletas');
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar atletas');
+                }
+                
+                const atletas = await response.json();
+                displayAtletas(atletas);
+            } catch (error) {
+                console.error('Erro ao carregar atletas:', error);
+                document.getElementById('atletasTableBody').innerHTML = 
+                    '<tr><td colspan="11" class="text-danger">Erro ao carregar dados dos atletas</td></tr>';
+            }
+        }
+
+        // Exibir equipes na tabela
+        function displayEquipes(equipes) {
+            const tbody = document.getElementById('equipesTableBody');
+            
+            if (equipes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11">Nenhuma equipe encontrada</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = equipes.map(equipe => `
+                <tr>
+                    <td>${equipe.EQUIPE}</td>
+                    <td>${equipe.KM25}</td>
+                    <td>${equipe.KM50}</td>
+                    <td>${equipe.KM75}</td>
+                    <td>${equipe.KM100}</td>
+                    <td>${equipe.KM125}</td>
+                    <td>${equipe.KM150}</td>
+                    <td>${equipe.KM175}</td>
+                    <td>${equipe.KM200}</td>
+                    <td>${equipe.ULTIMAPARCIAL}</td>
+                    <td>${equipe.TEMPO}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Exibir atletas na tabela
+        function displayAtletas(atletas) {
+            const tbody = document.getElementById('atletasTableBody');
+            
+            if (atletas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11">Nenhum atleta encontrado</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = atletas.map(atleta => `
+                <tr>
+                    <td>${atleta.NOME}</td>
+                    <td>${atleta.KM25}</td>
+                    <td>${atleta.KM50}</td>
+                    <td>${atleta.KM75}</td>
+                    <td>${atleta.KM100}</td>
+                    <td>${atleta.KM125}</td>
+                    <td>${atleta.KM150}</td>
+                    <td>${atleta.KM175}</td>
+                    <td>${atleta.KM200}</td>
+                    <td>${atleta.ULTIMAPARCIAL}</td>
+                    <td>${atleta.TEMPO}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Iniciar atualização automática
+        function startAutoRefresh() {
+            // Atualizar dados a cada 60 segundos
+            refreshInterval = setInterval(async () => {
+                await loadDashboardData();
+                resetCountdown();
+            }, 60000);
+
+            // Atualizar countdown a cada segundo
+            countdownInterval = setInterval(() => {
+                refreshCountdown--;
+                document.getElementById('countdown').textContent = refreshCountdown;
+                
+                if (refreshCountdown <= 0) {
+                    resetCountdown();
+                }
+            }, 1000);
+        }
+
+        // Resetar countdown
+        function resetCountdown() {
+            refreshCountdown = 60;
+            document.getElementById('countdown').textContent = refreshCountdown;
+        }
+
+        // Adicionar listeners para redimensionar colunas
+        function addColumnResizeListeners() {
+            const tables = document.querySelectorAll('.custom-table');
+            
+            tables.forEach(table => {
+                const headers = table.querySelectorAll('th');
+                
+                headers.forEach((header, index) => {
+                    // Adicionar cursor de redimensionamento
+                    header.addEventListener('mousedown', (e) => {
+                        if (e.offsetX > header.offsetWidth - 10) {
+                            currentResizeColumn = { header, index };
+                            startX = e.pageX;
+                            startWidth = header.offsetWidth;
+                            document.addEventListener('mousemove', handleColumnResize);
+                            document.addEventListener('mouseup', stopColumnResize);
+                            e.preventDefault();
+                        }
+                    });
+                    
+                    // Mudar cursor quando próximo da borda
+                    header.addEventListener('mousemove', (e) => {
+                        if (e.offsetX > header.offsetWidth - 10) {
+                            header.style.cursor = 'col-resize';
+                        } else {
+                            header.style.cursor = 'default';
+                        }
+                    });
+                });
+            });
+        }
+
+        // Redimensionar coluna
+        function handleColumnResize(e) {
+            if (!currentResizeColumn) return;
+            
+            const diff = e.pageX - startX;
+            const newWidth = startWidth + diff;
+            
+            if (newWidth > 50) { // Largura mínima
+                currentResizeColumn.header.style.width = newWidth + 'px';
+            }
+        }
+
+        // Parar redimensionamento
+        function stopColumnResize() {
+            currentResizeColumn = null;
+            document.removeEventListener('mousemove', handleColumnResize);
+            document.removeEventListener('mouseup', stopColumnResize);
+        }
+
+        // Função para o botão de lançamentos
+        function handleLancamentos() {
+            alert('Funcionalidade de lançamentos será implementada em breve!');
+            // Aqui você pode implementar a navegação para a página de lançamentos
+            // window.location.href = '/lancamentos';
+        }
+
+        // Funções auxiliares
+        function showLoading() {
+            // Implementar se necessário um loading global
+        }
+
+        function hideLoading() {
+            // Implementar se necessário um loading global
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Função para atualizar dados manualmente
+        function refreshData() {
+            loadDashboardData();
+            resetCountdown();
+        }
+
+        // Adicionar evento de teclado para refresh (F5 ou Ctrl+R)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                e.preventDefault();
+                refreshData();
+            }
+        });
+
+        // Limpar intervalos ao sair da página
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) clearInterval(refreshInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
+        });
+    </script>
+</body>
+</html>
