@@ -3758,10 +3758,7 @@ def verificar_senha1():
         
         print(f"DEBUG: Senha informada: {senha_informada}")
         print(f"DEBUG: Senha do ambiente existe: {senha_correta is not None}")
-        
-        # Para teste, você pode temporariamente usar uma senha fixa:
-        # senha_correta = "123456"  # Descomente esta linha para teste
-        
+                
         if senha_informada == senha_correta:
             session['autenticado'] = True
             print("DEBUG: Autenticação bem-sucedida")
@@ -5005,6 +5002,349 @@ def iniciar_cronometro():
 
 
 ########
+
+# Rota para exibir a página do dashboard
+@app.route('/dashboard200k')
+def dashboard200k():
+    return render_template('dashboard200k.html')
+
+# Rota para buscar dados das equipes
+@app.route('/dashboard_api/equipes')
+def dashboard_get_equipes():
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        
+        query = """
+        SELECT CONCAT(e.NOME_EQUIPE,' (',em.DEREDUZ,')') as EQUIPE,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDEA = e.IDEA) AS KM25,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDEA = e.IDEA) AS KM50,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDEA = e.IDEA) AS KM75,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDEA = e.IDEA) AS KM100,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDEA = e.IDEA) AS KM125,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDEA = e.IDEA) AS KM150,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDEA = e.IDEA) AS KM175,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDEA = e.IDEA) AS KM200,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
+           WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
+             AND IDEA = e.IDEA) AS ULTIMAPARCIAL,
+          CONCAT(
+            TIMESTAMPDIFF(HOUR, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
+                 AND IDEA = e.IDEA)
+            ),':',
+            LPAD(TIMESTAMPDIFF(MINUTE, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
+                 AND IDEA = e.IDEA)
+            ) % 60, 2, '0'),':',
+            LPAD(TIMESTAMPDIFF(SECOND, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
+                 AND IDEA = e.IDEA)
+            ) % 60, 2, '0')
+          ) AS TEMPO   
+        FROM EQUIPE e, EVENTO_MODALIDADE em
+        WHERE em.IDITEM = e.IDITEM
+        ORDER BY em.IDITEM
+        """
+        
+        cursor.execute(query)
+        equipes = cursor.fetchall()
+        cursor.close()
+        
+        equipes_list = []
+        for equipe in equipes:
+            equipes_list.append({
+                'EQUIPE': equipe[0],
+                'KM25': equipe[1].strftime('%d/%m/%y %H:%M') if equipe[1] else '',
+                'KM50': equipe[2].strftime('%d/%m/%y %H:%M') if equipe[2] else '',
+                'KM75': equipe[3].strftime('%d/%m/%y %H:%M') if equipe[3] else '',
+                'KM100': equipe[4].strftime('%d/%m/%y %H:%M') if equipe[4] else '',
+                'KM125': equipe[5].strftime('%d/%m/%y %H:%M') if equipe[5] else '',
+                'KM150': equipe[6].strftime('%d/%m/%y %H:%M') if equipe[6] else '',
+                'KM175': equipe[7].strftime('%d/%m/%y %H:%M') if equipe[7] else '',
+                'KM200': equipe[8].strftime('%d/%m/%y %H:%M') if equipe[8] else '',
+                'ULTIMAPARCIAL': equipe[9].strftime('%d/%m/%y %H:%M') if equipe[9] else '',
+                'TEMPO': equipe[10] if equipe[10] else ''
+            })
+        
+        return jsonify(equipes_list)
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao buscar equipes: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# Rota para buscar dados dos atletas solo
+@app.route('/dashboard_api/atletas')
+def dashboard_get_atletas():
+    if not session.get('autenticado'):
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        
+        query = """
+        SELECT CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDATLETA = a.IDATLETA) AS KM25,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDATLETA = a.IDATLETA) AS KM50,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDATLETA = a.IDATLETA) AS KM75,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDATLETA = a.IDATLETA) AS KM100,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDATLETA = a.IDATLETA) AS KM125,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDATLETA = a.IDATLETA) AS KM150,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDATLETA = a.IDATLETA) AS KM175,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA) AS KM200,
+          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
+           WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
+             AND IDATLETA = a.IDATLETA) AS ULTIMAPARCIAL,
+          CONCAT(
+            TIMESTAMPDIFF(HOUR, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
+                 AND IDATLETA = a.IDATLETA)
+            ),':',
+            LPAD(TIMESTAMPDIFF(MINUTE, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
+                 AND IDATLETA = a.IDATLETA)
+            ) % 60, 2, '0'),':',
+            LPAD(TIMESTAMPDIFF(SECOND, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
+                 AND IDATLETA = a.IDATLETA)
+            ) % 60, 2, '0')
+          ) AS TEMPO   
+        FROM ATLETA a, INSCRICAO i, EVENTO_MODALIDADE em
+        WHERE em.IDITEM = i.IDITEM
+        AND i.IDITEM = 1
+        AND i.IDATLETA = a.IDATLETA
+        ORDER BY a.NOME, a.SOBRENOME
+        """
+        
+        cursor.execute(query)
+        atletas = cursor.fetchall()
+        cursor.close()
+        
+        atletas_list = []
+        for atleta in atletas:
+            atletas_list.append({
+                'NOME': atleta[0],
+                'KM25': atleta[1].strftime('%d/%m/%y %H:%M') if atleta[1] else '',
+                'KM50': atleta[2].strftime('%d/%m/%y %H:%M') if atleta[2] else '',
+                'KM75': atleta[3].strftime('%d/%m/%y %H:%M') if atleta[3] else '',
+                'KM100': atleta[4].strftime('%d/%m/%y %H:%M') if atleta[4] else '',
+                'KM125': atleta[5].strftime('%d/%m/%y %H:%M') if atleta[5] else '',
+                'KM150': atleta[6].strftime('%d/%m/%y %H:%M') if atleta[6] else '',
+                'KM175': atleta[7].strftime('%d/%m/%y %H:%M') if atleta[7] else '',
+                'KM200': atleta[8].strftime('%d/%m/%y %H:%M') if atleta[8] else '',
+                'ULTIMAPARCIAL': atleta[9].strftime('%d/%m/%y %H:%M') if atleta[9] else '',
+                'TEMPO': atleta[10] if atleta[10] else ''
+            })
+        
+        return jsonify(atletas_list)
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao buscar atletas: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+#################
+
+@app.route('/lancamento200k')
+def lancamento200k():
+    """Renderiza a página de lançamento"""
+    return render_template('lancamento200k.html')
+
+@app.route('/api/lanca200k_parciais')
+def lanca200k_parciais():
+    """Busca as parciais disponíveis"""
+    print("DEBUG: Buscando parciais...")
+    
+    if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        cursor = mysql.connection.cursor()
+        print("DEBUG: Conexão com banco estabelecida")
+        
+        cursor.execute("""
+            SELECT KM, DEPARCIAL, IDPARCIAL FROM PARCIAIS_200K
+            WHERE KM <> 0
+            ORDER BY KM
+        """)
+        parciais = cursor.fetchall()
+        cursor.close()
+        
+        print(f"DEBUG: Encontradas {len(parciais)} parciais")
+        
+        parciais_list = []
+        for parcial in parciais:
+            parciais_list.append({
+                'KM': parcial[0],
+                'DEPARCIAL': parcial[1],
+                'IDPARCIAL': parcial[2]
+            })
+        
+        print(f"DEBUG: Retornando parciais: {parciais_list}")
+        return jsonify(parciais_list)
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao buscar parciais: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lanca200k_pesquisa_atleta', methods=['POST'])
+def lanca200k_pesquisa_atleta():
+    """Pesquisa atleta por número de peito"""
+    print("DEBUG: Pesquisando atleta...")
+    
+    if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        data = request.get_json()
+        km_parcial = data.get('km_parcial')
+        nu_peito = data.get('nu_peito')
+        
+        print(f"DEBUG: Pesquisando atleta - KM: {km_parcial}, Peito: {nu_peito}")
+        
+        cursor = mysql.connection.cursor()
+        
+        cursor.execute("""
+            SELECT 
+              i.IDATLETA, CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
+              COALESCE((SELECT IDEA FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),0) AS IDEA,
+              COALESCE((SELECT KM_INI+1 FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N') AS KM_INI,
+              COALESCE((SELECT KM_FIM FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N') AS KM_FIM  
+            FROM INSCRICAO i, ATLETA a 
+            WHERE a.IDATLETA = i.IDATLETA
+              AND (COALESCE((SELECT IDEA FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),0) = 0 
+                OR %s BETWEEN COALESCE((SELECT KM_INI+1 FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N')
+                AND COALESCE((SELECT KM_FIM FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N')) 
+              AND i.NUPEITO = %s
+        """, (km_parcial, nu_peito))
+        
+        atleta = cursor.fetchone()
+        
+        if atleta:
+            # Verificar se já existe lançamento para este atleta/equipe nesta parcial
+            idatleta = atleta[0]
+            idea = atleta[2]
+            
+            # Mapear KM para IDPARCIAL
+            km_to_idparcial = {
+                25: 2, 50: 3, 75: 4, 100: 5, 
+                125: 6, 150: 7, 175: 8, 200: 9
+            }
+            idparcial = km_to_idparcial.get(int(km_parcial), 0)
+            
+            # Verificar duplicatas
+            if idea == 0:
+                # Atleta individual - verificar por IDATLETA
+                cursor.execute("""
+                    SELECT COUNT(*) FROM PROVA_PARCIAIS_200K 
+                    WHERE IDATLETA = %s AND IDPARCIAL = %s
+                """, (idatleta, idparcial))
+            else:
+                # Equipe - verificar por IDEA
+                cursor.execute("""
+                    SELECT COUNT(*) FROM PROVA_PARCIAIS_200K 
+                    WHERE IDEA = %s AND IDPARCIAL = %s
+                """, (idea, idparcial))
+            
+            count = cursor.fetchone()[0]
+            cursor.close()
+            
+            if count > 0:
+                if idea == 0:
+                    message = f"Atleta já possui lançamento nesta parcial de {km_parcial}km"
+                else:
+                    message = f"Equipe já possui lançamento nesta parcial de {km_parcial}km"
+                
+                print(f"DEBUG: Lançamento duplicado detectado: {message}")
+                return jsonify({
+                    'success': False,
+                    'message': message
+                })
+            
+            print(f"DEBUG: Atleta encontrado: {atleta[1]}")
+            return jsonify({
+                'success': True,
+                'atleta': {
+                    'IDATLETA': atleta[0],
+                    'NOME': atleta[1],
+                    'IDEA': atleta[2],
+                    'KM_INI': atleta[3],
+                    'KM_FIM': atleta[4]
+                }
+            })
+        else:
+            cursor.close()
+            print("DEBUG: Nenhum atleta encontrado")
+            return jsonify({
+                'success': False,
+                'message': 'Nº de Peito não existe ou Atleta não permitido para esta parcial'
+            })
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao pesquisar atleta: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lanca200k_confirmar', methods=['POST'])
+def lanca200k_confirmar():
+    """Confirma o lançamento do atleta"""
+    print("DEBUG: Confirmando lançamento...")
+    
+    if not session.get('autenticado'):
+        print("DEBUG: Usuário não autenticado")
+        return jsonify({'error': 'Não autenticado'}), 401
+    
+    try:
+        data = request.get_json()
+        idea = data.get('idea')
+        idatleta = data.get('idatleta')
+        data_hora = data.get('data_hora')
+        km = data.get('km')
+        
+        # Mapear KM para IDPARCIAL
+        km_to_idparcial = {
+            25: 2, 50: 3, 75: 4, 100: 5, 
+            125: 6, 150: 7, 175: 8, 200: 9
+        }
+        
+        idparcial = km_to_idparcial.get(int(km), 0)
+        
+        print(f"DEBUG: Dados para insert - IDEA: {idea}, IDATLETA: {idatleta}, DATA_HORA: {data_hora}, KM: {km}, IDPARCIAL: {idparcial}")
+        
+        cursor = mysql.connection.cursor()
+        
+        cursor.execute("""
+            INSERT INTO PROVA_PARCIAIS_200K (IDEA, IDATLETA, DATA_HORA, IDPARCIAL, KM)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (idea, idatleta, data_hora, idparcial, km))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        print("DEBUG: Lançamento confirmado com sucesso")
+        return jsonify({
+            'success': True,
+            'message': 'Atleta Lançado com sucesso!'
+        })
+        
+    except Exception as e:
+        print(f"DEBUG: Erro ao confirmar lançamento: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
