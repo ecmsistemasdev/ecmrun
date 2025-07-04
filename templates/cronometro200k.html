@@ -178,6 +178,14 @@
             body {
                 padding-bottom: 100px;
             }
+
+            .atleta-parcial {
+                font-size: 1.4rem !important;
+            }
+
+            .atleta-detalhes {
+                font-size: 1.1rem !important;
+            }
         }
 
         @keyframes pulse {
@@ -219,8 +227,61 @@
             font-weight: bold;
             color: #fff;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            animation: scrollText 20s linear infinite;
+            animation: scrollText 40s linear infinite;
             padding-left: 100%;
+            display: flex;
+            align-items: center;
+            gap: 50px;
+        }
+
+        .atleta-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-right: 50px;
+        }
+
+        .atleta-foto {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .atleta-foto-placeholder {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .atleta-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .atleta-parcial {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .atleta-detalhes {
+            font-size: 1.4rem;
+            color: #e0e0e0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
         @keyframes scrollText {
@@ -258,7 +319,15 @@
     <!-- Footer com letreiro -->
     <div class="footer-letreiro">
         <div class="letreiro-container">
-            <div class="letreiro-texto">PASSAGEM DOS ATLETAS NAS PARCIAIS</div>
+            <div class="letreiro-texto" id="letreiroTexto">
+                <div class="atleta-item">
+                    <div class="atleta-foto-placeholder">?</div>
+                    <div class="atleta-info">
+                        <div class="atleta-parcial">Carregando passagens...</div>
+                        <div class="atleta-detalhes">Aguarde...</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -266,6 +335,8 @@
         let dataEvento = null;
         let cronometroInterval = null;
         let eventoIniciado = false;
+        let passagensInterval = null;
+        let dadosPassagens = [];
 
         async function carregarDadosEvento() {
             try {
@@ -302,6 +373,71 @@
             }
         }
 
+        async function carregarPassagensAtletas() {
+            try {
+                const response = await fetch('/api/passagens-atletas');
+                const data = await response.json();
+                
+                if (data.success && data.passagens) {
+                    dadosPassagens = data.passagens;
+                    atualizarLetreiro();
+                } else {
+                    console.error('Erro ao carregar passagens:', data.error);
+                }
+            } catch (error) {
+                console.error('Erro na requisição de passagens:', error);
+            }
+        }
+
+        function atualizarLetreiro() {
+            const letreiroElement = document.getElementById('letreiroTexto');
+            
+            if (dadosPassagens.length === 0) {
+                letreiroElement.innerHTML = `
+                    <div class="atleta-item">
+                        <div class="atleta-foto-placeholder">?</div>
+                        <div class="atleta-info">
+                            <div class="atleta-parcial">Nenhuma passagem registrada</div>
+                            <div class="atleta-detalhes">Aguardando dados...</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let htmlContent = '';
+            dadosPassagens.forEach(passagem => {
+                const dataFormatada = formatarDataPassagem(passagem.DATA_HORA);
+                const fotoUrl = `/static/img/foto/${passagem.IDATLETA}.jpg`;
+                
+                htmlContent += `
+                    <div class="atleta-item">
+                        <img src="${fotoUrl}" 
+                             alt="Foto ${passagem.NOME}" 
+                             class="atleta-foto"
+                             onerror="this.outerHTML='<div class=\\"atleta-foto-placeholder\\">
+                        <div class="atleta-info">
+                            <div class="atleta-parcial">Km ${passagem.KM} - ${passagem.EQUIPE}</div>
+                            <div class="atleta-detalhes">${passagem.NOME} - ${dataFormatada}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            letreiroElement.innerHTML = htmlContent;
+        }
+
+        function formatarDataPassagem(dataHora) {
+            const data = new Date(dataHora);
+            const dia = data.getDate().toString().padStart(2, '0');
+            const mes = (data.getMonth() + 1).toString().padStart(2, '0');
+            const ano = data.getFullYear().toString().slice(-2);
+            const hora = data.getHours().toString().padStart(2, '0');
+            const minuto = data.getMinutes().toString().padStart(2, '0');
+            
+            return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+        }
+
         function iniciarCronometragem() {
             if (cronometroInterval) {
                 clearInterval(cronometroInterval);
@@ -309,6 +445,18 @@
 
             cronometroInterval = setInterval(atualizarCronometro, 1000);
             atualizarCronometro(); // Primeira atualização imediata
+        }
+
+        function iniciarAtualizacaoPassagens() {
+            // Carrega imediatamente
+            carregarPassagensAtletas();
+            
+            // Configura para atualizar a cada final de loop (40 segundos)
+            if (passagensInterval) {
+                clearInterval(passagensInterval);
+            }
+            
+            passagensInterval = setInterval(carregarPassagensAtletas, 40000);
         }
 
         function atualizarCronometro() {
@@ -372,12 +520,18 @@
         // Inicializar quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
             carregarDadosEvento();
+            iniciarAtualizacaoPassagens();
         });
 
         // Reconectar se a página ficar visível novamente
         document.addEventListener('visibilitychange', function() {
-            if (!document.hidden && !cronometroInterval) {
-                carregarDadosEvento();
+            if (!document.hidden) {
+                if (!cronometroInterval) {
+                    carregarDadosEvento();
+                }
+                if (!passagensInterval) {
+                    iniciarAtualizacaoPassagens();
+                }
             }
         });
     </script>
