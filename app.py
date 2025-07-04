@@ -5001,6 +5001,71 @@ def iniciar_cronometro():
         return jsonify({'success': False, 'error': f'Erro ao iniciar cronômetro: {str(e)}'}), 500
 
 
+
+@app.route('/api/passagens-atletas', methods=['GET'])
+def listar_passagens_atletas():
+    """Lista as passagens mais recentes dos atletas nas parciais"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Executa a SQL que você forneceu
+        query = """
+        SELECT p.IDATLETA, p.IDEA, p.DATA_HORA, p.KM, a.NOME,
+          CASE 
+            WHEN p.IDEA = 0 THEN 'Solo'
+            ELSE (
+              SELECT CONCAT(e.NOME_EQUIPE, ' (', em.DEREDUZ, ')')
+              FROM EQUIPE e
+              JOIN EVENTO_MODALIDADE em ON em.IDITEM = e.IDITEM
+              WHERE e.IDEA = p.IDEA
+            )
+          END AS EQUIPE
+        FROM PROVA_PARCIAIS_200K p
+        JOIN ATLETA a ON a.IDATLETA = p.IDATLETA
+        WHERE p.IDPARCIAL > 1
+          AND (
+            (p.IDEA = 0 AND p.DATA_HORA = (
+              SELECT MAX(p2.DATA_HORA)
+              FROM PROVA_PARCIAIS_200K p2
+              WHERE p2.IDEA = 0 AND p2.IDATLETA = p.IDATLETA AND p2.IDPARCIAL > 1
+            ))
+            OR
+            (p.IDEA > 0 AND p.DATA_HORA = (
+              SELECT MAX(p3.DATA_HORA)
+              FROM PROVA_PARCIAIS_200K p3
+              WHERE p3.IDEA = p.IDEA AND p3.IDPARCIAL > 1
+            ))
+          )
+        ORDER BY p.DATA_HORA DESC;
+        """
+        
+        cur.execute(query)
+        passagens = cur.fetchall()
+        cur.close()
+        
+        passagens_list = []
+        for passagem in passagens:
+            passagens_list.append({
+                'IDATLETA': passagem[0],
+                'IDEA': passagem[1],
+                'DATA_HORA': passagem[2].isoformat() if passagem[2] else None,
+                'KM': passagem[3],
+                'NOME': passagem[4],
+                'EQUIPE': passagem[5] if passagem[5] else 'Solo'
+            })
+        
+        return jsonify({
+            'success': True,
+            'passagens': passagens_list
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao listar passagens: {str(e)}'
+        }), 500
+
+
 ########
 
 # Rota para exibir a página do dashboard
