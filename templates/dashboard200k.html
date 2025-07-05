@@ -19,12 +19,12 @@
             padding: 15px;
             max-width: 1400px;
             margin: 0 auto;
-            padding-bottom: 80px; /* Espaço para o footer */
+            padding-bottom: 80px;
         }
 
         .dashboard-header {
             text-align: center;
-            margin-bottom: 10px; /* Reduzido de 15px para 10px */
+            margin-bottom: 10px;
             padding: 10px 0;
         }
 
@@ -39,7 +39,7 @@
             color: rgba(255, 255, 255, 0.8);
             font-size: 0.9rem;
             margin-top: 5px;
-            margin-bottom: 5px; /* Adicionado para reduzir espaço */
+            margin-bottom: 5px;
         }
 
         .table-container {
@@ -103,6 +103,24 @@
             text-align: left;
         }
 
+        /* Células com tempo e atleta */
+        .time-cell {
+            line-height: 1.2;
+            padding: 4px 8px;
+        }
+
+        .time-display {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+
+        .athlete-display {
+            font-size: 0.65rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
         /* Zebrado melhorado para as tabelas */
         .custom-table tbody tr:nth-child(odd) {
             background-color: rgba(102, 126, 234, 0.08);
@@ -120,111 +138,33 @@
 
         /* Larguras específicas das colunas para ambas as tabelas */
         .custom-table th:nth-child(1) { width: 200px; } /* Equipe/Atleta */
-        .custom-table th:nth-child(2) { width: 80px; }  /* Km 25 */
-        .custom-table th:nth-child(3) { width: 80px; }  /* Km 50 */
-        .custom-table th:nth-child(4) { width: 80px; }  /* Km 75 */
-        .custom-table th:nth-child(5) { width: 80px; }  /* Km 100 */
-        .custom-table th:nth-child(6) { width: 80px; }  /* Km 125 */
-        .custom-table th:nth-child(7) { width: 80px; }  /* Km 150 */
-        .custom-table th:nth-child(8) { width: 80px; }  /* Km 175 */
-        .custom-table th:nth-child(9) { width: 80px; }  /* Km 200 */
+        .custom-table th:nth-child(2) { width: 100px; }  /* Km 25 */
+        .custom-table th:nth-child(3) { width: 100px; }  /* Km 50 */
+        .custom-table th:nth-child(4) { width: 100px; }  /* Km 75 */
+        .custom-table th:nth-child(5) { width: 100px; }  /* Km 100 */
+        .custom-table th:nth-child(6) { width: 100px; }  /* Km 125 */
+        .custom-table th:nth-child(7) { width: 100px; }  /* Km 150 */
+        .custom-table th:nth-child(8) { width: 100px; }  /* Km 175 */
+        .custom-table th:nth-child(9) { width: 100px; }  /* Km 200 */
         .custom-table th:nth-child(10) { width: 100px; } /* Última Parcial */
         .custom-table th:nth-child(11) { width: 100px; } /* Tempo */
 
         /* Aplicar as mesmas larguras às células td */
         .custom-table td:nth-child(1) { width: 200px; } /* Equipe/Atleta */
-        .custom-table td:nth-child(2) { width: 80px; }  /* Km 25 */
-        .custom-table td:nth-child(3) { width: 80px; }  /* Km 50 */
-        .custom-table td:nth-child(4) { width: 80px; }  /* Km 75 */
-        .custom-table td:nth-child(5) { width: 80px; }  /* Km 100 */
-        .custom-table td:nth-child(6) { width: 80px; }  /* Km 125 */
-        .custom-table td:nth-child(7) { width: 80px; }  /* Km 150 */
-        .custom-table td:nth-child(8) { width: 80px; }  /* Km 175 */
-        .custom-table td:nth-child(9) { width: 80px; }  /* Km 200 */
+        .custom-table td:nth-child(2) { width: 100px; }  /* Km 25 */
+        .custom-table td:nth-child(3) { width: 100px; }  /* Km 50 */
+        .custom-table td:nth-child(4) { width: 100px; }  /* Km 75 */
+        .custom-table td:nth-child(5) { width: 100px; }  /* Km 100 */
+        .custom-table td:nth-child(6) { width: 100px; }  /* Km 125 */
+        .custom-table td:nth-child(7) { width: 100px; }  /* Km 150 */
+        .custom-table td:nth-child(8) { width: 100px; }  /* Km 175 */
+        .custom-table td:nth-child(9) { width: 100px; }  /* Km 200 */
         .custom-table td:nth-child(10) { width: 100px; } /* Última Parcial */
         .custom-table td:nth-child(11) { width: 100px; } /* Tempo */
 
         .equipes-table {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
-        }
-
-        .auth-section {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .auth-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .auth-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .auth-header h2 {
-            color: #2c3e50;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .auth-header p {
-            color: #7f8c8d;
-            margin: 0;
-        }
-
-        .form-control {
-            border-radius: 10px;
-            border: 2px solid #e9ecef;
-            padding: 12px 15px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(45deg, #5a6fd8, #6a4190);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-success {
-            background: linear-gradient(45deg, #28a745, #20c997);
-            border: none;
-            border-radius: 8px;
-            padding: 8px 20px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .btn-success:hover {
-            background: linear-gradient(45deg, #218838, #1ba085);
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
 
         .loading {
@@ -251,20 +191,6 @@
             color: #dc3545;
         }
 
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            backdrop-filter: blur(10px);
-            padding: 12px;
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1000;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        }
-
         .refresh-indicator {
             position: fixed;
             top: 20px;
@@ -288,7 +214,7 @@
             height: 46px;
             border-radius: 50%;
             background: conic-gradient(#667eea 0deg, #764ba2 180deg, #e9ecef 360deg);
-            animation: spin 1s linear infinite;
+            animation: spin 60s linear infinite;
         }
 
         .refresh-indicator .progress-ring.paused {
@@ -318,11 +244,6 @@
             to { transform: rotate(360deg); }
         }
 
-        .refresh-indicator .progress-ring {
-            /* ... outras propriedades ... */
-            animation: spin 60s linear infinite;
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .dashboard-container {
@@ -343,13 +264,17 @@
             }
             
             .custom-table {
-                min-width: 800px;
+                min-width: 900px;
             }
             
             .custom-table th,
             .custom-table td {
                 padding: 4px 6px;
                 font-size: 0.7rem;
+            }
+            
+            .athlete-display {
+                font-size: 0.6rem;
             }
             
             .table-title {
@@ -384,7 +309,7 @@
             }
             
             .custom-table {
-                min-width: 600px;
+                min-width: 700px;
             }
             
             .custom-table th,
@@ -393,8 +318,8 @@
                 font-size: 0.65rem;
             }
             
-            .auth-card {
-                padding: 25px;
+            .athlete-display {
+                font-size: 0.55rem;
             }
         }
 
@@ -420,29 +345,9 @@
     </style>
 </head>
 <body>
-    <!-- Seção de Autenticação -->
-    <div id="authSection" class="auth-section">
-        <div class="auth-card">
-            <div class="auth-header">
-                <h2><i class="fas fa-lock"></i> Acesso Restrito</h2>
-                <p>Dashboard - Desafio 200k</p>
-            </div>
-            <form id="authForm">
-                <div class="mb-3">
-                    <label for="senha" class="form-label">Senha de Acesso:</label>
-                    <input type="password" class="form-control" id="senha" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-sign-in-alt me-2"></i>Entrar
-                </button>
-            </form>
-            <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
-        </div>
-    </div>
-
     <!-- Conteúdo Principal -->
-    <div id="mainContent" class="dashboard-container" style="display: none;">
-        <!-- Header Simplificado -->
+    <div class="dashboard-container">
+        <!-- Header -->
         <div class="dashboard-header">
             <h1>Desafio 200k - Porto Velho a Humaitá</h1>
             <p class="subtitle">Dashboard em Tempo Real</p>
@@ -524,20 +429,13 @@
     </div>
 
     <!-- Indicador de Atualização -->
-    <div id="refreshIndicator" class="refresh-indicator" style="display: none;">
+    <div id="refreshIndicator" class="refresh-indicator">
         <div class="progress-ring" id="progressRing"></div>
         <div class="inner-circle">
             <div class="countdown" id="countdown">60</div>
         </div>
     </div>
 
-    <!-- Footer fixo 
-    <div class="footer" id="footer" style="display: none;">
-        <button type="button" class="btn btn-success" id="lancamentosBtn">
-            <i class="fas fa-plus-circle me-2"></i>Lançamentos
-        </button>
-    </div>
-    -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Variáveis globais
@@ -551,46 +449,10 @@
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('authForm').addEventListener('submit', handleAuth);
-            document.getElementById('lancamentosBtn').addEventListener('click', handleLancamentos);
-            
-            // Adicionar funcionalidade de redimensionamento de colunas
+            loadDashboardData();
+            startAutoRefresh();
             addColumnResizeListeners();
         });
-
-        // Função de autenticação
-        async function handleAuth(e) {
-            e.preventDefault();
-            const senha = document.getElementById('senha').value;
-            
-            try {
-                showLoading();
-                const response = await fetch('/verificar_senha1', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ senha: senha })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('authSection').style.display = 'none';
-                    document.getElementById('mainContent').style.display = 'block';
-                    document.getElementById('refreshIndicator').style.display = 'flex';
-                    //document.getElementById('footer').style.display = 'block';
-                    await loadDashboardData();
-                    startAutoRefresh();
-                } else {
-                    showError(data.message || 'Senha incorreta');
-                }
-            } catch (error) {
-                showError('Erro ao verificar senha');
-            } finally {
-                hideLoading();
-            }
-        }
 
         // Carregar dados do dashboard
         async function loadDashboardData() {
@@ -641,6 +503,16 @@
             }
         }
 
+        // Função para formatar célula com tempo e atleta
+        function formatTimeCell(time, athlete) {
+            if (!time) return '';
+            
+            const timeDisplay = `<div class="time-display">${time}</div>`;
+            const athleteDisplay = athlete ? `<div class="athlete-display">${athlete}</div>` : '';
+            
+            return `<div class="time-cell">${timeDisplay}${athleteDisplay}</div>`;
+        }
+
         // Exibir equipes na tabela
         function displayEquipes(equipes) {
             const tbody = document.getElementById('equipesTableBody');
@@ -653,15 +525,15 @@
             tbody.innerHTML = equipes.map(equipe => `
                 <tr>
                     <td>${equipe.EQUIPE}</td>
-                    <td>${equipe.KM25}</td>
-                    <td>${equipe.KM50}</td>
-                    <td>${equipe.KM75}</td>
-                    <td>${equipe.KM100}</td>
-                    <td>${equipe.KM125}</td>
-                    <td>${equipe.KM150}</td>
-                    <td>${equipe.KM175}</td>
-                    <td>${equipe.KM200}</td>
-                    <td>${equipe.ULTIMAPARCIAL}</td>
+                    <td>${formatTimeCell(equipe.KM25, equipe.ATLETA25)}</td>
+                    <td>${formatTimeCell(equipe.KM50, equipe.ATLETA50)}</td>
+                    <td>${formatTimeCell(equipe.KM75, equipe.ATLETA75)}</td>
+                    <td>${formatTimeCell(equipe.KM100, equipe.ATLETA100)}</td>
+                    <td>${formatTimeCell(equipe.KM125, equipe.ATLETA125)}</td>
+                    <td>${formatTimeCell(equipe.KM150, equipe.ATLETA150)}</td>
+                    <td>${formatTimeCell(equipe.KM175, equipe.ATLETA175)}</td>
+                    <td>${formatTimeCell(equipe.KM200, equipe.ATLETA200)}</td>
+                    <td>${formatTimeCell(equipe.ULTIMAPARCIAL, '')}</td>
                     <td>${equipe.TEMPO}</td>
                 </tr>
             `).join('');
@@ -769,36 +641,16 @@
             document.removeEventListener('mouseup', stopColumnResize);
         }
 
-        // Função para o botão de lançamentos
-        function handleLancamentos() {
-            alert('Funcionalidade de lançamentos será implementada em breve!');
-            // Aqui você pode implementar a navegação para a página de lançamentos
-            // window.location.href = '/lancamentos';
-        }
-
-        // Funções auxiliares
-        function showLoading() {
-            // Implementar se necessário um loading global
-        }
-
-        function hideLoading() {
-            // Implementar se necessário um loading global
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-
         // Função para atualizar dados manualmente
         function refreshData() {
             loadDashboardData();
             resetCountdown();
+        }
+
+        // Funções auxiliares
+        function showError(message) {
+            console.error(message);
+            // Você pode implementar um sistema de notificações aqui se necessário
         }
 
         // Adicionar evento de teclado para refresh (F5 ou Ctrl+R)
