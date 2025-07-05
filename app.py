@@ -5271,11 +5271,7 @@ def lanca200k_parciais():
 def lanca200k_pesquisa_atleta():
     """Pesquisa atleta por número de peito"""
     print("DEBUG: Pesquisando atleta...")
-    
-#    if not session.get('autenticado'):
-#        print("DEBUG: Usuário não autenticado")
-#        return jsonify({'error': 'Não autenticado'}), 401
-    
+        
     try:
         data = request.get_json()
         km_parcial = data.get('km_parcial')
@@ -5285,19 +5281,26 @@ def lanca200k_pesquisa_atleta():
         
         cursor = mysql.connection.cursor()
         
+        # Consulta corrigida - separando a lógica para atletas individuais e equipes
         cursor.execute("""
             SELECT 
-              i.IDATLETA, CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
-              COALESCE((SELECT IDEA FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),0) AS IDEA,
-              COALESCE((SELECT KM_INI+1 FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N') AS KM_INI,
-              COALESCE((SELECT KM_FIM FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N') AS KM_FIM  
-            FROM INSCRICAO i, ATLETA a 
-            WHERE a.IDATLETA = i.IDATLETA
-              AND (COALESCE((SELECT IDEA FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),0) = 0 
-                OR %s BETWEEN COALESCE((SELECT KM_INI+1 FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N')
-                AND COALESCE((SELECT KM_FIM FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N')) 
-              AND i.NUPEITO = %s
-        """, (km_parcial, nu_peito))
+              i.IDATLETA, 
+              CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
+              COALESCE(ea.IDEA, 0) AS IDEA,
+              COALESCE(ea.KM_INI, 0) AS KM_INI,
+              COALESCE(ea.KM_FIM, 200) AS KM_FIM  
+            FROM INSCRICAO i 
+            INNER JOIN ATLETA a ON a.IDATLETA = i.IDATLETA
+            LEFT JOIN EQUIPE_ATLETAS ea ON ea.IDATLETA = i.IDATLETA
+            WHERE i.NUPEITO = %s
+              AND (
+                -- Atleta individual (não pertence a equipe)
+                ea.IDEA IS NULL
+                OR
+                -- Atleta de equipe (deve estar no intervalo correto)
+                (%s > ea.KM_INI AND %s <= ea.KM_FIM)
+              )
+        """, (nu_peito, km_parcial, km_parcial))
         
         atleta = cursor.fetchone()
         
@@ -5312,6 +5315,8 @@ def lanca200k_pesquisa_atleta():
                 125: 6, 150: 7, 175: 8, 200: 9
             }
             idparcial = km_to_idparcial.get(int(km_parcial), 0)
+            
+            print(f"DEBUG: Verificando duplicatas - IDATLETA: {idatleta}, IDEA: {idea}, IDPARCIAL: {idparcial}")
             
             # Verificar duplicatas
             if idea == 0:
@@ -5343,6 +5348,8 @@ def lanca200k_pesquisa_atleta():
                 })
             
             print(f"DEBUG: Atleta encontrado: {atleta[1]}")
+            print(f"DEBUG: Dados do atleta - IDEA: {idea}, KM_INI: {atleta[3]}, KM_FIM: {atleta[4]}")
+            
             return jsonify({
                 'success': True,
                 'atleta': {
@@ -5364,6 +5371,100 @@ def lanca200k_pesquisa_atleta():
     except Exception as e:
         print(f"DEBUG: Erro ao pesquisar atleta: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+# @app.route('/api/lanca200k_pesquisa_atleta', methods=['POST'])
+# def lanca200k_pesquisa_atleta():
+#     """Pesquisa atleta por número de peito"""
+#     print("DEBUG: Pesquisando atleta...")
+        
+#     try:
+#         data = request.get_json()
+#         km_parcial = data.get('km_parcial')
+#         nu_peito = data.get('nu_peito')
+        
+#         print(f"DEBUG: Pesquisando atleta - KM: {km_parcial}, Peito: {nu_peito}")
+        
+#         cursor = mysql.connection.cursor()
+        
+#         cursor.execute("""
+#             SELECT 
+#               i.IDATLETA, CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
+#               COALESCE((SELECT IDEA FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),0) AS IDEA,
+#               COALESCE((SELECT KM_INI+1 FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N') AS KM_INI,
+#               COALESCE((SELECT KM_FIM FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N') AS KM_FIM  
+#             FROM INSCRICAO i, ATLETA a 
+#             WHERE a.IDATLETA = i.IDATLETA
+#               AND (COALESCE((SELECT IDEA FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),0) = 0 
+#                 OR %s BETWEEN COALESCE((SELECT KM_INI+1 FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N')
+#                 AND COALESCE((SELECT KM_FIM FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N')) 
+#               AND i.NUPEITO = %s
+#         """, (km_parcial, nu_peito))
+        
+#         atleta = cursor.fetchone()
+        
+#         if atleta:
+#             # Verificar se já existe lançamento para este atleta/equipe nesta parcial
+#             idatleta = atleta[0]
+#             idea = atleta[2]
+            
+#             # Mapear KM para IDPARCIAL
+#             km_to_idparcial = {
+#                 25: 2, 50: 3, 75: 4, 100: 5, 
+#                 125: 6, 150: 7, 175: 8, 200: 9
+#             }
+#             idparcial = km_to_idparcial.get(int(km_parcial), 0)
+            
+#             # Verificar duplicatas
+#             if idea == 0:
+#                 # Atleta individual - verificar por IDATLETA
+#                 cursor.execute("""
+#                     SELECT COUNT(*) FROM PROVA_PARCIAIS_200K 
+#                     WHERE IDATLETA = %s AND IDPARCIAL = %s
+#                 """, (idatleta, idparcial))
+#             else:
+#                 # Equipe - verificar por IDEA
+#                 cursor.execute("""
+#                     SELECT COUNT(*) FROM PROVA_PARCIAIS_200K 
+#                     WHERE IDEA = %s AND IDPARCIAL = %s
+#                 """, (idea, idparcial))
+            
+#             count = cursor.fetchone()[0]
+#             cursor.close()
+            
+#             if count > 0:
+#                 if idea == 0:
+#                     message = f"Atleta já possui lançamento nesta parcial de {km_parcial}km"
+#                 else:
+#                     message = f"Equipe já possui lançamento nesta parcial de {km_parcial}km"
+                
+#                 print(f"DEBUG: Lançamento duplicado detectado: {message}")
+#                 return jsonify({
+#                     'success': False,
+#                     'message': message
+#                 })
+            
+#             print(f"DEBUG: Atleta encontrado: {atleta[1]}")
+#             return jsonify({
+#                 'success': True,
+#                 'atleta': {
+#                     'IDATLETA': atleta[0],
+#                     'NOME': atleta[1],
+#                     'IDEA': atleta[2],
+#                     'KM_INI': atleta[3],
+#                     'KM_FIM': atleta[4]
+#                 }
+#             })
+#         else:
+#             cursor.close()
+#             print("DEBUG: Nenhum atleta encontrado")
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Nº de Peito não existe ou Atleta não permitido para esta parcial'
+#             })
+        
+#     except Exception as e:
+#         print(f"DEBUG: Erro ao pesquisar atleta: {str(e)}")
+#         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/lanca200k_confirmar', methods=['POST'])
 def lanca200k_confirmar():
