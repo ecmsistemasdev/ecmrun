@@ -5036,7 +5036,7 @@ def listar_passagens_atletas():
               WHERE p3.IDEA = p.IDEA AND p3.IDPARCIAL > 1
             ))
           )
-        ORDER BY p.DATA_HORA DESC;
+        ORDER BY p.KM DESC, p.DATA_HORA;
         """
         
         cur.execute(query)
