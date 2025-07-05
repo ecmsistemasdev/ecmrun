@@ -4939,8 +4939,13 @@ def admin_apoio002():
     return render_template('admin_apoio002.html')
 
 #############################
-@app.route('/cronometro200k')
-def cronometro200k():
+#@app.route('/cronometro200k')
+#def cronometro200k():
+#    """Página do cronômetro da ultramaratona"""
+#    return render_template('cronometro200k.html')
+
+@app.route('/painel200k')
+def painel200k():
     """Página do cronômetro da ultramaratona"""
     return render_template('cronometro200k.html')
 
