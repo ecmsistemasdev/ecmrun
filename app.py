@@ -5076,22 +5076,35 @@ def dashboard200k():
 # Rota para buscar dados das equipes
 @app.route('/dashboard_api/equipes')
 def dashboard_get_equipes():
-    if not session.get('autenticado'):
-        return jsonify({'error': 'Não autenticado'}), 401
-    
     try:
         cursor = mysql.connection.cursor()
         
         query = """
         SELECT CONCAT(e.NOME_EQUIPE,' (',em.DEREDUZ,')') as EQUIPE,
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDEA = e.IDEA) AS KM25,
+          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+             AND  pp.KM = 25 AND pp.IDEA = e.IDEA) AS ATLETA25,
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDEA = e.IDEA) AS KM50,
+          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+             AND  pp.KM = 50 AND pp.IDEA = e.IDEA) AS ATLETA50,
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDEA = e.IDEA) AS KM75,
+          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+             AND  pp.KM = 75 AND pp.IDEA = e.IDEA) AS ATLETA75,          
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDEA = e.IDEA) AS KM100,
+          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+             AND  pp.KM = 100 AND pp.IDEA = e.IDEA) AS ATLETA100,
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDEA = e.IDEA) AS KM125,
+          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+             AND  pp.KM = 125 AND pp.IDEA = e.IDEA) AS ATLETA125,
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDEA = e.IDEA) AS KM150,
+          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+             AND  pp.KM = 150 AND pp.IDEA = e.IDEA) AS ATLETA150,
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDEA = e.IDEA) AS KM175,
+          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+             AND  pp.KM = 175 AND pp.IDEA = e.IDEA) AS ATLETA175,
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDEA = e.IDEA) AS KM200,
+          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+             AND  pp.KM = 200 AND pp.IDEA = e.IDEA) AS ATLETA200,
           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
            WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
              AND IDEA = e.IDEA) AS ULTIMAPARCIAL,
@@ -5129,15 +5142,23 @@ def dashboard_get_equipes():
             equipes_list.append({
                 'EQUIPE': equipe[0],
                 'KM25': equipe[1].strftime('%d/%m/%y %H:%M') if equipe[1] else '',
-                'KM50': equipe[2].strftime('%d/%m/%y %H:%M') if equipe[2] else '',
-                'KM75': equipe[3].strftime('%d/%m/%y %H:%M') if equipe[3] else '',
-                'KM100': equipe[4].strftime('%d/%m/%y %H:%M') if equipe[4] else '',
-                'KM125': equipe[5].strftime('%d/%m/%y %H:%M') if equipe[5] else '',
-                'KM150': equipe[6].strftime('%d/%m/%y %H:%M') if equipe[6] else '',
-                'KM175': equipe[7].strftime('%d/%m/%y %H:%M') if equipe[7] else '',
-                'KM200': equipe[8].strftime('%d/%m/%y %H:%M') if equipe[8] else '',
-                'ULTIMAPARCIAL': equipe[9].strftime('%d/%m/%y %H:%M') if equipe[9] else '',
-                'TEMPO': equipe[10] if equipe[10] else ''
+                'ATLETA25': equipe[2] if equipe[2] else '',
+                'KM50': equipe[3].strftime('%d/%m/%y %H:%M') if equipe[3] else '',
+                'ATLETA50': equipe[4] if equipe[4] else '',
+                'KM75': equipe[5].strftime('%d/%m/%y %H:%M') if equipe[5] else '',
+                'ATLETA75': equipe[6] if equipe[6] else '',
+                'KM100': equipe[7].strftime('%d/%m/%y %H:%M') if equipe[7] else '',
+                'ATLETA100': equipe[8] if equipe[8] else '',
+                'KM125': equipe[9].strftime('%d/%m/%y %H:%M') if equipe[9] else '',
+                'ATLETA125': equipe[10] if equipe[10] else '',
+                'KM150': equipe[11].strftime('%d/%m/%y %H:%M') if equipe[11] else '',
+                'ATLETA150': equipe[12] if equipe[12] else '',
+                'KM175': equipe[13].strftime('%d/%m/%y %H:%M') if equipe[13] else '',
+                'ATLETA175': equipe[14] if equipe[14] else '',
+                'KM200': equipe[15].strftime('%d/%m/%y %H:%M') if equipe[15] else '',
+                'ATLETA200': equipe[16] if equipe[16] else '',
+                'ULTIMAPARCIAL': equipe[17].strftime('%d/%m/%y %H:%M') if equipe[17] else '',
+                'TEMPO': equipe[18] if equipe[18] else ''
             })
         
         return jsonify(equipes_list)
@@ -5146,12 +5167,12 @@ def dashboard_get_equipes():
         print(f"DEBUG: Erro ao buscar equipes: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
+
+
 # Rota para buscar dados dos atletas solo
 @app.route('/dashboard_api/atletas')
 def dashboard_get_atletas():
-    if not session.get('autenticado'):
-        return jsonify({'error': 'Não autenticado'}), 401
-    
     try:
         cursor = mysql.connection.cursor()
         
