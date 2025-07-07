@@ -94,63 +94,80 @@
             margin: 20px;
             position: relative;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 580px;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 200, 55, 0.1) 0%, transparent 50%),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><path d="M0,300 Q300,250 600,300 T1200,300 L1200,350 Q900,380 600,350 T0,350 Z" fill="%23f0f0f0" opacity="0.3"/><path d="M0,320 Q300,280 600,320 T1200,320 L1200,370 Q900,400 600,370 T0,370 Z" fill="%23e0e0e0" opacity="0.2"/></svg>');
+            background-size: cover, cover, 100% 100%;
+            background-position: center, center, center;
+            background-repeat: no-repeat, no-repeat, no-repeat;
         }
 
         .certificate-header {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
             margin-bottom: 30px;
+            gap: 30px;
         }
 
         .certificate-logo {
-            width: 120px;
+            width: 150px;
             height: auto;
-            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        .certificate-titles {
+            flex: 1;
         }
 
         .certificate-title {
-            font-size: 2.5em;
+            font-size: 3.5em;
             font-weight: bold;
             color: #c9b037;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            line-height: 1;
         }
 
         .certificate-subtitle {
-            font-size: 1.5em;
+            font-size: 1.8em;
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 0;
         }
 
         .certificate-content {
             text-align: center;
             line-height: 1.8;
-            font-size: 1.2em;
+            font-size: 1.3em;
             color: #333;
             margin-bottom: 40px;
         }
 
         .athlete-name {
-            font-size: 2em;
+            font-size: 2.2em;
             font-weight: bold;
             color: #c9b037;
             text-transform: uppercase;
             margin: 20px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
         .certificate-details {
-            background: #f8f9fa;
+            background: rgba(248, 249, 250, 0.9);
             padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
             border-left: 5px solid #c9b037;
+            backdrop-filter: blur(5px);
         }
 
         .signatures {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 2px solid #ddd;
         }
 
         .signature {
@@ -159,15 +176,11 @@
             margin: 0 20px;
         }
 
-        .signature-line {
-            border-bottom: 2px solid #333;
-            margin-bottom: 10px;
-            height: 60px;
-        }
-
         .signature-name {
             font-weight: bold;
             color: #333;
+            font-size: 1.1em;
+            margin-bottom: 5px;
         }
 
         .signature-title {
@@ -175,7 +188,7 @@
             font-size: 0.9em;
         }
 
-        .certificate-footer {
+        .certificate-footer-logo {
             position: absolute;
             bottom: 20px;
             right: 20px;
@@ -186,9 +199,12 @@
             height: auto;
         }
 
-        .share-buttons {
+        .footer-buttons {
+            background: #f8f9fa;
+            padding: 20px;
             text-align: center;
-            margin-top: 30px;
+            border-top: 1px solid #dee2e6;
+            margin-top: 20px;
         }
 
         .error-message {
@@ -247,34 +263,81 @@
                 margin: 10px;
             }
             
+            .certificate-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
             .certificate-title {
-                font-size: 1.8em;
+                font-size: 2.5em;
+            }
+            
+            .certificate-subtitle {
+                font-size: 1.3em;
             }
             
             .signatures {
                 flex-direction: column;
+                gap: 20px;
             }
             
             .signature {
-                margin: 10px 0;
+                margin: 0;
             }
         }
 
         @media print {
+            @page {
+                size: A4 landscape;
+                margin: 1cm;
+            }
+            
             body {
                 background: white;
+                font-size: 12px;
             }
             
             .form-container,
-            .share-buttons {
+            .footer-buttons {
                 display: none !important;
             }
             
             .certificate-container {
                 display: block !important;
                 margin: 0;
+                padding: 20px;
                 box-shadow: none;
-                border: 2px solid #c9b037;
+                border: 3px solid #c9b037;
+                border-radius: 10px;
+                min-height: auto;
+                page-break-inside: avoid;
+            }
+            
+            .certificate-header {
+                margin-bottom: 20px;
+            }
+            
+            .certificate-title {
+                font-size: 2.8em;
+            }
+            
+            .certificate-subtitle {
+                font-size: 1.4em;
+            }
+            
+            .certificate-content {
+                font-size: 1.1em;
+                margin-bottom: 30px;
+            }
+            
+            .athlete-name {
+                font-size: 1.8em;
+            }
+            
+            .signatures {
+                margin-top: 30px;
+                padding-top: 15px;
             }
         }
     </style>
@@ -296,12 +359,12 @@
             <form id="certificate-form">
                 <div class="form-group">
                     <label for="cpf">CPF:</label>
-                    <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" required>
+                    <input type="tel" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="datanasc">Data de Nascimento:</label>
-                    <input type="date" id="datanasc" name="datanasc" required>
+                    <input type="tel" id="datanasc" name="datanasc" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric" required>
                 </div>
                 
                 <button type="submit" class="btn">Acessar Certificado</button>
@@ -311,8 +374,10 @@
         <div class="certificate-container" id="certificate-container">
             <div class="certificate-header">
                 <img src="/static/img/logo_200k.png" alt="Logo 200K" class="certificate-logo">
-                <h1 class="certificate-title">CERTIFICADO</h1>
-                <h2 class="certificate-subtitle">4º Desafio 200K Porto Velho - Humaitá</h2>
+                <div class="certificate-titles">
+                    <h1 class="certificate-title">CERTIFICADO</h1>
+                    <h2 class="certificate-subtitle">4º Desafio 200K Porto Velho - Humaitá</h2>
+                </div>
             </div>
 
             <div class="certificate-content">
@@ -329,27 +394,25 @@
 
             <div class="signatures">
                 <div class="signature">
-                    <div class="signature-line"></div>
                     <div class="signature-name">Kelio Esteves Xavier</div>
                     <div class="signature-title">Diretor da Prova</div>
                 </div>
                 
                 <div class="signature">
-                    <div class="signature-line"></div>
                     <div class="signature-name">Manoel Alves Barbosa</div>
                     <div class="signature-title">Coordenador de Prova</div>
                 </div>
             </div>
 
-            <div class="certificate-footer">
+            <div class="certificate-footer-logo">
                 <img src="/static/img/macaxeiraecia_logo.png" alt="MC Logo" class="mc-logo">
             </div>
-
-            <div class="share-buttons">
-                <button onclick="printCertificate()" class="btn">🖨️ Imprimir</button>
-                <button onclick="shareCertificate()" class="btn">📤 Compartilhar</button>
-                <button onclick="voltarFormulario()" class="btn">← Voltar</button>
-            </div>
+        </div>
+        
+        <div class="footer-buttons" id="footer-buttons" style="display: none;">
+            <button onclick="printCertificate()" class="btn">🖨️ Imprimir</button>
+            <button onclick="shareCertificate()" class="btn">📤 Compartilhar</button>
+            <button onclick="voltarFormulario()" class="btn">← Voltar</button>
         </div>
     </div>
 
@@ -361,6 +424,16 @@
                 value = value.replace(/(\d{3})(\d)/, '$1.$2');
                 value = value.replace(/(\d{3})(\d)/, '$1.$2');
                 value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            }
+            e.target.value = value;
+        });
+
+        // Máscara para Data de Nascimento
+        document.getElementById('datanasc').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 8) {
+                value = value.replace(/(\d{2})(\d)/, '$1/$2');
+                value = value.replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3');
             }
             e.target.value = value;
         });
@@ -377,10 +450,29 @@
                 return;
             }
             
-            if (!datanasc) {
-                showError('Data de nascimento é obrigatória');
+            if (!datanasc || datanasc.length !== 10) {
+                showError('Data de nascimento deve estar no formato dd/mm/aaaa');
                 return;
             }
+            
+            // Validar formato da data
+            const dataParts = datanasc.split('/');
+            if (dataParts.length !== 3) {
+                showError('Data de nascimento deve estar no formato dd/mm/aaaa');
+                return;
+            }
+            
+            const dia = parseInt(dataParts[0]);
+            const mes = parseInt(dataParts[1]);
+            const ano = parseInt(dataParts[2]);
+            
+            if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || ano < 1900 || ano > 2024) {
+                showError('Data de nascimento inválida');
+                return;
+            }
+            
+            // Converter para formato YYYY-MM-DD para envio
+            const dataFormatada = `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
 
             // Mostrar loading
             document.getElementById('loading').style.display = 'block';
@@ -394,7 +486,7 @@
                 },
                 body: JSON.stringify({
                     cpf: cpf,
-                    datanasc: datanasc
+                    datanasc: dataFormatada
                 })
             })
             .then(response => response.json())
@@ -450,11 +542,13 @@
             // Esconder formulário e mostrar certificado
             document.getElementById('form-container').style.display = 'none';
             document.getElementById('certificate-container').style.display = 'block';
+            document.getElementById('footer-buttons').style.display = 'block';
         }
 
         function voltarFormulario() {
             document.getElementById('form-container').style.display = 'block';
             document.getElementById('certificate-container').style.display = 'none';
+            document.getElementById('footer-buttons').style.display = 'none';
         }
 
         function printCertificate() {
@@ -489,7 +583,6 @@
         document.getElementById('cpf').addEventListener('blur', function() {
             const cpf = this.value.replace(/\D/g, '');
             if (cpf.length === 11) {
-                // Aqui você pode adicionar validação de CPF se desejar
                 console.log('CPF válido:', cpf);
             }
         });
