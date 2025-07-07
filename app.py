@@ -1,15 +1,17 @@
-from flask import Flask, render_template, redirect, request, make_response, jsonify, flash, session
+from flask import Flask, render_template, redirect, request, send_file, make_response, jsonify, flash, session
+from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 from flask_cors import CORS
 from flask_mysqldb import MySQL
 from dotenv import load_dotenv
-from datetime import datetime
 from pytz import timezone
 import mercadopago
 import requests
 import hashlib
 import pdfkit
 import os
+import io
+import base64
 import re
 import random
 import string
