@@ -5541,8 +5541,8 @@ def lanca200k_confirmar():
         return jsonify({'error': str(e)}), 500
 
 ###### CERTIFICADO #############
-@app.route('/certificado200k_acesso')
-def certificado200k_acesso():
+@app.route('/certificado200k')
+def certificado200k():
     """Página para acessar o certificado"""
     return render_template('certificado200k.html')
 
