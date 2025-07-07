@@ -5540,6 +5540,1012 @@ def lanca200k_confirmar():
         print(f"DEBUG: Erro ao confirmar lançamento: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+###### CERTIFICADO #############
+@app.route('/certificado200k_acesso')
+def certificado200k_acesso():
+    """Página para acessar o certificado"""
+    return render_template('certificado200k.html')
+
+@app.route('/certificado200k_buscar_atleta', methods=['POST'])
+def certificado200k_buscar_atleta():
+    """Busca os dados do atleta e retorna as informações para o certificado"""
+    try:
+        data = request.get_json()
+        cpf = data.get('cpf', '').replace('.', '').replace('-', '').replace(' ', '')
+        datanasc = data.get('datanasc', '')
+        
+        if not cpf or not datanasc:
+            return jsonify({'success': False, 'message': 'CPF e data de nascimento são obrigatórios'})
+        
+        # Verificar se CPF tem 11 dígitos
+        if len(cpf) != 11 or not cpf.isdigit():
+            return jsonify({'success': False, 'message': 'CPF deve ter 11 dígitos numéricos'})
+        
+        cur = mysql.connection.cursor()
+        
+        # Primeiro, verificar se o atleta existe
+        cur.execute("""
+            SELECT IDATLETA, CONCAT(NOME, ' ', SOBRENOME) AS NOME_COMPLETO, 
+                   CPF, DATANASC
+            FROM ATLETA 
+            WHERE CPF = %s AND DATANASC = %s
+        """, (cpf, datanasc))
+        
+        atleta = cur.fetchone()
+        
+        if not atleta:
+            cur.close()
+            return jsonify({'success': False, 'message': 'Atleta não encontrado com os dados informados'})
+        
+        idatleta = atleta[0]
+        nome_completo = atleta[1]
+        
+        # Verificar se é modalidade solo ou equipe
+        dados_certificado = None
+        
+        # Primeiro, tentar buscar dados da modalidade Solo
+        cur.execute("""
+            SELECT CONCAT(a.NOME,' ',a.SOBRENOME) AS NOME, 200 AS KM_PERCORRIDO, 
+            (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA) As DATA_HORA_LARGADA,
+            (SELECT KM FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA) As KM_LARGADA,
+            (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA) As DATA_HORA_CHEGADA,
+            (SELECT KM FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA) As KM_CHEGADA,
+            SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) 
+              AS TEMPO_TOTAL
+            FROM ATLETA a
+            WHERE a.IDATLETA = %s
+        """, (idatleta,))
+        
+        resultado_solo = cur.fetchone()
+        
+        if resultado_solo and resultado_solo[6] and resultado_solo[4]:  # Se tem tempo total e chegada
+            dados_certificado = {
+                'nome': resultado_solo[0],
+                'modalidade': 'SOLO',
+                'km_percorrido': resultado_solo[1],
+                'data_hora_largada': resultado_solo[2],
+                'data_hora_chegada': resultado_solo[4],
+                'tempo_total': resultado_solo[6],
+                'data_prova': resultado_solo[2].strftime('%d/%m/%Y') if resultado_solo[2] else datetime.now().strftime('%d/%m/%Y')
+            }
+        else:
+            # Se não encontrou dados solo, buscar dados de equipe
+            cur.execute("""
+                SELECT CONCAT(a.NOME,' ',a.SOBRENOME) AS NOME, (ea.KM_FIM - ea.KM_INI) AS KM_PERCORRIDO,
+                (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA) As DATA_HORA_LARGADA,
+                (SELECT KM FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA) As KM_LARGADA,
+                (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA) As DATA_HORA_CHEGADA,
+                (SELECT KM FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA) As KM_CHEGADA,
+                SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                  (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
+                  (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) 
+                  AS TEMPO_TOTAL,
+                ea.KM_INI, ea.KM_FIM
+                FROM ATLETA a, EQUIPE_ATLETAS ea
+                WHERE ea.IDATLETA = a.IDATLETA 
+                AND a.IDATLETA = %s
+            """, (idatleta,))
+            
+            resultado_equipe = cur.fetchone()
+            
+            if resultado_equipe and resultado_equipe[6] and resultado_equipe[4]:  # Se tem tempo total e chegada
+                # Determinar modalidade baseada na distância
+                km_percorrido = resultado_equipe[1]
+                if km_percorrido == 100:
+                    modalidade = 'DUPLA'
+                elif km_percorrido == 50:
+                    modalidade = 'QUARTETO'
+                elif km_percorrido == 25:
+                    modalidade = 'OCTETO'
+                else:
+                    modalidade = 'EQUIPE'
+                
+                dados_certificado = {
+                    'nome': resultado_equipe[0],
+                    'modalidade': modalidade,
+                    'km_percorrido': resultado_equipe[1],
+                    'data_hora_largada': resultado_equipe[2],
+                    'data_hora_chegada': resultado_equipe[4],
+                    'tempo_total': resultado_equipe[6],
+                    'data_prova': resultado_equipe[2].strftime('%d/%m/%Y') if resultado_equipe[2] else datetime.now().strftime('%d/%m/%Y')
+                }
+        
+        cur.close()
+        
+        if not dados_certificado:
+            return jsonify({'success': False, 'message': 'Atleta não completou a prova ou dados não encontrados'})
+        
+        # Converter tempo para string se necessário
+        tempo_str = dados_certificado['tempo_total']
+        if hasattr(tempo_str, 'total_seconds'):
+            tempo_total = tempo_str
+            horas = int(tempo_total.total_seconds() // 3600)
+            minutos = int((tempo_total.total_seconds() % 3600) // 60)
+            segundos = int(tempo_total.total_seconds() % 60)
+            tempo_str = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+        
+        return jsonify({
+            'success': True,
+            'dados': {
+                'idatleta': idatleta,
+                'nome': dados_certificado['nome'],
+                'modalidade': dados_certificado['modalidade'],
+                'km_percorrido': dados_certificado['km_percorrido'],
+                'tempo_total': str(tempo_str),
+                'data_prova': dados_certificado['data_prova']
+            }
+        })
+        
+    except Exception as e:
+        print(f"Erro ao buscar atleta: {e}")
+        return jsonify({'success': False, 'message': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_gerar_pdf', methods=['POST'])
+def certificado200k_gerar_pdf():
+    """Gera PDF do certificado para o atleta"""
+    try:
+        data = request.get_json()
+        dados = data.get('dados', {})
+        
+        if not dados:
+            return jsonify({'success': False, 'message': 'Dados do atleta são obrigatórios'})
+        
+        # Criar buffer para o PDF
+        buffer = io.BytesIO()
+        
+        # Criar documento PDF em paisagem
+        doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), 
+                              leftMargin=2*cm, rightMargin=2*cm, 
+                              topMargin=2*cm, bottomMargin=2*cm)
+        
+        # Estilos
+        styles = getSampleStyleSheet()
+        
+        # Estilo para título
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            textColor=colors.darkblue
+        )
+        
+        # Estilo para subtítulo
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Heading2'],
+            fontSize=16,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            textColor=colors.darkblue
+        )
+        
+        # Estilo para texto principal
+        main_style = ParagraphStyle(
+            'CustomMain',
+            parent=styles['Normal'],
+            fontSize=14,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            leading=20
+        )
+        
+        # Estilo para assinaturas
+        signature_style = ParagraphStyle(
+            'CustomSignature',
+            parent=styles['Normal'],
+            fontSize=12,
+            alignment=TA_CENTER,
+            textColor=colors.darkblue
+        )
+        
+        # Elementos do documento
+        elements = []
+        
+        # Logo do evento (se existir)
+        try:
+            logo_path = "/static/img/logo_200k.png"
+            if os.path.exists(logo_path):
+                logo = Image(logo_path, width=3*inch, height=2*inch)
+                logo.hAlign = 'CENTER'
+                elements.append(logo)
+                elements.append(Spacer(1, 20))
+        except:
+            pass
+        
+        # Título
+        title = Paragraph("4º Desafio 200 K Porto Velho - Humaitá", title_style)
+        elements.append(title)
+        elements.append(Spacer(1, 30))
+        
+        # Certificado
+        cert_title = Paragraph("CERTIFICADO DE PARTICIPAÇÃO", subtitle_style)
+        elements.append(cert_title)
+        elements.append(Spacer(1, 30))
+        
+        # Texto principal
+        texto_principal = f"""
+        <b>{dados['nome']}</b>, participou do 4º
+        Desafio 200k Porto Velho - Humaitá, na
+        modalidade <b>{dados['modalidade']}</b>, percorrendo a
+        distância de <b>{dados['km_percorrido']}km</b>, no tempo líquido de
+        <b>{dados['tempo_total']}</b>
+        """
+        
+        main_text = Paragraph(texto_principal, main_style)
+        elements.append(main_text)
+        elements.append(Spacer(1, 40))
+        
+        # Data e local
+        data_local = Paragraph(f"Porto Velho, {dados['data_prova']}", main_style)
+        elements.append(data_local)
+        elements.append(Spacer(1, 60))
+        
+        # Tabela de assinaturas
+        signature_data = [
+            ['', ''],
+            ['Kelio Esteves Xavier', 'Manoel Alves Barbosa'],
+            ['Diretor da Prova', 'Coordenador de Prova']
+        ]
+        
+        signature_table = Table(signature_data, colWidths=[3.5*inch, 3.5*inch])
+        signature_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 1), (-1, 1), 12),
+            ('FONTNAME', (0, 2), (-1, 2), 'Helvetica'),
+            ('FONTSIZE', (0, 2), (-1, 2), 10),
+            ('LINEABOVE', (0, 1), (-1, 1), 1, colors.black),
+            ('TOPPADDING', (0, 1), (-1, 1), 10),
+            ('BOTTOMPADDING', (0, 2), (-1, 2), 20),
+        ]))
+        
+        elements.append(signature_table)
+        elements.append(Spacer(1, 40))
+        
+        # Logo da empresa organizadora
+        try:
+            mc_logo_path = "/static/img/MC_logo.jpg"
+            if os.path.exists(mc_logo_path):
+                mc_logo = Image(mc_logo_path, width=2*inch, height=1.5*inch)
+                mc_logo.hAlign = 'RIGHT'
+                elements.append(mc_logo)
+        except:
+            pass
+        
+        # Construir PDF
+        doc.build(elements)
+        
+        # Retornar PDF
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
+        buffer.close()
+        
+        # Codificar em base64 para enviar via JSON
+        pdf_base64 = base64.b64encode(pdf_data).decode('utf-8')
+        
+        return jsonify({
+            'success': True,
+            'pdf_data': pdf_base64,
+            'filename': f"certificado_{dados['nome'].replace(' ', '_')}.pdf"
+        })
+        
+    except Exception as e:
+        print(f"Erro ao gerar PDF: {e}")
+        return jsonify({'success': False, 'message': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_download_pdf', methods=['POST'])
+def certificado200k_download_pdf():
+    """Baixa o PDF do certificado"""
+    try:
+        data = request.get_json()
+        pdf_data = data.get('pdf_data', '')
+        filename = data.get('filename', 'certificado.pdf')
+        
+        if not pdf_data:
+            return jsonify({'success': False, 'message': 'Dados do PDF não fornecidos'})
+        
+        # Decodificar base64
+        pdf_bytes = base64.b64decode(pdf_data)
+        
+        # Criar arquivo temporário
+        buffer = io.BytesIO(pdf_bytes)
+        
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Erro ao baixar PDF: {e}")
+        return jsonify({'success': False, 'message': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_verificar_conclusao/<int:idatleta>')
+def certificado200k_verificar_conclusao(idatleta):
+    """Verifica se o atleta completou a prova (solo ou equipe)"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Verificar conclusão solo
+        cur.execute("""
+            SELECT COUNT(*) as completou_solo
+            FROM PROVA_PARCIAIS_200K 
+            WHERE IDATLETA = %s AND KM = 200
+        """, (idatleta,))
+        
+        resultado_solo = cur.fetchone()
+        completou_solo = resultado_solo[0] > 0 if resultado_solo else False
+        
+        # Verificar conclusão equipe
+        cur.execute("""
+            SELECT COUNT(*) as completou_equipe
+            FROM EQUIPE_ATLETAS ea
+            JOIN PROVA_PARCIAIS_200K p ON p.IDEA = ea.IDEA AND p.KM = ea.KM_FIM
+            WHERE ea.IDATLETA = %s
+        """, (idatleta,))
+        
+        resultado_equipe = cur.fetchone()
+        completou_equipe = resultado_equipe[0] > 0 if resultado_equipe else False
+        
+        cur.close()
+        
+        return jsonify({
+            'completou_solo': completou_solo,
+            'completou_equipe': completou_equipe,
+            'completou_alguma': completou_solo or completou_equipe
+        })
+        
+    except Exception as e:
+        print(f"Erro ao verificar conclusão: {e}")
+        return jsonify({'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_estatisticas')
+def certificado200k_estatisticas():
+    """Retorna estatísticas gerais da prova"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Total de atletas inscritos
+        cur.execute("SELECT COUNT(*) FROM ATLETA")
+        total_atletas = cur.fetchone()[0]
+        
+        # Atletas que completaram solo
+        cur.execute("""
+            SELECT COUNT(DISTINCT IDATLETA) 
+            FROM PROVA_PARCIAIS_200K 
+            WHERE KM = 200
+        """)
+        completaram_solo = cur.fetchone()[0]
+        
+        # Atletas que completaram equipe
+        cur.execute("""
+            SELECT COUNT(DISTINCT ea.IDATLETA) 
+            FROM EQUIPE_ATLETAS ea
+            JOIN PROVA_PARCIAIS_200K p ON p.IDEA = ea.IDEA AND p.KM = ea.KM_FIM
+        """)
+        completaram_equipe = cur.fetchone()[0]
+        
+        # Melhor tempo solo
+        cur.execute("""
+            SELECT CONCAT(a.NOME, ' ', a.SOBRENOME) AS NOME,
+                   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) AS TEMPO
+            FROM ATLETA a
+            WHERE EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA)
+            ORDER BY TIMESTAMPDIFF(SECOND, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))
+            LIMIT 1
+        """)
+        melhor_tempo_solo = cur.fetchone()
+        
+        cur.close()
+        
+        return jsonify({
+            'total_atletas': total_atletas,
+            'completaram_solo': completaram_solo,
+            'completaram_equipe': completaram_equipe,
+            'total_completaram': completaram_solo + completaram_equipe,
+            'melhor_tempo_solo': {
+                'nome': melhor_tempo_solo[0] if melhor_tempo_solo else None,
+                'tempo': str(melhor_tempo_solo[1]) if melhor_tempo_solo else None
+            }
+        })
+        
+    except Exception as e:
+        print(f"Erro ao obter estatísticas: {e}")
+        return jsonify({'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_listar_finalizadores')
+def certificado200k_listar_finalizadores():
+    """Lista todos os atletas que completaram a prova"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Atletas que completaram solo
+        cur.execute("""
+            SELECT CONCAT(a.NOME, ' ', a.SOBRENOME) AS NOME, 
+                   'SOLO' AS MODALIDADE,
+                   200 AS KM_PERCORRIDO,
+                   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) AS TEMPO_TOTAL
+            FROM ATLETA a
+            WHERE EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA)
+            
+            UNION ALL
+            
+            SELECT CONCAT(a.NOME, ' ', a.SOBRENOME) AS NOME,
+                   CASE 
+                     WHEN (ea.KM_FIM - ea.KM_INI) = 100 THEN 'DUPLA'
+                     WHEN (ea.KM_FIM - ea.KM_INI) = 50 THEN 'QUARTETO'
+                     WHEN (ea.KM_FIM - ea.KM_INI) = 25 THEN 'OCTETO'
+                     ELSE 'EQUIPE'
+                   END AS MODALIDADE,
+                   (ea.KM_FIM - ea.KM_INI) AS KM_PERCORRIDO,
+                   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) AS TEMPO_TOTAL
+            FROM ATLETA a, EQUIPE_ATLETAS ea
+            WHERE ea.IDATLETA = a.IDATLETA 
+            AND EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA)
+            
+            ORDER BY NOME
+        """)
+        
+        finalizadores = cur.fetchall()
+        cur.close()
+        
+        resultado = []
+        for finalizador in finalizadores:
+            resultado.append({
+                'nome': finalizador[0],
+                'modalidade': finalizador[1],
+                'km_percorrido': finalizador[2],
+                'tempo_total': str(finalizador[3]) if finalizador[3] else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'finalizadores': resultado,
+            'total': len(resultado)
+        })
+        
+    except Exception as e:
+        print(f"Erro ao listar finalizadores: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_validar_cpf', methods=['POST'])
+def certificado200k_validar_cpf():
+    """Valida CPF usando algoritmo padrão"""
+    try:
+        data = request.get_json()
+        cpf = data.get('cpf', '').replace('.', '').replace('-', '').replace(' ', '')
+        
+        if not cpf or len(cpf) != 11 or not cpf.isdigit():
+            return jsonify({'valido': False, 'message': 'CPF deve ter 11 dígitos numéricos'})
+        
+        # Verificar se todos os dígitos são iguais
+        if cpf == cpf[0] * 11:
+            return jsonify({'valido': False, 'message': 'CPF inválido'})
+        
+        # Algoritmo de validação do CPF
+        def calcular_digito(cpf_parcial, pesos):
+            soma = sum(int(cpf_parcial[i]) * pesos[i] for i in range(len(cpf_parcial)))
+            resto = soma % 11
+            return 0 if resto < 2 else 11 - resto
+        
+        # Verificar primeiro dígito
+        primeiro_digito = calcular_digito(cpf[:9], [10, 9, 8, 7, 6, 5, 4, 3, 2])
+        if int(cpf[9]) != primeiro_digito:
+            return jsonify({'valido': False, 'message': 'CPF inválido'})
+        
+        # Verificar segundo dígito
+        segundo_digito = calcular_digito(cpf[:10], [11, 10, 9, 8, 7, 6, 5, 4, 3, 2])
+        if int(cpf[10]) != segundo_digito:
+            return jsonify({'valido': False, 'message': 'CPF inválido'})
+        
+        return jsonify({'valido': True, 'message': 'CPF válido'})
+        
+    except Exception as e:
+        print(f"Erro ao validar CPF: {e}")
+        return jsonify({'valido': False, 'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_buscar_por_nome', methods=['POST'])
+def certificado200k_buscar_por_nome():
+    """Busca atletas por nome (para administração)"""
+    try:
+        data = request.get_json()
+        nome = data.get('nome', '').strip()
+        
+        if len(nome) < 3:
+            return jsonify({'success': False, 'message': 'Nome deve ter pelo menos 3 caracteres'})
+        
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT IDATLETA, CONCAT(NOME, ' ', SOBRENOME) AS NOME_COMPLETO,
+                   CPF, DATANASC
+            FROM ATLETA 
+            WHERE CONCAT(NOME, ' ', SOBRENOME) LIKE %s
+            ORDER BY NOME, SOBRENOME
+            LIMIT 20
+        """, (f'%{nome}%',))
+        
+        atletas = cur.fetchall()
+        cur.close()
+        
+        resultado = []
+        for atleta in atletas:
+            resultado.append({
+                'idatleta': atleta[0],
+                'nome': atleta[1],
+                'cpf': atleta[2],
+                'datanasc': atleta[3].strftime('%Y-%m-%d') if atleta[3] else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'atletas': resultado
+        })
+        
+    except Exception as e:
+        print(f"Erro ao buscar por nome: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_detalhes_atleta/<int:idatleta>')
+def certificado200k_detalhes_atleta(idatleta):
+    """Obtém detalhes completos do atleta e sua participação"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Dados básicos do atleta
+        cur.execute("""
+            SELECT IDATLETA, CONCAT(NOME, ' ', SOBRENOME) AS NOME_COMPLETO,
+                   NOME, SOBRENOME, CPF, DATANASC
+            FROM ATLETA 
+            WHERE IDATLETA = %s
+        """, (idatleta,))
+        
+        atleta = cur.fetchone()
+        if not atleta:
+            cur.close()
+            return jsonify({'success': False, 'message': 'Atleta não encontrado'})
+        
+        # Verificar participação solo
+        cur.execute("""
+            SELECT KM, DATA_HORA 
+            FROM PROVA_PARCIAIS_200K 
+            WHERE IDATLETA = %s 
+            ORDER BY KM
+        """, (idatleta,))
+        
+        pontos_solo = cur.fetchall()
+        
+        # Verificar participação em equipe
+        cur.execute("""
+            SELECT ea.IDEA, ea.KM_INI, ea.KM_FIM,
+                   p1.DATA_HORA as DATA_INICIO,
+                   p2.DATA_HORA as DATA_FIM
+            FROM EQUIPE_ATLETAS ea
+            LEFT JOIN PROVA_PARCIAIS_200K p1 ON p1.IDEA = ea.IDEA AND p1.KM = ea.KM_INI
+            LEFT JOIN PROVA_PARCIAIS_200K p2 ON p2.IDEA = ea.IDEA AND p2.KM = ea.KM_FIM
+            WHERE ea.IDATLETA = %s
+        """, (idatleta,))
+        
+        dados_equipe = cur.fetchone()
+        cur.close()
+        
+        resultado = {
+            'atleta': {
+                'idatleta': atleta[0],
+                'nome_completo': atleta[1],
+                'nome': atleta[2],
+                'sobrenome': atleta[3],
+                'cpf': atleta[4],
+                'datanasc': atleta[5].strftime('%Y-%m-%d') if atleta[5] else None
+            },
+            'participacao_solo': {
+                'participou': len(pontos_solo) > 0,
+                'completou': any(ponto[0] == 200 for ponto in pontos_solo),
+                'pontos': [{'km': ponto[0], 'data_hora': ponto[1].strftime('%Y-%m-%d %H:%M:%S') if ponto[1] else None} for ponto in pontos_solo]
+            },
+            'participacao_equipe': {
+                'participou': dados_equipe is not None,
+                'completou': dados_equipe is not None and dados_equipe[4] is not None,
+                'detalhes': {
+                    'idea': dados_equipe[0] if dados_equipe else None,
+                    'km_ini': dados_equipe[1] if dados_equipe else None,
+                    'km_fim': dados_equipe[2] if dados_equipe else None,
+                    'data_inicio': dados_equipe[3].strftime('%Y-%m-%d %H:%M:%S') if dados_equipe and dados_equipe[3] else None,
+                    'data_fim': dados_equipe[4].strftime('%Y-%m-%d %H:%M:%S') if dados_equipe and dados_equipe[4] else None,
+                    'distancia': dados_equipe[2] - dados_equipe[1] if dados_equipe and dados_equipe[1] and dados_equipe[2] else None
+                } if dados_equipe else None
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'dados': resultado
+        })
+        
+    except Exception as e:
+        print(f"Erro ao obter detalhes do atleta: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_ranking_solo')
+def certificado200k_ranking_solo():
+    """Obtém ranking dos atletas na modalidade solo"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        cur.execute("""
+            SELECT CONCAT(a.NOME, ' ', a.SOBRENOME) AS NOME,
+                   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) AS TEMPO_TOTAL,
+                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA) AS DATA_LARGADA,
+                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA) AS DATA_CHEGADA
+            FROM ATLETA a
+            WHERE EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA)
+            ORDER BY TIMESTAMPDIFF(SECOND, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))
+        """)
+        
+        ranking = cur.fetchall()
+        cur.close()
+        
+        resultado = []
+        for posicao, atleta in enumerate(ranking, 1):
+            resultado.append({
+                'posicao': posicao,
+                'nome': atleta[0],
+                'tempo_total': str(atleta[1]) if atleta[1] else None,
+                'data_largada': atleta[2].strftime('%Y-%m-%d %H:%M:%S') if atleta[2] else None,
+                'data_chegada': atleta[3].strftime('%Y-%m-%d %H:%M:%S') if atleta[3] else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'ranking': resultado,
+            'total': len(resultado)
+        })
+        
+    except Exception as e:
+        print(f"Erro ao obter ranking solo: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_ranking_equipe')
+def certificado200k_ranking_equipe():
+    """Obtém ranking dos atletas na modalidade equipe"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        cur.execute("""
+            SELECT CONCAT(a.NOME, ' ', a.SOBRENOME) AS NOME,
+                   CASE 
+                     WHEN (ea.KM_FIM - ea.KM_INI) = 100 THEN 'DUPLA'
+                     WHEN (ea.KM_FIM - ea.KM_INI) = 50 THEN 'QUARTETO'
+                     WHEN (ea.KM_FIM - ea.KM_INI) = 25 THEN 'OCTETO'
+                     ELSE 'EQUIPE'
+                   END AS MODALIDADE,
+                   (ea.KM_FIM - ea.KM_INI) AS KM_PERCORRIDO,
+                   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) AS TEMPO_TOTAL,
+                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA) AS DATA_LARGADA,
+                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA) AS DATA_CHEGADA,
+                   ea.IDEA
+            FROM ATLETA a, EQUIPE_ATLETAS ea
+            WHERE ea.IDATLETA = a.IDATLETA 
+            AND EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA)
+            ORDER BY MODALIDADE, TIMESTAMPDIFF(SECOND, 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
+              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))
+        """)
+        
+        ranking = cur.fetchall()
+        cur.close()
+        
+        # Agrupar por modalidade
+        resultado = {'DUPLA': [], 'QUARTETO': [], 'OCTETO': []}
+        contadores = {'DUPLA': 1, 'QUARTETO': 1, 'OCTETO': 1}
+        
+        for atleta in ranking:
+            modalidade = atleta[1]
+            if modalidade in resultado:
+                resultado[modalidade].append({
+                    'posicao': contadores[modalidade],
+                    'nome': atleta[0],
+                    'km_percorrido': atleta[2],
+                    'tempo_total': str(atleta[3]) if atleta[3] else None,
+                    'data_largada': atleta[4].strftime('%Y-%m-%d %H:%M:%S') if atleta[4] else None,
+                    'data_chegada': atleta[5].strftime('%Y-%m-%d %H:%M:%S') if atleta[5] else None,
+                    'idea': atleta[6]
+                })
+                contadores[modalidade] += 1
+        
+        return jsonify({
+            'success': True,
+            'ranking': resultado,
+            'total': {
+                'dupla': len(resultado['DUPLA']),
+                'quarteto': len(resultado['QUARTETO']),
+                'octeto': len(resultado['OCTETO'])
+            }
+        })
+        
+    except Exception as e:
+        print(f"Erro ao obter ranking equipe: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_equipes')
+def certificado200k_equipes():
+    """Lista todas as equipes e seus membros"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        cur.execute("""
+            SELECT DISTINCT ea.IDEA,
+                   CASE 
+                     WHEN COUNT(ea.IDATLETA) = 2 THEN 'DUPLA'
+                     WHEN COUNT(ea.IDATLETA) = 4 THEN 'QUARTETO'
+                     WHEN COUNT(ea.IDATLETA) = 8 THEN 'OCTETO'
+                     ELSE 'EQUIPE'
+                   END AS MODALIDADE,
+                   COUNT(ea.IDATLETA) AS TOTAL_ATLETAS
+            FROM EQUIPE_ATLETAS ea
+            GROUP BY ea.IDEA
+            ORDER BY ea.IDEA
+        """)
+        
+        equipes = cur.fetchall()
+        
+        resultado = []
+        for equipe in equipes:
+            idea = equipe[0]
+            modalidade = equipe[1]
+            total_atletas = equipe[2]
+            
+            # Buscar membros da equipe
+            cur.execute("""
+                SELECT CONCAT(a.NOME, ' ', a.SOBRENOME) AS NOME,
+                       ea.KM_INI, ea.KM_FIM,
+                       (ea.KM_FIM - ea.KM_INI) AS KM_PERCORRIDO,
+                       SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                         (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
+                         (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) AS TEMPO_INDIVIDUAL,
+                       EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA) AS COMPLETOU
+                FROM ATLETA a, EQUIPE_ATLETAS ea
+                WHERE ea.IDATLETA = a.IDATLETA 
+                AND ea.IDEA = %s
+                ORDER BY ea.KM_INI
+            """, (idea,))
+            
+            membros = cur.fetchall()
+            
+            # Verificar se a equipe completou (todos os membros terminaram)
+            equipe_completou = all(membro[5] for membro in membros)
+            
+            # Calcular tempo total da equipe (do primeiro ao último)
+            tempo_total_equipe = None
+            if equipe_completou:
+                cur.execute("""
+                    SELECT SEC_TO_TIME(TIMESTAMPDIFF(SECOND,
+                        (SELECT MIN(DATA_HORA) FROM PROVA_PARCIAIS_200K WHERE IDEA = %s AND KM = 0),
+                        (SELECT MAX(DATA_HORA) FROM PROVA_PARCIAIS_200K WHERE IDEA = %s AND KM = 200)
+                    )) AS TEMPO_TOTAL
+                """, (idea, idea))
+                tempo_result = cur.fetchone()
+                tempo_total_equipe = str(tempo_result[0]) if tempo_result and tempo_result[0] else None
+            
+            resultado.append({
+                'idea': idea,
+                'modalidade': modalidade,
+                'total_atletas': total_atletas,
+                'completou': equipe_completou,
+                'tempo_total': tempo_total_equipe,
+                'membros': [{
+                    'nome': membro[0],
+                    'km_ini': membro[1],
+                    'km_fim': membro[2],
+                    'km_percorrido': membro[3],
+                    'tempo_individual': str(membro[4]) if membro[4] else None,
+                    'completou': membro[5]
+                } for membro in membros]
+            })
+        
+        cur.close()
+        
+        return jsonify({
+            'success': True,
+            'equipes': resultado,
+            'total': len(resultado)
+        })
+        
+    except Exception as e:
+        print(f"Erro ao listar equipes: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
+@app.route('/certificado200k_relatorio_geral')
+def certificado200k_relatorio_geral():
+    """Gera relatório geral da prova"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Estatísticas gerais
+        cur.execute("SELECT COUNT(*) FROM ATLETA")
+        total_atletas = cur.fetchone()[0]
+        
+        cur.execute("""
+            SELECT COUNT(DISTINCT IDATLETA) 
+            FROM PROVA_PARCIAIS_200K 
+            WHERE KM = 200
+        """)
+        completaram_solo = cur.fetchone()[0]
+        
+        cur.execute("""
+            SELECT COUNT(DISTINCT ea.IDATLETA) 
+            FROM EQUIPE_ATLETAS ea
+            JOIN PROVA_PARCIAIS_200K p ON p.IDEA = ea.IDEA AND p.KM = ea.KM_FIM
+        """)
+        completaram_equipe = cur.fetchone()[0]
+        
+        # Estatísticas por modalidade
+        cur.execute("""
+            SELECT 
+                CASE 
+                    WHEN (ea.KM_FIM - ea.KM_INI) = 100 THEN 'DUPLA'
+                    WHEN (ea.KM_FIM - ea.KM_INI) = 50 THEN 'QUARTETO'
+                    WHEN (ea.KM_FIM - ea.KM_INI) = 25 THEN 'OCTETO'
+                    ELSE 'EQUIPE'
+                END AS MODALIDADE,
+                COUNT(DISTINCT ea.IDATLETA) AS TOTAL_ATLETAS,
+                COUNT(DISTINCT CASE WHEN p.KM = ea.KM_FIM THEN ea.IDATLETA END) AS COMPLETARAM
+            FROM EQUIPE_ATLETAS ea
+            LEFT JOIN PROVA_PARCIAIS_200K p ON p.IDEA = ea.IDEA AND p.KM = ea.KM_FIM
+            GROUP BY MODALIDADE
+        """)
+        
+        stats_equipe = cur.fetchall()
+        
+        # Tempos por modalidade
+        cur.execute("""
+            SELECT 'SOLO' AS MODALIDADE,
+                   MIN(SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA)))) AS MELHOR_TEMPO,
+                   MAX(SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA)))) AS PIOR_TEMPO,
+                   AVG(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) AS TEMPO_MEDIO_SEGUNDOS
+            FROM ATLETA a
+            WHERE EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA)
+        """)
+        
+        stats_solo = cur.fetchone()
+        
+        cur.close()
+        
+        # Formatar estatísticas de equipe
+        stats_equipe_formatadas = {}
+        for stat in stats_equipe:
+            stats_equipe_formatadas[stat[0]] = {
+                'total_atletas': stat[1],
+                'completaram': stat[2],
+                'taxa_conclusao': round((stat[2] / stat[1]) * 100, 2) if stat[1] > 0 else 0
+            }
+        
+        # Calcular tempo médio em formato legível
+        tempo_medio_legivel = None
+        if stats_solo and stats_solo[3]:
+            segundos = int(stats_solo[3])
+            horas = segundos // 3600
+            minutos = (segundos % 3600) // 60
+            segundos = segundos % 60
+            tempo_medio_legivel = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+        
+        resultado = {
+            'resumo_geral': {
+                'total_atletas': total_atletas,
+                'completaram_solo': completaram_solo,
+                'completaram_equipe': completaram_equipe,
+                'total_completaram': completaram_solo + completaram_equipe,
+                'taxa_conclusao_geral': round(((completaram_solo + completaram_equipe) / total_atletas) * 100, 2) if total_atletas > 0 else 0
+            },
+            'modalidade_solo': {
+                'completaram': completaram_solo,
+                'melhor_tempo': str(stats_solo[1]) if stats_solo and stats_solo[1] else None,
+                'pior_tempo': str(stats_solo[2]) if stats_solo and stats_solo[2] else None,
+                'tempo_medio': tempo_medio_legivel
+            },
+            'modalidades_equipe': stats_equipe_formatadas,
+            'data_relatorio': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        return jsonify({
+            'success': True,
+            'relatorio': resultado
+        })
+        
+    except Exception as e:
+        print(f"Erro ao gerar relatório geral: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
+# Funções auxiliares para validação
+def validar_cpf(cpf):
+    """Valida CPF usando algoritmo padrão"""
+    if not cpf or len(cpf) != 11 or not cpf.isdigit():
+        return False
+    
+    # Verificar se todos os dígitos são iguais
+    if cpf == cpf[0] * 11:
+        return False
+    
+    # Algoritmo de validação do CPF
+    def calcular_digito(cpf_parcial, pesos):
+        soma = sum(int(cpf_parcial[i]) * pesos[i] for i in range(len(cpf_parcial)))
+        resto = soma % 11
+        return 0 if resto < 2 else 11 - resto
+    
+    # Verificar primeiro dígito
+    primeiro_digito = calcular_digito(cpf[:9], [10, 9, 8, 7, 6, 5, 4, 3, 2])
+    if int(cpf[9]) != primeiro_digito:
+        return False
+    
+    # Verificar segundo dígito
+    segundo_digito = calcular_digito(cpf[:10], [11, 10, 9, 8, 7, 6, 5, 4, 3, 2])
+    if int(cpf[10]) != segundo_digito:
+        return False
+    
+    return True
+
+def formatar_tempo(segundos):
+    """Formata tempo em segundos para HH:MM:SS"""
+    if not segundos:
+        return None
+    
+    horas = int(segundos // 3600)
+    minutos = int((segundos % 3600) // 60)
+    segundos = int(segundos % 60)
+    return f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+
+def limpar_cpf(cpf):
+    """Remove formatação do CPF"""
+    if not cpf:
+        return ''
+    return cpf.replace('.', '').replace('-', '').replace(' ', '')
+
+# Middleware para log de requests (opcional)
+@app.before_request
+def log_request_info():
+    """Log das requisições para debug"""
+    if request.endpoint and request.endpoint.startswith('certificado200k_'):
+        print(f"Certificado 200K - {request.method} {request.endpoint} - IP: {request.remote_addr}")
+
+# Error handlers específicos para as rotas de certificado
+@app.errorhandler(500)
+def handle_500(e):
+    if request.endpoint and request.endpoint.startswith('certificado200k_'):
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'}), 500
+    return e
+
+@app.errorhandler(404)
+def handle_404(e):
+    if request.endpoint and request.endpoint.startswith('certificado200k_'):
+        return jsonify({'success': False, 'error': 'Endpoint não encontrado'}), 404
+    return e
+
+#########################
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
