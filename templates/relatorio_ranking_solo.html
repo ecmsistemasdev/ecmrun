@@ -316,7 +316,21 @@
             }
             
             return tempo;
+        }    
+        
+        function formatData(dataString) {
+            if (!dataString) return '-';
+            
+            const data = new Date(dataString);
+            const dataFormatada = data.toLocaleDateString('pt-BR');
+            const horaFormatada = data.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false // Garante formato 24h
+            });
+            return `${dataFormatada} ${horaFormatada}`;
         }        
+        
         
         // Função para carregar dados do ranking
         async function loadRanking() {
@@ -359,10 +373,10 @@
                 const sexoText = atleta.sexo; // === 'M' ? 'Masculino' : 'Feminino';
                 
                 // Formatar datas
-                const dataLargada = atleta.data_largada ? 
-                    new Date(atleta.data_largada).toLocaleString('pt-BR') : 'N/A';
-                const dataChegada = atleta.data_chegada ? 
-                    new Date(atleta.data_chegada).toLocaleString('pt-BR') : 'N/A';
+                //const dataLargada = atleta.data_largada ? 
+                //    new Date(atleta.data_largada).toLocaleString('pt-BR') : 'N/A';
+                //const dataChegada = atleta.data_chegada ? 
+                //    new Date(atleta.data_chegada).toLocaleString('pt-BR') : 'N/A';
                 
                 // Formatar tempo
                 //const tempoFormatado = formatarTempo(atleta.tempo_total);
@@ -371,11 +385,14 @@
                     <td class="posicao">${atleta.posicao}</td>
                     <td>${atleta.nome}</td>
                     <td>${sexoText}</td>
-                    <td class="tempo-destaque">${formatarTempo(atleta.tempo_total)}</td>
-                    <td>${dataLargada}</td>
-                    <td>${dataChegada}</td>
+                    <td ${formatarTempo(atleta.tempo_total)}</td>
+                    <td>${formatData(atleta.data_largada)}</td>
+                    <td>${formatData(atleta.data_chegada)}</td>                        
+
                 `;
                 
+                //    <td>${dataLargada}</td>
+                //    <td>${dataChegada}</td>                
                 tbody.appendChild(row);
             });
         }
