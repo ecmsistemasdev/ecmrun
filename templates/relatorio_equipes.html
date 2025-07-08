@@ -528,13 +528,39 @@
 
         function formatarDataHora(dataHora) {
             if (!dataHora) return 'N/A';
-            const date = new Date(dataHora);
-            const dia = String(date.getDate()).padStart(2, '0');
-            const mes = String(date.getMonth() + 1).padStart(2, '0');
-            const ano = date.getFullYear();
-            const hora = String(date.getHours()).padStart(2, '0');
-            const minuto = String(date.getMinutes()).padStart(2, '0');
-            return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+            
+            // Se já está no formato brasileiro correto (dd/mm/yyyy hh:mm), retorna como está
+            if (typeof dataHora === 'string' && dataHora.match(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)) {
+                return dataHora;
+            }
+            
+            // Se for um objeto Date, formatar para o padrão brasileiro
+            if (dataHora instanceof Date) {
+                const dia = String(dataHora.getDate()).padStart(2, '0');
+                const mes = String(dataHora.getMonth() + 1).padStart(2, '0');
+                const ano = dataHora.getFullYear();
+                const hora = String(dataHora.getHours()).padStart(2, '0');
+                const minuto = String(dataHora.getMinutes()).padStart(2, '0');
+                return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+            }
+            
+            // Se for uma string em outro formato, tentar converter
+            try {
+                const date = new Date(dataHora);
+                if (!isNaN(date.getTime())) {
+                    const dia = String(date.getDate()).padStart(2, '0');
+                    const mes = String(date.getMonth() + 1).padStart(2, '0');
+                    const ano = date.getFullYear();
+                    const hora = String(date.getHours()).padStart(2, '0');
+                    const minuto = String(date.getMinutes()).padStart(2, '0');
+                    return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+                }
+            } catch (e) {
+                console.error('Erro ao formatar data:', e);
+            }
+            
+            // Se não conseguir processar, retorna a string original
+            return dataHora.toString();
         }
 
         function formatarTempo(tempo) {
