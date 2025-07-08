@@ -3,28 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Equipes Detalhadas - Corrida 200K</title>
+    <title>Relatório de Equipes - Corrida 200K</title>
     <style>
         @page {
             size: A4 portrait;
-            margin: 15mm;
+            margin: 20mm;
         }
         
         body {
-            font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
             margin: 0;
-            padding: 0;
-            line-height: 1.4;
+            padding: 20px;
+            background: white;
         }
         
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #333;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
         }
         
         .logo-left {
@@ -37,175 +38,214 @@
             height: 60px;
         }
         
-        .title {
+        .title-section {
+            flex: 1;
             text-align: center;
-            flex-grow: 1;
             margin: 0 20px;
         }
         
-        .title h1 {
-            font-size: 18px;
+        .title-section h1 {
             margin: 0;
-            color: #333;
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: 700;
         }
         
-        .title h2 {
-            font-size: 14px;
+        .subtitle {
             margin: 5px 0 0 0;
-            color: #666;
+            font-size: 14px;
+            color: #7f8c8d;
         }
         
         .filters {
-            background-color: #f8f9fa;
+            background: #f8f9fa;
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 8px;
             margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
         }
         
         .filter-group {
-            display: inline-block;
-            margin-right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .filter-group label {
-            font-weight: bold;
-            margin-right: 10px;
+            font-weight: 600;
+            color: #495057;
         }
         
         .filter-group select {
-            padding: 5px;
+            padding: 8px 12px;
             border: 1px solid #ddd;
-            border-radius: 3px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .stats-summary {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
         }
         
         .modalidade-section {
             margin-bottom: 30px;
         }
         
-        .modalidade-title {
-            background-color: #007bff;
+        .modalidade-header {
+            background: #3498db;
             color: white;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            border-radius: 5px;
+            padding: 12px 20px;
+            border-radius: 8px 8px 0 0;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 0;
         }
         
-        .equipe-container {
+        .equipes-container {
             border: 1px solid #ddd;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            overflow: hidden;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .equipe-card {
+            border-bottom: 1px solid #eee;
+            padding: 15px;
+            background: white;
+        }
+        
+        .equipe-card:last-child {
+            border-bottom: none;
         }
         
         .equipe-header {
-            background-color: #e9ecef;
-            padding: 10px;
-            font-weight: bold;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px;
         }
         
         .equipe-info {
-            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .equipe-id {
+            font-weight: bold;
+            color: #2c3e50;
         }
         
         .equipe-status {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 9px;
-            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
         }
         
         .status-completou {
-            background-color: #28a745;
-            color: white;
+            background: #d4edda;
+            color: #155724;
         }
         
         .status-nao-completou {
-            background-color: #dc3545;
-            color: white;
+            background: #f8d7da;
+            color: #721c24;
         }
         
         .equipe-tempo {
-            font-size: 12px;
-            color: #007bff;
-            margin-left: 10px;
+            font-size: 14px;
+            color: #495057;
+            font-weight: 600;
         }
         
         .membros-table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 10px;
         }
         
         .membros-table th,
         .membros-table td {
-            padding: 8px;
+            padding: 8px 12px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #eee;
         }
         
         .membros-table th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            font-size: 9px;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            font-size: 12px;
         }
         
         .membros-table td {
-            font-size: 9px;
+            font-size: 13px;
+        }
+        
+        .sexo-m {
+            color: #007bff;
+            font-weight: 600;
+        }
+        
+        .sexo-f {
+            color: #e83e8c;
+            font-weight: 600;
         }
         
         .membro-completou {
             color: #28a745;
-            font-weight: bold;
+            font-weight: 600;
         }
         
         .membro-nao-completou {
             color: #dc3545;
-            font-weight: bold;
-        }
-        
-        .stats-summary {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .stats-row {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 10px;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 16px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        
-        .stat-label {
-            font-size: 9px;
-            color: #666;
+            font-weight: 600;
         }
         
         .no-data {
             text-align: center;
-            padding: 40px;
-            color: #666;
+            color: #6c757d;
             font-style: italic;
+            padding: 40px;
         }
         
         .loading {
             text-align: center;
             padding: 40px;
-            color: #666;
+            color: #6c757d;
         }
         
         @media print {
@@ -213,8 +253,16 @@
                 display: none;
             }
             
-            .equipe-container {
-                page-break-inside: avoid;
+            body {
+                padding: 0;
+            }
+            
+            .modalidade-section {
+                break-inside: avoid;
+            }
+            
+            .equipe-card {
+                break-inside: avoid;
             }
         }
     </style>
@@ -222,27 +270,18 @@
 <body>
     <div class="header">
         <img src="static/img/ecmrunlogo1.png" alt="ECM Run Logo" class="logo-left">
-        <div class="title">
-            <h1>Relatório de Equipes Detalhadas</h1>
-            <h2>Corrida 200K</h2>
+        <div class="title-section">
+            <h1>Relatório de Equipes</h1>
+            <p class="subtitle">Corrida 200K - Detalhes das Equipes</p>
         </div>
         <img src="static/img/logo_200k.png" alt="Logo 200K" class="logo-right">
     </div>
 
     <div class="filters">
         <div class="filter-group">
-            <label for="filtroSexo">Filtrar por Sexo:</label>
-            <select id="filtroSexo" onchange="filtrarPorSexo()">
-                <option value="todos">Todos</option>
-                <option value="M">Masculino</option>
-                <option value="F">Feminino</option>
-            </select>
-        </div>
-        
-        <div class="filter-group">
-            <label for="filtroModalidade">Filtrar por Modalidade:</label>
-            <select id="filtroModalidade" onchange="filtrarPorModalidade()">
-                <option value="todas">Todas</option>
+            <label for="modalidadeFilter">Modalidade:</label>
+            <select id="modalidadeFilter">
+                <option value="">Todas</option>
                 <option value="DUPLA">Dupla</option>
                 <option value="QUARTETO">Quarteto</option>
                 <option value="OCTETO">Octeto</option>
@@ -250,25 +289,62 @@
         </div>
         
         <div class="filter-group">
-            <label for="filtroStatus">Filtrar por Status:</label>
-            <select id="filtroStatus" onchange="filtrarPorStatus()">
-                <option value="todos">Todos</option>
-                <option value="completou">Completaram</option>
-                <option value="nao-completou">Não Completaram</option>
+            <label for="sexoFilter">Sexo:</label>
+            <select id="sexoFilter">
+                <option value="">Ambos</option>
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="statusFilter">Status:</label>
+            <select id="statusFilter">
+                <option value="">Todos</option>
+                <option value="true">Completaram</option>
+                <option value="false">Não Completaram</option>
             </select>
         </div>
     </div>
 
-    <div class="stats-summary" id="statsSummary"></div>
+    <div class="stats-summary">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number" id="totalEquipes">0</div>
+                <div class="stat-label">Total de Equipes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="equipesCompletaram">0</div>
+                <div class="stat-label">Completaram</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalAtletas">0</div>
+                <div class="stat-label">Total de Atletas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="taxaConclusao">0%</div>
+                <div class="stat-label">Taxa de Conclusão</div>
+            </div>
+        </div>
+    </div>
 
     <div id="loading" class="loading">Carregando dados...</div>
     
     <div id="content" style="display: none;">
-        <div id="equipesContainer"></div>
-    </div>
+        <div id="dupla-section" class="modalidade-section">
+            <h2 class="modalidade-header">Dupla (100km cada)</h2>
+            <div class="equipes-container" id="dupla-container"></div>
+        </div>
 
-    <div id="noData" class="no-data" style="display: none;">
-        Nenhuma equipe encontrada.
+        <div id="quarteto-section" class="modalidade-section">
+            <h2 class="modalidade-header">Quarteto (50km cada)</h2>
+            <div class="equipes-container" id="quarteto-container"></div>
+        </div>
+
+        <div id="octeto-section" class="modalidade-section">
+            <h2 class="modalidade-header">Octeto (25km cada)</h2>
+            <div class="equipes-container" id="octeto-container"></div>
+        </div>
     </div>
 
     <script>
@@ -282,197 +358,169 @@
                 
                 if (data.success) {
                     equipesData = data.equipes;
-                    filteredData = equipesData;
-                    exibirEstatisticas();
-                    exibirEquipes();
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('content').style.display = 'block';
+                    filteredData = [...equipesData];
+                    renderizarEquipes();
+                    atualizarEstatisticas();
                 } else {
-                    throw new Error(data.error || 'Erro ao carregar dados');
+                    console.error('Erro ao carregar dados:', data.error);
+                    document.getElementById('loading').innerHTML = '<div class="no-data">Erro ao carregar dados</div>';
                 }
             } catch (error) {
                 console.error('Erro:', error);
-                document.getElementById('loading').innerHTML = 'Erro ao carregar dados: ' + error.message;
-                document.getElementById('noData').style.display = 'block';
+                document.getElementById('loading').innerHTML = '<div class="no-data">Erro ao conectar com o servidor</div>';
             }
-        }
-
-        function exibirEstatisticas() {
-            const totalEquipes = filteredData.length;
-            const equipesCompletaram = filteredData.filter(e => e.completou).length;
-            const totalAtletas = filteredData.reduce((sum, e) => sum + e.total_atletas, 0);
-            const atletasCompletaram = filteredData.reduce((sum, e) => sum + e.membros.filter(m => m.completou).length, 0);
-            
-            const modalidades = {
-                'DUPLA': filteredData.filter(e => e.modalidade === 'DUPLA').length,
-                'QUARTETO': filteredData.filter(e => e.modalidade === 'QUARTETO').length,
-                'OCTETO': filteredData.filter(e => e.modalidade === 'OCTETO').length
-            };
-
-            const statsHtml = `
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <div class="stat-value">${totalEquipes}</div>
-                        <div class="stat-label">Total de Equipes</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">${equipesCompletaram}</div>
-                        <div class="stat-label">Equipes Completaram</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">${totalAtletas}</div>
-                        <div class="stat-label">Total de Atletas</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">${atletasCompletaram}</div>
-                        <div class="stat-label">Atletas Completaram</div>
-                    </div>
-                </div>
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <div class="stat-value">${modalidades.DUPLA}</div>
-                        <div class="stat-label">Duplas</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">${modalidades.QUARTETO}</div>
-                        <div class="stat-label">Quartetos</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">${modalidades.OCTETO}</div>
-                        <div class="stat-label">Octetos</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">${totalEquipes > 0 ? Math.round((equipesCompletaram / totalEquipes) * 100) : 0}%</div>
-                        <div class="stat-label">Taxa de Conclusão</div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('statsSummary').innerHTML = statsHtml;
-        }
-
-        function exibirEquipes() {
-            const container = document.getElementById('equipesContainer');
-            
-            if (filteredData.length === 0) {
-                document.getElementById('noData').style.display = 'block';
-                container.innerHTML = '';
-                return;
-            }
-
-            document.getElementById('noData').style.display = 'none';
-            
-            // Agrupar por modalidade
-            const modalidades = ['DUPLA', 'QUARTETO', 'OCTETO'];
-            let html = '';
-
-            modalidades.forEach(modalidade => {
-                const equipesModalidade = filteredData.filter(e => e.modalidade === modalidade);
-                
-                if (equipesModalidade.length > 0) {
-                    html += `<div class="modalidade-section">
-                        <div class="modalidade-title">${modalidade} (${equipesModalidade.length} equipes)</div>`;
-                    
-                    equipesModalidade.forEach(equipe => {
-                        const statusClass = equipe.completou ? 'status-completou' : 'status-nao-completou';
-                        const statusText = equipe.completou ? 'COMPLETOU' : 'NÃO COMPLETOU';
-                        
-                        html += `
-                            <div class="equipe-container">
-                                <div class="equipe-header">
-                                    <div class="equipe-info">
-                                        <strong>Equipe ID: ${equipe.idea}</strong> - ${equipe.total_atletas} atletas
-                                    </div>
-                                    <div>
-                                        <span class="equipe-status ${statusClass}">${statusText}</span>
-                                        ${equipe.tempo_total ? `<span class="equipe-tempo">Tempo: ${equipe.tempo_total}</span>` : ''}
-                                    </div>
-                                </div>
-                                <table class="membros-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Atleta</th>
-                                            <th>Sexo</th>
-                                            <th>Parcial</th>
-                                            <th>KM</th>
-                                            <th>Tempo Individual</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                        
-                        equipe.membros.forEach(membro => {
-                            const membroStatus = membro.completou ? 'membro-completou' : 'membro-nao-completou';
-                            const membroStatusText = membro.completou ? 'COMPLETOU' : 'NÃO COMPLETOU';
-                            
-                            html += `
-                                <tr>
-                                    <td>${membro.nome}</td>
-                                    <td>${membro.sexo}</td>
-                                    <td>${membro.parcial}</td>
-                                    <td>${membro.km_percorrido}</td>
-                                    <td>${membro.tempo_individual || '-'}</td>
-                                    <td class="${membroStatus}">${membroStatusText}</td>
-                                </tr>`;
-                        });
-                        
-                        html += `</tbody></table></div>`;
-                    });
-                    
-                    html += `</div>`;
-                }
-            });
-
-            container.innerHTML = html;
-        }
-
-        function filtrarPorSexo() {
-            aplicarFiltros();
-        }
-
-        function filtrarPorModalidade() {
-            aplicarFiltros();
-        }
-
-        function filtrarPorStatus() {
-            aplicarFiltros();
         }
 
         function aplicarFiltros() {
-            const sexoSelecionado = document.getElementById('filtroSexo').value;
-            const modalidadeSelecionada = document.getElementById('filtroModalidade').value;
-            const statusSelecionado = document.getElementById('filtroStatus').value;
+            const modalidadeFilter = document.getElementById('modalidadeFilter').value;
+            const sexoFilter = document.getElementById('sexoFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
 
             filteredData = equipesData.filter(equipe => {
                 // Filtro por modalidade
-                if (modalidadeSelecionada !== 'todas' && equipe.modalidade !== modalidadeSelecionada) {
+                if (modalidadeFilter && equipe.modalidade !== modalidadeFilter) {
                     return false;
                 }
 
                 // Filtro por status
-                if (statusSelecionado !== 'todos') {
-                    if (statusSelecionado === 'completou' && !equipe.completou) {
-                        return false;
-                    }
-                    if (statusSelecionado === 'nao-completou' && equipe.completou) {
-                        return false;
-                    }
+                if (statusFilter !== '') {
+                    if (statusFilter === 'true' && !equipe.completou) return false;
+                    if (statusFilter === 'false' && equipe.completou) return false;
                 }
 
-                // Filtro por sexo (verifica se pelo menos um membro da equipe tem o sexo selecionado)
-                if (sexoSelecionado !== 'todos') {
-                    return equipe.membros.some(membro => membro.sexo === sexoSelecionado);
+                // Filtro por sexo (pelo menos um membro deve ter o sexo selecionado)
+                if (sexoFilter) {
+                    const temSexo = equipe.membros.some(membro => membro.sexo === sexoFilter);
+                    if (!temSexo) return false;
                 }
 
                 return true;
             });
 
-            exibirEstatisticas();
-            exibirEquipes();
+            renderizarEquipes();
+            atualizarEstatisticas();
         }
 
+        function renderizarEquipes() {
+            const containers = {
+                'DUPLA': document.getElementById('dupla-container'),
+                'QUARTETO': document.getElementById('quarteto-container'),
+                'OCTETO': document.getElementById('octeto-container')
+            };
+
+            // Limpar containers
+            Object.values(containers).forEach(container => {
+                container.innerHTML = '';
+            });
+
+            // Agrupar por modalidade
+            const equipesModalidade = {
+                'DUPLA': [],
+                'QUARTETO': [],
+                'OCTETO': []
+            };
+
+            filteredData.forEach(equipe => {
+                if (equipesModalidade[equipe.modalidade]) {
+                    equipesModalidade[equipe.modalidade].push(equipe);
+                }
+            });
+
+            // Renderizar cada modalidade
+            Object.keys(equipesModalidade).forEach(modalidade => {
+                const container = containers[modalidade];
+                const equipes = equipesModalidade[modalidade];
+
+                if (equipes.length === 0) {
+                    container.innerHTML = '<div class="no-data">Nenhuma equipe encontrada</div>';
+                    return;
+                }
+
+                equipes.forEach(equipe => {
+                    const equipeCard = document.createElement('div');
+                    equipeCard.className = 'equipe-card';
+                    
+                    const statusClass = equipe.completou ? 'status-completou' : 'status-nao-completou';
+                    const statusText = equipe.completou ? '✓ Completou' : '✗ Não Completou';
+                    
+                    equipeCard.innerHTML = `
+                        <div class="equipe-header">
+                            <div class="equipe-info">
+                                <span class="equipe-id">Equipe ${equipe.idea}</span>
+                                <span class="equipe-status ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="equipe-tempo">
+                                ${equipe.tempo_total ? `Tempo Total: ${equipe.tempo_total}` : 'Tempo não disponível'}
+                            </div>
+                        </div>
+                        
+                        <table class="membros-table">
+                            <thead>
+                                <tr>
+                                    <th>Atleta</th>
+                                    <th>Sexo</th>
+                                    <th>Parcial</th>
+                                    <th>Distância</th>
+                                    <th>Tempo Individual</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${equipe.membros.map(membro => `
+                                    <tr>
+                                        <td>${membro.nome}</td>
+                                        <td><span class="sexo-${membro.sexo.toLowerCase()}">${membro.sexo}</span></td>
+                                        <td>${membro.parcial}</td>
+                                        <td>${membro.km_percorrido}km</td>
+                                        <td>${membro.tempo_individual || 'N/A'}</td>
+                                        <td>
+                                            <span class="${membro.completou ? 'membro-completou' : 'membro-nao-completou'}">
+                                                ${membro.completou ? '✓' : '✗'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    container.appendChild(equipeCard);
+                });
+            });
+
+            // Mostrar/ocultar seções baseado no filtro
+            document.getElementById('dupla-section').style.display = 
+                equipesModalidade['DUPLA'].length > 0 ? 'block' : 'none';
+            document.getElementById('quarteto-section').style.display = 
+                equipesModalidade['QUARTETO'].length > 0 ? 'block' : 'none';
+            document.getElementById('octeto-section').style.display = 
+                equipesModalidade['OCTETO'].length > 0 ? 'block' : 'none';
+        }
+
+        function atualizarEstatisticas() {
+            const totalEquipes = filteredData.length;
+            const equipesCompletaram = filteredData.filter(e => e.completou).length;
+            const totalAtletas = filteredData.reduce((sum, equipe) => sum + equipe.total_atletas, 0);
+            const taxaConclusao = totalEquipes > 0 ? Math.round((equipesCompletaram / totalEquipes) * 100) : 0;
+
+            document.getElementById('totalEquipes').textContent = totalEquipes;
+            document.getElementById('equipesCompletaram').textContent = equipesCompletaram;
+            document.getElementById('totalAtletas').textContent = totalAtletas;
+            document.getElementById('taxaConclusao').textContent = `${taxaConclusao}%`;
+        }
+
+        // Event listeners
+        document.getElementById('modalidadeFilter').addEventListener('change', aplicarFiltros);
+        document.getElementById('sexoFilter').addEventListener('change', aplicarFiltros);
+        document.getElementById('statusFilter').addEventListener('change', aplicarFiltros);
+
         // Carregar dados quando a página carregar
-        document.addEventListener('DOMContentLoaded', carregarDados);
+        window.addEventListener('load', () => {
+            carregarDados().then(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            });
+        });
     </script>
 </body>
 </html>
