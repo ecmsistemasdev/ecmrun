@@ -6319,7 +6319,7 @@ def relatorio200k_equipes():
         cur = mysql.connection.cursor()
         
         cur.execute("""
-            SELECT DISTINCT ea.IDEA,
+            SELECT DISTINCT ea.IDEA, e.NOME_EQUIPE,
                    CASE 
                      WHEN COUNT(ea.IDATLETA) = 2 THEN 'DUPLA'
                      WHEN COUNT(ea.IDATLETA) = 4 THEN 'QUARTETO'
@@ -6327,7 +6327,8 @@ def relatorio200k_equipes():
                      ELSE 'EQUIPE'
                    END AS MODALIDADE,
                    COUNT(ea.IDATLETA) AS TOTAL_ATLETAS
-            FROM EQUIPE_ATLETAS ea
+            FROM EQUIPE_ATLETAS ea, EQUIPE e
+            WHERE ea.IDEA = e.IDEA
             GROUP BY ea.IDEA
             ORDER BY ea.IDEA
         """)
@@ -6337,8 +6338,9 @@ def relatorio200k_equipes():
         resultado = []
         for equipe in equipes:
             idea = equipe[0]
-            modalidade = equipe[1]
-            total_atletas = equipe[2]
+            nome_equipe = equipe[1]
+            modalidade = equipe[2]
+            total_atletas = equipe[3]
             
             # Buscar membros da equipe
             cur.execute("""
@@ -6375,6 +6377,7 @@ def relatorio200k_equipes():
             
             resultado.append({
                 'idea': idea,
+                'nome_equipe': nome_equipe,
                 'modalidade': modalidade,
                 'total_atletas': total_atletas,
                 'completou': equipe_completou,
@@ -6400,8 +6403,7 @@ def relatorio200k_equipes():
     except Exception as e:
         print(f"Erro ao listar equipes: {e}")
         return jsonify({'success': False, 'error': 'Erro interno do servidor'})
-
-
+	    
 @app.route('/certificado200k_relatorio_geral')
 def certificado200k_relatorio_geral():
     """Gera relatório geral da prova"""
