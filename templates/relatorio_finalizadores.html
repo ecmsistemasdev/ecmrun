@@ -140,19 +140,19 @@
             background: #f8f9fa;
             border: 1px solid #e9ecef;
             color: #2c3e50;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             text-align: center;
         }
 
         .summary-number {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .summary-label {
-            font-size: 14px;
+            font-size: 13px;
             color: #666;
         }
 
@@ -356,9 +356,27 @@
         function formatarTempo(tempo) {
             if (!tempo || tempo === 'N/A' || tempo === 'null') return 'N/A';
             
-            // Se já está no formato HH:MM, retorna como está
-            if (tempo.includes(':') && tempo.length <= 5) {
-                return tempo;
+            // Se contém "day", extrair o tempo total
+            if (tempo.includes('day')) {
+                const match = tempo.match(/(\d+)\s*day[s]?,\s*(\d+):(\d+):(\d+)/);
+                if (match) {
+                    const days = parseInt(match[1]);
+                    const hours = parseInt(match[2]);
+                    const minutes = parseInt(match[3]);
+                    
+                    const totalHours = (days * 24) + hours;
+                    return `${totalHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                }
+            }
+            
+            // Se está no formato HH:MM:SS, extrair apenas HH:MM
+            if (tempo.includes(':')) {
+                const parts = tempo.split(':');
+                if (parts.length >= 2) {
+                    const hours = parseInt(parts[0]) || 0;
+                    const minutes = parseInt(parts[1]) || 0;
+                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                }
             }
             
             // Se está em formato de duração (ex: "2h 30m" ou "150 minutos")
@@ -424,7 +442,6 @@
                 const row = document.createElement('tr');
                 
                 const sexoText = finalizador.sexo;
-                const equipeClass = finalizador.equipe === 'SOLO' ? 'equipe-solo' : 'equipe-team';
                 
                 // Formatar tempo no formato HH:MM
                 const tempoFormatado = formatarTempo(finalizador.tempo_total);
@@ -433,7 +450,7 @@
                     <td class="posicao">${index + 1}</td>
                     <td>${finalizador.nome}</td>
                     <td>${sexoText}</td>
-                    <td><span class="${equipeClass}">${finalizador.equipe}</span></td>
+                    <td>${finalizador.equipe}</td>
                     <td>${finalizador.km_percorrido} km</td>
                     <td class="tempo-destaque">${tempoFormatado}</td>
                 `;
