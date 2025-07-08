@@ -6563,7 +6563,94 @@ def handle_404(e):
         return jsonify({'success': False, 'error': 'Endpoint não encontrado'}), 404
     return e
 
-#########################
+#### RELATORIOS 200K #####################
+
+@app.route('/relatorios200k')
+def relatorios200k():
+    """Página principal dos relatórios"""
+    return render_template('relatorios200k.html')
+
+@app.route('/relatorio_finalizadores')
+def relatorio_finalizadores():
+    """Página do relatório de finalizadores"""
+    return render_template('relatorio_finalizadores.html')
+
+@app.route('/relatorio_ranking_solo')
+def relatorio_ranking_solo():
+    """Página do relatório de ranking solo"""
+    return render_template('relatorio_ranking_solo.html')
+
+@app.route('/relatorio_ranking_equipe')
+def relatorio_ranking_equipe():
+    """Página do relatório de ranking de equipe"""
+    return render_template('relatorio_ranking_equipe.html')
+
+@app.route('/relatorio_equipes')
+def relatorio_equipes():
+    """Página do relatório de equipes detalhadas"""
+    return render_template('relatorio_equipes.html')
+
+@app.route('/relatorio_geral')
+def relatorio_geral():
+    """Página do relatório geral"""
+    return render_template('relatorio_geral.html')
+
+# Rota adicional para exportação PDF (opcional)
+@app.route('/exportar_relatorio_pdf/<tipo>')
+def exportar_relatorio_pdf(tipo):
+    """Exporta relatório específico em PDF"""
+    try:
+        # Mapear tipos de relatório para templates
+        templates = {
+            'finalizadores': 'relatorio_finalizadores.html',
+            'ranking_solo': 'relatorio_ranking_solo.html',
+            'ranking_equipe': 'relatorio_ranking_equipe.html',
+            'equipes': 'relatorio_equipes.html',
+            'geral': 'relatorio_geral.html'
+        }
+        
+        if tipo not in templates:
+            return jsonify({'success': False, 'error': 'Tipo de relatório inválido'})
+        
+        # Renderizar template HTML
+        html_content = render_template(templates[tipo])
+        
+        # Configurações para PDF
+        options = {
+            'page-size': 'A4',
+            'orientation': 'Portrait',
+            'margin-top': '20mm',
+            'margin-right': '20mm',
+            'margin-bottom': '20mm',
+            'margin-left': '20mm',
+            'encoding': 'UTF-8',
+            'no-outline': None,
+            'enable-local-file-access': None
+        }
+        
+        # Gerar PDF
+        pdf = pdfkit.from_string(html_content, False, options=options)
+        
+        # Criar resposta
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=relatorio_{tipo}_200k.pdf'
+        
+        return response
+        
+    except Exception as e:
+        print(f"Erro ao exportar PDF: {e}")
+        return jsonify({'success': False, 'error': 'Erro ao gerar PDF'})
+
+# Rota para buscar dados de atleta específico (se necessário)
+@app.route('/atleta_detalhes/<int:idatleta>')
+def atleta_detalhes(idatleta):
+    """Redireciona para a rota existente de detalhes do atleta"""
+    return redirect(f'/relatorio200k_detalhes_atleta/{idatleta}')
+
+#############
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
