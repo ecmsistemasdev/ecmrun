@@ -120,34 +120,7 @@
             background: #34495e;
         }
 
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-        }
 
-        .summary-card {
-            text-align: center;
-            padding: 10px;
-        }
-
-        .summary-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .summary-label {
-            font-size: 14px;
-            color: #666;
-            font-weight: 500;
-        }
 
         .modalidade-section {
             margin-bottom: 40px;
@@ -329,27 +302,9 @@
             <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
             <button class="btn" onclick="location.reload()">🔄 Atualizar Dados</button>
         </div>
-        
-        <!--
-        <div class="summary-cards">
-            <div class="summary-card">
-                <div class="summary-number" id="totalDupla">-</div>
-                <div class="summary-label">Dupla</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-number" id="totalQuarteto">-</div>
-                <div class="summary-label">Quarteto</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-number" id="totalOcteto">-</div>
-                <div class="summary-label">Octeto</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-number" id="totalGeral">-</div>
-                <div class="summary-label">Total Geral</div>
-            </div>
-        </div>
-        -->
+
+
+
         <div id="loadingMessage" class="loading">
             Carregando ranking de equipes...
         </div>
@@ -477,7 +432,6 @@
                     rankingFiltered = JSON.parse(JSON.stringify(rankingData));
                     
                     displayRanking();
-                    updateSummaryCards();
                     
                     document.getElementById('loadingMessage').style.display = 'none';
                     document.getElementById('rankingContent').style.display = 'block';
@@ -539,18 +493,7 @@
             });
         }
 
-        // Função para atualizar cards de resumo
-        function updateSummaryCards() {
-            const totalDupla = rankingFiltered.DUPLA ? rankingFiltered.DUPLA.length : 0;
-            const totalQuarteto = rankingFiltered.QUARTETO ? rankingFiltered.QUARTETO.length : 0;
-            const totalOcteto = rankingFiltered.OCTETO ? rankingFiltered.OCTETO.length : 0;
-            const totalGeral = totalDupla + totalQuarteto + totalOcteto;
-            
-            document.getElementById('totalDupla').textContent = totalDupla;
-            document.getElementById('totalQuarteto').textContent = totalQuarteto;
-            document.getElementById('totalOcteto').textContent = totalOcteto;
-            document.getElementById('totalGeral').textContent = totalGeral;
-        }
+
 
         // Função para filtrar por sexo
         function filtrarPorSexo() {
@@ -583,7 +526,6 @@
             }
             
             displayRanking();
-            updateSummaryCards();
             updateSectionVisibility();
         }
 
