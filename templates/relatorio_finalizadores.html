@@ -7,14 +7,14 @@
     <style>
         @media print {
             body { 
-                font-size: 12px; 
+                font-size: 10px; 
                 margin: 0;
                 padding: 10mm;
             }
             .no-print { display: none !important; }
             .page-break { page-break-after: always; }
             .header { margin-bottom: 20px; }
-            table { font-size: 10px; }
+            table { font-size: 9px; }
         }
 
         * {
@@ -48,13 +48,8 @@
         }
 
         .logo-left {
-            width: 50px;
-            height: 50px;
-        }
-
-        .logo-right {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
         }
 
         .header-center {
@@ -73,6 +68,12 @@
         .report-subtitle {
             font-size: 16px;
             color: #666;
+        }
+
+        .tempo-destaque {
+            font-weight: bold;
+            font-size: 14px;
+            color: #e74c3c;
         }
 
         .controls {
@@ -123,14 +124,22 @@
 
         .summary-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-cards-bottom {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-bottom: 30px;
         }
 
         .summary-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            color: #2c3e50;
             padding: 20px;
             border-radius: 8px;
             text-align: center;
@@ -144,7 +153,7 @@
 
         .summary-label {
             font-size: 14px;
-            opacity: 0.9;
+            color: #666;
         }
 
         .table-container {
@@ -157,10 +166,11 @@
             width: 100%;
             border-collapse: collapse;
             background: white;
+            font-size: 12px;
         }
 
         th, td {
-            padding: 12px;
+            padding: 8px 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
         }
@@ -178,14 +188,10 @@
             background: #f8f9fa;
         }
 
-        .sexo-m {
-            color: #3498db;
+        .posicao {
             font-weight: bold;
-        }
-
-        .sexo-f {
-            color: #e74c3c;
-            font-weight: bold;
+            text-align: center;
+            width: 60px;
         }
 
         .equipe-solo {
@@ -252,18 +258,25 @@
             .filter-group {
                 justify-content: space-between;
             }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-cards-bottom {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <img src="static/img/ecmrunlogo1.png" alt="ECM Run Logo" class="logo-left">
+            <img src="static/img/logo_200k.png" alt="ECM Run Logo" class="logo-left">
             <div class="header-center">
-                <h1 class="report-title">Relatório de Finalizadores</h1>
-                <p class="report-subtitle">Corrida 200K - Atletas que Completaram a Prova</p>
+                <h1 class="report-title">4º Desafio 200K Porto Velho - Humaitá</h1>
+                <p class="report-subtitle">Relatório de Finalizadores - Atletas que Completaram a Prova</p>
             </div>
-            <img src="static/img/logo_200k.png" alt="Logo 200K" class="logo-right">
         </div>
 
         <div class="controls no-print">
@@ -276,7 +289,6 @@
                 </select>
             </div>
             <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-            <button class="btn" onclick="location.reload()">🔄 Atualizar Dados</button>
         </div>
 
         <div class="summary-cards">
@@ -292,6 +304,9 @@
                 <div class="summary-number" id="totalFeminino">-</div>
                 <div class="summary-label">Feminino</div>
             </div>
+        </div>
+
+        <div class="summary-cards-bottom">
             <div class="summary-card">
                 <div class="summary-number" id="totalSolo">-</div>
                 <div class="summary-label">Solo</div>
@@ -329,13 +344,45 @@
 
         <div class="footer">
             <p>Relatório gerado em: <span id="dataRelatorio"></span></p>
-            <p>Sistema de Gestão de Corrida 200K - ECM Run</p>
+            <p>Sistema de Gestão de Corrida - ECM Run</p>
         </div>
     </div>
 
     <script>
         let finalizadoresData = [];
         let finalizadoresFiltered = [];
+
+        // Função para converter tempo para formato HH:MM
+        function formatarTempo(tempo) {
+            if (!tempo || tempo === 'N/A' || tempo === 'null') return 'N/A';
+            
+            // Se já está no formato HH:MM, retorna como está
+            if (tempo.includes(':') && tempo.length <= 5) {
+                return tempo;
+            }
+            
+            // Se está em formato de duração (ex: "2h 30m" ou "150 minutos")
+            if (tempo.includes('h') || tempo.includes('m')) {
+                const hours = tempo.match(/(\d+)h/);
+                const minutes = tempo.match(/(\d+)m/);
+                
+                const h = hours ? parseInt(hours[1]) : 0;
+                const m = minutes ? parseInt(minutes[1]) : 0;
+                
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            }
+            
+            // Se está em minutos totais
+            if (!isNaN(tempo)) {
+                const totalMinutes = parseInt(tempo);
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            }
+            
+            return tempo;
+        }
 
         // Função para carregar dados dos finalizadores
         async function loadFinalizadores() {
@@ -376,18 +423,19 @@
             finalizadoresFiltered.forEach((finalizador, index) => {
                 const row = document.createElement('tr');
                 
-                const sexoClass = finalizador.sexo === 'M' ? 'sexo-m' : 'sexo-f';
-                const sexoText = finalizador.sexo === 'M' ? 'Masculino' : 'Feminino';
-                
+                const sexoText = finalizador.sexo;
                 const equipeClass = finalizador.equipe === 'SOLO' ? 'equipe-solo' : 'equipe-team';
                 
+                // Formatar tempo no formato HH:MM
+                const tempoFormatado = formatarTempo(finalizador.tempo_total);
+                
                 row.innerHTML = `
-                    <td>${index + 1}</td>
+                    <td class="posicao">${index + 1}</td>
                     <td>${finalizador.nome}</td>
-                    <td class="${sexoClass}">${sexoText}</td>
+                    <td>${sexoText}</td>
                     <td><span class="${equipeClass}">${finalizador.equipe}</span></td>
                     <td>${finalizador.km_percorrido} km</td>
-                    <td>${finalizador.tempo_total || 'N/A'}</td>
+                    <td class="tempo-destaque">${tempoFormatado}</td>
                 `;
                 
                 tbody.appendChild(row);
