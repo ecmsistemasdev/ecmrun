@@ -6581,21 +6581,21 @@ def relatorios200k():
     return render_template('relatorios200k.html')
 
 @app.route('/relatorio_finalizadores')
-def relatorio_finalizadores():
+def relatorio200k_finalizadores():
     """Página do relatório de finalizadores"""
     return render_template('relatorio_finalizadores.html')
 
 @app.route('/relatorio_ranking_solo')
-def relatorio_ranking_solo():
+def relatorio200k_ranking_solo():
     """Página do relatório de ranking solo"""
     return render_template('relatorio_ranking_solo.html')
 
 @app.route('/relatorio_ranking_equipe')
-def relatorio_ranking_equipe():
+def relatorio200k_ranking_equipe():
     """Página do relatório de ranking de equipe"""
     return render_template('relatorio_ranking_equipe.html')
 
-@app.route('/relatorio_equipes')
+@app.route('/relatorio200k_equipes')
 def relatorio_equipes():
     """Página do relatório de equipes detalhadas"""
     return render_template('relatorio_equipes.html')
