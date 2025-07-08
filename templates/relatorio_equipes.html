@@ -446,7 +446,7 @@
                     equipeCard.innerHTML = `
                         <div class="equipe-header">
                             <div class="equipe-info">
-                                <span class="equipe-id">Equipe ${equipe.idea}</span>
+                                <span class="equipe-id">Equipe: ${equipe.nome_equipe}</span>
                                 <span class="equipe-status ${statusClass}">${statusText}</span>
                             </div>
                             <div class="equipe-tempo">
@@ -469,7 +469,7 @@
                                 ${equipe.membros.map(membro => `
                                     <tr>
                                         <td>${membro.nome}</td>
-                                        <td><span class="sexo-${membro.sexo.toLowerCase()}">${membro.sexo}</span></td>
+                                        <td>${membro.sexo.toLowerCase()}">${membro.sexo}</td>
                                         <td>${membro.parcial}</td>
                                         <td>${membro.km_percorrido}km</td>
                                         <td>${membro.tempo_individual || 'N/A'}</td>
