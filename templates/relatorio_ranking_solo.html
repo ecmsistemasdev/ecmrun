@@ -338,7 +338,7 @@
             rankingFiltered.forEach((atleta, index) => {
                 const row = document.createElement('tr');
                 
-                const sexoText = atleta.sexo === 'M' ? 'Masculino' : 'Feminino';
+                const sexoText = atleta.sexo; // === 'M' ? 'Masculino' : 'Feminino';
                 
                 // Formatar datas
                 const dataLargada = atleta.data_largada ? 
