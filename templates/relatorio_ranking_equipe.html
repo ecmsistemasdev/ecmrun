@@ -7,14 +7,14 @@
     <style>
         @media print {
             body { 
-                font-size: 12px; 
+                font-size: 10px; 
                 margin: 0;
                 padding: 10mm;
             }
             .no-print { display: none !important; }
             .page-break { page-break-after: always; }
             .header { margin-bottom: 20px; }
-            table { font-size: 10px; }
+            table { font-size: 9px; }
         }
 
         * {
@@ -105,7 +105,7 @@
         }
 
         .btn {
-            background: #2c3e50;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             padding: 10px 20px;
@@ -117,10 +117,9 @@
         }
 
         .btn:hover {
-            background: #34495e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-
-
 
         .modalidade-section {
             margin-bottom: 40px;
@@ -131,21 +130,9 @@
             color: white;
             padding: 15px;
             border-radius: 8px 8px 0 0;
-            font-size: 18px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .modalidade-dupla {
-            background: #e74c3c;
-        }
-
-        .modalidade-quarteto {
-            background: #3498db;
-        }
-
-        .modalidade-octeto {
-            background: #27ae60;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: left;
         }
 
         .table-container {
@@ -159,19 +146,22 @@
             width: 100%;
             border-collapse: collapse;
             background: white;
+            font-size: 12px;
         }
 
         th, td {
-            padding: 12px;
+            padding: 8px 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
-            font-size: 14px;
         }
 
         th {
-            background: #34495e;
+            background: #2c3e50;
             color: white;
             font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         tr:hover {
@@ -187,6 +177,7 @@
         .tempo-destaque {
             font-weight: bold;
             font-size: 16px;
+            color: #e74c3c;
         }
 
         .empty-section {
@@ -279,8 +270,6 @@
             <button class="btn" onclick="location.reload()">🔄 Atualizar Dados</button>
         </div>
 
-
-
         <div id="loadingMessage" class="loading">
             Carregando ranking de equipes...
         </div>
@@ -292,7 +281,7 @@
         <div id="rankingContent" style="display: none;">
             <!-- Seção DUPLA -->
             <div class="modalidade-section" id="secaoDupla">
-                <div class="modalidade-title modalidade-dupla">
+                <div class="modalidade-title">
                     🏃‍♂️🏃‍♀️ DUPLA - 100km por atleta
                 </div>
                 <div class="table-container">
@@ -316,7 +305,7 @@
 
             <!-- Seção QUARTETO -->
             <div class="modalidade-section" id="secaoQuarteto">
-                <div class="modalidade-title modalidade-quarteto">
+                <div class="modalidade-title">
                     👥 QUARTETO - 50km por atleta
                 </div>
                 <div class="table-container">
@@ -340,7 +329,7 @@
 
             <!-- Seção OCTETO -->
             <div class="modalidade-section" id="secaoOcteto">
-                <div class="modalidade-title modalidade-octeto">
+                <div class="modalidade-title">
                     👥👥 OCTETO - 25km por atleta
                 </div>
                 <div class="table-container">
@@ -385,17 +374,6 @@
             
             return tempo;
         }
-
-        // // Função para formatar data
-        // function formatData(dataString) {
-        //     if (!dataString) return '-';
-            
-        //     const data = new Date(dataString);
-        //     return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {
-        //         hour: '2-digit',
-        //         minute: '2-digit'
-        //     });
-        // }
 
         // Função para formatar data no formato "dd/mm/yyyy hh:mm"
         function formatData(dataString) {
@@ -477,8 +455,6 @@
                 }
             });
         }
-
-
 
         // Função para filtrar por sexo
         function filtrarPorSexo() {
