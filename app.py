@@ -6326,7 +6326,9 @@ def relatorio200k_equipes():
                      WHEN COUNT(ea.IDATLETA) = 8 THEN 'OCTETO'
                      ELSE 'EQUIPE'
                    END AS MODALIDADE,
-                   COUNT(ea.IDATLETA) AS TOTAL_ATLETAS
+                   COUNT(ea.IDATLETA) AS TOTAL_ATLETAS,
+                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA) AS DATA_HORA_LARGADA,
+                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDEA = e.IDEA) AS DATA_HORA_CHEGADA
             FROM EQUIPE_ATLETAS ea, EQUIPE e
             WHERE ea.IDEA = e.IDEA
             GROUP BY ea.IDEA
@@ -6341,12 +6343,15 @@ def relatorio200k_equipes():
             nome_equipe = equipe[1]
             modalidade = equipe[2]
             total_atletas = equipe[3]
-            
+            datahora_largada = equipe[4]
+            datahora_chegada = equipe[5]
+
             # Buscar membros da equipe
             cur.execute("""
                 SELECT CONCAT(i.NUPEITO,' - ',a.NOME, ' ', a.SOBRENOME) AS NOME, a.SEXO,
                        CONCAT(ea.KM_INI,' - ',ea.KM_FIM) AS PARCIAL,
                        (ea.KM_FIM - ea.KM_INI) AS KM_PERCORRIDO,
+                       (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA) AS DATA_HORA_CHEGADA,
                        SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
                          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
                          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) AS TEMPO_INDIVIDUAL,
@@ -6380,6 +6385,8 @@ def relatorio200k_equipes():
                 'nome_equipe': nome_equipe,
                 'modalidade': modalidade,
                 'total_atletas': total_atletas,
+                'datahora_largada': datahora_largada.strftime('%d/%m/%Y %H:%M') if datahora_largada else None,
+                'datahora_chegada': datahora_chegada.strftime('%d/%m/%Y %H:%M') if datahora_chegada else None,
                 'completou': equipe_completou,
                 'tempo_total': tempo_total_equipe,
                 'membros': [{
@@ -6387,9 +6394,11 @@ def relatorio200k_equipes():
 		    'sexo': membro[1],
                     'parcial': membro[2],
                     'km_percorrido': membro[3],
-                    'tempo_individual': str(membro[4]) if membro[4] else None,
-                    'completou': membro[5]
+                    'chegada_parcial': membro[4].strftime('%d/%m/%Y %H:%M') if membro[4] else None,
+                    'tempo_individual': str(membro[5]) if membro[5] else None,
+                    'completou': membro[6]
                 } for membro in membros]
+                
             })
         
         cur.close()
@@ -6404,6 +6413,8 @@ def relatorio200k_equipes():
         print(f"Erro ao listar equipes: {e}")
         return jsonify({'success': False, 'error': 'Erro interno do servidor'})
 	    
+
+
 @app.route('/certificado200k_relatorio_geral')
 def certificado200k_relatorio_geral():
     """Gera relatório geral da prova"""
