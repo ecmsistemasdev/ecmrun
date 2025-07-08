@@ -75,6 +75,11 @@
             color: #666;
         }
 
+        .tempo-destaque {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
         .controls {
             background: #f8f9fa;
             padding: 15px;
@@ -360,13 +365,13 @@
                     new Date(atleta.data_chegada).toLocaleString('pt-BR') : 'N/A';
                 
                 // Formatar tempo
-                const tempoFormatado = formatarTempo(atleta.tempo_total);
+                //const tempoFormatado = formatarTempo(atleta.tempo_total);
                 
                 row.innerHTML = `
                     <td class="posicao">${atleta.posicao}</td>
                     <td>${atleta.nome}</td>
                     <td>${sexoText}</td>
-                    <td>${tempoFormatado}</td>
+                    <td class="tempo-destaque">${formatarTempo(atleta.tempo_total)}</td>
                     <td>${dataLargada}</td>
                     <td>${dataChegada}</td>
                 `;
