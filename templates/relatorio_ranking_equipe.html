@@ -105,7 +105,7 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2c3e50;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -117,8 +117,7 @@
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: #34495e;
         }
 
         .summary-cards {
@@ -126,25 +125,28 @@
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
         }
 
         .summary-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
             text-align: center;
+            padding: 10px;
         }
 
         .summary-number {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
+            color: #2c3e50;
             margin-bottom: 5px;
         }
 
         .summary-label {
-            font-size: 12px;
-            opacity: 0.9;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
         }
 
         .modalidade-section {
@@ -439,6 +441,30 @@
         let rankingData = {};
         let rankingFiltered = {};
 
+        // Função para converter tempo para HH:MM
+        function formatTempo(tempo) {
+            if (!tempo) return '-';
+            
+            // Se o tempo já está no formato HH:MM:SS, extrair apenas HH:MM
+            const parts = tempo.split(':');
+            if (parts.length >= 2) {
+                return `${parts[0]}:${parts[1]}`;
+            }
+            
+            return tempo;
+        }
+
+        // Função para formatar data
+        function formatData(dataString) {
+            if (!dataString) return '-';
+            
+            const data = new Date(dataString);
+            return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
         // Função para carregar dados do ranking
         async function loadRanking() {
             try {
@@ -480,4 +506,123 @@
                 tbody.innerHTML = '';
                 
                 if (rankingFiltered[modalidade] && rankingFiltered[modalidade].length > 0) {
-                    rankingFiltered[
+                    rankingFiltered[modalidade].forEach(atleta => {
+                        const row = document.createElement('tr');
+                        
+                        // Classe para posição
+                        let posicaoClass = 'posicao';
+                        if (atleta.posicao === 1) posicaoClass += ' posicao-1';
+                        else if (atleta.posicao === 2) posicaoClass += ' posicao-2';
+                        else if (atleta.posicao === 3) posicaoClass += ' posicao-3';
+                        
+                        // Classe para sexo
+                        const sexoClass = atleta.sexo === 'M' ? 'sexo-m' : 'sexo-f';
+                        
+                        row.innerHTML = `
+                            <td class="${posicaoClass}">${atleta.posicao}°</td>
+                            <td>${atleta.nome}</td>
+                            <td class="${sexoClass}">${atleta.sexo}</td>
+                            <td>${atleta.km_percorrido}km</td>
+                            <td class="tempo-destaque">${formatTempo(atleta.tempo_total)}</td>
+                            <td>${formatData(atleta.data_largada)}</td>
+                            <td>${formatData(atleta.data_chegada)}</td>
+                        `;
+                        
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="7" class="empty-section">Nenhum atleta encontrado nesta modalidade</td>`;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        // Função para atualizar cards de resumo
+        function updateSummaryCards() {
+            const totalDupla = rankingFiltered.DUPLA ? rankingFiltered.DUPLA.length : 0;
+            const totalQuarteto = rankingFiltered.QUARTETO ? rankingFiltered.QUARTETO.length : 0;
+            const totalOcteto = rankingFiltered.OCTETO ? rankingFiltered.OCTETO.length : 0;
+            const totalGeral = totalDupla + totalQuarteto + totalOcteto;
+            
+            document.getElementById('totalDupla').textContent = totalDupla;
+            document.getElementById('totalQuarteto').textContent = totalQuarteto;
+            document.getElementById('totalOcteto').textContent = totalOcteto;
+            document.getElementById('totalGeral').textContent = totalGeral;
+        }
+
+        // Função para filtrar por sexo
+        function filtrarPorSexo() {
+            const sexoSelecionado = document.getElementById('filtroSexo').value;
+            const modalidadeSelecionada = document.getElementById('filtroModalidade').value;
+            
+            rankingFiltered = JSON.parse(JSON.stringify(rankingData));
+            
+            // Aplicar filtro de sexo
+            if (sexoSelecionado !== 'ambos') {
+                Object.keys(rankingFiltered).forEach(modalidade => {
+                    rankingFiltered[modalidade] = rankingFiltered[modalidade].filter(atleta => 
+                        atleta.sexo === sexoSelecionado
+                    );
+                    
+                    // Reordenar posições
+                    rankingFiltered[modalidade].forEach((atleta, index) => {
+                        atleta.posicao = index + 1;
+                    });
+                });
+            }
+            
+            // Aplicar filtro de modalidade
+            if (modalidadeSelecionada !== 'todas') {
+                Object.keys(rankingFiltered).forEach(modalidade => {
+                    if (modalidade !== modalidadeSelecionada) {
+                        rankingFiltered[modalidade] = [];
+                    }
+                });
+            }
+            
+            displayRanking();
+            updateSummaryCards();
+            updateSectionVisibility();
+        }
+
+        // Função para filtrar por modalidade
+        function filtrarPorModalidade() {
+            filtrarPorSexo(); // Reutiliza a lógica de filtro
+        }
+
+        // Função para controlar visibilidade das seções
+        function updateSectionVisibility() {
+            const modalidadeSelecionada = document.getElementById('filtroModalidade').value;
+            
+            const secoes = {
+                'DUPLA': 'secaoDupla',
+                'QUARTETO': 'secaoQuarteto',
+                'OCTETO': 'secaoOcteto'
+            };
+            
+            Object.keys(secoes).forEach(modalidade => {
+                const secao = document.getElementById(secoes[modalidade]);
+                if (modalidadeSelecionada === 'todas' || modalidadeSelecionada === modalidade) {
+                    secao.style.display = 'block';
+                } else {
+                    secao.style.display = 'none';
+                }
+            });
+        }
+
+        // Função para definir data do relatório
+        function setReportDate() {
+            const now = new Date();
+            const dateString = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR');
+            document.getElementById('dataRelatorio').textContent = dateString;
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            setReportDate();
+            loadRanking();
+        });
+    </script>
+</body>
+</html>
