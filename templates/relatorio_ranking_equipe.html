@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Equipe - 200K</title>
+    <style>
+        @media print {
+            body { 
+                font-size: 12px; 
+                margin: 0;
+                padding: 10mm;
+            }
+            .no-print { display: none !important; }
+            .page-break { page-break-after: always; }
+            .header { margin-bottom: 20px; }
+            table { font-size: 10px; }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            width: 210mm;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: white;
+            padding: 20mm;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            min-height: 297mm;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 15px;
+        }
+
+        .logo-left {
+            width: 50px;
+            height: 50px;
+        }
+
+        .logo-right {
+            width: 60px;
+            height: 60px;
+        }
+
+        .header-center {
+            text-align: center;
+            flex: 1;
+            margin: 0 20px;
+        }
+
+        .report-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .report-subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .modalidade-section {
+            margin-bottom: 40px;
+        }
+
+        .modalidade-title {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .modalidade-dupla {
+            background: #e74c3c;
+        }
+
+        .modalidade-quarteto {
+            background: #3498db;
+        }
+
+        .modalidade-octeto {
+            background: #27ae60;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .posicao {
+            font-weight: bold;
+            text-align: center;
+            width: 60px;
+        }
+
+        .posicao-1 {
+            background: #ffd700;
+            color: #333;
+        }
+
+        .posicao-2 {
+            background: #c0c0c0;
+            color: #333;
+        }
+
+        .posicao-3 {
+            background: #cd7f32;
+            color: white;
+        }
+
+        .sexo-m {
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .sexo-f {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .tempo-destaque {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .empty-section {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #e74c3c;
+            background: #fdf2f2;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                width: 100%;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="static/img/ecmrunlogo1.png" alt="ECM Run Logo" class="logo-left">
+            <div class="header-center">
+                <h1 class="report-title">Ranking Equipe</h1>
+                <p class="report-subtitle">Corrida 200K - Classificação por Modalidades</p>
+            </div>
+            <img src="static/img/logo_200k.png" alt="Logo 200K" class="logo-right">
+        </div>
+
+        <div class="controls no-print">
+            <div class="filter-group">
+                <label for="filtroSexo">Filtrar por Sexo:</label>
+                <select id="filtroSexo" onchange="filtrarPorSexo()">
+                    <option value="ambos">Ambos</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Feminino</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filtroModalidade">Modalidade:</label>
+                <select id="filtroModalidade" onchange="filtrarPorModalidade()">
+                    <option value="todas">Todas</option>
+                    <option value="DUPLA">Dupla</option>
+                    <option value="QUARTETO">Quarteto</option>
+                    <option value="OCTETO">Octeto</option>
+                </select>
+            </div>
+            <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+            <button class="btn" onclick="location.reload()">🔄 Atualizar Dados</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-number" id="totalDupla">-</div>
+                <div class="summary-label">Dupla</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number" id="totalQuarteto">-</div>
+                <div class="summary-label">Quarteto</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number" id="totalOcteto">-</div>
+                <div class="summary-label">Octeto</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number" id="totalGeral">-</div>
+                <div class="summary-label">Total Geral</div>
+            </div>
+        </div>
+
+        <div id="loadingMessage" class="loading">
+            Carregando ranking de equipes...
+        </div>
+
+        <div id="errorMessage" class="error" style="display: none;">
+            Erro ao carregar os dados. Tente novamente.
+        </div>
+
+        <div id="rankingContent" style="display: none;">
+            <!-- Seção DUPLA -->
+            <div class="modalidade-section" id="secaoDupla">
+                <div class="modalidade-title modalidade-dupla">
+                    🏃‍♂️🏃‍♀️ DUPLA - 100km por atleta
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Posição</th>
+                                <th>Nome</th>
+                                <th>Sexo</th>
+                                <th>KM Percorrido</th>
+                                <th>Tempo</th>
+                                <th>Data Largada</th>
+                                <th>Data Chegada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaDupla">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Seção QUARTETO -->
+            <div class="modalidade-section" id="secaoQuarteto">
+                <div class="modalidade-title modalidade-quarteto">
+                    👥 QUARTETO - 50km por atleta
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Posição</th>
+                                <th>Nome</th>
+                                <th>Sexo</th>
+                                <th>KM Percorrido</th>
+                                <th>Tempo</th>
+                                <th>Data Largada</th>
+                                <th>Data Chegada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaQuarteto">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Seção OCTETO -->
+            <div class="modalidade-section" id="secaoOcteto">
+                <div class="modalidade-title modalidade-octeto">
+                    👥👥 OCTETO - 25km por atleta
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Posição</th>
+                                <th>Nome</th>
+                                <th>Sexo</th>
+                                <th>KM Percorrido</th>
+                                <th>Tempo</th>
+                                <th>Data Largada</th>
+                                <th>Data Chegada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaOcteto">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Relatório gerado em: <span id="dataRelatorio"></span></p>
+            <p>Sistema de Gestão de Corrida 200K - ECM Run</p>
+        </div>
+    </div>
+
+    <script>
+        let rankingData = {};
+        let rankingFiltered = {};
+
+        // Função para carregar dados do ranking
+        async function loadRanking() {
+            try {
+                const response = await fetch('/relatorio200k_ranking_equipe');
+                const data = await response.json();
+                
+                if (data.success) {
+                    rankingData = data.ranking;
+                    rankingFiltered = JSON.parse(JSON.stringify(rankingData));
+                    
+                    displayRanking();
+                    updateSummaryCards();
+                    
+                    document.getElementById('loadingMessage').style.display = 'none';
+                    document.getElementById('rankingContent').style.display = 'block';
+                } else {
+                    showError('Erro ao carregar dados: ' + (data.error || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                console.error('Erro ao carregar ranking:', error);
+                showError('Erro de conexão. Verifique sua conexão com a internet.');
+            }
+        }
+
+        // Função para exibir erro
+        function showError(message) {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Função para exibir ranking na tabela
+        function displayRanking() {
+            const modalidades = ['DUPLA', 'QUARTETO', 'OCTETO'];
+            const tabelasId = ['tabelaDupla', 'tabelaQuarteto', 'tabelaOcteto'];
+            
+            modalidades.forEach((modalidade, index) => {
+                const tbody = document.getElementById(tabelasId[index]);
+                tbody.innerHTML = '';
+                
+                if (rankingFiltered[modalidade] && rankingFiltered[modalidade].length > 0) {
+                    rankingFiltered[
