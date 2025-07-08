@@ -6595,7 +6595,7 @@ def relatorio200k_ranking_equipe():
     """Página do relatório de ranking de equipe"""
     return render_template('relatorio_ranking_equipe.html')
 
-@app.route('/relatorio200k_equipes')
+@app.route('/relatorio_equipes')
 def relatorio_equipes():
     """Página do relatório de equipes detalhadas"""
     return render_template('relatorio_equipes.html')
