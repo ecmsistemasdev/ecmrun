@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Solo - 200K</title>
+    <style>
+        @media print {
+            body { 
+                font-size: 12px; 
+                margin: 0;
+                padding: 10mm;
+            }
+            .no-print { display: none !important; }
+            .page-break { page-break-after: always; }
+            .header { margin-bottom: 20px; }
+            table { font-size: 10px; }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            width: 210mm;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: white;
+            padding: 20mm;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            min-height: 297mm;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 15px;
+        }
+
+        .logo-left {
+            width: 50px;
+            height: 50px;
+        }
+
+        .logo-right {
+            width: 60px;
+            height: 60px;
+        }
+
+        .header-center {
+            text-align: center;
+            flex: 1;
+            margin: 0 20px;
+        }
+
+        .report-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .report-subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #2c3e50;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .posicao {
+            font-weight: bold;
+            text-align: center;
+            width: 60px;
+        }
+
+        .posicao-1 {
+            background: #ffd700;
+            color: #333;
+        }
+
+        .posicao-2 {
+            background: #c0c0c0;
+            color: #333;
+        }
+
+        .posicao-3 {
+            background: #cd7f32;
+            color: white;
+        }
+
+        .sexo-m {
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .sexo-f {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .tempo-destaque {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #e74c3c;
+            background: #fdf2f2;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                width: 100%;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="static/img/ecmrunlogo1.png" alt="ECM Run Logo" class="logo-left">
+            <div class="header-center">
+                <h1 class="report-title">Ranking Solo</h1>
+                <p class="report-subtitle">Corrida 200K - Classificação Individual</p>
+            </div>
+            <img src="static/img/logo_200k.png" alt="Logo 200K" class="logo-right">
+        </div>
+
+        <div class="controls no-print">
+            <div class="filter-group">
+                <label for="filtroSexo">Filtrar por Sexo:</label>
+                <select id="filtroSexo" onchange="filtrarPorSexo()">
+                    <option value="ambos">Ambos</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Feminino</option>
+                </select>
+            </div>
+            <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+            <button class="btn" onclick="location.reload()">🔄 Atualizar Dados</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-number" id="totalParticipantes">-</div>
+                <div class="summary-label">Total de Participantes</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number" id="totalMasculino">-</div>
+                <div class="summary-label">Masculino</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number" id="totalFeminino">-</div>
+                <div class="summary-label">Feminino</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number" id="melhorTempo">-</div>
+                <div class="summary-label">Melhor Tempo</div>
+            </div>
+        </div>
+
+        <div id="loadingMessage" class="loading">
+            Carregando ranking solo...
+        </div>
+
+        <div id="errorMessage" class="error" style="display: none;">
+            Erro ao carregar os dados. Tente novamente.
+        </div>
+
+        <div class="table-container" id="tableContainer" style="display: none;">
+            <table id="rankingTable">
+                <thead>
+                    <tr>
+                        <th>Posição</th>
+                        <th>Nome</th>
+                        <th>Sexo</th>
+                        <th>Tempo Total</th>
+                        <th>Data Largada</th>
+                        <th>Data Chegada</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>Relatório gerado em: <span id="dataRelatorio"></span></p>
+            <p>Sistema de Gestão de Corrida 200K - ECM Run</p>
+        </div>
+    </div>
+
+    <script>
+        let rankingData = [];
+        let rankingFiltered = [];
+
+        // Função para carregar dados do ranking
+        async function loadRanking() {
+            try {
+                const response = await fetch('/relatorio200k_ranking_solo');
+                const data = await response.json();
+                
+                if (data.success) {
+                    rankingData = data.ranking;
+                    rankingFiltered = [...rankingData];
+                    
+                    displayRanking();
+                    updateSummaryCards();
+                    
+                    document.getElementById('loadingMessage').style.display = 'none';
+                    document.getElementById('tableContainer').style.display = 'block';
+                } else {
+                    showError('Erro ao carregar dados: ' + (data.error || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                console.error('Erro ao carregar ranking:', error);
+                showError('Erro de conexão. Verifique sua conexão com a internet.');
+            }
+        }
+
+        // Função para exibir erro
+        function showError(message) {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Função para exibir ranking na tabela
+        function displayRanking() {
+            const tbody = document.getElementById('rankingTableBody');
+            tbody.innerHTML = '';
+            
+            rankingFiltered.forEach((atleta, index) => {
+                const row = document.createElement('tr');
+                
+                const sexoClass = atleta.sexo === 'M' ? 'sexo-m' : 'sexo-f';
+                const sexoText = atleta.sexo === 'M' ? 'Masculino' : 'Feminino';
+                
+                let posicaoClass = 'posicao';
+                if (index === 0) posicaoClass += ' posicao-1';
+                else if (index === 1) posicaoClass += ' posicao-2';
+                else if (index === 2) posicaoClass += ' posicao-3';
+                
+                // Formatar datas
+                const dataLargada = atleta.data_largada ? 
+                    new Date(atleta.data_largada).toLocaleString('pt-BR') : 'N/A';
+                const dataChegada = atleta.data_chegada ? 
+                    new Date(atleta.data_chegada).toLocaleString('pt-BR') : 'N/A';
+                
+                row.innerHTML = `
+                    <td class="${posicaoClass}">${atleta.posicao}</td>
+                    <td>${atleta.nome}</td>
+                    <td class="${sexoClass}">${sexoText}</td>
+                    <td class="tempo-destaque">${atleta.tempo_total || 'N/A'}</td>
+                    <td>${dataLargada}</td>
+                    <td>${dataChegada}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Função para atualizar cards de resumo
+        function updateSummaryCards() {
+            const total = rankingFiltered.length;
+            const masculino = rankingFiltered.filter(a => a.sexo === 'M').length;
+            const feminino = rankingFiltered.filter(a => a.sexo === 'F').length;
+            const melhorTempo = rankingFiltered.length > 0 ? rankingFiltered[0].tempo_total : 'N/A';
+            
+            document.getElementById('totalParticipantes').textContent = total;
+            document.getElementById('totalMasculino').textContent = masculino;
+            document.getElementById('totalFeminino').textContent = feminino;
+            document.getElementById('melhorTempo').textContent = melhorTempo;
+        }
+
+        // Função para filtrar por sexo
+        function filtrarPorSexo() {
+            const filtroSexo = document.getElementById('filtroSexo').value;
+            
+            if (filtroSexo === 'ambos') {
+                rankingFiltered = [...rankingData];
+            } else {
+                rankingFiltered = rankingData.filter(a => a.sexo === filtroSexo);
+            }
+            
+            // Reajustar posições após filtro
+            rankingFiltered.forEach((atleta, index) => {
+                atleta.posicao = index + 1;
+            });
+            
+            displayRanking();
+            updateSummaryCards();
+        }
+
+        // Função para definir data do relatório
+        function setReportDate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR');
+            document.getElementById('dataRelatorio').textContent = dateStr;
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRanking();
+            setReportDate();
+        });
+    </script>
+</body>
+</html>
