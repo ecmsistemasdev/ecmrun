@@ -56,8 +56,8 @@
         }
 
         .logo-right {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             background: white;
             border-radius: 8px;
             display: flex;
@@ -233,20 +233,20 @@
                     <img src="static/img/ecmrunlogo1.png" alt="ECM Run Logo" style="width: 50px; height: 50px; object-fit: contain;">
                 </div>
                 <div>
-                    <h1 class="main-title">Relatórios 200K</h1>
+                    <h1 class="main-title">Relatórios do 4º Desafio 200K</h1>
                     <p class="subtitle">Sistema de Gestão de Corrida</p>
                 </div>
                 <div class="logo-right">
-                    <img src="static/img/logo_200k.png" alt="Logo 200K" style="width: 60px; height: 60px; object-fit: contain;">
+                    <img src="static/img/logo_200k.png" alt="Logo 200K" style="width: 80px; height: 80px; object-fit: contain;">
                 </div>
             </div>
         </div>
 
         <div class="main-content">
             <div class="intro-section">
-                <h2 class="intro-title">Sistema de Relatórios da Corrida 200K</h2>
+                <h2 class="intro-title">Sistema de Relatórios de Corrida</h2>
                 <p class="intro-text">
-                    Acesse todos os relatórios detalhados da corrida 200K. Visualize estatísticas, rankings, 
+                    Acesse todos os relatórios detalhados do 4º Desafio 200K Porto Velho - Humaitá. Visualize estatísticas, rankings, 
                     dados dos atletas e muito mais. Todos os relatórios podem ser visualizados na tela 
                     e salvos em PDF formato A4.
                 </p>
@@ -262,12 +262,12 @@
                         incluindo dados de tempo, equipe e distância percorrida.
                     </p>
                     <div class="report-actions">
-                        <a href="relatorio_finalizadores" class="btn" target="_blank">
+                        <a href="/relatorio_finalizadores" class="btn" target="_blank">
                             📋 Visualizar Relatório
                         </a>
-                        <button class="btn btn-secondary" onclick="exportToPDF('finalizadores')">
+                        <!-- <button class="btn btn-secondary" onclick="exportToPDF('finalizadores')">
                             📄 Salvar PDF
-                        </button>
+                        </button> -->
                     </div>
                 </div>
 
@@ -280,12 +280,12 @@
                         ordenados por tempo de conclusão da prova.
                     </p>
                     <div class="report-actions">
-                        <a href="relatorio_ranking_solo" class="btn" target="_blank">
+                        <a href="/relatorio_ranking_solo" class="btn" target="_blank">
                             📋 Visualizar Relatório
                         </a>
-                        <button class="btn btn-secondary" onclick="exportToPDF('ranking_solo')">
+                        <!-- <button class="btn btn-secondary" onclick="exportToPDF('ranking_solo')">
                             📄 Salvar PDF
-                        </button>
+                        </button> -->
                     </div>
                 </div>
 
@@ -298,12 +298,12 @@
                         separados por categoria.
                     </p>
                     <div class="report-actions">
-                        <a href="relatorio_ranking_equipe" class="btn" target="_blank">
+                        <a href="/relatorio_ranking_equipe" class="btn" target="_blank">
                             📋 Visualizar Relatório
                         </a>
-                        <button class="btn btn-secondary" onclick="exportToPDF('ranking_equipe')">
+                        <!-- <button class="btn btn-secondary" onclick="exportToPDF('ranking_equipe')">
                             📄 Salvar PDF
-                        </button>
+                        </button> -->
                     </div>
                 </div>
 
@@ -316,12 +316,12 @@
                         membros, tempos individuais e status de conclusão.
                     </p>
                     <div class="report-actions">
-                        <a href="relatorio_equipes" class="btn" target="_blank">
+                        <a href="/relatorio_equipes" class="btn" target="_blank">
                             📋 Visualizar Relatório
                         </a>
-                        <button class="btn btn-secondary" onclick="exportToPDF('equipes')">
+                        <!-- <button class="btn btn-secondary" onclick="exportToPDF('equipes')">
                             📄 Salvar PDF
-                        </button>
+                        </button> -->
                     </div>
                 </div>
 
@@ -334,12 +334,12 @@
                         tempos médios e taxa de conclusão.
                     </p>
                     <div class="report-actions">
-                        <a href="relatorio_geral" class="btn" target="_blank">
+                        <a href="/relatorio_geral" class="btn" target="_blank">
                             📋 Visualizar Relatório
                         </a>
-                        <button class="btn btn-secondary" onclick="exportToPDF('geral')">
+                        <!-- <button class="btn btn-secondary" onclick="exportToPDF('geral')">
                             📄 Salvar PDF
-                        </button>
+                        </button> -->
                     </div>
                 </div>
             </div>
@@ -369,11 +369,11 @@
         // Função para exportar para PDF
         function exportToPDF(reportType) {
             const reportUrls = {
-                'finalizadores': 'relatorio_finalizadores.html',
-                'ranking_solo': 'relatorio_ranking_solo.html',
-                'ranking_equipe': 'relatorio_ranking_equipe.html',
-                'equipes': 'relatorio_equipes.html',
-                'geral': 'relatorio_geral.html'
+                'finalizadores': '/relatorio_finalizadores',
+                'ranking_solo': '/relatorio_ranking_solo',
+                'ranking_equipe': '/relatorio_ranking_equipe',
+                'equipes': '/relatorio_equipes',
+                'geral': '/relatorio_geral'
             };
             
             const url = reportUrls[reportType];
