@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Geral - Corrida 200K</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 2cm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        
+        .container {
+            max-width: 21cm;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .logo-left {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .logo-right {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .title {
+            flex: 1;
+            text-align: center;
+            margin: 0 20px;
+        }
+        
+        .title h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .title h2 {
+            font-size: 18px;
+            color: #7f8c8d;
+            font-weight: normal;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background-color: #219a52;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+        
+        .error {
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .progress-bar {
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            transition: width 0.3s ease;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .info-box {
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .date-info {
+            text-align: right;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        
+        @media print {
+            .controls {
+                display: none;
+            }
+            
+            body {
+                background-color: white;
+            }
+            
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="static/img/ecmrunlogo1.png" alt="ECM Run Logo" class="logo-left">
+            <div class="title">
+                <h1>Relatório Geral</h1>
+                <h2>Corrida 200K - Estatísticas Completas</h2>
+            </div>
+            <img src="static/img/logo_200k.png" alt="Logo 200K" class="logo-right">
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="btn btn-success" onclick="exportToPDF()">📄 Salvar PDF</button>
+            <button class="btn" onclick="location.reload()">🔄 Atualizar</button>
+        </div>
+
+        <div id="loading" class="loading">
+            <p>Carregando relatório geral...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <p>Erro ao carregar os dados. Tente novamente.</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Estatísticas Gerais -->
+            <div class="section">
+                <h2>📊 Resumo Geral</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total de Atletas</h3>
+                        <div class="stat-value" id="total-atletas">0</div>
+                        <div class="stat-subtitle">Inscritos na corrida</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Finalizadores</h3>
+                        <div class="stat-value" id="total-finalizadores">0</div>
+                        <div class="stat-subtitle">Completaram a prova</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Taxa de Conclusão</h3>
+                        <div class="stat-value" id="taxa-conclusao">0%</div>
+                        <div class="stat-subtitle">Percentual de sucesso</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modalidade Solo -->
+            <div class="section">
+                <h2>🏃‍♂️ Modalidade Solo</h2>
+                <div class="info-box">
+                    <h4>Estatísticas da Modalidade Individual</h4>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Métrica</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-solo">
+                                <!-- Dados preenchidos via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modalidades de Equipe -->
+            <div class="section">
+                <h2>👥 Modalidades de Equipe</h2>
+                <div class="info-box">
+                    <h4>Estatísticas por Modalidade de Equipe</h4>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Modalidade</th>
+                                    <th>Total Atletas</th>
+                                    <th>Completaram</th>
+                                    <th>Taxa de Conclusão</th>
+                                    <th>Progresso</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-equipe">
+                                <!-- Dados preenchidos via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="date-info">
+                <p>Relatório gerado em: <span id="data-relatorio"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let relatorioData = null;
+
+        async function carregarRelatorio() {
+            try {
+                const response = await fetch('/certificado200k_relatorio_geral');
+                const data = await response.json();
+                
+                if (data.success) {
+                    relatorioData = data.relatorio;
+                    preencherRelatorio(data.relatorio);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Erro ao carregar relatório');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        function preencherRelatorio(relatorio) {
+            // Resumo geral
+            const resumo = relatorio.resumo_geral;
+            document.getElementById('total-atletas').textContent = resumo.total_atletas;
+            document.getElementById('total-finalizadores').textContent = resumo.total_completaram;
+            document.getElementById('taxa-conclusao').textContent = resumo.taxa_conclusao_geral.toFixed(1) + '%';
+
+            // Modalidade solo
+            const solo = relatorio.modalidade_solo;
+            const statsSolo = document.getElementById('stats-solo');
+            statsSolo.innerHTML = `
+                <tr>
+                    <td>Atletas que completaram</td>
+                    <td>${solo.completaram}</td>
+                </tr>
+                <tr>
+                    <td>Melhor tempo</td>
+                    <td>${solo.melhor_tempo || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td>Pior tempo</td>
+                    <td>${solo.pior_tempo || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td>Tempo médio</td>
+                    <td>${solo.tempo_medio || 'N/A'}</td>
+                </tr>
+            `;
+
+            // Modalidades de equipe
+            const equipe = relatorio.modalidades_equipe;
+            const statsEquipe = document.getElementById('stats-equipe');
+            let equipeHtml = '';
+            
+            const modalidades = ['DUPLA', 'QUARTETO', 'OCTETO'];
+            
+            for (const modalidade of modalidades) {
+                if (equipe[modalidade]) {
+                    const dados = equipe[modalidade];
+                    const taxa = dados.taxa_conclusao;
+                    
+                    equipeHtml += `
+                        <tr>
+                            <td>${modalidade}</td>
+                            <td>${dados.total_atletas}</td>
+                            <td>${dados.completaram}</td>
+                            <td>${taxa.toFixed(1)}%</td>
+                            <td>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${taxa}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            if (equipeHtml === '') {
+                equipeHtml = '<tr><td colspan="5" class="no-data">Nenhuma modalidade de equipe encontrada</td></tr>';
+            }
+            
+            statsEquipe.innerHTML = equipeHtml;
+
+            // Data do relatório
+            document.getElementById('data-relatorio').textContent = relatorio.data_relatorio;
+        }
+
+        function exportToPDF() {
+            if (!relatorioData) {
+                alert('Dados não carregados. Tente novamente.');
+                return;
+            }
+
+            // Usar a função existente de exportação
+            const originalDisplay = document.querySelector('.controls').style.display;
+            document.querySelector('.controls').style.display = 'none';
+            
+            window.print();
+            
+            document.querySelector('.controls').style.display = originalDisplay;
+        }
+
+        // Carregar relatório quando a página for carregada
+        document.addEventListener('DOMContentLoaded', carregarRelatorio);
+    </script>
+</body>
+</html>
