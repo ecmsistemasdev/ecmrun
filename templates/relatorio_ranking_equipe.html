@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ranking Equipe - 200K</title>
+    <title>Ranking Solo - 200K</title>
     <style>
         @media print {
             body { 
@@ -75,6 +75,12 @@
             color: #666;
         }
 
+        .tempo-destaque {
+            font-weight: bold;
+            font-size: 14px;
+            color: #e74c3c;
+        }
+
         .controls {
             background: #f8f9fa;
             padding: 15px;
@@ -121,25 +127,10 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        .modalidade-section {
-            margin-bottom: 40px;
-        }
-
-        .modalidade-title {
-            background: #2c3e50;
-            color: white;
-            padding: 15px;
-            border-radius: 8px 8px 0 0;
-            font-size: 16px;
-            font-weight: 600;
-            text-align: left;
-        }
-
         .table-container {
             overflow-x: auto;
-            border-radius: 0 0 8px 8px;
+            border-radius: 8px;
             border: 1px solid #ddd;
-            border-top: none;
         }
 
         table {
@@ -156,8 +147,8 @@
         }
 
         th {
-            background: #2c3e50;
-            color: white;
+            background: transparent;
+            color: #2c3e50;
             font-weight: 600;
             position: sticky;
             top: 0;
@@ -172,19 +163,6 @@
             font-weight: bold;
             text-align: center;
             width: 60px;
-        }
-
-        .tempo-destaque {
-            font-weight: bold;
-            font-size: 16px;
-            color: #e74c3c;
-        }
-
-        .empty-section {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-            font-style: italic;
         }
 
         .footer {
@@ -240,12 +218,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="static/img/logo_200k.png" alt="Logo 200K" class="logo-left">
+            <img src="static/img/logo_200k.png" alt="ECM Run Logo" class="logo-left">
             <div class="header-center">
-                <h1 class="report-title">Ranking Equipe</h1>
-                <p class="report-subtitle">Corrida 200K - Classificação por Modalidades</p>
+                <h1 class="report-title">Ranking Solo</h1>
+                <p class="report-subtitle">4º Desafio 200K - Classificação Individual</p>
             </div>
-            
         </div>
 
         <div class="controls no-print">
@@ -257,125 +234,77 @@
                     <option value="F">Feminino</option>
                 </select>
             </div>
-            <div class="filter-group">
-                <label for="filtroModalidade">Modalidade:</label>
-                <select id="filtroModalidade" onchange="filtrarPorModalidade()">
-                    <option value="todas">Todas</option>
-                    <option value="DUPLA">Dupla</option>
-                    <option value="QUARTETO">Quarteto</option>
-                    <option value="OCTETO">Octeto</option>
-                </select>
-            </div>
             <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
             <button class="btn" onclick="location.reload()">🔄 Atualizar Dados</button>
         </div>
 
         <div id="loadingMessage" class="loading">
-            Carregando ranking de equipes...
+            Carregando ranking solo...
         </div>
 
         <div id="errorMessage" class="error" style="display: none;">
             Erro ao carregar os dados. Tente novamente.
         </div>
 
-        <div id="rankingContent" style="display: none;">
-            <!-- Seção DUPLA -->
-            <div class="modalidade-section" id="secaoDupla">
-                <div class="modalidade-title">
-                    🏃‍♂️🏃‍♀️ DUPLA - 100km por atleta
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Posição</th>
-                                <th>Nome</th>
-                                <th>Sexo</th>
-                                <th>KM Percorrido</th>
-                                <th>Tempo</th>
-                                <th>Data Largada</th>
-                                <th>Data Chegada</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaDupla">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Seção QUARTETO -->
-            <div class="modalidade-section" id="secaoQuarteto">
-                <div class="modalidade-title">
-                    👥 QUARTETO - 50km por atleta
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Posição</th>
-                                <th>Nome</th>
-                                <th>Sexo</th>
-                                <th>KM Percorrido</th>
-                                <th>Tempo</th>
-                                <th>Data Largada</th>
-                                <th>Data Chegada</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaQuarteto">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Seção OCTETO -->
-            <div class="modalidade-section" id="secaoOcteto">
-                <div class="modalidade-title">
-                    👥👥 OCTETO - 25km por atleta
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Posição</th>
-                                <th>Nome</th>
-                                <th>Sexo</th>
-                                <th>KM Percorrido</th>
-                                <th>Tempo</th>
-                                <th>Data Largada</th>
-                                <th>Data Chegada</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaOcteto">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="table-container" id="tableContainer" style="display: none;">
+            <table id="rankingTable">
+                <thead>
+                    <tr>
+                        <th>Posição</th>
+                        <th>Nome</th>
+                        <th>Sexo</th>
+                        <th>Tempo Total</th>
+                        <th>Data Largada</th>
+                        <th>Data Chegada</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingTableBody">
+                </tbody>
+            </table>
         </div>
 
         <div class="footer">
             <p>Relatório gerado em: <span id="dataRelatorio"></span></p>
-            <p>Sistema de Gestão de Corrida 200K - ECM Run</p>
+            <p>Sistema de Gestão de Corrida - ECM Run</p>
         </div>
     </div>
 
     <script>
-        let rankingData = {};
-        let rankingFiltered = {};
+        let rankingData = [];
+        let rankingFiltered = [];
 
-        // Função para converter tempo para HH:MM
-        function formatTempo(tempo) {
-            if (!tempo) return '-';
+        // Função para converter tempo para formato HH:MM
+        function formatarTempo(tempo) {
+            if (!tempo || tempo === 'N/A' || tempo === 'null') return 'N/A';
             
-            // Se o tempo já está no formato HH:MM:SS, extrair apenas HH:MM
-            const parts = tempo.split(':');
-            if (parts.length >= 2) {
-                return `${parts[0]}:${parts[1]}`;
+            // Se já está no formato HH:MM, retorna como está
+            if (tempo.includes(':') && tempo.length <= 5) {
+                return tempo;
+            }
+            
+            // Se está em formato de duração (ex: "2h 30m" ou "150 minutos")
+            if (tempo.includes('h') || tempo.includes('m')) {
+                const hours = tempo.match(/(\d+)h/);
+                const minutes = tempo.match(/(\d+)m/);
+                
+                const h = hours ? parseInt(hours[1]) : 0;
+                const m = minutes ? parseInt(minutes[1]) : 0;
+                
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            }
+            
+            // Se está em minutos totais
+            if (!isNaN(tempo)) {
+                const totalMinutes = parseInt(tempo);
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
             }
             
             return tempo;
         }
-
-        // Função para formatar data no formato "dd/mm/yyyy hh:mm"
+        
         function formatData(dataString) {
             if (!dataString) return '-';
             
@@ -384,25 +313,25 @@
             const horaFormatada = data.toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: false // Garante formato 24h
+                hour12: false
             });
             return `${dataFormatada} ${horaFormatada}`;
         }        
-
+        
         // Função para carregar dados do ranking
         async function loadRanking() {
             try {
-                const response = await fetch('/relatorio200k_ranking_equipe');
+                const response = await fetch('/relatorio200k_ranking_solo');
                 const data = await response.json();
                 
                 if (data.success) {
                     rankingData = data.ranking;
-                    rankingFiltered = JSON.parse(JSON.stringify(rankingData));
+                    rankingFiltered = [...rankingData];
                     
                     displayRanking();
                     
                     document.getElementById('loadingMessage').style.display = 'none';
-                    document.getElementById('rankingContent').style.display = 'block';
+                    document.getElementById('tableContainer').style.display = 'block';
                 } else {
                     showError('Erro ao carregar dados: ' + (data.error || 'Erro desconhecido'));
                 }
@@ -421,117 +350,59 @@
 
         // Função para exibir ranking na tabela
         function displayRanking() {
-            const modalidades = ['DUPLA', 'QUARTETO', 'OCTETO'];
-            const tabelasId = ['tabelaDupla', 'tabelaQuarteto', 'tabelaOcteto'];
-            const secoesId = ['secaoDupla', 'secaoQuarteto', 'secaoOcteto'];
+            const tbody = document.getElementById('rankingTableBody');
+            tbody.innerHTML = '';
             
-            modalidades.forEach((modalidade, index) => {
-                const tbody = document.getElementById(tabelasId[index]);
-                const secao = document.getElementById(secoesId[index]);
-                tbody.innerHTML = '';
+            rankingFiltered.forEach((atleta, index) => {
+                const row = document.createElement('tr');
                 
-                if (rankingFiltered[modalidade] && rankingFiltered[modalidade].length > 0) {
-                    // Mostrar seção se há dados
-                    secao.style.display = 'block';
-                    
-                    rankingFiltered[modalidade].forEach(atleta => {
-                        const row = document.createElement('tr');
-                        
-                        row.innerHTML = `
-                            <td class="posicao">${atleta.posicao}°</td>
-                            <td>${atleta.nome}</td>
-                            <td>${atleta.sexo}</td>
-                            <td>${atleta.km_percorrido}km</td>
-                            <td class="tempo-destaque">${formatTempo(atleta.tempo_total)}</td>
-                            <td>${formatData(atleta.data_largada)}</td>
-                            <td>${formatData(atleta.data_chegada)}</td>
-                        `;
-                        
-                        tbody.appendChild(row);
-                    });
-                } else {
-                    // Ocultar seção se não há dados
-                    secao.style.display = 'none';
-                }
+                const sexoText = atleta.sexo;
+                
+                // Formatar tempo - CORREÇÃO PRINCIPAL AQUI
+                const tempoFormatado = formatarTempo(atleta.tempo_total);
+                
+                row.innerHTML = `
+                    <td class="posicao">${atleta.posicao}</td>
+                    <td>${atleta.nome}</td>
+                    <td>${sexoText}</td>
+                    <td class="tempo-destaque">${tempoFormatado}</td>
+                    <td>${formatData(atleta.data_largada)}</td>
+                    <td>${formatData(atleta.data_chegada)}</td>
+                `;
+                   
+                tbody.appendChild(row);
             });
         }
 
         // Função para filtrar por sexo
         function filtrarPorSexo() {
-            const sexoSelecionado = document.getElementById('filtroSexo').value;
-            const modalidadeSelecionada = document.getElementById('filtroModalidade').value;
+            const filtroSexo = document.getElementById('filtroSexo').value;
             
-            rankingFiltered = JSON.parse(JSON.stringify(rankingData));
-            
-            // Aplicar filtro de sexo
-            if (sexoSelecionado !== 'ambos') {
-                Object.keys(rankingFiltered).forEach(modalidade => {
-                    rankingFiltered[modalidade] = rankingFiltered[modalidade].filter(atleta => 
-                        atleta.sexo === sexoSelecionado
-                    );
-                    
-                    // Reordenar posições
-                    rankingFiltered[modalidade].forEach((atleta, index) => {
-                        atleta.posicao = index + 1;
-                    });
-                });
+            if (filtroSexo === 'ambos') {
+                rankingFiltered = [...rankingData];
+            } else {
+                rankingFiltered = rankingData.filter(a => a.sexo === filtroSexo);
             }
             
-            // Aplicar filtro de modalidade
-            if (modalidadeSelecionada !== 'todas') {
-                Object.keys(rankingFiltered).forEach(modalidade => {
-                    if (modalidade !== modalidadeSelecionada) {
-                        rankingFiltered[modalidade] = [];
-                    }
-                });
-            }
+            // Reajustar posições após filtro
+            rankingFiltered.forEach((atleta, index) => {
+                atleta.posicao = index + 1;
+            });
             
             displayRanking();
-            updateSectionVisibility();
-        }
-
-        // Função para filtrar por modalidade
-        function filtrarPorModalidade() {
-            filtrarPorSexo(); // Reutiliza a lógica de filtro
-        }
-
-        // Função para controlar visibilidade das seções
-        function updateSectionVisibility() {
-            const modalidadeSelecionada = document.getElementById('filtroModalidade').value;
-            
-            const secoes = {
-                'DUPLA': 'secaoDupla',
-                'QUARTETO': 'secaoQuarteto',
-                'OCTETO': 'secaoOcteto'
-            };
-            
-            Object.keys(secoes).forEach(modalidade => {
-                const secao = document.getElementById(secoes[modalidade]);
-                const temDados = rankingFiltered[modalidade] && rankingFiltered[modalidade].length > 0;
-                
-                if (modalidadeSelecionada === 'todas') {
-                    // Mostrar apenas se tem dados
-                    secao.style.display = temDados ? 'block' : 'none';
-                } else if (modalidadeSelecionada === modalidade) {
-                    // Mostrar apenas se é a modalidade selecionada e tem dados
-                    secao.style.display = temDados ? 'block' : 'none';
-                } else {
-                    secao.style.display = 'none';
-                }
-            });
         }
 
         // Função para definir data do relatório
         function setReportDate() {
             const now = new Date();
-            const dateString = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR');
-            document.getElementById('dataRelatorio').textContent = dateString;
+            const dateStr = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR');
+            document.getElementById('dataRelatorio').textContent = dateStr;
         }
 
         // Inicializar quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
-            setReportDate();
             loadRanking();
+            setReportDate();
         });
     </script>
 </body>
