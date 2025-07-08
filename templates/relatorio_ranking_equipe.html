@@ -184,8 +184,6 @@
             width: 60px;
         }
 
-
-
         .tempo-destaque {
             font-weight: bold;
             font-size: 16px;
@@ -388,16 +386,30 @@
             return tempo;
         }
 
-        // Função para formatar data
+        // // Função para formatar data
+        // function formatData(dataString) {
+        //     if (!dataString) return '-';
+            
+        //     const data = new Date(dataString);
+        //     return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {
+        //         hour: '2-digit',
+        //         minute: '2-digit'
+        //     });
+        // }
+
+        // Função para formatar data no formato "dd/mm/yyyy hh:mm"
         function formatData(dataString) {
             if (!dataString) return '-';
             
             const data = new Date(dataString);
-            return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {
+            const dataFormatada = data.toLocaleDateString('pt-BR');
+            const horaFormatada = data.toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                hour12: false // Garante formato 24h
             });
-        }
+            return `${dataFormatada} ${horaFormatada}`;
+        }        
 
         // Função para carregar dados do ranking
         async function loadRanking() {
