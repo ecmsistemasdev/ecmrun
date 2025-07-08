@@ -6279,7 +6279,7 @@ def certificado200k_ranking_equipe():
                 resultado[modalidade].append({
                     'posicao': contadores[modalidade],
                     'nome': atleta[0],
-		    'sexo': atleta[1],
+                    'sexo': atleta[1],  # CORREÇÃO: linha corrigida
                     'km_percorrido': atleta[3],
                     'tempo_total': str(atleta[4]) if atleta[4] else None,
                     'data_largada': atleta[5].strftime('%Y-%m-%d %H:%M:%S') if atleta[5] else None,
