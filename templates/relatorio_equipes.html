@@ -21,16 +21,18 @@
         
         .header {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
             margin-bottom: 30px;
             padding-bottom: 15px;
             border-bottom: 2px solid #e0e0e0;
+            text-align: center;
         }
         
         .logo-left {
             width: 70px;
             height: 70px;
+            margin-bottom: 15px;
         }
         
         .logo-right {
@@ -39,9 +41,9 @@
         }
         
         .title-section {
-            flex: 1;
             text-align: center;
-            margin: 0 20px;
+            margin: 0;
+            min-width: 200px;
         }
         
         .title-section h1 {
@@ -53,19 +55,29 @@
         
         .subtitle {
             margin: 5px 0 0 0;
-            font-size: 14px;
+            font-size: 16px;
             color: #7f8c8d;
+            font-weight: 600;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         .filters {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
             display: flex;
             gap: 15px;
             align-items: center;
             flex-wrap: wrap;
+            justify-content: center;
         }
         
         .filter-group {
@@ -77,6 +89,7 @@
         .filter-group label {
             font-weight: 600;
             color: #495057;
+            white-space: nowrap;
         }
         
         .filter-group select {
@@ -84,6 +97,23 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+            min-width: 120px;
+        }
+        
+        .print-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .print-btn:hover {
+            background: #218838;
         }
         
         .stats-summary {
@@ -155,17 +185,21 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .equipe-info {
             display: flex;
             align-items: center;
             gap: 15px;
+            flex-wrap: wrap;
         }
         
         .equipe-id {
             font-weight: bold;
             color: #2c3e50;
+            white-space: nowrap;
         }
         
         .equipe-status {
@@ -173,28 +207,23 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
-        }
-        
-        .status-completou {
             background: #d4edda;
             color: #155724;
-        }
-        
-        .status-nao-completou {
-            background: #f8d7da;
-            color: #721c24;
+            white-space: nowrap;
         }
         
         .equipe-tempo {
             font-size: 14px;
             color: #495057;
             font-weight: 600;
+            white-space: nowrap;
         }
         
         .membros-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            overflow-x: auto;
         }
         
         .membros-table th,
@@ -209,30 +238,11 @@
             font-weight: 600;
             color: #495057;
             font-size: 12px;
+            white-space: nowrap;
         }
         
         .membros-table td {
             font-size: 13px;
-        }
-        
-        .sexo-m {
-            color: #007bff;
-            font-weight: 600;
-        }
-        
-        .sexo-f {
-            color: #e83e8c;
-            font-weight: 600;
-        }
-        
-        .membro-completou {
-            color: #28a745;
-            font-weight: 600;
-        }
-        
-        .membro-nao-completou {
-            color: #dc3545;
-            font-weight: 600;
         }
         
         .no-data {
@@ -248,21 +258,199 @@
             color: #6c757d;
         }
         
-        @media print {
+        /* Responsividade para Mobile */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .logo-left {
+                order: -2; /* Logo sempre primeiro */
+                margin-bottom: 10px;
+            }
+            
+            .title-section {
+                margin: 0;
+                order: -1; /* Título depois da logo */
+            }
+            
+            .title-section h1 {
+                font-size: 20px;
+            }
+            
+            .subtitle {
+                font-size: 14px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
             .filters {
-                display: none;
+                width: 100%;
+                padding: 10px;
+                gap: 10px;
+                justify-content: center;
+            }
+            
+            .filter-group select {
+                min-width: auto;
+            }
+            
+            .print-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+                flex-shrink: 0;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .stat-item {
+                padding: 8px;
+            }
+            
+            .stat-number {
+                font-size: 18px;
+            }
+            
+            .modalidade-header {
+                font-size: 16px;
+                padding: 10px 15px;
+            }
+            
+            .equipe-card {
+                padding: 10px;
+            }
+            
+            .equipe-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .equipe-info {
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-start;
+            }
+            
+            /* Tabela responsiva */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .membros-table {
+                min-width: 600px;
+            }
+            
+            .membros-table th,
+            .membros-table td {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+            
+            .membros-table th {
+                font-size: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .equipe-info {
+                font-size: 12px;
+            }
+            
+            .membros-table {
+                min-width: 500px;
+            }
+        }
+        
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 15mm 10mm 15mm 10mm; /* top right bottom left */
             }
             
             body {
-                padding: 0;
+                margin: 0;
+                padding: 10px;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            
+            .controls {
+                display: none;
+            }
+            
+            .header {
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+            }
+            
+            .title-section h1 {
+                font-size: 18px;
+            }
+            
+            .subtitle {
+                font-size: 14px;
+            }
+            
+            .stats-summary {
+                margin-bottom: 15px;
+                padding: 10px;
             }
             
             .modalidade-section {
                 break-inside: avoid;
+                margin-bottom: 20px;
+            }
+            
+            .modalidade-header {
+                font-size: 16px;
+                padding: 8px 15px;
             }
             
             .equipe-card {
                 break-inside: avoid;
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .equipe-header {
+                margin-bottom: 8px;
+            }
+            
+            .membros-table {
+                font-size: 11px;
+            }
+            
+            .membros-table th,
+            .membros-table td {
+                padding: 4px 6px;
+            }
+            
+            /* Forçar quebra de página entre seções se necessário */
+            .modalidade-section:not(:first-child) {
+                page-break-before: auto;
+            }
+            
+            /* Evitar quebra de página dentro das tabelas */
+            .table-responsive {
+                page-break-inside: avoid;
             }
         }
     </style>
@@ -276,33 +464,21 @@
         </div>
     </div>
 
-    <div class="filters">
-        <div class="filter-group">
-            <label for="modalidadeFilter">Modalidade:</label>
-            <select id="modalidadeFilter">
-                <option value="">Todas</option>
-                <option value="DUPLA">Dupla</option>
-                <option value="QUARTETO">Quarteto</option>
-                <option value="OCTETO">Octeto</option>
-            </select>
-        </div>
-        
-        <div class="filter-group">
-            <label for="sexoFilter">Sexo:</label>
-            <select id="sexoFilter">
-                <option value="">Ambos</option>
-                <option value="M">Masculino</option>
-                <option value="F">Feminino</option>
-            </select>
-        </div>
-        
-        <div class="filter-group">
-            <label for="statusFilter">Status:</label>
-            <select id="statusFilter">
-                <option value="">Todos</option>
-                <option value="true">Completaram</option>
-                <option value="false">Não Completaram</option>
-            </select>
+    <div class="controls">
+        <div class="filters">
+            <div class="filter-group">
+                <label for="modalidadeFilter">Modalidade:</label>
+                <select id="modalidadeFilter">
+                    <option value="">Todas</option>
+                    <option value="DUPLA">Dupla</option>
+                    <option value="QUARTETO">Quarteto</option>
+                    <option value="OCTETO">Octeto</option>
+                </select>
+            </div>
+            
+            <button class="print-btn" onclick="imprimirRelatorio()">
+                📄 Imprimir/Baixar PDF
+            </button>
         </div>
     </div>
 
@@ -321,7 +497,7 @@
                 <div class="stat-label">Total de Atletas</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number" id="taxaConclusao">0%</div>
+                <div class="stat-number" id="taxaConclusao">100%</div>
                 <div class="stat-label">Taxa de Conclusão</div>
             </div>
         </div>
@@ -350,13 +526,84 @@
         let equipesData = [];
         let filteredData = [];
 
+        function formatarDataHora(dataHora) {
+            if (!dataHora) return 'N/A';
+            const date = new Date(dataHora);
+            const dia = String(date.getDate()).padStart(2, '0');
+            const mes = String(date.getMonth() + 1).padStart(2, '0');
+            const ano = date.getFullYear();
+            const hora = String(date.getHours()).padStart(2, '0');
+            const minuto = String(date.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+        }
+
+        function formatarTempo(tempo) {
+            if (!tempo) return '00:00';
+            
+            // Converter para string se necessário
+            tempo = String(tempo).trim();
+            
+            // Se já está no formato HH:MM correto, retorna
+            if (tempo.match(/^\d{1,3}:\d{2}$/)) {
+                return tempo;
+            }
+            
+            // Se contém 'day' ou 'days', processar
+            if (tempo.includes('day')) {
+                try {
+                    // Exemplo: "1 day, 2:55:00" ou "2 days, 10:30:45"
+                    const parts = tempo.split(', ');
+                    if (parts.length === 2) {
+                        // Extrair dias
+                        const daysPart = parts[0];
+                        const days = parseInt(daysPart.split(' ')[0]);
+                        
+                        // Extrair horas:minutos:segundos
+                        const timePart = parts[1];
+                        const timeParts = timePart.split(':');
+                        const hours = parseInt(timeParts[0]) || 0;
+                        const minutes = parseInt(timeParts[1]) || 0;
+                        
+                        // Converter dias para horas e somar
+                        const totalHours = (days * 24) + hours;
+                        
+                        return `${totalHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                    }
+                } catch (e) {
+                    console.error('Erro ao processar tempo com days:', e);
+                }
+            }
+            
+            // Se está no formato HH:MM:SS, remover segundos
+            if (tempo.includes(':')) {
+                const parts = tempo.split(':');
+                if (parts.length >= 2) {
+                    const hours = parseInt(parts[0]) || 0;
+                    const minutes = parseInt(parts[1]) || 0;
+                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                }
+            }
+            
+            // Se é apenas um número (minutos), converter para HH:MM
+            const numericValue = parseInt(tempo);
+            if (!isNaN(numericValue)) {
+                const hours = Math.floor(numericValue / 60);
+                const minutes = numericValue % 60;
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            }
+            
+            // Retorna valor original se não conseguir processar
+            return tempo;
+        }
+
         async function carregarDados() {
             try {
                 const response = await fetch('/relatorio200k_equipes');
                 const data = await response.json();
                 
                 if (data.success) {
-                    equipesData = data.equipes;
+                    // Filtrar apenas equipes que completaram
+                    equipesData = data.equipes.filter(equipe => equipe.completou);
                     filteredData = [...equipesData];
                     renderizarEquipes();
                     atualizarEstatisticas();
@@ -372,25 +619,11 @@
 
         function aplicarFiltros() {
             const modalidadeFilter = document.getElementById('modalidadeFilter').value;
-            const sexoFilter = document.getElementById('sexoFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
 
             filteredData = equipesData.filter(equipe => {
                 // Filtro por modalidade
                 if (modalidadeFilter && equipe.modalidade !== modalidadeFilter) {
                     return false;
-                }
-
-                // Filtro por status
-                if (statusFilter !== '') {
-                    if (statusFilter === 'true' && !equipe.completou) return false;
-                    if (statusFilter === 'false' && equipe.completou) return false;
-                }
-
-                // Filtro por sexo (pelo menos um membro deve ter o sexo selecionado)
-                if (sexoFilter) {
-                    const temSexo = equipe.membros.some(membro => membro.sexo === sexoFilter);
-                    if (!temSexo) return false;
                 }
 
                 return true;
@@ -439,48 +672,49 @@
                     const equipeCard = document.createElement('div');
                     equipeCard.className = 'equipe-card';
                     
-                    const statusClass = equipe.completou ? 'status-completou' : 'status-nao-completou';
-                    const statusText = equipe.completou ? '✓ Completou' : '✗ Não Completou';
+                    const dataHoraLargada = formatarDataHora(equipe.datahora_largada);
+                    const dataHoraChegada = formatarDataHora(equipe.datahora_chegada);
+                    const tempoTotal = formatarTempo(equipe.tempo_total);
                     
                     equipeCard.innerHTML = `
                         <div class="equipe-header">
                             <div class="equipe-info">
                                 <span class="equipe-id">Equipe: ${equipe.nome_equipe}</span>
-                                <span class="equipe-status ${statusClass}">${statusText}</span>
+                                <span class="equipe-status">✓ Completou</span>
+                                <span class="equipe-tempo">Largada: ${dataHoraLargada}</span>
+                                <span class="equipe-tempo">Chegada: ${dataHoraChegada}</span>
                             </div>
                             <div class="equipe-tempo">
-                                ${equipe.tempo_total ? `Tempo Total: ${equipe.tempo_total}` : 'Tempo não disponível'}
+                                Tempo Total: ${tempoTotal}
                             </div>
                         </div>
                         
-                        <table class="membros-table">
-                            <thead>
-                                <tr>
-                                    <th>Atleta</th>
-                                    <th>Sexo</th>
-                                    <th>Parcial</th>
-                                    <th>Distância</th>
-                                    <th>Tempo Individual</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${equipe.membros.map(membro => `
+                        <div class="table-responsive">
+                            <table class="membros-table">
+                                <thead>
                                     <tr>
-                                        <td>${membro.nome}</td>
-                                        <td>${membro.sexo}</td>
-                                        <td>${membro.parcial}</td>
-                                        <td>${membro.km_percorrido}km</td>
-                                        <td>${membro.tempo_individual || 'N/A'}</td>
-                                        <td>
-                                            <span class="${membro.completou ? 'membro-completou' : 'membro-nao-completou'}">
-                                                ${membro.completou ? '✓' : '✗'}
-                                            </span>
-                                        </td>
+                                        <th>Atleta</th>
+                                        <th>Sexo</th>
+                                        <th>Parcial</th>
+                                        <th>Distância</th>
+                                        <th>Chegada Parcial</th>
+                                        <th>Tempo Individual</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${equipe.membros.map(membro => `
+                                        <tr>
+                                            <td>${membro.nome}</td>
+                                            <td>${membro.sexo}</td>
+                                            <td>${membro.parcial}</td>
+                                            <td>${membro.km_percorrido}km</td>
+                                            <td>${formatarDataHora(membro.chegada_parcial)}</td>
+                                            <td>${formatarTempo(membro.tempo_individual)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     `;
                     
                     container.appendChild(equipeCard);
@@ -495,23 +729,25 @@
             document.getElementById('octeto-section').style.display = 
                 equipesModalidade['OCTETO'].length > 0 ? 'block' : 'none';
         }
-
+        
         function atualizarEstatisticas() {
             const totalEquipes = filteredData.length;
             const equipesCompletaram = filteredData.filter(e => e.completou).length;
             const totalAtletas = filteredData.reduce((sum, equipe) => sum + equipe.total_atletas, 0);
-            const taxaConclusao = totalEquipes > 0 ? Math.round((equipesCompletaram / totalEquipes) * 100) : 0;
+            const taxaConclusao = 100; // Sempre 100% pois só mostra quem completou
 
             document.getElementById('totalEquipes').textContent = totalEquipes;
             document.getElementById('equipesCompletaram').textContent = equipesCompletaram;
             document.getElementById('totalAtletas').textContent = totalAtletas;
-            document.getElementById('taxaConclusao').textContent = `${taxaConclusao}%`;
+            document.getElementById('taxaConclusao').textContent = '100%';
+        }
+
+        function imprimirRelatorio() {
+            window.print();
         }
 
         // Event listeners
         document.getElementById('modalidadeFilter').addEventListener('change', aplicarFiltros);
-        document.getElementById('sexoFilter').addEventListener('change', aplicarFiltros);
-        document.getElementById('statusFilter').addEventListener('change', aplicarFiltros);
 
         // Carregar dados quando a página carregar
         window.addEventListener('load', () => {
