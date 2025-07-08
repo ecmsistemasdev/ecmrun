@@ -372,19 +372,17 @@
                 
                 const sexoText = atleta.sexo; // === 'M' ? 'Masculino' : 'Feminino';
                 
-                // Formatar datas
-                const dataLargada = atleta.data_largada ? 
-                    new Date(atleta.data_largada).toLocaleString('pt-BR') : 'N/A';
-                const dataChegada = atleta.data_chegada ? 
-                    new Date(atleta.data_chegada).toLocaleString('pt-BR') : 'N/A';
+                // Formatar tempo
+                const tempoFormatado = formatarTempo(atleta.tempo_total);
                 
                 row.innerHTML = `
-                    <td class="${posicaoClass}">${atleta.posicao}</td>
+                    <td class="posicao">${atleta.posicao}</td>
                     <td>${atleta.nome}</td>
-                    <td ${sexoText}</td>
-                    <td class="tempo-destaque">${atleta.tempo_total || 'N/A'}</td>
-                    <td>${dataLargada}</td>
-                    <td>${dataChegada}</td>
+                    <td>${sexoText}</td>
+                    <td ${tempoFormatado}</td>
+                    <td>${formatData(atleta.data_largada)}</td>
+                    <td>${formatData(atleta.data_chegada)}</td>                        
+
                 `;
                    
                 tbody.appendChild(row);
