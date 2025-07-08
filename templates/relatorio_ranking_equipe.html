@@ -329,7 +329,8 @@
             <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
             <button class="btn" onclick="location.reload()">🔄 Atualizar Dados</button>
         </div>
-
+        
+        <!--
         <div class="summary-cards">
             <div class="summary-card">
                 <div class="summary-number" id="totalDupla">-</div>
@@ -348,7 +349,7 @@
                 <div class="summary-label">Total Geral</div>
             </div>
         </div>
-
+        -->
         <div id="loadingMessage" class="loading">
             Carregando ranking de equipes...
         </div>
@@ -539,17 +540,17 @@
         }
 
         // Função para atualizar cards de resumo
-        function updateSummaryCards() {
-            const totalDupla = rankingFiltered.DUPLA ? rankingFiltered.DUPLA.length : 0;
-            const totalQuarteto = rankingFiltered.QUARTETO ? rankingFiltered.QUARTETO.length : 0;
-            const totalOcteto = rankingFiltered.OCTETO ? rankingFiltered.OCTETO.length : 0;
-            const totalGeral = totalDupla + totalQuarteto + totalOcteto;
+        //function updateSummaryCards() {
+        //    const totalDupla = rankingFiltered.DUPLA ? rankingFiltered.DUPLA.length : 0;
+        //    const totalQuarteto = rankingFiltered.QUARTETO ? rankingFiltered.QUARTETO.length : 0;
+        //    const totalOcteto = rankingFiltered.OCTETO ? rankingFiltered.OCTETO.length : 0;
+        //    const totalGeral = totalDupla + totalQuarteto + totalOcteto;
             
-            document.getElementById('totalDupla').textContent = totalDupla;
-            document.getElementById('totalQuarteto').textContent = totalQuarteto;
-            document.getElementById('totalOcteto').textContent = totalOcteto;
-            document.getElementById('totalGeral').textContent = totalGeral;
-        }
+        //    document.getElementById('totalDupla').textContent = totalDupla;
+        //    document.getElementById('totalQuarteto').textContent = totalQuarteto;
+        //    document.getElementById('totalOcteto').textContent = totalOcteto;
+        //    document.getElementById('totalGeral').textContent = totalGeral;
+        //}
 
         // Função para filtrar por sexo
         function filtrarPorSexo() {
