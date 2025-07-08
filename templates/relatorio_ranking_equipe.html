@@ -540,17 +540,17 @@
         }
 
         // Função para atualizar cards de resumo
-        //function updateSummaryCards() {
-        //    const totalDupla = rankingFiltered.DUPLA ? rankingFiltered.DUPLA.length : 0;
-        //    const totalQuarteto = rankingFiltered.QUARTETO ? rankingFiltered.QUARTETO.length : 0;
-        //    const totalOcteto = rankingFiltered.OCTETO ? rankingFiltered.OCTETO.length : 0;
-        //    const totalGeral = totalDupla + totalQuarteto + totalOcteto;
+        function updateSummaryCards() {
+            const totalDupla = rankingFiltered.DUPLA ? rankingFiltered.DUPLA.length : 0;
+            const totalQuarteto = rankingFiltered.QUARTETO ? rankingFiltered.QUARTETO.length : 0;
+            const totalOcteto = rankingFiltered.OCTETO ? rankingFiltered.OCTETO.length : 0;
+            const totalGeral = totalDupla + totalQuarteto + totalOcteto;
             
-        //    document.getElementById('totalDupla').textContent = totalDupla;
-        //    document.getElementById('totalQuarteto').textContent = totalQuarteto;
-        //    document.getElementById('totalOcteto').textContent = totalOcteto;
-        //    document.getElementById('totalGeral').textContent = totalGeral;
-        //}
+            document.getElementById('totalDupla').textContent = totalDupla;
+            document.getElementById('totalQuarteto').textContent = totalQuarteto;
+            document.getElementById('totalOcteto').textContent = totalOcteto;
+            document.getElementById('totalGeral').textContent = totalGeral;
+        }
 
         // Função para filtrar por sexo
         function filtrarPorSexo() {
