@@ -5963,65 +5963,6 @@ def certificado200k_estatisticas():
         print(f"Erro ao obter estatísticas: {e}")
         return jsonify({'error': 'Erro interno do servidor'})
 
-@app.route('/relatorio200k_listar_finalizadores')
-def relatorio200k_listar_finalizadores():
-    """Lista todos os atletas que completaram a prova"""
-    try:
-        cur = mysql.connection.cursor()
-        
-        # Atletas que completaram solo
-        cur.execute("""
-            SELECT CONCAT(i.NUPEITO,' - ', a.NOME, ' ', a.SOBRENOME) AS NOME, 'SOLO' AS EQUIPE,
-                   200 AS KM_PERCORRIDO,
-                   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
-                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
-                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) AS TEMPO_TOTAL,
-                     CONCAT(NOME, ' ',SOBRENOME) AS ORDER_NOME
-            FROM ATLETA a, INSCRICAO i
-            WHERE EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE IDEA = 0 AND KM = 200 AND IDATLETA = a.IDATLETA)
-            AND i.IDATLETA = a.IDATLETA
-            
-            UNION ALL
-            
-            SELECT CONCAT(i.NUPEITO,' - ', a.NOME, ' ', a.SOBRENOME) AS NOME, 
-            CONCAT(UPPER(em.DEREDUZ),' - ',e.NOME_EQUIPE) AS EQUIPE,
-			   (ea.KM_FIM - ea.KM_INI) AS KM_PERCORRIDO,
-			   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
-				 (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
-				 (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) AS TEMPO_TOTAL,
-				 CONCAT(NOME, ' ',SOBRENOME) AS ORDER_NOME
-            FROM ATLETA a, INSCRICAO i, EQUIPE_ATLETAS ea, EQUIPE e, EVENTO_MODALIDADE em
-            WHERE e.IDEA = ea.IDEA 
-            AND ea.IDATLETA = a.IDATLETA
-            AND em.IDITEM = i.IDITEM
-            AND i.IDATLETA = a.IDATLETA
-            AND EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA)
-            
-            ORDER BY ORDER_NOME
-        """)
-        
-        finalizadores = cur.fetchall()
-        cur.close()
-        
-        resultado = []
-        for finalizador in finalizadores:
-            resultado.append({
-                'nome': finalizador[0],
-                'equipe': finalizador[1],
-                'km_percorrido': finalizador[2],
-                'tempo_total': str(finalizador[3]) if finalizador[3] else None
-            })
-        # o ultimo campo ORDER_NOME não vou precisar, inclui na SQL apenas para ordenar por NOME
-
-        return jsonify({
-            'success': True,
-            'finalizadores': resultado,
-            'total': len(resultado)
-        })
-        
-    except Exception as e:
-        print(f"Erro ao listar finalizadores: {e}")
-        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
 
 @app.route('/certificado200k_validar_cpf', methods=['POST'])
 def certificado200k_validar_cpf():
@@ -6099,6 +6040,69 @@ def certificado200k_buscar_por_nome():
     except Exception as e:
         print(f"Erro ao buscar por nome: {e}")
         return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
+
+@app.route('/relatorio200k_listar_finalizadores')
+def relatorio200k_listar_finalizadores():
+    """Lista todos os atletas que completaram a prova"""
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Atletas que completaram solo
+        cur.execute("""
+            SELECT CONCAT(i.NUPEITO,' - ', a.NOME, ' ', a.SOBRENOME) AS NOME, a.SEXO, 'SOLO' AS EQUIPE,
+                   200 AS KM_PERCORRIDO,
+                   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
+                     (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) AS TEMPO_TOTAL,
+                     CONCAT(NOME, ' ',SOBRENOME) AS ORDER_NOME
+            FROM ATLETA a, INSCRICAO i
+            WHERE EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE IDEA = 0 AND KM = 200 AND IDATLETA = a.IDATLETA)
+            AND i.IDATLETA = a.IDATLETA
+            
+            UNION ALL
+            
+            SELECT CONCAT(i.NUPEITO,' - ', a.NOME, ' ', a.SOBRENOME) AS NOME, a.SEXO,
+            CONCAT(UPPER(em.DEREDUZ),' - ',e.NOME_EQUIPE) AS EQUIPE,
+			   (ea.KM_FIM - ea.KM_INI) AS KM_PERCORRIDO,
+			   SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
+				 (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
+				 (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) AS TEMPO_TOTAL,
+				 CONCAT(NOME, ' ',SOBRENOME) AS ORDER_NOME
+            FROM ATLETA a, INSCRICAO i, EQUIPE_ATLETAS ea, EQUIPE e, EVENTO_MODALIDADE em
+            WHERE e.IDEA = ea.IDEA 
+            AND ea.IDATLETA = a.IDATLETA
+            AND em.IDITEM = i.IDITEM
+            AND i.IDATLETA = a.IDATLETA
+            AND EXISTS (SELECT 1 FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA)
+            
+            ORDER BY ORDER_NOME
+        """)
+        
+        finalizadores = cur.fetchall()
+        cur.close()
+        
+        resultado = []
+        for finalizador in finalizadores:
+            resultado.append({
+                'nome': finalizador[0],
+		'sexo': finalizador[1],
+                'equipe': finalizador[2],
+                'km_percorrido': finalizador[3],
+                'tempo_total': str(finalizador[4]) if finalizador[4] else None
+            })
+        # o ultimo campo ORDER_NOME não vou precisar, inclui na SQL apenas para ordenar por NOME
+
+        return jsonify({
+            'success': True,
+            'finalizadores': resultado,
+            'total': len(resultado)
+        })
+        
+    except Exception as e:
+        print(f"Erro ao listar finalizadores: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno do servidor'})
+
 
 @app.route('/relatorio200k_detalhes_atleta/<int:idatleta>')
 def relatorio200k_detalhes_atleta(idatleta):
@@ -6187,7 +6191,7 @@ def certificado200k_ranking_solo():
         cur = mysql.connection.cursor()
         
         cur.execute("""
-            SELECT CONCAT(i.NUPEITO,' - ',a.NOME, ' ', a.SOBRENOME) AS NOME,
+            SELECT CONCAT(i.NUPEITO,' - ',a.NOME, ' ', a.SOBRENOME) AS NOME, a.SEXO,
                    SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
                      (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
                      (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) AS TEMPO_TOTAL,
@@ -6210,9 +6214,10 @@ def certificado200k_ranking_solo():
             resultado.append({
                 'posicao': posicao,
                 'nome': atleta[0],
-                'tempo_total': str(atleta[1]) if atleta[1] else None,
-                'data_largada': atleta[2].strftime('%Y-%m-%d %H:%M:%S') if atleta[2] else None,
-                'data_chegada': atleta[3].strftime('%Y-%m-%d %H:%M:%S') if atleta[3] else None
+		'sexo': atleta[1],
+                'tempo_total': str(atleta[2]) if atleta[2] else None,
+                'data_largada': atleta[3].strftime('%Y-%m-%d %H:%M:%S') if atleta[3] else None,
+                'data_chegada': atleta[4].strftime('%Y-%m-%d %H:%M:%S') if atleta[4] else None
             })
         
         return jsonify({
@@ -6232,7 +6237,7 @@ def certificado200k_ranking_equipe():
         cur = mysql.connection.cursor()
         
         cur.execute("""
-            SELECT CONCAT(i.NUPEITO,' - ',a.NOME, ' ', a.SOBRENOME) AS NOME,
+            SELECT CONCAT(i.NUPEITO,' - ',a.NOME, ' ', a.SOBRENOME) AS NOME, a.SEXO,
                    CASE 
                      WHEN (ea.KM_FIM - ea.KM_INI) = 100 THEN 'DUPLA'
                      WHEN (ea.KM_FIM - ea.KM_INI) = 50 THEN 'QUARTETO'
@@ -6263,16 +6268,17 @@ def certificado200k_ranking_equipe():
         contadores = {'DUPLA': 1, 'QUARTETO': 1, 'OCTETO': 1}
         
         for atleta in ranking:
-            modalidade = atleta[1]
+            modalidade = atleta[2]
             if modalidade in resultado:
                 resultado[modalidade].append({
                     'posicao': contadores[modalidade],
                     'nome': atleta[0],
-                    'km_percorrido': atleta[2],
-                    'tempo_total': str(atleta[3]) if atleta[3] else None,
-                    'data_largada': atleta[4].strftime('%Y-%m-%d %H:%M:%S') if atleta[4] else None,
-                    'data_chegada': atleta[5].strftime('%Y-%m-%d %H:%M:%S') if atleta[5] else None,
-                    'idea': atleta[6]
+		    'sexo': atleta[1],
+                    'km_percorrido': atleta[3],
+                    'tempo_total': str(atleta[4]) if atleta[4] else None,
+                    'data_largada': atleta[5].strftime('%Y-%m-%d %H:%M:%S') if atleta[5] else None,
+                    'data_chegada': atleta[6].strftime('%Y-%m-%d %H:%M:%S') if atleta[6] else None,
+                    'idea': atleta[7]
                 })
                 contadores[modalidade] += 1
         
@@ -6320,7 +6326,7 @@ def relatorio200k_equipes():
             
             # Buscar membros da equipe
             cur.execute("""
-                SELECT CONCAT(i.NUPEITO,' - ',a.NOME, ' ', a.SOBRENOME) AS NOME,
+                SELECT CONCAT(i.NUPEITO,' - ',a.NOME, ' ', a.SOBRENOME) AS NOME, a.SEXO,
                        CONCAT(ea.KM_INI,' - ',ea.KM_FIM) AS PARCIAL,
                        (ea.KM_FIM - ea.KM_INI) AS KM_PERCORRIDO,
                        SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
@@ -6337,7 +6343,7 @@ def relatorio200k_equipes():
             membros = cur.fetchall()
             
             # Verificar se a equipe completou (todos os membros terminaram)
-            equipe_completou = all(membro[4] for membro in membros)
+            equipe_completou = all(membro[5] for membro in membros)
             
             # Calcular tempo total da equipe (do primeiro ao último)
             tempo_total_equipe = None
@@ -6359,10 +6365,11 @@ def relatorio200k_equipes():
                 'tempo_total': tempo_total_equipe,
                 'membros': [{
                     'nome': membro[0],
-                    'parcial': membro[1],
-                    'km_percorrido': membro[2],
-                    'tempo_individual': str(membro[3]) if membro[3] else None,
-                    'completou': membro[4]
+		    'sexo': membro[1],
+                    'parcial': membro[2],
+                    'km_percorrido': membro[3],
+                    'tempo_individual': str(membro[4]) if membro[4] else None,
+                    'completou': membro[5]
                 } for membro in membros]
             })
         
