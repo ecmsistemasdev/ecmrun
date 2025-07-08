@@ -165,6 +165,7 @@
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
+            font-size: 14px;
         }
 
         th {
@@ -182,31 +183,8 @@
             text-align: center;
             width: 60px;
         }
-        /*
-        .posicao-1 {
-            background: #ffd700;
-            color: #333;
-        }
 
-        .posicao-2 {
-            background: #c0c0c0;
-            color: #333;
-        }
 
-        .posicao-3 {
-            background: #cd7f32;
-            color: white;
-        }
-        */
-        .sexo-m {
-            color: #3498db;
-            font-weight: bold;
-        }
-
-        .sexo-f {
-            color: #e74c3c;
-            font-weight: bold;
-        }
 
         .tempo-destaque {
             font-weight: bold;
@@ -455,28 +433,24 @@
         function displayRanking() {
             const modalidades = ['DUPLA', 'QUARTETO', 'OCTETO'];
             const tabelasId = ['tabelaDupla', 'tabelaQuarteto', 'tabelaOcteto'];
+            const secoesId = ['secaoDupla', 'secaoQuarteto', 'secaoOcteto'];
             
             modalidades.forEach((modalidade, index) => {
                 const tbody = document.getElementById(tabelasId[index]);
+                const secao = document.getElementById(secoesId[index]);
                 tbody.innerHTML = '';
                 
                 if (rankingFiltered[modalidade] && rankingFiltered[modalidade].length > 0) {
+                    // Mostrar seção se há dados
+                    secao.style.display = 'block';
+                    
                     rankingFiltered[modalidade].forEach(atleta => {
                         const row = document.createElement('tr');
                         
-                        // Classe para posição
-                        let posicaoClass = 'posicao';
-                        //if (atleta.posicao === 1) posicaoClass += ' posicao-1';
-                        //else if (atleta.posicao === 2) posicaoClass += ' posicao-2';
-                        //else if (atleta.posicao === 3) posicaoClass += ' posicao-3';
-                        
-                        // Classe para sexo
-                        const sexoClass = atleta.sexo === 'M' ? 'sexo-m' : 'sexo-f';
-                        
                         row.innerHTML = `
-                            <td class="${posicaoClass}">${atleta.posicao}°</td>
+                            <td class="posicao">${atleta.posicao}°</td>
                             <td>${atleta.nome}</td>
-                            <td class="${sexoClass}">${atleta.sexo}</td>
+                            <td>${atleta.sexo}</td>
                             <td>${atleta.km_percorrido}km</td>
                             <td class="tempo-destaque">${formatTempo(atleta.tempo_total)}</td>
                             <td>${formatData(atleta.data_largada)}</td>
@@ -486,9 +460,8 @@
                         tbody.appendChild(row);
                     });
                 } else {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td colspan="7" class="empty-section">Nenhum atleta encontrado nesta modalidade</td>`;
-                    tbody.appendChild(row);
+                    // Ocultar seção se não há dados
+                    secao.style.display = 'none';
                 }
             });
         }
@@ -546,8 +519,14 @@
             
             Object.keys(secoes).forEach(modalidade => {
                 const secao = document.getElementById(secoes[modalidade]);
-                if (modalidadeSelecionada === 'todas' || modalidadeSelecionada === modalidade) {
-                    secao.style.display = 'block';
+                const temDados = rankingFiltered[modalidade] && rankingFiltered[modalidade].length > 0;
+                
+                if (modalidadeSelecionada === 'todas') {
+                    // Mostrar apenas se tem dados
+                    secao.style.display = temDados ? 'block' : 'none';
+                } else if (modalidadeSelecionada === modalidade) {
+                    // Mostrar apenas se é a modalidade selecionada e tem dados
+                    secao.style.display = temDados ? 'block' : 'none';
                 } else {
                     secao.style.display = 'none';
                 }
