@@ -379,13 +379,13 @@
                 //    new Date(atleta.data_chegada).toLocaleString('pt-BR') : 'N/A';
                 
                 // Formatar tempo
-                const tempoFormatado = formatarTempo(atleta.tempo_total);
+                //const tempoFormatado = formatarTempo(atleta.tempo_total);
                 
                 row.innerHTML = `
                     <td class="posicao">${atleta.posicao}</td>
                     <td>${atleta.nome}</td>
                     <td>${sexoText}</td>
-                    <td ${tempoFormatado}</td>
+                    <td ${atleta.tempo_total}</td>
                     <td>${formatData(atleta.data_largada)}</td>
                     <td>${formatData(atleta.data_chegada)}</td>                        
 
