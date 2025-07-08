@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios 200K - Sistema de Corrida</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-logos {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-left {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 12px;
+        }
+
+        .logo-right {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 12px;
+        }
+
+        .main-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .report-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .report-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .report-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+
+        .intro-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .intro-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .intro-text {
+            color: #666;
+            line-height: 1.6;
+            font-size: 1.1em;
+        }
+
+        .stats-bar {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2em;
+            }
+            
+            .reports-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-logos {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-logos">
+                <div class="logo-left">
+                    <img src="static/img/ecmrunlogo1.png" alt="ECM Run Logo" style="width: 50px; height: 50px; object-fit: contain;">
+                </div>
+                <div>
+                    <h1 class="main-title">Relatórios 200K</h1>
+                    <p class="subtitle">Sistema de Gestão de Corrida</p>
+                </div>
+                <div class="logo-right">
+                    <img src="static/img/logo_200k.png" alt="Logo 200K" style="width: 60px; height: 60px; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="intro-section">
+                <h2 class="intro-title">Sistema de Relatórios da Corrida 200K</h2>
+                <p class="intro-text">
+                    Acesse todos os relatórios detalhados da corrida 200K. Visualize estatísticas, rankings, 
+                    dados dos atletas e muito mais. Todos os relatórios podem ser visualizados na tela 
+                    e salvos em PDF formato A4.
+                </p>
+            </div>
+
+            <div class="reports-grid">
+                <!-- Relatório de Finalizadores -->
+                <div class="report-card">
+                    <div class="report-icon">🏆</div>
+                    <h3 class="report-title">Finalizadores</h3>
+                    <p class="report-description">
+                        Lista completa de todos os atletas que completaram a prova, 
+                        incluindo dados de tempo, equipe e distância percorrida.
+                    </p>
+                    <div class="report-actions">
+                        <a href="relatorio_finalizadores.html" class="btn" target="_blank">
+                            📋 Visualizar Relatório
+                        </a>
+                        <button class="btn btn-secondary" onclick="exportToPDF('finalizadores')">
+                            📄 Salvar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ranking Solo -->
+                <div class="report-card">
+                    <div class="report-icon">🥇</div>
+                    <h3 class="report-title">Ranking Solo</h3>
+                    <p class="report-description">
+                        Classificação dos atletas na modalidade individual, 
+                        ordenados por tempo de conclusão da prova.
+                    </p>
+                    <div class="report-actions">
+                        <a href="relatorio_ranking_solo.html" class="btn" target="_blank">
+                            📋 Visualizar Relatório
+                        </a>
+                        <button class="btn btn-secondary" onclick="exportToPDF('ranking_solo')">
+                            📄 Salvar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ranking Equipe -->
+                <div class="report-card">
+                    <div class="report-icon">👥</div>
+                    <h3 class="report-title">Ranking Equipe</h3>
+                    <p class="report-description">
+                        Classificação dos atletas nas modalidades de equipe (Dupla, Quarteto, Octeto), 
+                        separados por categoria.
+                    </p>
+                    <div class="report-actions">
+                        <a href="relatorio_ranking_equipe.html" class="btn" target="_blank">
+                            📋 Visualizar Relatório
+                        </a>
+                        <button class="btn btn-secondary" onclick="exportToPDF('ranking_equipe')">
+                            📄 Salvar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Relatório de Equipes -->
+                <div class="report-card">
+                    <div class="report-icon">🏃‍♂️</div>
+                    <h3 class="report-title">Equipes Detalhadas</h3>
+                    <p class="report-description">
+                        Informações completas sobre todas as equipes participantes, 
+                        membros, tempos individuais e status de conclusão.
+                    </p>
+                    <div class="report-actions">
+                        <a href="relatorio_equipes.html" class="btn" target="_blank">
+                            📋 Visualizar Relatório
+                        </a>
+                        <button class="btn btn-secondary" onclick="exportToPDF('equipes')">
+                            📄 Salvar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Relatório Geral -->
+                <div class="report-card">
+                    <div class="report-icon">📊</div>
+                    <h3 class="report-title">Relatório Geral</h3>
+                    <p class="report-description">
+                        Estatísticas gerais da corrida, incluindo resumos por modalidade, 
+                        tempos médios e taxa de conclusão.
+                    </p>
+                    <div class="report-actions">
+                        <a href="relatorio_geral.html" class="btn" target="_blank">
+                            📋 Visualizar Relatório
+                        </a>
+                        <button class="btn btn-secondary" onclick="exportToPDF('geral')">
+                            📄 Salvar PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalAtletas">-</div>
+                    <div class="stat-label">Total de Atletas</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalFinalizadores">-</div>
+                    <div class="stat-label">Finalizadores</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalEquipes">-</div>
+                    <div class="stat-label">Equipes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="taxaConclusao">-</div>
+                    <div class="stat-label">Taxa de Conclusão</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para exportar para PDF
+        function exportToPDF(reportType) {
+            const reportUrls = {
+                'finalizadores': 'relatorio_finalizadores.html',
+                'ranking_solo': 'relatorio_ranking_solo.html',
+                'ranking_equipe': 'relatorio_ranking_equipe.html',
+                'equipes': 'relatorio_equipes.html',
+                'geral': 'relatorio_geral.html'
+            };
+            
+            const url = reportUrls[reportType];
+            if (url) {
+                // Abre o relatório em uma nova janela otimizada para impressão
+                const printWindow = window.open(url + '?print=true', '_blank', 'width=800,height=600');
+                if (printWindow) {
+                    printWindow.onload = function() {
+                        setTimeout(() => {
+                            printWindow.print();
+                        }, 500);
+                    };
+                }
+            }
+        }
+
+        // Carregar estatísticas gerais
+        async function loadStats() {
+            try {
+                const response = await fetch('/certificado200k_relatorio_geral');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.relatorio.resumo_geral;
+                    document.getElementById('totalAtletas').textContent = stats.total_atletas;
+                    document.getElementById('totalFinalizadores').textContent = stats.total_completaram;
+                    document.getElementById('taxaConclusao').textContent = stats.taxa_conclusao_geral + '%';
+                    
+                    // Carregar total de equipes
+                    const equipesResponse = await fetch('/relatorio200k_equipes');
+                    const equipesData = await equipesResponse.json();
+                    if (equipesData.success) {
+                        document.getElementById('totalEquipes').textContent = equipesData.total;
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
+        // Carregar estatísticas quando a página carregar
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>
