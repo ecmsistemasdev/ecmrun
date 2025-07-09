@@ -6422,13 +6422,13 @@ def certificado200k_relatorio_geral():
         cur = mysql.connection.cursor()
         
         # Estatísticas gerais
-        cur.execute("SELECT COUNT(*) FROM ATLETA")
+        cur.execute("SELECT COUNT(*) FROM INSCRICAO")
         total_atletas = cur.fetchone()[0]
         
         cur.execute("""
             SELECT COUNT(DISTINCT IDATLETA) 
             FROM PROVA_PARCIAIS_200K 
-            WHERE KM = 200
+            WHERE IDEA = 0 AND KM = 200
         """)
         completaram_solo = cur.fetchone()[0]
         
