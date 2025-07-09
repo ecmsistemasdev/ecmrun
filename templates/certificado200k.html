@@ -209,6 +209,14 @@
             color: white;
             font-size: 24px;
             font-weight: bold;
+            object-fit: contain;
+        }
+
+        .certificate-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
         }
 
         .certificate-titles {
@@ -284,8 +292,8 @@
             position: absolute;
             bottom: 20px;
             right: 20px;
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: #333;
             border-radius: 50%;
             display: flex;
@@ -294,6 +302,14 @@
             color: white;
             font-size: 14px;
             font-weight: bold;
+            overflow: hidden;
+        }
+
+        .certificate-footer-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
         }
 
         .certificate-viewer-footer {
@@ -387,6 +403,11 @@
             .certificate-viewer-header {
                 padding: 10px 15px;
                 height: 50px;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 1001 !important;
             }
             
             .certificate-viewer-header h2 {
@@ -394,23 +415,28 @@
             }
             
             .certificate-viewer-content {
-                top: 50px;
-                bottom: 70px;
+                top: 50px !important;
+                bottom: 70px !important;
                 padding: 10px;
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                overflow: auto !important;
             }
             
             .certificate-viewer-footer {
                 height: 70px;
                 padding: 10px 15px;
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 1001 !important;
             }
             
             .certificate-viewer-footer .btn {
                 padding: 10px 20px;
                 font-size: 14px;
-            }
-            
-            .zoom-controls {
-                display: none;
             }
         }
 
@@ -507,8 +533,8 @@
             }
             
             .certificate-footer-logo {
-                width: 50px !important;
-                height: 50px !important;
+                width: 40px !important;
+                height: 40px !important;
             }
         }
     </style>
@@ -555,51 +581,13 @@
             </div>
         </div>
         
-        <!-- <div class="certificate-viewer-content" id="certificate-viewer-content">
-            <div class="certificate-frame" id="certificate-frame">
-                <div class="certificate-container">
-                    <div class="certificate-header">
-                        <div class="certificate-logo">200K</div>
-                        <div class="certificate-titles">
-                            <h1 class="certificate-title">CERTIFICADO</h1>
-                            <h2 class="certificate-subtitle">4º Desafio 200K Porto Velho - Humaitá</h2>
-                        </div>
-                    </div>
-
-                    <div class="certificate-content">
-                        <div class="athlete-name" id="athlete-name">NOME DO ATLETA</div>
-                        
-                        <p>participou do 4º Desafio 200k Porto Velho - Humaitá, na modalidade <strong id="modalidade">INDIVIDUAL</strong>, percorrendo a distância de <strong id="distancia">200km</strong>, no tempo líquido de <strong id="tempo">00:00:00</strong></p>
-                        
-                        <div class="certificate-details">
-                            <p><strong>Distância Percorrida:</strong> <span id="km-percorrido">200</span> km</p>
-                            <p><strong>Tempo Total:</strong> <span id="tempo-total">00:00:00</span></p>
-                            <p><strong>Data da Prova:</strong> <span id="data-prova">Porto Velho, 2024</span></p>
-                        </div>
-                    </div>
-
-                    <div class="signatures">
-                        <div class="signature">
-                            <div class="signature-name">Kelio Esteves Xavier</div>
-                            <div class="signature-title">Diretor da Prova</div>
-                        </div>
-                        
-                        <div class="signature">
-                            <div class="signature-name">Manoel Alves Barbosa</div>
-                            <div class="signature-title">Coordenador de Prova</div>
-                        </div>
-                    </div>
-
-                    <div class="certificate-footer-logo">MC</div>
-                </div>
-            </div>
-        </div> -->
-        
         <div class="certificate-viewer-content" id="certificate-viewer-content">
             <div class="certificate-frame" id="certificate-frame">
                 <div class="certificate-container">
                     <div class="certificate-header">
-                        <img src="/static/img/logo_200k.png" alt="Logo 200K" class="certificate-logo">
+                        <div class="certificate-logo">
+                            <img src="/static/img/logo_200k.png" alt="Logo 200K" onerror="this.style.display='none'; this.parentElement.innerHTML='200K';">
+                        </div>
                         <div class="certificate-titles">
                             <h1 class="certificate-title">CERTIFICADO</h1>
                             <h2 class="certificate-subtitle">4º Desafio 200K Porto Velho - Humaitá</h2>
@@ -631,7 +619,7 @@
                     </div>
 
                     <div class="certificate-footer-logo">
-                        <img src="/static/img/macaxeiraecia_logo.png" alt="MC Logo" class="mc-logo">
+                        <img src="/static/img/macaxeiraecia_logo.png" alt="MC Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='MC';">
                     </div>
                 </div>
             </div>
@@ -754,20 +742,20 @@
             hideMessages();
             
             // Simular dados para teste (remover em produção)
-            // setTimeout(() => {
-            //     document.getElementById('loading').style.display = 'none';
-            //     const dadosTeste = {
-            //         nome: 'João Silva Santos',
-            //         modalidade: 'INDIVIDUAL',
-            //         km_percorrido: '200',
-            //         tempo_total: '08:45:32',
-            //         data_prova: '2024'
-            //     };
-            //     showCertificate(dadosTeste);
-            // }, 1000);
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                const dadosTeste = {
+                    nome: 'João Silva Santos',
+                    modalidade: 'INDIVIDUAL',
+                    km_percorrido: '200',
+                    tempo_total: '08:45:32',
+                    data_prova: '2024'
+                };
+                showCertificate(dadosTeste);
+            }, 1000);
             
             // Código real (descomentar em produção)
-            
+            /*
             fetch('/certificado200k_buscar_atleta', {
                 method: 'POST',
                 headers: {
@@ -793,7 +781,7 @@
                 console.error('Erro:', error);
                 showError('Erro ao buscar dados do atleta');
             });
-        
+            */
         });
 
         function hideMessages() {
