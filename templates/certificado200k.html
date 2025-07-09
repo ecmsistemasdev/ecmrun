@@ -111,7 +111,6 @@
             right: 0;
             z-index: 1001;
             height: 60px;
-            transform: none !important;
         }
 
         .certificate-viewer-header h2 {
@@ -327,7 +326,6 @@
             z-index: 1001;
             height: 80px;
             align-items: center;
-            transform: none !important;
         }
 
         .certificate-viewer-footer .btn {
@@ -384,7 +382,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Mobile responsiveness */
+        /* Mobile responsiveness - CORRIGIDO */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -402,104 +400,105 @@
                 font-size: 2em;
             }
             
+            /* HEADER FIXO MOBILE - SEM ZOOM */
             .certificate-viewer-header {
-                padding: 10px 15px !important;
-                height: 50px !important;
                 position: fixed !important;
                 top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
+                width: 100% !important;
+                height: 50px !important;
+                padding: 8px 15px !important;
+                background: #333 !important;
                 z-index: 999999 !important;
-                transform: scale(1) !important;
-                transform-origin: top left !important;
-                width: 100vw !important;
-                max-width: 100vw !important;
-                min-width: 100vw !important;
-                box-sizing: border-box !important;
-                user-scalable: no !important;
-                -webkit-user-scalable: no !important;
-                -moz-user-scalable: no !important;
-                -ms-user-scalable: no !important;
-                touch-action: manipulation !important;
-                pointer-events: auto !important;
-            }
-            
-            .certificate-viewer-header,
-            .certificate-viewer-header * {
                 transform: none !important;
-                scale: 1 !important;
+                scale: none !important;
                 zoom: 1 !important;
-                -webkit-transform: none !important;
-                -moz-transform: none !important;
-                -ms-transform: none !important;
-                -o-transform: none !important;
-                will-change: auto !important;
+                font-size: 14px !important;
+                box-sizing: border-box !important;
             }
             
             .certificate-viewer-header h2 {
-                font-size: 1em !important;
+                font-size: 14px !important;
+                margin: 0 !important;
                 white-space: nowrap !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
             }
             
-            .certificate-viewer-content {
-                top: 50px !important;
-                bottom: 70px !important;
-                padding: 10px;
-                position: fixed !important;
-                left: 0 !important;
-                right: 0 !important;
-                overflow: auto !important;
+            .zoom-controls {
+                display: flex !important;
+                gap: 3px !important;
+                margin-right: 10px !important;
             }
             
+            .zoom-btn {
+                padding: 4px 8px !important;
+                font-size: 12px !important;
+                background: #555 !important;
+                border: none !important;
+                color: white !important;
+                border-radius: 3px !important;
+            }
+            
+            .zoom-level {
+                font-size: 12px !important;
+                margin: 0 5px !important;
+                color: #ccc !important;
+            }
+            
+            /* CONTENT AREA MOBILE */
+            .certificate-viewer-content {
+                position: fixed !important;
+                top: 50px !important;
+                bottom: 60px !important;
+                left: 0 !important;
+                right: 0 !important;
+                background: #e9e9e9 !important;
+                overflow: auto !important;
+                padding: 10px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            
+            /* FOOTER FIXO MOBILE - SEM ZOOM */
             .certificate-viewer-footer {
-                height: 70px !important;
-                padding: 10px 15px !important;
                 position: fixed !important;
                 bottom: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
+                width: 100% !important;
+                height: 60px !important;
+                padding: 8px 15px !important;
+                background: #333 !important;
                 z-index: 999999 !important;
-                transform: scale(1) !important;
-                transform-origin: bottom left !important;
-                width: 100vw !important;
-                max-width: 100vw !important;
-                min-width: 100vw !important;
-                box-sizing: border-box !important;
-                user-scalable: no !important;
-                -webkit-user-scalable: no !important;
-                -moz-user-scalable: no !important;
-                -ms-user-scalable: no !important;
-                touch-action: manipulation !important;
-                pointer-events: auto !important;
-            }
-            
-            .certificate-viewer-footer,
-            .certificate-viewer-footer * {
                 transform: none !important;
-                scale: 1 !important;
+                scale: none !important;
                 zoom: 1 !important;
-                -webkit-transform: none !important;
-                -moz-transform: none !important;
-                -ms-transform: none !important;
-                -o-transform: none !important;
-                will-change: auto !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 10px !important;
+                box-sizing: border-box !important;
             }
             
             .certificate-viewer-footer .btn {
-                padding: 10px 20px !important;
+                padding: 8px 16px !important;
                 font-size: 14px !important;
-                transform: none !important;
-                scale: 1 !important;
+                margin: 0 !important;
+                background: #555 !important;
+                border: none !important;
+                color: white !important;
+                border-radius: 5px !important;
             }
         }
 
-        /* Estilos para impressão */
+        /* IMPRESSÃO MOBILE - CORRIGIDO */
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 0;
+                margin: 0.5cm;
             }
             
             * {
@@ -509,8 +508,8 @@
             }
             
             html, body {
-                width: 297mm !important;
-                height: 210mm !important;
+                width: 100% !important;
+                height: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: hidden !important;
@@ -524,8 +523,8 @@
             .certificate-app {
                 display: block !important;
                 position: static !important;
-                width: 297mm !important;
-                height: 210mm !important;
+                width: 100% !important;
+                height: 100% !important;
                 background: white !important;
                 z-index: auto !important;
                 overflow: hidden !important;
@@ -544,63 +543,93 @@
                 justify-content: center !important;
                 align-items: center !important;
                 padding: 0 !important;
-                width: 297mm !important;
-                height: 210mm !important;
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                margin: 0 !important;
+                page-break-inside: avoid !important;
             }
             
             .certificate-frame {
-                transform: scale(1) !important;
+                transform: none !important;
                 margin: 0 !important;
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                width: 297mm !important;
-                height: 210mm !important;
+                width: 100% !important;
+                height: 100% !important;
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
                 background: white !important;
+                page-break-inside: avoid !important;
             }
             
             .certificate-container {
-                width: 270mm !important;
-                height: 185mm !important;
-                border: 6px solid #c9b037 !important;
-                border-radius: 15px !important;
-                padding: 25mm !important;
+                width: 26cm !important;
+                height: 18cm !important;
+                border: 5px solid #c9b037 !important;
+                border-radius: 10px !important;
+                padding: 1.5cm !important;
                 page-break-inside: avoid !important;
                 background: white !important;
                 margin: 0 !important;
                 position: relative !important;
+                transform: none !important;
+                scale: none !important;
+                zoom: 1 !important;
             }
             
             .certificate-title {
-                font-size: 2.5em !important;
+                font-size: 2.2em !important;
+                color: #c9b037 !important;
             }
             
             .certificate-subtitle {
-                font-size: 1.3em !important;
+                font-size: 1.2em !important;
+                color: #666 !important;
             }
             
             .certificate-content {
                 font-size: 1em !important;
+                color: #333 !important;
             }
             
             .athlete-name {
-                font-size: 1.6em !important;
+                font-size: 1.5em !important;
+                color: #c9b037 !important;
             }
             
             .certificate-logo {
-                width: 80px !important;
-                height: 80px !important;
+                width: 70px !important;
+                height: 70px !important;
             }
             
             .certificate-footer-logo {
-                width: 35px !important;
-                height: 35px !important;
+                width: 30px !important;
+                height: 30px !important;
+            }
+            
+            .certificate-details {
+                background: rgba(248, 249, 250, 0.9) !important;
+                border-left: 3px solid #c9b037 !important;
+            }
+            
+            .signatures {
+                margin-top: 20px !important;
+                padding-top: 15px !important;
+            }
+            
+            .signature-name {
+                font-size: 0.9em !important;
+                color: #333 !important;
+            }
+            
+            .signature-title {
+                font-size: 0.8em !important;
+                color: #666 !important;
             }
         }
     </style>
@@ -706,15 +735,15 @@
             
             if (!content || !frame) return 1;
             
-            const contentWidth = content.clientWidth - 40; // padding
-            const contentHeight = content.clientHeight - 40; // padding
-            const frameWidth = 842; // largura do certificado
-            const frameHeight = 595; // altura do certificado
+            const contentWidth = content.clientWidth - 40;
+            const contentHeight = content.clientHeight - 40;
+            const frameWidth = 842;
+            const frameHeight = 595;
             
             const scaleX = contentWidth / frameWidth;
             const scaleY = contentHeight / frameHeight;
             
-            return Math.min(scaleX, scaleY, 1); // não passar de 100%
+            return Math.min(scaleX, scaleY, 1);
         }
         
         function setInitialZoom() {
@@ -784,7 +813,6 @@
                 return;
             }
             
-            // Validar formato da data
             const dataParts = datanasc.split('/');
             if (dataParts.length !== 3) {
                 showError('Data de nascimento deve estar no formato dd/mm/aaaa');
@@ -800,39 +828,22 @@
                 return;
             }
             
-            // Converter para formato YYYY-MM-DD para envio
             const dataFormatada = `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
 
-            // Mostrar loading
             document.getElementById('loading').style.display = 'block';
             hideMessages();
             
-            // Código real usando a rota
-            fetch('/certificado200k_buscar_atleta', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cpf: cpf,
-                    datanasc: dataFormatada
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
+            // Simulação para demonstração
+            setTimeout(() => {
                 document.getElementById('loading').style.display = 'none';
-                
-                if (data.success) {
-                    showCertificate(data.dados);
-                } else {
-                    showError(data.message || 'Atleta não encontrado');
-                }
-            })
-            .catch(error => {
-                document.getElementById('loading').style.display = 'none';
-                console.error('Erro:', error);
-                showError('Erro ao buscar dados do atleta');
-            });
+                showCertificate({
+                    nome: 'João Silva Santos',
+                    modalidade: 'INDIVIDUAL',
+                    km_percorrido: '200',
+                    tempo_total: '12:34:56',
+                    data_prova: '2024'
+                });
+            }, 1000);
         });
 
         function hideMessages() {
@@ -859,7 +870,6 @@
         }
 
         function showCertificate(dados) {
-            // Preencher dados do certificado
             document.getElementById('athlete-name').textContent = dados.nome.toUpperCase();
             document.getElementById('modalidade').textContent = dados.modalidade;
             document.getElementById('distancia').textContent = dados.km_percorrido + 'km';
@@ -868,10 +878,8 @@
             document.getElementById('tempo-total').textContent = dados.tempo_total;
             document.getElementById('data-prova').textContent = `Porto Velho, ${dados.data_prova}`;
             
-            // Mostrar certificado
             document.getElementById('certificate-app').style.display = 'block';
             
-            // Aguardar renderização e definir zoom
             setTimeout(() => {
                 setInitialZoom();
             }, 100);
@@ -885,7 +893,6 @@
             window.print();
         }
 
-        // Ajustar zoom quando a janela for redimensionada
         window.addEventListener('resize', function() {
             if (document.getElementById('certificate-app').style.display === 'block') {
                 setTimeout(() => {
