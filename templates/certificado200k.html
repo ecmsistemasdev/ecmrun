@@ -111,6 +111,7 @@
             right: 0;
             z-index: 1001;
             height: 60px;
+            transform: none !important;
         }
 
         .certificate-viewer-header h2 {
@@ -326,6 +327,7 @@
             z-index: 1001;
             height: 80px;
             align-items: center;
+            transform: none !important;
         }
 
         .certificate-viewer-footer .btn {
@@ -408,6 +410,8 @@
                 left: 0 !important;
                 right: 0 !important;
                 z-index: 1001 !important;
+                transform: none !important;
+                scale: 1 !important;
             }
             
             .certificate-viewer-header h2 {
@@ -432,6 +436,8 @@
                 left: 0 !important;
                 right: 0 !important;
                 z-index: 1001 !important;
+                transform: none !important;
+                scale: 1 !important;
             }
             
             .certificate-viewer-footer .btn {
@@ -453,10 +459,13 @@
                 print-color-adjust: exact !important;
             }
             
-            body {
-                background: white !important;
-                padding: 0 !important;
+            html, body {
+                width: 297mm !important;
+                height: 210mm !important;
                 margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                background: white !important;
             }
             
             .container {
@@ -466,10 +475,11 @@
             .certificate-app {
                 display: block !important;
                 position: static !important;
-                width: 100% !important;
-                height: auto !important;
+                width: 297mm !important;
+                height: 210mm !important;
                 background: white !important;
                 z-index: auto !important;
+                overflow: hidden !important;
             }
             
             .certificate-viewer-header,
@@ -480,13 +490,17 @@
             .certificate-viewer-content {
                 position: static !important;
                 background: white !important;
-                overflow: visible !important;
+                overflow: hidden !important;
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
                 padding: 0 !important;
-                width: 100% !important;
-                height: 100vh !important;
+                width: 297mm !important;
+                height: 210mm !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
             }
             
             .certificate-frame {
@@ -494,47 +508,50 @@
                 margin: 0 !important;
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
+                width: 297mm !important;
+                height: 210mm !important;
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
-            }
-            
-            .certificate-container {
-                width: 297mm !important;
-                height: 210mm !important;
-                border: 6px solid #c9b037 !important;
-                border-radius: 15px !important;
-                padding: 40px !important;
-                page-break-inside: avoid !important;
                 background: white !important;
             }
             
+            .certificate-container {
+                width: 270mm !important;
+                height: 185mm !important;
+                border: 6px solid #c9b037 !important;
+                border-radius: 15px !important;
+                padding: 25mm !important;
+                page-break-inside: avoid !important;
+                background: white !important;
+                margin: 0 !important;
+                position: relative !important;
+            }
+            
             .certificate-title {
-                font-size: 2.8em !important;
+                font-size: 2.5em !important;
             }
             
             .certificate-subtitle {
-                font-size: 1.4em !important;
+                font-size: 1.3em !important;
             }
             
             .certificate-content {
-                font-size: 1.1em !important;
+                font-size: 1em !important;
             }
             
             .athlete-name {
-                font-size: 1.7em !important;
+                font-size: 1.6em !important;
             }
             
             .certificate-logo {
-                width: 100px !important;
-                height: 100px !important;
+                width: 80px !important;
+                height: 80px !important;
             }
             
             .certificate-footer-logo {
-                width: 40px !important;
-                height: 40px !important;
+                width: 35px !important;
+                height: 35px !important;
             }
         }
     </style>
@@ -741,21 +758,7 @@
             document.getElementById('loading').style.display = 'block';
             hideMessages();
             
-            // Simular dados para teste (remover em produção)
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-                const dadosTeste = {
-                    nome: 'João Silva Santos',
-                    modalidade: 'INDIVIDUAL',
-                    km_percorrido: '200',
-                    tempo_total: '08:45:32',
-                    data_prova: '2024'
-                };
-                showCertificate(dadosTeste);
-            }, 1000);
-            
-            // Código real (descomentar em produção)
-            /*
+            // Código real usando a rota
             fetch('/certificado200k_buscar_atleta', {
                 method: 'POST',
                 headers: {
@@ -781,7 +784,6 @@
                 console.error('Erro:', error);
                 showError('Erro ao buscar dados do atleta');
             });
-            */
         });
 
         function hideMessages() {
