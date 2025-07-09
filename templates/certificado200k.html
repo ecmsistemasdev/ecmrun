@@ -86,23 +86,79 @@
             transform: translateY(-2px);
         }
 
-        /* Container para o certificado com proporção fixa */
-        .certificate-frame {
+        /* Viewer App Style */
+        .certificate-app {
             display: none;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px;
+            height: 100vh;
+            flex-direction: column;
+            background: #f5f5f5;
         }
 
-        .certificate-viewer {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
+        .certificate-viewer-header {
+            background: #333;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .certificate-viewer-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .viewer-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        .zoom-btn {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .zoom-btn:hover {
+            background: #666;
+        }
+
+        .zoom-level {
+            color: #ccc;
+            font-size: 14px;
+            margin: 0 10px;
+        }
+
+        .certificate-viewer-content {
+            flex: 1;
+            overflow: auto;
+            background: #e9e9e9;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .certificate-frame {
             background: white;
             border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transform-origin: center top;
+            transition: transform 0.3s ease;
+            margin: 20px;
         }
 
         .certificate-container {
@@ -111,9 +167,8 @@
             border-radius: 15px;
             padding: 40px;
             position: relative;
-            min-height: 580px;
-            width: 100%;
-            aspect-ratio: 297/210; /* Proporção A4 paisagem */
+            width: 842px; /* A4 width in px at 72 DPI */
+            height: 595px; /* A4 height in px at 72 DPI in landscape */
             background-image: 
                 radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(255, 200, 55, 0.1) 0%, transparent 50%),
@@ -132,7 +187,7 @@
         }
 
         .certificate-logo {
-            width: 150px;
+            width: 120px;
             height: auto;
             flex-shrink: 0;
         }
@@ -142,7 +197,7 @@
         }
 
         .certificate-title {
-            font-size: 3.5em;
+            font-size: 3em;
             font-weight: bold;
             color: #c9b037;
             margin-bottom: 10px;
@@ -151,7 +206,7 @@
         }
 
         .certificate-subtitle {
-            font-size: 1.8em;
+            font-size: 1.5em;
             color: #666;
             margin-bottom: 0;
         }
@@ -159,13 +214,13 @@
         .certificate-content {
             text-align: center;
             line-height: 1.8;
-            font-size: 1.3em;
+            font-size: 1.1em;
             color: #333;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .athlete-name {
-            font-size: 2.2em;
+            font-size: 1.8em;
             font-weight: bold;
             color: #c9b037;
             text-transform: uppercase;
@@ -175,9 +230,9 @@
 
         .certificate-details {
             background: rgba(248, 249, 250, 0.9);
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
-            margin: 20px 0;
+            margin: 15px 0;
             border-left: 5px solid #c9b037;
             backdrop-filter: blur(5px);
         }
@@ -185,7 +240,7 @@
         .signatures {
             display: flex;
             justify-content: space-around;
-            margin-top: 40px;
+            margin-top: 30px;
             padding-top: 20px;
         }
 
@@ -198,13 +253,13 @@
         .signature-name {
             font-weight: bold;
             color: #333;
-            font-size: 1.1em;
+            font-size: 1em;
             margin-bottom: 5px;
         }
 
         .signature-title {
             color: #666;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
         .certificate-footer-logo {
@@ -214,15 +269,30 @@
         }
 
         .mc-logo {
-            width: 80px;
+            width: 60px;
             height: auto;
         }
 
-        .footer-buttons {
-            background: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-            border-top: 1px solid #dee2e6;
+        .certificate-viewer-footer {
+            background: #333;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .certificate-viewer-footer .btn {
+            background: #555;
+            margin: 0;
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+
+        .certificate-viewer-footer .btn:hover {
+            background: #666;
+            transform: none;
         }
 
         .error-message {
@@ -266,14 +336,15 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Responsividade para mobile - mantém proporção */
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 0;
             }
             
             .container {
-                border-radius: 10px;
+                border-radius: 0;
+                height: 100vh;
             }
             
             .form-container {
@@ -284,24 +355,45 @@
                 font-size: 2em;
             }
             
-            .certificate-frame {
+            .certificate-app {
+                border-radius: 0;
+            }
+            
+            .certificate-viewer-content {
                 padding: 10px;
+            }
+            
+            .certificate-frame {
                 margin: 10px;
+                /* Escala inicial para mobile - miniatura */
+                transform: scale(0.35);
             }
             
-            /* O certificado mantém sua proporção original */
-            .certificate-container {
-                transform-origin: top left;
+            .zoom-controls {
+                display: none; /* Oculta controles de zoom no mobile */
             }
             
-            /* Botões ficam em tamanho normal */
-            .footer-buttons {
-                padding: 15px;
+            .certificate-viewer-header h2 {
+                font-size: 1em;
             }
             
-            .footer-buttons .btn {
+            .certificate-viewer-footer .btn {
+                padding: 10px 15px;
                 font-size: 16px;
-                padding: 10px 20px;
+            }
+        }
+
+        /* Tablet */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .certificate-frame {
+                transform: scale(0.7);
+            }
+        }
+
+        /* Desktop */
+        @media (min-width: 1025px) {
+            .certificate-frame {
+                transform: scale(0.9);
             }
         }
 
@@ -322,7 +414,6 @@
                 background: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                font-size: 12px !important;
             }
             
             .container {
@@ -332,103 +423,61 @@
                 width: 100% !important;
                 max-width: none !important;
                 margin: 0 !important;
+                height: auto !important;
             }
             
-            .form-container,
-            .footer-buttons {
+            .form-container {
                 display: none !important;
             }
             
-            .certificate-frame {
+            .certificate-app {
                 display: block !important;
+                height: auto !important;
                 background: white !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                border-radius: 0 !important;
             }
             
-            .certificate-viewer {
-                max-width: none !important;
-                margin: 0 !important;
+            .certificate-viewer-header,
+            .certificate-viewer-footer {
+                display: none !important;
+            }
+            
+            .certificate-viewer-content {
+                padding: 0 !important;
                 background: white !important;
-                border-radius: 0 !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+            
+            .certificate-frame {
+                transform: scale(1) !important;
+                margin: 0 !important;
                 box-shadow: none !important;
+                border-radius: 0 !important;
             }
             
             .certificate-container {
-                border: 6px solid #c9b037 !important;
-                border-radius: 10px !important;
-                padding: 30px !important;
-                margin: 0 !important;
-                min-height: auto !important;
                 width: 100% !important;
                 height: auto !important;
-                aspect-ratio: auto !important;
+                border: 4px solid #c9b037 !important;
+                border-radius: 10px !important;
+                padding: 30px !important;
                 page-break-inside: avoid !important;
-                background-image: 
-                    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(255, 200, 55, 0.1) 0%, transparent 50%),
-                    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><path d="M0,300 Q300,250 600,300 T1200,300 L1200,350 Q900,380 600,350 T0,350 Z" fill="%23f0f0f0" opacity="0.3"/><path d="M0,320 Q300,280 600,320 T1200,320 L1200,370 Q900,400 600,370 T0,370 Z" fill="%23e0e0e0" opacity="0.2"/></svg>') !important;
-                background-size: cover, cover, 100% 100% !important;
-                background-position: center, center, center !important;
-                background-repeat: no-repeat, no-repeat, no-repeat !important;
-            }
-            
-            .certificate-header {
-                margin-bottom: 20px !important;
-                gap: 20px !important;
-            }
-            
-            .certificate-logo {
-                width: 120px !important;
             }
             
             .certificate-title {
-                font-size: 2.8em !important;
-                color: #c9b037 !important;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.1) !important;
+                font-size: 2.5em !important;
             }
             
             .certificate-subtitle {
-                font-size: 1.4em !important;
-                color: #666 !important;
+                font-size: 1.3em !important;
             }
             
             .certificate-content {
-                font-size: 1.1em !important;
-                margin-bottom: 25px !important;
-                color: #333 !important;
+                font-size: 1em !important;
             }
             
             .athlete-name {
-                font-size: 1.8em !important;
-                color: #c9b037 !important;
-                text-shadow: 1px 1px 2px rgba(0,0,0,0.1) !important;
-            }
-            
-            .certificate-details {
-                background: rgba(248, 249, 250, 0.9) !important;
-                border-left: 5px solid #c9b037 !important;
-                padding: 15px !important;
-                margin: 15px 0 !important;
-            }
-            
-            .signatures {
-                margin-top: 25px !important;
-                padding-top: 15px !important;
-            }
-            
-            .signature-name {
-                color: #333 !important;
-                font-weight: bold !important;
-            }
-            
-            .signature-title {
-                color: #666 !important;
-            }
-            
-            .mc-logo {
-                width: 60px !important;
+                font-size: 1.6em !important;
             }
         }
     </style>
@@ -462,48 +511,61 @@
             </form>
         </div>
 
-        <div class="certificate-frame" id="certificate-frame">
-            <div class="certificate-viewer">
-                <div class="certificate-container">
-                    <div class="certificate-header">
-                        <img src="/static/img/logo_200k.png" alt="Logo 200K" class="certificate-logo">
-                        <div class="certificate-titles">
-                            <h1 class="certificate-title">CERTIFICADO</h1>
-                            <h2 class="certificate-subtitle">4º Desafio 200K Porto Velho - Humaitá</h2>
-                        </div>
-                    </div>
-
-                    <div class="certificate-content">
-                        <div class="athlete-name" id="athlete-name">NOME DO ATLETA</div>
-                        
-                        <p>participou do 4º Desafio 200k Porto Velho - Humaitá, na modalidade <strong id="modalidade">INDIVIDUAL</strong>, percorrendo a distância de <strong id="distancia">200km</strong>, no tempo líquido de <strong id="tempo">00:00:00</strong></p>
-                        
-                        <div class="certificate-details">
-                            <p><strong>Distância Percorrida:</strong> <span id="km-percorrido">200</span> km</p>
-                            <p><strong>Tempo Total:</strong> <span id="tempo-total">00:00:00</span></p>
-                            <p><strong>Data da Prova:</strong> <span id="data-prova">Porto Velho, 2024</span></p>
-                        </div>
-                    </div>
-
-                    <div class="signatures">
-                        <div class="signature">
-                            <div class="signature-name">Kelio Esteves Xavier</div>
-                            <div class="signature-title">Diretor da Prova</div>
-                        </div>
-                        
-                        <div class="signature">
-                            <div class="signature-name">Manoel Alves Barbosa</div>
-                            <div class="signature-title">Coordenador de Prova</div>
-                        </div>
-                    </div>
-
-                    <div class="certificate-footer-logo">
-                        <img src="/static/img/macaxeiraecia_logo.png" alt="MC Logo" class="mc-logo">
+        <div class="certificate-app" id="certificate-app">
+            <div class="certificate-viewer-header">
+                <h2>Certificado 200K Porto Velho - Humaitá</h2>
+                <div class="viewer-controls">
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" onclick="zoomOut()">-</button>
+                        <span class="zoom-level" id="zoom-level">90%</span>
+                        <button class="zoom-btn" onclick="zoomIn()">+</button>
                     </div>
                 </div>
             </div>
             
-            <div class="footer-buttons">
+            <div class="certificate-viewer-content">
+                <div class="certificate-frame" id="certificate-frame">
+                    <div class="certificate-container">
+                        <div class="certificate-header">
+                            <img src="/static/img/logo_200k.png" alt="Logo 200K" class="certificate-logo">
+                            <div class="certificate-titles">
+                                <h1 class="certificate-title">CERTIFICADO</h1>
+                                <h2 class="certificate-subtitle">4º Desafio 200K Porto Velho - Humaitá</h2>
+                            </div>
+                        </div>
+
+                        <div class="certificate-content">
+                            <div class="athlete-name" id="athlete-name">NOME DO ATLETA</div>
+                            
+                            <p>participou do 4º Desafio 200k Porto Velho - Humaitá, na modalidade <strong id="modalidade">INDIVIDUAL</strong>, percorrendo a distância de <strong id="distancia">200km</strong>, no tempo líquido de <strong id="tempo">00:00:00</strong></p>
+                            
+                            <div class="certificate-details">
+                                <p><strong>Distância Percorrida:</strong> <span id="km-percorrido">200</span> km</p>
+                                <p><strong>Tempo Total:</strong> <span id="tempo-total">00:00:00</span></p>
+                                <p><strong>Data da Prova:</strong> <span id="data-prova">Porto Velho, 2024</span></p>
+                            </div>
+                        </div>
+
+                        <div class="signatures">
+                            <div class="signature">
+                                <div class="signature-name">Kelio Esteves Xavier</div>
+                                <div class="signature-title">Diretor da Prova</div>
+                            </div>
+                            
+                            <div class="signature">
+                                <div class="signature-name">Manoel Alves Barbosa</div>
+                                <div class="signature-title">Coordenador de Prova</div>
+                            </div>
+                        </div>
+
+                        <div class="certificate-footer-logo">
+                            <img src="/static/img/macaxeiraecia_logo.png" alt="MC Logo" class="mc-logo">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="certificate-viewer-footer">
                 <button onclick="printCertificate()" class="btn">🖨️ Imprimir</button>
                 <button onclick="voltarFormulario()" class="btn">← Voltar</button>
             </div>
@@ -511,6 +573,46 @@
     </div>
 
     <script>
+        let currentZoom = 0.9; // Zoom inicial para desktop
+        
+        // Ajustar zoom inicial baseado no dispositivo
+        function setInitialZoom() {
+            const isMobile = window.innerWidth <= 768;
+            const isTablet = window.innerWidth > 768 && window.innerWidth <= 1024;
+            
+            if (isMobile) {
+                currentZoom = 0.35;
+            } else if (isTablet) {
+                currentZoom = 0.7;
+            } else {
+                currentZoom = 0.9;
+            }
+            
+            updateZoom();
+        }
+        
+        function updateZoom() {
+            const frame = document.getElementById('certificate-frame');
+            const zoomLevel = document.getElementById('zoom-level');
+            
+            frame.style.transform = `scale(${currentZoom})`;
+            zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+        }
+        
+        function zoomIn() {
+            if (currentZoom < 1.5) {
+                currentZoom += 0.1;
+                updateZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (currentZoom > 0.3) {
+                currentZoom -= 0.1;
+                updateZoom();
+            }
+        }
+
         // Máscara para CPF
         document.getElementById('cpf').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
@@ -633,14 +735,17 @@
             document.getElementById('tempo-total').textContent = dados.tempo_total;
             document.getElementById('data-prova').textContent = `Porto Velho, ${dados.data_prova}`;
             
+            // Definir zoom inicial baseado no dispositivo
+            setInitialZoom();
+            
             // Esconder formulário e mostrar certificado
             document.getElementById('form-container').style.display = 'none';
-            document.getElementById('certificate-frame').style.display = 'block';
+            document.getElementById('certificate-app').style.display = 'flex';
         }
 
         function voltarFormulario() {
             document.getElementById('form-container').style.display = 'block';
-            document.getElementById('certificate-frame').style.display = 'none';
+            document.getElementById('certificate-app').style.display = 'none';
         }
 
         function printCertificate() {
@@ -652,6 +757,13 @@
             const cpf = this.value.replace(/\D/g, '');
             if (cpf.length === 11) {
                 console.log('CPF válido:', cpf);
+            }
+        });
+        
+        // Ajustar zoom quando a janela for redimensionada
+        window.addEventListener('resize', function() {
+            if (document.getElementById('certificate-app').style.display === 'flex') {
+                setInitialZoom();
             }
         });
     </script>
