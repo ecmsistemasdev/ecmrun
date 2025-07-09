@@ -122,40 +122,6 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .summary-cards-bottom {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .summary-card {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            color: #2c3e50;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .summary-number {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 3px;
-        }
-
-        .summary-label {
-            font-size: 13px;
-            color: #666;
-        }
-
         .table-container {
             overflow-x: auto;
             border-radius: 8px;
@@ -258,14 +224,6 @@
             .filter-group {
                 justify-content: space-between;
             }
-            
-            .summary-cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .summary-cards-bottom {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
@@ -289,32 +247,6 @@
                 </select>
             </div>
             <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-        </div>
-        
-        <div class="summary-cards">
-            <div class="summary-card">
-                <div class="summary-number" id="totalFinalizadores">-</div>
-                <div class="summary-label">Total de Finalizadores</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-number" id="totalMasculino">-</div>
-                <div class="summary-label">Masculino</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-number" id="totalFeminino">-</div>
-                <div class="summary-label">Feminino</div>
-            </div>
-        </div>
-
-        <div class="summary-cards-bottom">
-            <div class="summary-card">
-                <div class="summary-number" id="totalSolo">-</div>
-                <div class="summary-label">Solo</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-number" id="totalEquipe">-</div>
-                <div class="summary-label">Equipe</div>
-            </div>
         </div>
 
         <div id="loadingMessage" class="loading">
@@ -413,7 +345,6 @@
                     finalizadoresFiltered = [...finalizadoresData];
                     
                     displayFinalizadores();
-                    updateSummaryCards();
                     
                     document.getElementById('loadingMessage').style.display = 'none';
                     document.getElementById('tableContainer').style.display = 'block';
@@ -459,21 +390,6 @@
             });
         }
 
-        // Função para atualizar cards de resumo
-        function updateSummaryCards() {
-            const total = finalizadoresFiltered.length;
-            const masculino = finalizadoresFiltered.filter(f => f.sexo === 'M').length;
-            const feminino = finalizadoresFiltered.filter(f => f.sexo === 'F').length;
-            const solo = finalizadoresFiltered.filter(f => f.equipe === 'SOLO').length;
-            const equipe = finalizadoresFiltered.filter(f => f.equipe !== 'SOLO').length;
-            
-            document.getElementById('totalFinalizadores').textContent = total;
-            document.getElementById('totalMasculino').textContent = masculino;
-            document.getElementById('totalFeminino').textContent = feminino;
-            document.getElementById('totalSolo').textContent = solo;
-            document.getElementById('totalEquipe').textContent = equipe;
-        }
-
         // Função para filtrar por sexo
         function filtrarPorSexo() {
             const filtroSexo = document.getElementById('filtroSexo').value;
@@ -485,7 +401,6 @@
             }
             
             displayFinalizadores();
-            updateSummaryCards();
         }
 
         // Função para definir data do relatório
