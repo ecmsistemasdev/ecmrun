@@ -555,7 +555,7 @@
             </div>
         </div>
         
-        <div class="certificate-viewer-content" id="certificate-viewer-content">
+        <!-- <div class="certificate-viewer-content" id="certificate-viewer-content">
             <div class="certificate-frame" id="certificate-frame">
                 <div class="certificate-container">
                     <div class="certificate-header">
@@ -593,7 +593,49 @@
                     <div class="certificate-footer-logo">MC</div>
                 </div>
             </div>
-        </div>
+        </div> -->
+        
+        <div class="certificate-viewer-content" id="certificate-viewer-content">
+            <div class="certificate-frame" id="certificate-frame">
+                <div class="certificate-container">
+                    <div class="certificate-header">
+                        <img src="/static/img/logo_200k.png" alt="Logo 200K" class="certificate-logo">
+                        <div class="certificate-titles">
+                            <h1 class="certificate-title">CERTIFICADO</h1>
+                            <h2 class="certificate-subtitle">4º Desafio 200K Porto Velho - Humaitá</h2>
+                        </div>
+                    </div>
+
+                    <div class="certificate-content">
+                        <div class="athlete-name" id="athlete-name">NOME DO ATLETA</div>
+                        
+                        <p>Participou do 4º Desafio 200k Porto Velho - Humaitá, na modalidade <strong id="modalidade">INDIVIDUAL</strong>, percorrendo a distância de <strong id="distancia">200km</strong>, no tempo líquido de <strong id="tempo">00:00:00</strong></p>
+                        
+                        <div class="certificate-details">
+                            <p><strong>Distância Percorrida:</strong> <span id="km-percorrido">200</span> km</p>
+                            <p><strong>Tempo Total:</strong> <span id="tempo-total">00:00:00</span></p>
+                            <p><strong>Data da Prova:</strong> <span id="data-prova">Porto Velho, 2024</span></p>
+                        </div>
+                    </div>
+
+                    <div class="signatures">
+                        <div class="signature">
+                            <div class="signature-name">Kelio Esteves Xavier</div>
+                            <div class="signature-title">Diretor da Prova</div>
+                        </div>
+                        
+                        <div class="signature">
+                            <div class="signature-name">Manoel Alves Barbosa</div>
+                            <div class="signature-title">Coordenador de Prova</div>
+                        </div>
+                    </div>
+
+                    <div class="certificate-footer-logo">
+                        <img src="/static/img/macaxeiraecia_logo.png" alt="MC Logo" class="mc-logo">
+                    </div>
+                </div>
+            </div>
+        </div>        
         
         <div class="certificate-viewer-footer">
             <button onclick="printCertificate()" class="btn">🖨️ Imprimir</button>
@@ -712,20 +754,20 @@
             hideMessages();
             
             // Simular dados para teste (remover em produção)
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-                const dadosTeste = {
-                    nome: 'João Silva Santos',
-                    modalidade: 'INDIVIDUAL',
-                    km_percorrido: '200',
-                    tempo_total: '08:45:32',
-                    data_prova: '2024'
-                };
-                showCertificate(dadosTeste);
-            }, 1000);
+            // setTimeout(() => {
+            //     document.getElementById('loading').style.display = 'none';
+            //     const dadosTeste = {
+            //         nome: 'João Silva Santos',
+            //         modalidade: 'INDIVIDUAL',
+            //         km_percorrido: '200',
+            //         tempo_total: '08:45:32',
+            //         data_prova: '2024'
+            //     };
+            //     showCertificate(dadosTeste);
+            // }, 1000);
             
             // Código real (descomentar em produção)
-            /*
+            
             fetch('/certificado200k_buscar_atleta', {
                 method: 'POST',
                 headers: {
@@ -751,7 +793,7 @@
                 console.error('Erro:', error);
                 showError('Erro ao buscar dados do atleta');
             });
-            */
+        
         });
 
         function hideMessages() {
