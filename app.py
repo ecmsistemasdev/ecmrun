@@ -5600,7 +5600,7 @@ def certificado200k_buscar_atleta():
               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) 
               AS TEMPO_TOTAL,
-              (SELECT DTFIM FROM EVENTO WHERE IDEVENTO = 1) AS DATAFIM
+              (SELECT DETALHE FROM EVENTO WHERE IDEVENTO = 1) AS DATAFIM
             FROM ATLETA a
             WHERE a.IDATLETA = %s
         """, (idatleta,))
@@ -5629,7 +5629,7 @@ def certificado200k_buscar_atleta():
                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) 
                   AS TEMPO_TOTAL,
-                ea.KM_INI, ea.KM_FIM, (SELECT DTFIM FROM EVENTO WHERE IDEVENTO = 1) AS DATAFIM
+                ea.KM_INI, ea.KM_FIM, (SELECT DETALHE FROM EVENTO WHERE IDEVENTO = 1) AS DATAFIM
                 FROM ATLETA a, EQUIPE_ATLETAS ea
                 WHERE ea.IDATLETA = a.IDATLETA 
                 AND a.IDATLETA = %s
