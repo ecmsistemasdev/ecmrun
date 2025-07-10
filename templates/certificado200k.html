@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -298,7 +297,33 @@
         .signature {
             text-align: center;
             flex: 1;
-            margin: 0 20px;
+            margin: 0 40px;
+            position: relative;
+            height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .signature-image {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 60px;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .signature-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border: none;
+            border-radius: 0;
+            filter: none;
         }
 
         .signature-name {
@@ -306,11 +331,21 @@
             color: #333;
             font-size: 1em;
             margin-bottom: 5px;
+            position: relative;
+            z-index: 2;
+            /* background: rgba(255, 255, 255, 0.8);
+            padding: 2px 8px; */
+            border-radius: 3px;
         }
 
         .signature-title {
             color: #666;
             font-size: 0.85em;
+            position: relative;
+            z-index: 2;
+            /* background: rgba(255, 255, 255, 0.8);
+            padding: 2px 8px; */
+            border-radius: 3px;
         }
 
         .certificate-footer-logo {
@@ -517,6 +552,24 @@
                 transform: none !important;
                 scale: 1 !important;
             }
+
+            .signature {
+                height: 60px;
+            }
+
+            .signature-image {
+                width: 80px;
+                height: 40px;
+                top: -15px;
+            }
+
+            .signature-name {
+                font-size: 0.9em;
+            }
+
+            .signature-title {
+                font-size: 0.75em;
+            }
         }
 
         /* Estilos para impressão */
@@ -631,6 +684,24 @@
                 width: 35px !important;
                 height: 35px !important;
             }
+
+            .signature {
+                height: 70px !important;
+            }
+
+            .signature-image {
+                width: 100px !important;
+                height: 50px !important;
+                top: -15px !important;
+            }
+
+            .signature-name {
+                font-size: 0.95em !important;
+            }
+
+            .signature-title {
+                font-size: 0.8em !important;
+            }
         }
     </style>
 </head>
@@ -706,26 +777,26 @@
 
                     <div class="signatures">
                         <div class="signature">
+                            <div class="signature-image">
+                                <img src="/static/img/ass_kelio1.png" alt="Assinatura Kelio">
+                            </div>
                             <div class="signature-name">Kelio Esteves Xavier</div>
                             <div class="signature-title">Diretor da Prova</div>
                         </div>
                         
                         <div class="signature">
+                            <div class="signature-image">
+                                <img src="/static/img/ass_alves1.png" alt="Assinatura Alves">
+                            </div>
                             <div class="signature-name">Manoel Alves Barbosa</div>
                             <div class="signature-title">Coordenador de Prova</div>
                         </div>
                     </div>
-                    <!--
-                    <div class="certificate-footer-logo">
-                        <img src="/static/img/macaxeiraecia_logo.png" alt="MC Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='MC';">
-                    </div>
-                    -->
                 </div>
             </div>
         </div>        
         
         <div class="certificate-viewer-footer">
-            <!--<button onclick="printCertificate()" class="btn">🖨️ Imprimir</button> -->
             <button onclick="voltarFormulario()" class="btn">← Voltar</button>
         </div>
     </div>
