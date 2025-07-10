@@ -5599,7 +5599,8 @@ def certificado200k_buscar_atleta():
             SEC_TO_TIME(TIMESTAMPDIFF(SECOND, 
               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) 
-              AS TEMPO_TOTAL
+              AS TEMPO_TOTAL,
+              (SELECT DTFIM FROM EVENTO WHERE IDEVENTO = 1) AS DATAFIM
             FROM ATLETA a
             WHERE a.IDATLETA = %s
         """, (idatleta,))
@@ -5614,7 +5615,7 @@ def certificado200k_buscar_atleta():
                 'data_hora_largada': resultado_solo[2],
                 'data_hora_chegada': resultado_solo[4],
                 'tempo_total': resultado_solo[6],
-                'data_prova': resultado_solo[2].strftime('%d/%m/%Y') if resultado_solo[2] else datetime.now().strftime('%d/%m/%Y')
+                'data_prova': resultado_solo[7]
             }
         else:
             # Se não encontrou dados solo, buscar dados de equipe
@@ -5628,7 +5629,7 @@ def certificado200k_buscar_atleta():
                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) 
                   AS TEMPO_TOTAL,
-                ea.KM_INI, ea.KM_FIM
+                ea.KM_INI, ea.KM_FIM, (SELECT DTFIM FROM EVENTO WHERE IDEVENTO = 1) AS DATAFIM
                 FROM ATLETA a, EQUIPE_ATLETAS ea
                 WHERE ea.IDATLETA = a.IDATLETA 
                 AND a.IDATLETA = %s
@@ -5636,6 +5637,8 @@ def certificado200k_buscar_atleta():
             
             resultado_equipe = cur.fetchone()
             
+	   # 'data_prova': resultado_solo[2].strftime('%d/%m/%Y') if resultado_solo[2] else datetime.now().strftime('%d/%m/%Y')
+		
             if resultado_equipe and resultado_equipe[6] and resultado_equipe[4]:  # Se tem tempo total e chegada
                 # Determinar modalidade baseada na distância
                 km_percorrido = resultado_equipe[1]
@@ -5655,7 +5658,7 @@ def certificado200k_buscar_atleta():
                     'data_hora_largada': resultado_equipe[2],
                     'data_hora_chegada': resultado_equipe[4],
                     'tempo_total': resultado_equipe[6],
-                    'data_prova': resultado_equipe[2].strftime('%d/%m/%Y') if resultado_equipe[2] else datetime.now().strftime('%d/%m/%Y')
+                    'data_prova': resultado_equipe[9]
                 }
         
         cur.close()
