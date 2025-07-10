@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -193,7 +194,7 @@
         .certificate-header {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: space-between;
             margin-bottom: 30px;
             gap: 30px;
         }
@@ -220,8 +221,31 @@
             border-radius: 50%;
         }
 
+        .certificate-logo-right {
+            width: 120px;
+            height: 120px;
+            flex-shrink: 0;
+            background: #c9b037;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            object-fit: contain;
+        }
+
+        .certificate-logo-right img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
         .certificate-titles {
             flex: 1;
+            text-align: center;
         }
 
         .certificate-title {
@@ -598,6 +622,11 @@
                 height: 80px !important;
             }
             
+            .certificate-logo-right {
+                width: 80px !important;
+                height: 80px !important;
+            }
+            
             .certificate-footer-logo {
                 width: 35px !important;
                 height: 35px !important;
@@ -657,6 +686,9 @@
                         <div class="certificate-titles">
                             <h1 class="certificate-title">CERTIFICADO</h1>
                             <h2 class="certificate-subtitle">4º Desafio 200K Porto Velho - Humaitá</h2>
+                        </div>
+                        <div class="certificate-logo-right">
+                            <img src="/static/img/macaxeiraecia_logo.png" alt="Logo Macaxeira&Cia" onerror="this.style.display='none'; this.parentElement.innerHTML='MC';">
                         </div>
                     </div>
 
