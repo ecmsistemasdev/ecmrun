@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo_ecmrun.jpg') }}">
+    <title>{{ evento[0] if evento else 'Real Slope Challenge' }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .event-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .event-info {
+            font-size: 1.2em;
+            color: #34495e;
+            margin: 10px 0;
+        }
+
+        .event-info strong {
+            color: #e74c3c;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .left-content {
+            flex: 2;
+        }
+
+        .right-content {
+            flex: 1;
+            min-width: 350px;
+        }
+
+        .banner-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .event-banner {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .description-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .description-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .inscription-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-title {
+            background-color: #647e99;
+            color: white;
+            padding: 15px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .lote-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+        }
+
+        .lote-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .lote-info {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .lote-price {
+            font-size: 1.1em;
+            color: #27ae60;
+            margin: 8px 0;
+        }
+
+        .lote-total {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 8px 0;
+        }
+
+        .lote-deadline {
+            color: #e74c3c;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .status-nao-iniciado {
+            background-color: #f39c12;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .status-esgotado, .status-encerrado {
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .btn-inscrever {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-inscrever:hover {
+            background-color: #219a52;
+        }
+
+        .regulation-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .regulation-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .regulation-placeholder {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 40px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .main-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .right-content {
+                min-width: auto;
+                order: -1;
+            }
+
+            .event-title {
+                font-size: 1.8em;
+            }
+
+            .event-info {
+                font-size: 1em;
+            }
+
+            .inscription-form {
+                margin: 10px 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .event-title {
+                font-size: 1.5em;
+            }
+
+            .lote-item {
+                padding: 10px;
+            }
+
+            .btn-inscrever {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header com informações do evento -->
+        <div class="header">
+            {% if evento %}
+                <h1 class="event-title">{{ evento[0] }}</h1>
+                <div class="event-info">
+                    <strong>Data:</strong> {{ evento[1] }} às {{ evento[2] }}
+                </div>
+                <div class="event-info">
+                    <strong>Local:</strong> {{ evento[3] }}, {{ evento[4] }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="main-content">
+            <!-- Conteúdo principal à esquerda -->
+            <div class="left-content">
+                <!-- Banner do evento -->
+                <div class="banner-container">
+                    <img src="{{ url_for('static', filename='img/banner_arealslopte.jpeg') }}" 
+                         alt="Banner do Evento" class="event-banner">
+                </div>
+
+                <!-- Seção de descrição do evento -->
+                <div class="description-section">
+                    <h2 class="description-title">Descrição do Evento</h2>
+                    <div class="description-content">
+                        <!-- Espaço para adicionar a descrição do evento -->
+                        <p style="color: #666; font-style: italic; text-align: center; padding: 20px;">
+                            Descrição do evento será adicionada aqui...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Seção do regulamento -->
+                <div class="regulation-section">
+                    <h2 class="regulation-title">Regulamento</h2>
+                    <div class="regulation-placeholder">
+                        Regulamento do evento será adicionado aqui...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulário de inscrição à direita -->
+            <div class="right-content">
+                <div class="inscription-form">
+                    <div class="form-title">Inscrição</div>
+                    
+                    {% if lotes %}
+                        {% for lote in lotes %}
+                            <div class="lote-item">
+                                <div class="lote-title">
+                                    {{ lote[1] }} - {{ lote[6] }}
+                                </div>
+                                
+                                {% if lote[14] == 'NÃO INICIADO' %}
+                                    <div class="status-nao-iniciado">
+                                        NÃO INICIADO
+                                    </div>
+                                {% elif lote[14] == 'ABERTO' %}
+                                    <div class="lote-info">
+                                        <div class="lote-price">
+                                            R$ {{ "%.2f"|format(lote[8]) }} (+ R$ {{ "%.2f"|format(lote[9]) }} taxa)
+                                        </div>
+                                        <div class="lote-total">
+                                            Total: R$ {{ "%.2f"|format(lote[10]) }}
+                                        </div>
+                                        <div class="lote-deadline">
+                                            Inscrições até {{ lote[3].strftime('%d/%m/%Y') if lote[3] else 'Data não definida' }}
+                                        </div>
+                                        <button class="btn-inscrever" onclick="inscrever({{ lote[0] }})">
+                                            Inscrever
+                                        </button>
+                                    </div>
+                                {% elif lote[14] == 'ESGOTADO' %}
+                                    <div class="status-esgotado">
+                                        ESGOTADO
+                                    </div>
+                                {% elif lote[14] == 'ENCERRADO' %}
+                                    <div class="status-encerrado">
+                                        ENCERRADO
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="text-align: center; color: #666; padding: 20px;">
+                            Nenhum lote disponível no momento.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function inscrever(idItem) {
+            // Função que será implementada para abrir a página de inscrição
+            alert('Página de inscrição será implementada. ID do lote: ' + idItem);
+            // Aqui você pode redirecionar para a página de inscrição
+            // window.location.href = '/inscricao/' + idItem;
+        }
+    </script>
+</body>
+</html>
