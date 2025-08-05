@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/static/img/banner_arealslopte.jpeg">
+    <link rel="stylesheet" type="text/css" href="/static/css/arealslope.css"/>
+    <title>{{ evento.titulo }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    </div>
+
+    <!-- Header com banner do evento -->
+    <div class="event-header">
+        <div class="event-info">
+            <h1 class="event-title">{{ evento.titulo }}</h1>
+            <div class="event-details">
+                <div class="event-datetime">
+                    <span class="icon">📅</span>
+                    <span>Data: {{ evento.data }} - {{ evento.hora }}</span>
+                </div>
+                <div class="event-location">
+                    <span class="icon">📍</span>
+                    <span>{{ evento.local }}, {{ evento.cidade_uf }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="event-banner">
+            <img src="/static/img/banner_arealslopte.jpeg" alt="Banner do Evento" class="banner-image">
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Formulário de Inscrição (primeiro no mobile) -->
+        <div class="inscription-form-container">
+            <form class="registration-form">
+                <div class="form-title">Inscrição</div>
+                
+                <div class="lotes-container">
+                    {% for lote in lotes %}
+                    <div class="lote-item" data-iditem="{{ lote.iditem }}">
+                        <h4 class="lote-title">{{ lote.descricao }} - {{ lote.delote }}</h4>
+                        
+                        {% if lote.status_lote == 'NÃO INICIADO' %}
+                            <div class="lote-status status-nao-iniciado">
+                                NÃO INICIADO
+                            </div>
+                        {% elif lote.status_lote == 'ABERTO' %}
+                            <div class="lote-pricing">
+                                <div class="price-breakdown">
+                                    <span class="price-value">R$ {{ lote.vlinscricao_formatada }}</span>
+                                    <span class="price-tax">(+ R$ {{ lote.vltaxa_formatada }} taxa)</span>
+                                </div>
+                                <div class="price-total-container">
+                                    <div class="price-total">
+                                        Total: R$ {{ lote.vltotal_formatada }}
+                                    </div>
+                                    <button type="button" class="inscricao-btn" data-iditem="{{ lote.iditem }}">
+                                        Inscreva-se
+                                    </button>
+                                </div>
+                                <div class="lote-deadline">
+                                    Inscrições até {{ lote.dtfim_formatada }}
+                                </div>
+                            </div>
+                        {% elif lote.status_lote == 'ESGOTADO' %}
+                            <div class="lote-status status-esgotado">
+                                ESGOTADO
+                            </div>
+                        {% elif lote.status_lote == 'ENCERRADO' %}
+                            <div class="lote-status status-encerrado">
+                                ENCERRADO
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        <div class="main-content">
+            <form>
+                <div class="info">
+                
+                    <h3 class="info-title">Descrição do evento</h3> 
+                    <br>
+                    📅 Data: 18 de janeiro de 2026<br>
+                    🏃🏻 Concentração às 05:30 - Largada às 06:00 🕕<br>
+                    📍 Local: Rua Alexandre Guimarães com José de Alencar - s/n, Bairro Areal
+                    <br><br>
+                    🏃‍♀️ <b>Modalidades Disponíveis:</b><br>
+                    • 7km<br>
+                    • 14km<br>
+                    • 21km<br><br>
+                    
+                    💲 <b>Valores das Inscrições por Lote:</b><br>
+                    <b>LOTE 01:</b> 10/08/2025 à 09/09/2025 (até 100 inscrições)<br>
+                    • 7km: R$ 88,00 + Taxa<br>
+                    • 14km: R$ 107,00 + Taxa<br>
+                    • 21km: R$ 120,00 + Taxa<br><br>
+                    
+                    <b>LOTE 02:</b> 10/09/2025 à 09/10/2025 (até 200 inscrições)<br>
+                    • 7km: R$ 105,00 + Taxa<br>
+                    • 14km: R$ 120,00 + Taxa<br>
+                    • 21km: R$ 135,00 + Taxa<br><br>
+                    
+                    <b>LOTE 03:</b> 10/10/2025 à 09/11/2025 (até 400 inscrições)<br>
+                    • 7km: R$ 110,00 + Taxa<br>
+                    • 14km: R$ 130,00 + Taxa<br>
+                    • 21km: R$ 149,00 + Taxa<br><br>
+                    
+                    👥 <b>Desconto:</b> Idosos têm 50% de desconto (calculado sobre o valor do 3º lote)<br><br>
+                    
+                    💰 <b>Forma de Pagamento:</b><br>
+                    Pix e Cartão de Crédito<br><br>
+                    
+                    🏆 <b>Kit do Atleta:</b> Camiseta, número de peito e medalha (sendo a medalha apenas para quem completar a prova)<br><br>
+                    
+                    🥫 <b>Importante:</b> Na retirada do kit, cada inscrito deverá levar 1kg de alimento não perecível (exceto sal e açúcar) para doação<br><br>
+                    
+                    💧 <b>Hidratação:</b> Postos de hidratação nos quilômetros 2,5 e 5km, além do local de chegada<br><br>
+                    
+                    🏅 <b>Premiação 21km:</b><br>
+                    • 1º lugar: R$ 600,00 + troféu<br>
+                    • 2º lugar: R$ 400,00 + troféu<br>
+                    • 3º lugar: R$ 300,00 + troféu<br>
+                    • 4º lugar: R$ 200,00 + troféu<br>
+                    • 5º lugar: R$ 150,00 + troféu<br><br>
+                    
+                    📱 Mais informações: (69) 99925-9005<br>
+                </div>
+            </form>
+
+            <form id="termoForm">
+                <div class="form-title">Regulamento</div>
+                <div class="termo">
+                    <br>
+                    <h3>REGULAMENTO DA CORRIDA</h3>
+                    <br>
+                    <h4>Capítulo I - 2° Corrida Areal Slope</h4>
+                    <br>
+                    <b>Artigo 1º.</b> Será realizada no dia 18 de janeiro de 2026 na cidade de Porto Velho/RO nos bairros Areal e Tucumanzal.
+                    <br><br>
+                    
+                    <b>Artigo 2º.</b> O horário de concentração será às 5h30 e a largada da corrida será às 6h00, sob qualquer condição climática.
+                    <br><br>
+                    Local da largada: Rua Alexandre Guimarães com José de Alencar - s/n, Bairro Areal
+                    <br><br>
+                    
+                    2.1 - O horário de largada da corrida ficará sujeito a alterações em razão da quantidade de inscritos e de eventuais problemas de ordem externa, tais como, tráfego intenso, falhas de comunicação ou suspensão no fornecimento de energia.
+                    <br><br>
+                    
+                    2.2 - Até a data da Prova Presencial também poderão ser realizados ajustes de percurso e neste regulamento com objetivo de melhorias técnicas e atendimento às necessidades da cidade e órgãos públicos competentes, mantendo a LARGADA e CHEGADA aos locais acima descritos.
+                    <br><br>
+                    
+                    <b>Artigo 3º.</b> A corrida será realizada nas distâncias de 21km, 14km e 7km.
+                    <br><br>
+                    
+                    <b>Artigo 4º.</b> A 2° Corrida Areal Slope terá a duração limite de 3h30min em qualquer distância.
+                    <br><br>
+                    
+                    <b>Artigo 5º.</b> A Comissão Organizadora terá competência para resolver qualquer problema ou responder dúvidas durante a corrida.
+                    <br><br>
+                    
+                    <h4>Capítulo II - INSCRIÇÃO</h4>
+                    
+                    <b>Artigo 7º.</b> Poderá participar da corrida o(a) competidor(a), aqui denominado(a) atleta, que se inscrever, realizar a inscrição no prazo determinado e expressar concordância com as normas deste Regulamento.
+                    <br><br>
+                    
+                    <b>Artigo 8º.</b> As inscrições deverão ser realizadas pelo link https://www.ecmrun.com.br/arealslope.
+                    <br><br>
+                    
+                    8.1 As inscrições contarão com 3 (três) lotes com valores e período descritos abaixo:
+                    <br><br>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Modalidade</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">LOTE 01</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">LOTE 02</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">LOTE 03</th>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">7KM PÚBLICO GERAL</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 88,00 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 105,00 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 110,00 + Taxa</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">14KM PÚBLICO GERAL</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 107,00 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 120,00 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 130,00 + Taxa</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">21KM PÚBLICO GERAL</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 120,00 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 135,00 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 149,00 + Taxa</td>
+                        </tr>
+                    </table>
+                    
+                    <b>Período e quantidade de inscrição de cada Lote:</b>
+                    <br><br>
+                    • <b>LOTE 01:</b> 10/08/2025 à 09/09/2025 ou até atingir o total de 100 inscrições<br>
+                    • <b>LOTE 02:</b> 10/09/2025 à 09/10/2025 ou até atingir o total de 200 inscrições<br>
+                    • <b>LOTE 03:</b> 10/10/2025 à 09/11/2025 ou até atingir o total de 400 inscrições<br><br>
+                    
+                    Idosos terão descontos de 50%. Esses descontos são calculados em cima do valor do 3º LOTE.
+                    <br><br>
+                    
+                    A data de início dos lotes 02 e 03, poderão ser antecipadas automaticamente em caso de atingirem os limites de inscrições dos lotes anteriores.
+                    <br><br>
+                    
+                    *Não serão validados pedidos de inscrição enviados via Redes Sociais e/ou outro meio de comunicação que não seja pelo Link informado acima, SEM EXCEÇÕES.
+                    <br><br>
+                    
+                    Quaisquer dúvidas e/ou problemas com o link, entrar em contato diretamente com o suporte através do WhatsApp (69) 99925-7724 ou e-mail adm@ecmrun.com.br.
+                    <br><br>
+                    
+                    <b>Artigo 9º.</b> Os inscritos deverão no dia da retirada do kit levar 1 Kg de alimento não perecível (menos sal e açúcar) para doação.
+                    <br><br>
+                    
+                    <b>Artigo 10º.</b> No ato da inscrição, ao concordar com o regulamento, o(a) atleta aceita todos os termos do regulamento e assume total responsabilidade por sua participação no evento.
+                    <br><br>
+                    
+                    <b>Artigo 11º.</b> As inscrições serão encerradas na data limite do LOTE 03 ou até atingir o limite de atletas definido para esta corrida.
+                    <br><br>
+                    
+                    <b>Artigo 12º.</b> A empresa organizadora poderá, a qualquer momento, suspender ou prorrogar prazos ou, ainda, elevar ou limitar o número de inscrições, em função de necessidades, disponibilidade técnica e/ou questões estruturais, sem aviso prévio.
+                    <br><br>
+                    
+                    <b>Artigo 13º.</b> Os atletas são responsáveis pela veracidade das informações fornecidas no sistema on-line ou na ficha de inscrição. Os atletas concordam que o e-mail será o meio de comunicação utilizado pela empresa organizadora para repassar informações e atualizações referentes à corrida.
+                    <br><br>
+                    
+                    <b>Artigo 14º.</b> Serão disponibilizadas 400 inscrições para 2º CORRIDA AREAL SLOPE de acordo com a ordem de inscrição realizadas.
+                    <br><br>
+                    
+                    <b>Artigo 15º.</b> A inscrição na corrida é pessoal e intransferível, não podendo qualquer atleta ser substituído por outra, em qualquer situação.
+                    <br><br>
+                    
+                    15.1 O atleta que ceder seu número de peito para outra pessoa será responsável por qualquer acidente ou dano que esta venha a sofrer, isentando o atendimento e quaisquer responsabilidade da empresa organizadora, seus patrocinadores, apoiadores e órgãos públicos.
+                    <br><br>
+                    
+                    <b>Artigo 16º.</b> De acordo com a determinação da Confederação Brasileira de Atletismo, a idade mínima para atletas se inscreverem e participarem de corridas de rua é de 16 (dezesseis) anos, com as seguintes restrições:
+                    <br><br>
+                    
+                    I - Os atletas menores de 18 anos de idade NÃO poderão participar de corridas com percurso igual ou superior a 10 Km;<br>
+                    II - A idade a ser considerada, obrigatoriamente, para os efeitos de inscrição é a que o atleta terá no dia da corrida (18/01/2026);<br>
+                    III - Os atletas menores de 18 anos só poderão participar da corrida de 7Km mediante autorização por escrito com firma reconhecida dos pais ou de um responsável legal que deverá ser enviada no ato da inscrição para a central de informação e apresentada a organização na retirada do kit participação. A autorização deverá estar acompanhada de cópia de um documento de Identidade do menor de idade, que será retida pela empresa organizadora, no ato de entrega dos kits.
+                    <br><br>
+                    
+                    <h4>Capítulo III - ENTREGA DE KIT PARTICIPAÇÃO</h4>
+                    
+                    <b>Artigo 17º.</b> O Kit do atleta será composto por camiseta e número de peito e medalha, sendo a medalha somente para o atleta que completar a prova.
+                    <br><br>
+                    
+                    <b>Artigo 18º.</b> A entrega dos kits será realizada do dia 14/01/2026, em local a ser definido previamente pela organização do evento.
+                    <br><br>
+                    
+                    <b>Artigo 19º.</b> A retirada de kits só poderá ser efetivada por terceiros mediante apresentação de autorização específica.
+                    <br><br>
+                    
+                    <b>Artigo 20º.</b> No momento da retirada do kit o responsável deverá conferir os seus dados e o número de peito.
+                    <br><br>
+                    
+                    <b>Artigo 21º.</b> Não serão aceitas reclamações cadastrais como também dos itens que compõem o kit, após sua retirada.
+                    <br><br>
+                    
+                    <b>Artigo 22º.</b> O tamanho das camisetas será no momento da entrega dos kits.
+                    <br><br>
+                    
+                    <b>Artigo 23º.</b> A não retirada do kit nas datas e horários estipulados pela empresa organizadora implicará na perda do mesmo, não podendo ser retirado posteriormente.
+                    <br><br>
+                    
+                    <b>Artigo 24º.</b> Os kits que sobrarem após o último dia de entrega estipulado pela organização, será destinado para doação.
+                    <br><br>
+                    
+                    <b>Parágrafo primeiro.</b> As camisetas serão disponibilizadas nos tamanhos: PP Unissex, P Unissex, M Unissex, G Unissex e GG Unissex.
+                    <br><br>
+                    
+                    <b>Parágrafo segundo.</b> Como as camisetas são confeccionadas com antecedência, onde o lote final de inscrições os tamanhos das camisetas não são computados e sim estimados, os participantes que retirarem seus kits no último dia e/ou final do horário previsto da entrega, poderão estar sujeitos ao tamanho da camiseta de acordo com a disponibilidade existente.
+                    <br><br>
+                    
+                    <b>Parágrafo terceiro.</b> O (a) atleta não poderá alegar impossibilidade de participar da corrida, caso não tenha camiseta em tamanho que lhe sirva.
+                    <br><br>
+                    
+                    <b>Artigo 25º.</b> A organização do evento se compromete a cumprir os prazos estipulados de entrega. No entanto, não se responsabiliza por atrasos que venham a existir em situação de força maior, gerados por terceiros.
+                    <br><br>
+                    
+                    <b>Artigo 26º.</b> Os participantes deverão dirigir-se ao local de retirada do kit por conta própria.
+                    <br><br>
+                    
+                    <h4>Capítulo IV - INSTRUÇÕES E REGRAS</h4>
+                    
+                    <b>Artigo 27º.</b> Os atletas deverão dirigir-se ao local de largada com pelo menos meia hora de antecedência, quando serão dadas as instruções finais.
+                    <br><br>
+                    
+                    <b>Artigo 28º.</b> A cada atleta será fornecido um número que deve ser usado visivelmente no peito, sem rasura ou alterações, durante toda a realização da corrida.
+                    <br><br>
+                    
+                    <b>Artigo 29º.</b> Todos (as) os(as) atletas deverão estar em dia com rigorosa avaliação médica para realização da corrida, sendo conhecedores de seu estado de saúde e de sua aptidão física para participar da corrida.
+                    <br><br>
+                    
+                    <b>Artigo 30º.</b> A empresa organizadora não se responsabilizará pela saúde física dos atletas.
+                    <br><br>
+                    
+                    <b>Artigo 31º.</b> O atleta é responsável pela decisão de participar da corrida, avaliando sua condição física, desempenho e julgando por si só se deve ou não continuar ao longo da competição.
+                    <br><br>
+                    
+                    <b>Artigo 32º.</b> Os organizadores não tem responsabilidade sobre o atendimento médico dos atletas, despesas médicas em casos de internação ou lesões geradas pela participação na corrida. Porém, em cumprimento as normas da CBAT, será disponibilizado um serviço de ambulância para atendimento emergencial aos atletas e para a remoção destes aos hospitais da rede pública de saúde.
+                    <br><br>
+                    
+                    <b>Artigo 33º.</b> O(a) atleta ou seu (sua) acompanhante poderá decidir pela remoção ou transferência para hospitais da rede privada de saúde, eximindo a empresa organizadora de qualquer responsabilidade ou reembolso pelas despesas decorrentes deste atendimento médico.
+                    <br><br>
+                    
+                    <b>Artigo 34º.</b> Estarão à disposição dos atletas, banheiros femininos e masculinos próximo ao local da largada e não teremos guarda-volumes.
+                    <br><br>
+                    
+                    <b>Artigo 35º.</b> Cada atleta deverá guardar seus pertences antes da prova.
+                    <br><br>
+                    
+                    <b>Artigo 36º.</b> Ao longo do percurso da corrida haverá posto de hidratação nos quilômetros 2,5 e 5km, além do local de chegada.
+                    <br><br>
+                    
+                    <h4>Capítulo V - PREMIAÇÃO</h4>
+                    
+                    <b>Artigo 37º.</b> A premiação da 2° Corrida Areal Slope serão distribuídas da seguinte forma:
+                    <br><br>
+                    
+                    37.1 Os ATLETAS classificados do 1º ao 5º lugar no percurso de 21km na categoria geral masculino e feminino receberão troféus e o valor líquido abaixo descrito, correspondente a sua colocação.
+                    <br><br>
+                    
+                    <b>21 KM - MASCULINO E FEMININO - VALOR</b>
+                    <br><br>
+                    1° LUGAR R$ 600,00<br>
+                    2° LUGAR R$ 400,00<br>
+                    3° LUGAR R$ 300,00<br>
+                    4° LUGAR R$ 200,00<br>
+                    5° LUGAR R$ 150,00<br><br>
+                    
+                    Nas demais categorias por faixa etária do percurso de 21km haverá premiação somente de troféus do 1º ao 3º colocados.
+                    <br><br>
+                    
+                    No percurso de 14km haverá premiação de troféus do 1º ao 5º colocados nas categorias geral masculino e feminino e do 1º ao 3º colocados nas categorias por faixa etárias masculino e feminino.
+                    <br><br>
+                    
+                    No percurso de 7km haverá premiação de troféus do 1º ao 3º nas categorias geral masculino e feminino e por faixa etárias masculino e feminino.
+                    <br><br>
+                    
+                    Todos os atletas que cruzarem a linha de chegada de forma legal, regularmente inscritos e sem o descumprimento deste regulamento, receberão medalhas de "finisher".
+                    <br><br>
+                    
+                    *Não serão entregues medalhas para as pessoas que, mesmo inscritas, não participaram da corrida.
+                    <br><br>
+                    
+                    <b>Artigo 38º.</b> A 2° CORRIDA AREAL SLOPE contará com as categorias GERAL, masculino e feminino, e nas FAIXAS ETÁRIAS de idades:
+                    <br><br>
+                    
+                    • Até 35 anos;<br>
+                    • De 36 a 45 anos;<br>
+                    • De 46 a 55 anos;<br>
+                    • De 56 anos em diante.<br><br>
+                    
+                    <b>Artigo 39º.</b> A idade considerada para classificação nas categorias de faixas etária será de acordo com o que o atleta tiver em 18 de janeiro de 2026. Todos os ATLETAS que tiverem seus nomes chamados para premiação deverão encaminhar-se imediatamente à área de premiação. Caso esse atleta não esteja presente será desclassificado e não terá direito a troféu e/ou qualquer outra premiação.
+                    <br><br>
+                    
+                    <b>Artigo 40º.</b> Os resultados oficiais da 2ª CORRIDA AREAL SLOPE serão informados através do site oficial do evento no prazo de 48 horas após o término da corrida.
+                    <br><br>
+                    
+                    <h4>Capítulo VI - DIREITOS DE IMAGEM E DIREITOS AUTORAIS</h4>
+                    
+                    <b>Artigo 41º.</b> O(a) atleta que se inscreve e consequentemente participa da corrida está incondicionalmente aceitando e concordando em ter sua imagem e voz divulgada através de fotos, filmes, rádio, jornais, revistas, internet, vídeos e televisão, ou qualquer outro meio de comunicação, para usos informativos, promocionais ou publicitários relativos ao Evento, sem acarretar nenhum ônus a organização e aos patrocinadores, renunciando o recebimento de qualquer renda que vier a ser auferida com tais direitos em qualquer tempo/data.
+                    <br><br>
+                    
+                    <b>Artigo 42º.</b> Todos os atletas, staffs, organizadores cedem no ato de inscrição todos os direitos de utilização de sua imagem e voz para a empresa organizadora e para os patrocinadores desta corrida.
+                    <br><br>
+                    
+                    <b>Artigo 43º.</b> A filmagem, transmissão pela televisão, fotografias ou vídeo relativos à corrida têm os direitos reservados aos organizadores.
+                    <br><br>
+                    
+                    <b>Parágrafo único.</b> Qualquer forma de divulgação de imagens da corrida ou interesse em destinar um profissional para a cobertura da corrida estará sujeita à autorização e aprovação pela empresa organizadora.
+                    <br><br>
+                    
+                    <h4>Capítulo VII - SUSPENSÃO, ADIAMENTO E CANCELAMENTO DO EVENTO ESPORTIVO</h4>
+                    
+                    <b>Artigo 44º.</b> A Comissão Organizadora, primando pela segurança dos atletas, poderá determinar a suspensão da corrida, iniciada ou não, por questões de segurança pública, vandalismo e/ou motivos de força maior. Sendo suspensa a corrida, por qualquer um destes motivos, esta será considerada realizada e não haverá designação de nova data para realização da corrida.
+                    <br><br>
+                    
+                    <b>Artigo 45º.</b> Os (as) atletas ficam cientes que deverão assumir, no ato da inscrição, todos os riscos e danos da eventual suspensão da corrida (iniciada ou não) por questões de segurança pública, vandalismo e/ou motivos de força maior, não gerando qualquer responsabilidade para a empresa organizadora.
+                    <br><br>
+                    
+                    <b>Artigo 46º.</b> Na hipótese de suspensão do evento esportivo não haverá devolução do alimento não perecível.
+                    <br><br>
+                    
+                    <b>Artigo 47º.</b> A corrida poderá ser adiada ou cancelada a critério da empresa organizadora, sendo comunicado aos inscritos esta decisão pelo Instagram oficial da corrida.
+                    <br><br>
+                    
+                    <h4>Capítulo VIII - DISPOSIÇÕES GERAIS</h4>
+                    
+                    <b>Artigo 48º.</b> A segurança da corrida receberá apoio dos órgãos competentes e haverá sinalização para a orientação dos atletas.
+                    <br><br>
+                    
+                    <b>Artigo 49º.</b> A organização poderá, a seu critério ou conforme as necessidades da corrida, alterar ou revogar este regulamento, total ou parcialmente, informando as mudanças pelo site oficial da corrida.
+                    <br><br>
+                    
+                    <b>Artigo 50º.</b> Caso seja liberado pelos órgãos responsáveis a montagens de tendas de Assessorias e Equipes de corrida, no local de prova, é necessário prévio aviso de até 15 dias.
+                    <br><br>
+                    
+                    <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f0f8ff; border-radius: 10px;">
+                        <b style="color: #1d72cc; font-size: 18px;">Ao se inscrever, o atleta declara ter lido e concordado integralmente com este regulamento.</b>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p><b>"Tudo posso naquele que me fortalece."</b><br> Filipenses 4:13</p>
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+        <p class="footer-text">Versão 1.2</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inscricaoBtns = document.querySelectorAll('.inscricao-btn');
+
+            // Event listeners para botões de inscrição
+            inscricaoBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const iditem = this.getAttribute('data-iditem');
+                    
+                    // Buscar dados do lote selecionado
+                    fetch(`/api/lote-inscricao/${iditem}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                alert('Erro ao carregar dados do lote: ' + data.error);
+                                return;
+                            }
+
+                            // Armazenar dados do lote no localStorage
+                            localStorage.setItem('lote_iditem', data.iditem);
+                            localStorage.setItem('lote_descricao', data.descricao);
+                            localStorage.setItem('lote_vlinscricao', data.vlinscricao);
+                            localStorage.setItem('lote_vltaxa', data.vltaxa);
+                            localStorage.setItem('lote_vltotal', data.vltotal);
+
+                            // Redirecionar para página de inscrição
+                            window.location.href = '/inscricao-arealslope';
+                        })
+                        .catch(error => {
+                            console.error('Erro:', error);
+                            alert('Erro ao processar solicitação');
+                        });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
