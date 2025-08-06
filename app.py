@@ -6800,7 +6800,7 @@ def arealslope():
             }
             lotes.append(lote_info)
         
-        return render_template('arealslope.html', evento=evento, lotes=lotes)
+        return render_template('arealslope__.html', evento=evento, lotes=lotes)
         
     except Exception as e:
         print(f"Erro ao carregar página arealslope: {str(e)}")
@@ -6858,4 +6858,5 @@ def get_lote_inscricao(iditem):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
