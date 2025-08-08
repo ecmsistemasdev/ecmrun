@@ -1002,19 +1002,24 @@ def comprovante(payment_id):
             app.logger.info("Dados não encontrados")
             return "Dados não encontrados", 404
         
-        # Converter a data de string para datetime
+        # Verificar se a data de pagamento é válida antes de formatar
         data_pagamento = receipt_data[0]
+        if data_pagamento is not None:
+            data_pagamento_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M')
+        else:
+            data_pagamento_formatada = "Data não informada"
+            app.logger.warning(f"DTPAGAMENTO é NULL para payment_id: {payment_id}")
 
         # Estruturar os dados do comprovante
         receipt_data_dict = { 
-            'data': data_pagamento.strftime('%d/%m/%Y %H:%M'),  
+            'data': data_pagamento_formatada,  
             'evento': receipt_data[1],
             'endereco': receipt_data[2],
             'dataevento': receipt_data[3],
             'participante': receipt_data[4],
             'km': receipt_data[5],
-            'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
-            'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
+            'valor': f'R$ {receipt_data[6]:,.2f}' if receipt_data[6] is not None else 'R$ 0,00',  # Verificar valor também
+            'valortotal': f'R$ {receipt_data[7]:,.2f}' if receipt_data[7] is not None else 'R$ 0,00',  # Verificar valor também
             'formapgto': receipt_data[8],
             'inscricao': str(receipt_data[9]),
             'obs': receipt_data[12],
@@ -1029,7 +1034,6 @@ def comprovante(payment_id):
         id_inscricao = receipt_data[11]
         app.logger.info(f' FLEMAIL: { flemail }')
         app.logger.info(f' ID INSC: { id_inscricao }')
-
 
         if flemail == 'N':
 
@@ -1048,13 +1052,13 @@ def comprovante(payment_id):
             mysql.connection.commit()
             cur1.close()
 
-
         return render_template('comprovante_insc.html', **receipt_data_dict)
 
     except Exception as e:
         app.logger.error(f"Erro ao buscar dados do comprovante: {str(e)}")
         return "Erro ao buscar dados", 500
 
+        
 @app.route('/vercomprovante/<int:payment_id>')
 def vercomprovante(payment_id):
     try:
@@ -7443,3 +7447,4 @@ def lista_eventos_direto():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
