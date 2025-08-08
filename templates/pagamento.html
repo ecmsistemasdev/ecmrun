@@ -36,18 +36,30 @@
         <div id="qrContainer" class="qr-container hidden">
             <h3>QR Code PIX</h3>
             <img alt="QR Code PIX" class="qr-code" id="qrCode">
-            
+
+            <!-- <div class="pix-key-container">
+                <div>Chave PIX:</div>
+                <div class="pix-key" id="pixKey"></div>
+                <button class="button" onclick="copyPixKey()">Copiar Chave PIX</button>
+            </div> -->
+
             <div class="pix-key-container">
                 <div>Chave PIX:</div>
                 <div class="pix-key" id="pixKey"></div>
                 <button class="button" onclick="copyPixKey()">Copiar Chave PIX</button>
+                <!-- NOVO BOTÃO ADICIONADO AQUI -->
+                <button class="button primary" onclick="confirmarPagamento()" id="confirmPaymentBtn">
+                    <span id="confirmBtnText">Confirmar Pagamento</span>
+                    <span id="confirmBtnSpinner" class="spinner-small" style="display: none;"></span>
+                </button>
             </div>
+
         </div>
 
         <div class="button-container">
             <button class="button secondary" onclick="voltarParaEvento()">Voltar</button>
         </div>
-        
+
         <!-- <div class="button-container">
              <button class="button secondary" onclick="window.history.back()">Voltar</button>
         </div> -->
@@ -91,7 +103,7 @@
         </div>
     </div>
 
-    <div class="cartoes" align="center">      
+    <div class="cartoes" align="center">
         <div>
             <img src="https://ecmrun.com.br/static/img/seloseguro.png" style="width:60%; margin-top: 3px;">
         </div>
@@ -137,8 +149,8 @@
                 }
             };
 
-            const currentEnv = window.location.hostname === 'localhost' || 
-                            window.location.hostname.includes('192.168') ? 
+            const currentEnv = window.location.hostname === 'localhost' ||
+                            window.location.hostname.includes('192.168') ?
                             'development' : 'production';
 
             const baseURL = environments[currentEnv].baseURL;
@@ -178,69 +190,69 @@
                 const timerElement = document.createElement('div');
                 timerElement.id = 'pixCountdown';
                 timerElement.className = 'timer-container';
-                
+
                 const timerTitle = document.createElement('div');
                 timerTitle.className = 'countdown-title';
                 timerTitle.innerHTML = 'Tempo p/ pagamento';
-                
+
                 const timerDisplay = document.createElement('div');
                 timerDisplay.className = 'countdown-display';
                 timerDisplay.id = 'countdownDisplay';
-                
+
                 timerElement.appendChild(timerTitle);
                 timerElement.appendChild(timerDisplay);
-                
+
                 // Adiciona ao body para ficar flutuante
                 document.body.appendChild(timerElement);
-                
+
                 // Função para atualizar o timer
                 function updateTimer() {
                     if (remainingTime <= 0) {
                         clearInterval(countdownInterval);
                         document.getElementById('countdownDisplay').innerHTML = '00:00';
                         document.getElementById('pixCountdown').classList.add('expired');
-                        
+
                         // Exibe mensagem de expiração
                         const expirationMsg = document.createElement('div');
                         expirationMsg.className = 'expiration-message';
                         expirationMsg.innerHTML = 'O tempo para pagamento expirou. <button class="button refresh-button" onclick="window.location.reload()">Gerar novo QR Code</button>';
-                        
+
                         const qrContainer = document.getElementById('qrContainer');
                         if (qrContainer) {
                             qrContainer.classList.add('expired');
                             qrContainer.appendChild(expirationMsg);
                         }
-                        
+
                         return;
                     }
-                    
+
                     const minutes = Math.floor(remainingTime / 60);
                     const seconds = remainingTime % 60;
-                    
+
                     // Formata o tempo com zeros à esquerda quando necessário
                     const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
                     const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
-                    
+
                     // Atualiza o display
                     const countdownDisplay = document.getElementById('countdownDisplay');
                     if (countdownDisplay) {
                         countdownDisplay.innerHTML = `${formattedMinutes}:${formattedSeconds}`;
                     }
-                    
+
                     // Adiciona classe de alerta quando restar menos de 5 minutos
                     const timerContainer = document.getElementById('pixCountdown');
                     if (remainingTime <= 300 && timerContainer) {
                         timerContainer.classList.add('warning');
                     }
-                    
+
                     // Decrementa o tempo restante
                     remainingTime--;
                 }
-                
+
                 // Inicia o timer imediatamente e depois a cada segundo
                 updateTimer();
                 countdownInterval = setInterval(updateTimer, 1000);
-                
+
                 // Salva o horário de início para recuperação apenas se for um timer novo
                 if (startFromFull) {
                     localStorage.setItem('pixTimerStart', Date.now().toString());
@@ -252,13 +264,13 @@
             function recoverCountdownTimer() {
                 const timerStart = localStorage.getItem('pixTimerStart');
                 const expirationDuration = localStorage.getItem('pixExpirationDuration');
-                
+
                 if (timerStart && expirationDuration) {
                     const elapsed = Math.floor((Date.now() - parseInt(timerStart)) / 1000);
                     const totalDuration = parseInt(expirationDuration);
-                    
+
                     remainingTime = totalDuration - elapsed;
-                    
+
                     if (remainingTime > 0) {
                         console.log(`Recuperando timer com ${remainingTime} segundos restantes`);
                         startCountdownTimer(false); // Não reinicia do tempo total
@@ -269,7 +281,7 @@
                         localStorage.removeItem('pixExpirationDuration');
                     }
                 }
-                
+
                 return false;
             }
 
@@ -278,12 +290,12 @@
                 if (countdownInterval) {
                     clearInterval(countdownInterval);
                 }
-                
+
                 const timerElement = document.getElementById('pixCountdown');
                 if (timerElement) {
                     timerElement.remove();
                 }
-                
+
                 localStorage.removeItem('pixTimerStart');
                 localStorage.removeItem('pixExpirationDuration');
             }
@@ -291,7 +303,7 @@
             // Função para persistir dados do pagamento com verificação
             function persistPaymentData(data) {
                 if (!data) return false;
-                
+
                 try {
                     const paymentData = {
                         paymentId: data.payment_id,
@@ -299,7 +311,7 @@
                         qrCodeBase64: data.qr_code_base64,
                         timestamp: Date.now()
                     };
-                    
+
                     // Verifica se todos os dados necessários estão presentes
                     if (!paymentData.paymentId || !paymentData.qrCode || !paymentData.qrCodeBase64) {
                         console.error('Dados incompletos para persistência');
@@ -343,21 +355,59 @@
 
             function redirectToReceipt(paymentId) {
                 try {
+                    console.log('Iniciando redirecionamento para comprovante:', paymentId);
+
                     // Limpa o timer antes de redirecionar
                     clearCountdownTimer();
+
+                    // Para todas as verificações
+                    if (checkInterval) {
+                        clearInterval(checkInterval);
+                    }
 
                     // Limpa dados do pagamento antes do redirecionamento
                     sessionStorage.removeItem('paymentData');
                     localStorage.removeItem('lastPaymentId');
-                    
-                    // Redireciona para a página de recibo
-                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
-                    window.location.replace(`/comprovante/${paymentId}`);
+
+                    // Remove o listener de visibilidade
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+                    // Construir a URL correta
+                    const redirectUrl = `${baseURL}/comprovante/${paymentId}`;
+                    console.log('Redirecionando para:', redirectUrl);
+
+                    // Usar replace para não permitir voltar
+                    window.location.replace(redirectUrl);
+
                 } catch (error) {
                     console.error('Erro ao redirecionar:', error);
-                    alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
+                    // Fallback: tenta redirecionar mesmo com erro
+                    try {
+                        window.location.href = `/comprovante/${paymentId}`;
+                    } catch (fallbackError) {
+                        console.error('Erro no fallback de redirecionamento:', fallbackError);
+                        alert('Pagamento confirmado! Por favor, recarregue a página e acesse "Minhas Inscrições" para ver o comprovante.');
+                    }
                 }
             }
+
+            // function redirectToReceipt(paymentId) {
+            //     try {
+            //         // Limpa o timer antes de redirecionar
+            //         clearCountdownTimer();
+
+            //         // Limpa dados do pagamento antes do redirecionamento
+            //         sessionStorage.removeItem('paymentData');
+            //         localStorage.removeItem('lastPaymentId');
+
+            //         // Redireciona para a página de recibo
+            //         console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+            //         window.location.replace(`/comprovante/${paymentId}`);
+            //     } catch (error) {
+            //         console.error('Erro ao redirecionar:', error);
+            //         alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
+            //     }
+            // }
 
             // Adicione esta função que estava faltando
             function clearPaymentRelatedLocalStorage() {
@@ -365,9 +415,36 @@
                 localStorage.removeItem('lastPaymentId');
             }
 
+            // guardar ate verificar se realmente a função abaixo qe foi corrigida, funcione
             // Função para recuperar QR Code
+            // async function recoverQRCode(paymentId) {
+            //     try {
+            //         const response = await fetch(`${baseURL}/recuperar-qrcode/${paymentId}`, {
+            //             method: 'GET',
+            //             headers: {
+            //                 'Content-Type': 'application/json'
+            //             }
+            //         });
+
+            //         const data = await response.json();
+
+            //         if (data.success && data.qr_code && data.qr_code_base64) {
+            //             return data;
+            //         }
+            //         return null;
+            //     } catch (error) {
+            //         console.error('Erro ao recuperar QR Code:', error);
+            //         return null;
+            //     }
+            // }
+
+
+            // Função para recuperar QR Code CORRIGIDA
+            // Se der erro volta a função acima que esta comentada
             async function recoverQRCode(paymentId) {
                 try {
+                    console.log('Tentando recuperar QR Code para:', paymentId);
+
                     const response = await fetch(`${baseURL}/recuperar-qrcode/${paymentId}`, {
                         method: 'GET',
                         headers: {
@@ -375,19 +452,62 @@
                         }
                     });
 
-                    const data = await response.json();
-                    
-                    if (data.success && data.qr_code && data.qr_code_base64) {
-                        return data;
+                    if (!response.ok) {
+                        console.error('Erro na resposta da recuperação:', response.status, response.statusText);
+                        return null;
                     }
-                    return null;
+
+                    const data = await response.json();
+                    console.log('Dados recuperados:', data);
+
+                    if (data.success && data.qr_code && data.qr_code_base64) {
+                        console.log('QR Code recuperado com sucesso');
+                        return data;
+                    } else {
+                        console.error('Dados do QR Code incompletos na recuperação:', data);
+                        return null;
+                    }
                 } catch (error) {
                     console.error('Erro ao recuperar QR Code:', error);
                     return null;
                 }
             }
 
-            // Função para exibir QR Code com validação CORRIGIDA
+
+            // guardar por enquanto até confirmar que a função abaixo esteja funcionando de vdd
+            // // Função para exibir QR Code com validação CORRIGIDA
+            // function displayQRCode(qrCodeBase64, qrCodeText, isRecovered = false) {
+            //     if (!qrCodeBase64 || !qrCodeText) {
+            //         throw new Error('Dados do QR Code inválidos');
+            //     }
+
+            //     const qrContainer = document.getElementById('qrContainer');
+            //     const loadingContainer = document.getElementById('loadingContainer');
+            //     const qrCode = document.getElementById('qrCode');
+            //     const pixKey = document.getElementById('pixKey');
+            //     const totalAmount = document.getElementById('totalAmount');
+
+            //     // Garante que o valor total seja exibido
+            //     const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
+            //     const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
+            //     const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
+
+            //     totalAmount.textContent = formatCurrency(totalValue);
+
+            //     qrCode.src = `data:image/png;base64,${qrCodeBase64}`;
+            //     pixKey.textContent = qrCodeText;
+
+            //     loadingContainer.classList.add('hidden');
+            //     qrContainer.classList.remove('hidden');
+
+            //     // Inicia o timer apenas se não conseguir recuperar um existente
+            //     if (!recoverCountdownTimer()) {
+            //         console.log('Iniciando novo timer de 30 minutos');
+            //         startCountdownTimer(true); // Inicia do tempo total
+            //     }
+            // }
+
+            // Função para exibir QR Code com validação e atualização do ID
             function displayQRCode(qrCodeBase64, qrCodeText, isRecovered = false) {
                 if (!qrCodeBase64 || !qrCodeText) {
                     throw new Error('Dados do QR Code inválidos');
@@ -412,6 +532,21 @@
                 loadingContainer.classList.add('hidden');
                 qrContainer.classList.remove('hidden');
 
+                // Se foi recuperado, garantir que o IDPAGAMENTO esteja atualizado
+                if (isRecovered) {
+                    const persistedData = getPersistedPaymentData();
+                    if (persistedData && persistedData.paymentId) {
+                        console.log('Garantindo que IDPAGAMENTO esteja atualizado para QR recuperado');
+                        atualizarIdPagamento(persistedData.paymentId).then(success => {
+                            if (success) {
+                                console.log('IDPAGAMENTO confirmado/atualizado para QR recuperado');
+                            } else {
+                                console.warn('Falha ao confirmar IDPAGAMENTO para QR recuperado');
+                            }
+                        });
+                    }
+                }
+
                 // Inicia o timer apenas se não conseguir recuperar um existente
                 if (!recoverCountdownTimer()) {
                     console.log('Iniciando novo timer de 30 minutos');
@@ -419,13 +554,14 @@
                 }
             }
 
+
             function validatePaymentData() {
                 // Check if all required localStorage data is present
                 const requiredFields = [
                     'user_name', 'user_email', 'user_cpf',
                     'categoria', 'valoratual', 'valortaxa', 'valortotal'
                 ];
-                
+
                 const missingFields = [];
                 requiredFields.forEach(field => {
                     const value = localStorage.getItem(field);
@@ -433,35 +569,35 @@
                         missingFields.push(field);
                     }
                 });
-                
+
                 if (missingFields.length > 0) {
                     console.error('Missing required fields:', missingFields);
                     return false;
                 }
-                
+
                 // Validate numeric values
                 const valorAtual = parseFloat(localStorage.getItem('valoratual') || '0');
                 const valorTaxa = parseFloat(localStorage.getItem('valortaxa') || '0');
                 const valorTotal = parseFloat(localStorage.getItem('valortotal') || '0');
-                
+
                 if (isNaN(valorAtual) || isNaN(valorTaxa) || isNaN(valorTotal)) {
-                    console.error('Invalid numeric values:', { 
-                        valorAtual, 
-                        valorTaxa, 
-                        valorTotal 
+                    console.error('Invalid numeric values:', {
+                        valorAtual,
+                        valorTaxa,
+                        valorTotal
                     });
                     return false;
                 }
-                
+
                 return true;
             }
 
-            // Função para atualizar o ID do pagamento na base de dados
+            // Função para atualizar o ID do pagamento na base de dados CORRIGIDA
             async function atualizarIdPagamento(paymentId) {
                 try {
                     const cpf = localStorage.getItem('user_cpf');
                     const idEvento = localStorage.getItem('id_evento');
-                    
+
                     if (!cpf || !idEvento) {
                         console.error('Dados necessários não encontrados:', { cpf, idEvento });
                         return false;
@@ -484,8 +620,13 @@
                         })
                     });
 
+                    if (!response.ok) {
+                        console.error('Erro na resposta da atualização:', response.status);
+                        return false;
+                    }
+
                     const result = await response.json();
-                    
+
                     if (result.success) {
                         console.log('ID do pagamento atualizado com sucesso:', result);
                         return true;
@@ -493,7 +634,7 @@
                         console.error('Erro ao atualizar ID do pagamento:', result.message);
                         return false;
                     }
-                    
+
                 } catch (error) {
                     console.error('Erro na requisição de atualização do ID pagamento:', error);
                     return false;
@@ -501,9 +642,62 @@
             }
 
 
-            // Função principal para gerar pagamento PIX com retry
+            // // Função para atualizar o ID do pagamento na base de dados
+            // async function atualizarIdPagamento(paymentId) {
+            //     try {
+            //         const cpf = localStorage.getItem('user_cpf');
+            //         const idEvento = localStorage.getItem('id_evento');
+
+            //         if (!cpf || !idEvento) {
+            //             console.error('Dados necessários não encontrados:', { cpf, idEvento });
+            //             return false;
+            //         }
+
+            //         console.log('Atualizando ID do pagamento:', {
+            //             cpf: cpf,
+            //             payment_id: paymentId,
+            //             id_evento: idEvento
+            //         });
+
+            //         const response = await fetch(`${baseURL}/atualiza-idpagamento/${cpf}`, {
+            //             method: 'POST',
+            //             headers: {
+            //                 'Content-Type': 'application/json'
+            //             },
+            //             body: JSON.stringify({
+            //                 payment_id: paymentId,
+            //                 id_evento: idEvento
+            //             })
+            //         });
+
+            //         const result = await response.json();
+
+            //         if (result.success) {
+            //             console.log('ID do pagamento atualizado com sucesso:', result);
+            //             return true;
+            //         } else {
+            //             console.error('Erro ao atualizar ID do pagamento:', result.message);
+            //             return false;
+            //         }
+
+            //     } catch (error) {
+            //         console.error('Erro na requisição de atualização do ID pagamento:', error);
+            //         return false;
+            //     }
+            // }
+
+            // Função principal para gerar pagamento PIX com retry CORRIGIDA
             async function generatePixPayment(totalValue, isRetry = false) {
                 try {
+                    // VERIFICA SE JÁ EXISTE UM PAYMENT VÁLIDO ANTES DE GERAR NOVO
+                    if (!isRetry) {
+                        const persistedData = getPersistedPaymentData();
+                        if (persistedData && persistedData.paymentId) {
+                            console.log('Payment já existe, não gerando novo:', persistedData.paymentId);
+                            return;
+                        }
+                    }
+
                     if (isRetry && retryCount >= MAX_RETRIES) {
                         throw new Error('Número máximo de tentativas excedido');
                     }
@@ -517,10 +711,10 @@
                     const vlinscricao = parseFloat(localStorage.getItem('valoratual') || '0');
                     const vltaxa = parseFloat(localStorage.getItem('valortaxa') || '0');
                     const totalValue = parseFloat(localStorage.getItem('valortotal') || '0');
-                    
+
                     console.log('Valores sendo enviados:', {
-                        vlinscricao, 
-                        vltaxa, 
+                        vlinscricao,
+                        vltaxa,
                         totalValue,
                         vlinscricaoType: typeof vlinscricao,
                         vltaxaType: typeof vltaxa,
@@ -545,7 +739,7 @@
                         ...userData
                     };
 
-                    console.log('Enviando dados para o servidor:', requestData);
+                    console.log('GERANDO NOVO PAYMENT PIX:', requestData);
 
                     const response = await fetch(`${baseURL}/gerar-pix`, {
                             method: 'POST',
@@ -564,127 +758,306 @@
 
                     // Verifica se tem os dados necessários
                     if (!responseData.qr_code || !responseData.qr_code_base64) {
-                        // Tenta recuperar o QR code se tiver o payment_id
-                        if (responseData.payment_id) {
-                            const recoveredData = await recoverQRCode(responseData.payment_id);
-                            if (recoveredData) {
-                                responseData.qr_code = recoveredData.qr_code;
-                                responseData.qr_code_base64 = recoveredData.qr_code_base64;
-                            }
-                        }
+                        throw new Error('Dados do QR Code incompletos na resposta');
                     }
 
                     if (responseData.qr_code && responseData.qr_code_base64) {
+                        console.log('NOVO PAYMENT GERADO COM SUCESSO:', responseData.payment_id);
                         persistPaymentData(responseData);
                         displayQRCode(responseData.qr_code_base64, responseData.qr_code, false);
-                        
+
                         if (responseData.payment_id) {
-                            // NOVA FUNCIONALIDADE: Atualizar ID do pagamento na base de dados
-                            console.log('Payment ID obtido, atualizando na base de dados:', responseData.payment_id);
-                            const updateSuccess = await atualizarIdPagamento(responseData.payment_id);
-                            
-                            if (updateSuccess) {
-                                console.log('ID do pagamento atualizado com sucesso na base de dados');
-                            } else {
-                                console.warn('Falha ao atualizar ID do pagamento na base de dados, mas continuando com o processo');
-                            }
-                            
                             await startPaymentVerification(responseData.payment_id);
                         }
-                    } else {
-                        throw new Error('Dados do QR Code incompletos');
                     }
-
-                    // if (responseData.qr_code && responseData.qr_code_base64) {
-                    //     persistPaymentData(responseData);
-                    //     displayQRCode(responseData.qr_code_base64, responseData.qr_code, false);
-                        
-                    //     if (responseData.payment_id) {
-                    //         await startPaymentVerification(responseData.payment_id);
-                    //     }
-                    // } else {
-                    //     throw new Error('Dados do QR Code incompletos');
-                    // }
 
                 } catch (error) {
                     console.error('Erro ao gerar PIX:', error);
-                    
-                    if (!isRetry) {
-                        // Tenta recuperar dados anteriores primeiro
-                        const persistedData = getPersistedPaymentData();
-                        if (persistedData) {
-                            if (persistedData.qrCodeBase64 && persistedData.qrCode) {
-                                displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode, true);
-                                if (persistedData.paymentId) {
-                                    await startPaymentVerification(persistedData.paymentId);
-                                    return;
-                                }
-                            } else if (persistedData.paymentId) {
-                                // Tenta recuperar apenas o QR code
-                                const recoveredData = await recoverQRCode(persistedData.paymentId);
-                                if (recoveredData) {
-                                    displayQRCode(recoveredData.qr_code_base64, recoveredData.qr_code, true);
-                                    await startPaymentVerification(persistedData.paymentId);
-                                    return;
-                                }
-                            }
-                        }
 
-                        // Se não conseguiu recuperar, tenta gerar novo
-                        retryCount++;
-                        await generatePixPayment(totalValue, true);
+                    if (!isRetry) {
+                        // Só tenta retry se realmente não tem nenhum payment válido
+                        const persistedData = getPersistedPaymentData();
+                        if (!persistedData || !persistedData.paymentId) {
+                            retryCount++;
+                            await generatePixPayment(totalValue, true);
+                        }
                     } else {
                         document.getElementById('loadingContainer').innerHTML = `
                             <p>Erro ao gerar QR Code PIX. Por favor, tente novamente em alguns instantes.</p>
-                            <p>Caso você tenha efetuado o pagamento fique tranquilo, sua inscrição está garantida. Nosso suporte entrará em contato para enviar a confirmação, mas caso queira, você poderá entrar em contato com o suporte pelo WhatsApp (69)99925-7724 ou pelo e-mail adm@ecmrun.com.br. Desde já pedimos desculpas pelo ocorrido.</p>
                             <button class="button" onclick="window.location.reload()">Tentar novamente</button>
                         `;
                     }
                 }
             }
 
-            // Função para verificar pagamento
+
+
+            // // Função principal para gerar pagamento PIX com retry
+            // async function generatePixPayment(totalValue, isRetry = false) {
+            //     try {
+            //         if (isRetry && retryCount >= MAX_RETRIES) {
+            //             throw new Error('Número máximo de tentativas excedido');
+            //         }
+
+            //         // Validate data before sending
+            //         if (!validatePaymentData()) {
+            //             throw new Error('Dados de pagamento inválidos ou incompletos');
+            //         }
+
+            //         // Parse values safely ensuring they're numbers
+            //         const vlinscricao = parseFloat(localStorage.getItem('valoratual') || '0');
+            //         const vltaxa = parseFloat(localStorage.getItem('valortaxa') || '0');
+            //         const totalValue = parseFloat(localStorage.getItem('valortotal') || '0');
+
+            //         console.log('Valores sendo enviados:', {
+            //             vlinscricao,
+            //             vltaxa,
+            //             totalValue,
+            //             vlinscricaoType: typeof vlinscricao,
+            //             vltaxaType: typeof vltaxa,
+            //             totalValueType: typeof totalValue
+            //         });
+
+            //         const userData = {
+            //             idatleta: localStorage.getItem('user_idatleta'),
+            //             nome: localStorage.getItem('user_name'),
+            //             email: localStorage.getItem('user_email'),
+            //             cpf: localStorage.getItem('user_cpf')
+            //         };
+
+            //         if (!userData.email || !userData.cpf || !totalValue) {
+            //             throw new Error('Dados incompletos para geração do PIX');
+            //         }
+
+            //         const requestData = {
+            //             valor_atual: vlinscricao,
+            //             valor_taxa: vltaxa,
+            //             valor_total: totalValue,
+            //             ...userData
+            //         };
+
+            //         console.log('Enviando dados para o servidor:', requestData);
+
+            //         const response = await fetch(`${baseURL}/gerar-pix`, {
+            //                 method: 'POST',
+            //             headers: {
+            //                 'Content-Type': 'application/json'
+            //             },
+            //             body: JSON.stringify(requestData)
+            //         });
+
+            //         const responseData = await response.json();
+            //         console.log('Resposta do servidor:', responseData);
+
+            //         if (!response.ok) {
+            //             throw new Error(responseData.message || `Erro HTTP: ${response.status}`);
+            //         }
+
+            //         // Verifica se tem os dados necessários
+            //         if (!responseData.qr_code || !responseData.qr_code_base64) {
+            //             // Tenta recuperar o QR code se tiver o payment_id
+            //             if (responseData.payment_id) {
+            //                 const recoveredData = await recoverQRCode(responseData.payment_id);
+            //                 if (recoveredData) {
+            //                     responseData.qr_code = recoveredData.qr_code;
+            //                     responseData.qr_code_base64 = recoveredData.qr_code_base64;
+            //                 }
+            //             }
+            //         }
+
+            //         if (responseData.qr_code && responseData.qr_code_base64) {
+            //             persistPaymentData(responseData);
+            //             displayQRCode(responseData.qr_code_base64, responseData.qr_code, false);
+
+            //             if (responseData.payment_id) {
+            //                 // NOVA FUNCIONALIDADE: Atualizar ID do pagamento na base de dados
+            //                 console.log('Payment ID obtido, atualizando na base de dados:', responseData.payment_id);
+            //                 const updateSuccess = await atualizarIdPagamento(responseData.payment_id);
+
+            //                 if (updateSuccess) {
+            //                     console.log('ID do pagamento atualizado com sucesso na base de dados');
+            //                 } else {
+            //                     console.warn('Falha ao atualizar ID do pagamento na base de dados, mas continuando com o processo');
+            //                 }
+
+            //                 await startPaymentVerification(responseData.payment_id);
+            //             }
+            //         } else {
+            //             throw new Error('Dados do QR Code incompletos');
+            //         }
+
+            //         // if (responseData.qr_code && responseData.qr_code_base64) {
+            //         //     persistPaymentData(responseData);
+            //         //     displayQRCode(responseData.qr_code_base64, responseData.qr_code, false);
+
+            //         //     if (responseData.payment_id) {
+            //         //         await startPaymentVerification(responseData.payment_id);
+            //         //     }
+            //         // } else {
+            //         //     throw new Error('Dados do QR Code incompletos');
+            //         // }
+
+            //     } catch (error) {
+            //         console.error('Erro ao gerar PIX:', error);
+
+            //         if (!isRetry) {
+            //             // Tenta recuperar dados anteriores primeiro
+            //             const persistedData = getPersistedPaymentData();
+            //             if (persistedData) {
+            //                 if (persistedData.qrCodeBase64 && persistedData.qrCode) {
+            //                     displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode, true);
+            //                     if (persistedData.paymentId) {
+            //                         await startPaymentVerification(persistedData.paymentId);
+            //                         return;
+            //                     }
+            //                 } else if (persistedData.paymentId) {
+            //                     // Tenta recuperar apenas o QR code
+            //                     const recoveredData = await recoverQRCode(persistedData.paymentId);
+            //                     if (recoveredData) {
+            //                         displayQRCode(recoveredData.qr_code_base64, recoveredData.qr_code, true);
+            //                         await startPaymentVerification(persistedData.paymentId);
+            //                         return;
+            //                     }
+            //                 }
+            //             }
+
+            //             // Se não conseguiu recuperar, tenta gerar novo
+            //             retryCount++;
+            //             await generatePixPayment(totalValue, true);
+            //         } else {
+            //             document.getElementById('loadingContainer').innerHTML = `
+            //                 <p>Erro ao gerar QR Code PIX. Por favor, tente novamente em alguns instantes.</p>
+            //                 <p>Caso você tenha efetuado o pagamento fique tranquilo, sua inscrição está garantida. Nosso suporte entrará em contato para enviar a confirmação, mas caso queira, você poderá entrar em contato com o suporte pelo WhatsApp (69)99925-7724 ou pelo e-mail adm@ecmrun.com.br. Desde já pedimos desculpas pelo ocorrido.</p>
+            //                 <button class="button" onclick="window.location.reload()">Tentar novamente</button>
+            //             `;
+            //         }
+            //     }
+            // }
+
+            // Função para verificar pagamento - VERSÃO CORRIGIDA
             async function startPaymentVerification(paymentId) {
                 if (checkInterval) {
                     clearInterval(checkInterval);
                 }
 
                 let startTime = Date.now();
-                
+                let consecutiveErrors = 0;
+                const MAX_CONSECUTIVE_ERRORS = 3;
+
                 const checkPayment = async () => {
                     if (isRedirecting) return;
 
                     try {
                         if (Date.now() - startTime > VERIFICATION_TIMEOUT) {
                             clearInterval(checkInterval);
-                            alert('Tempo de verificação expirado. Se você já realizou o pagamento, aguarde alguns instantes e atualize a página.');
+                            console.log('Tempo de verificação expirado');
+                            // Não exibe alert automaticamente, deixa o usuário decidir
                             return;
                         }
 
-                        const response = await fetch(`${baseURL}/verificar-pagamento/${paymentId}`);
+                        console.log(`Verificando pagamento ${paymentId}...`);
+
+                        const response = await fetch(`${baseURL}/verificar-pagamento/${paymentId}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Cache-Control': 'no-cache'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
                         const data = await response.json();
-                        
+                        console.log('Resposta da verificação:', data);
+
+                        // Reset contador de erros em caso de sucesso
+                        consecutiveErrors = 0;
+
                         if (data.success && data.status === 'approved' && !isRedirecting) {
-                            console.log('Pagamento aprovado, preparando redirecionamento...');
+                            console.log('Pagamento aprovado! Redirecionando...');
                             isRedirecting = true;
                             clearInterval(checkInterval);
 
                             // Remove event listeners
                             document.removeEventListener('visibilitychange', handleVisibilityChange);
-                            
-                            // Executa o redirecionamento
-                            redirectToReceipt(paymentId);
+
+                            // Pequeno delay para garantir que o processamento foi concluído
+                            setTimeout(() => {
+                                redirectToReceipt(paymentId);
+                            }, 1000);
+
+                        } else if (data.status === 'pending' || data.status === 'in_process') {
+                            console.log(`Status do pagamento: ${data.status} - continuando verificação...`);
+                        } else if (data.status === 'cancelled' || data.status === 'rejected') {
+                            console.log(`Pagamento ${data.status}`);
+                            clearInterval(checkInterval);
+                            alert(`Pagamento ${data.status === 'cancelled' ? 'cancelado' : 'rejeitado'}. Por favor, tente novamente.`);
                         }
+
                     } catch (error) {
-                        console.error('Erro ao verificar pagamento:', error);
+                        consecutiveErrors++;
+                        console.error(`Erro ao verificar pagamento (tentativa ${consecutiveErrors}):`, error);
+
+                        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                            clearInterval(checkInterval);
+                            console.error('Muitos erros consecutivos, parando verificação automática');
+                        }
                     }
                 };
 
+                // Primeira verificação imediata
                 await checkPayment();
+
                 if (!isRedirecting) {
-                    checkInterval = setInterval(checkPayment, 5000);
+                    // Verifica a cada 3 segundos (mais frequente para melhor UX)
+                    checkInterval = setInterval(checkPayment, 3000);
                 }
             }
+
+            // // Função para verificar pagamento
+            // async function startPaymentVerification(paymentId) {
+            //     if (checkInterval) {
+            //         clearInterval(checkInterval);
+            //     }
+
+            //     let startTime = Date.now();
+
+            //     const checkPayment = async () => {
+            //         if (isRedirecting) return;
+
+            //         try {
+            //             if (Date.now() - startTime > VERIFICATION_TIMEOUT) {
+            //                 clearInterval(checkInterval);
+            //                 alert('Tempo de verificação expirado. Se você já realizou o pagamento, aguarde alguns instantes e atualize a página.');
+            //                 return;
+            //             }
+
+            //             const response = await fetch(`${baseURL}/verificar-pagamento/${paymentId}`);
+            //             const data = await response.json();
+
+            //             if (data.success && data.status === 'approved' && !isRedirecting) {
+            //                 console.log('Pagamento aprovado, preparando redirecionamento...');
+            //                 isRedirecting = true;
+            //                 clearInterval(checkInterval);
+
+            //                 // Remove event listeners
+            //                 document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+            //                 // Executa o redirecionamento
+            //                 redirectToReceipt(paymentId);
+            //             }
+            //         } catch (error) {
+            //             console.error('Erro ao verificar pagamento:', error);
+            //         }
+            //     };
+
+            //     await checkPayment();
+            //     if (!isRedirecting) {
+            //         checkInterval = setInterval(checkPayment, 5000);
+            //     }
+            // }
 
             // Função para lidar com mudanças de visibilidade da página
             function handleVisibilityChange() {
@@ -697,7 +1070,7 @@
                 }
             }
 
-            // Inicialização da página CORRIGIDA
+            // Inicialização da página CORRIGIDA - EVITA MÚLTIPLOS PAYMENTS
             async function initializePagamento() {
                 try {
                     const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
@@ -705,46 +1078,58 @@
                     const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
 
                     document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
-                    
-                    // Tenta recuperar dados persistidos
+
+                    // PRIMEIRA PRIORIDADE: Tentar recuperar dados persistidos válidos
                     const persistedData = getPersistedPaymentData();
-                    if (persistedData && persistedData.qrCodeBase64 && persistedData.qrCode && 
-                        persistedData.timestamp && (Date.now() - persistedData.timestamp) < 900000) {
-                        console.log('Recuperando dados persistidos válidos');
-                        displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode, true);
-                        
-                        if (persistedData.paymentId) {
-                            // Verificar se precisa atualizar o ID do pagamento para dados recuperados
-                            console.log('Verificando se o ID do pagamento já foi atualizado para:', persistedData.paymentId);
-                            const updateSuccess = await atualizarIdPagamento(persistedData.paymentId);
-                            
-                            if (updateSuccess) {
-                                console.log('ID do pagamento atualizado/confirmado na base de dados');
-                            }
-                            
+
+                    if (persistedData && persistedData.paymentId) {
+                        console.log('Dados persistidos encontrados, verificando validade...', persistedData);
+
+                        // Se tem QR code completo e é recente (menos de 15 minutos)
+                        if (persistedData.qrCodeBase64 && persistedData.qrCode &&
+                            persistedData.timestamp && (Date.now() - persistedData.timestamp) < 900000) {
+
+                            console.log('Usando dados persistidos completos e válidos');
+                            displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode, true);
                             await startPaymentVerification(persistedData.paymentId);
+                            return; // PARA AQUI - NÃO GERA NOVO PAYMENT
                         }
-                    } else {
-                        // Se não há dados persistidos válidos, gera um novo QR code
-                        console.log('Gerando novo pagamento PIX');
-                        await generatePixPayment(totalValue);
+
+                        // Se tem apenas paymentId, tenta recuperar o QR code
+                        console.log('Tentando recuperar QR Code para payment existente:', persistedData.paymentId);
+                        const recoveredData = await recoverQRCode(persistedData.paymentId);
+
+                        if (recoveredData && recoveredData.qr_code_base64) {
+                            console.log('QR Code recuperado com sucesso');
+                            // Atualiza os dados persistidos com o QR code recuperado
+                            const updatedData = {
+                                ...persistedData,
+                                qrCode: recoveredData.qr_code,
+                                qrCodeBase64: recoveredData.qr_code_base64,
+                                timestamp: Date.now()
+                            };
+                            persistPaymentData(updatedData);
+
+                            displayQRCode(recoveredData.qr_code_base64, recoveredData.qr_code, true);
+                            await startPaymentVerification(persistedData.paymentId);
+                            return; // PARA AQUI - NÃO GERA NOVO PAYMENT
+                        }
+
+                        // Se chegou até aqui, o payment existe mas não conseguiu recuperar o QR
+                        console.log('Payment existe mas QR code expirado/indisponível');
                     }
 
-                    // if (persistedData && persistedData.qrCodeBase64 && persistedData.qrCode && 
-                    //     persistedData.timestamp && (Date.now() - persistedData.timestamp) < 900000) {
-                    //     console.log('Recuperando dados persistidos válidos');
-                    //     displayQRCode(persistedData.qrCodeBase64, persistedData.qrCode, true);
-                    //     if (persistedData.paymentId) {
-                    //         await startPaymentVerification(persistedData.paymentId);
-                    //     }
-                    // } else {
-                    //     // Se não há dados persistidos válidos, gera um novo QR code
-                    //     console.log('Gerando novo pagamento PIX');
-                    //     await generatePixPayment(totalValue);
-                    // }
+                    // ÚLTIMA OPÇÃO: Só gera novo payment se realmente não existe nenhum válido
+                    console.log('Nenhum pagamento válido encontrado, gerando novo...');
+                    await generatePixPayment(totalValue);
+
                 } catch (error) {
                     console.error('Erro na inicialização:', error);
-                    alert('Erro ao inicializar o pagamento. Por favor, tente novamente.');
+                    // Só mostra erro se realmente não conseguir recuperar nada
+                    const persistedData = getPersistedPaymentData();
+                    if (!persistedData || !persistedData.paymentId) {
+                        alert('Erro ao inicializar o pagamento. Por favor, tente novamente.');
+                    }
                 }
             }
 
@@ -755,7 +1140,7 @@
                     alert('Chave PIX não disponível no momento. Por favor, aguarde o carregamento ou recarregue a página.');
                     return;
                 }
-                
+
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(pixKey)
                         .then(() => {
@@ -769,6 +1154,78 @@
                 }
             };
 
+            // Função para confirmar pagamento manualmente
+            window.confirmarPagamento = async function() {
+                const confirmBtn = document.getElementById('confirmPaymentBtn');
+                const btnText = document.getElementById('confirmBtnText');
+                const btnSpinner = document.getElementById('confirmBtnSpinner');
+
+                // Desabilita o botão e mostra loading
+                confirmBtn.disabled = true;
+                btnText.style.display = 'none';
+                btnSpinner.style.display = 'inline-block';
+
+                try {
+                    const persistedData = getPersistedPaymentData();
+                    if (!persistedData || !persistedData.paymentId) {
+                        throw new Error('ID do pagamento não encontrado');
+                    }
+
+                    console.log('Verificação manual do pagamento:', persistedData.paymentId);
+
+                    const response = await fetch(`${baseURL}/verificar-pagamento/${persistedData.paymentId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erro na verificação: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('Resultado da verificação manual:', data);
+
+                    if (data.success && data.status === 'approved') {
+                        alert('Pagamento confirmado com sucesso! Redirecionando...');
+                        isRedirecting = true;
+
+                        // Para a verificação automática
+                        if (checkInterval) {
+                            clearInterval(checkInterval);
+                        }
+
+                        // Remove event listeners
+                        document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+                        // Redireciona
+                        setTimeout(() => {
+                            redirectToReceipt(persistedData.paymentId);
+                        }, 1500);
+
+                    } else if (data.status === 'pending' || data.status === 'in_process') {
+                        alert('Pagamento ainda está sendo processado. Aguarde alguns instantes e tente novamente.');
+                    } else if (data.status === 'cancelled' || data.status === 'rejected') {
+                        alert(`Pagamento ${data.status === 'cancelled' ? 'cancelado' : 'rejeitado'}. Você precisa gerar um novo QR Code.`);
+                        window.location.reload();
+                    } else {
+                        alert('Pagamento ainda não foi identificado. Verifique se o pagamento foi realizado corretamente e tente novamente em alguns instantes.');
+                    }
+
+                } catch (error) {
+                    console.error('Erro ao confirmar pagamento:', error);
+                    alert('Erro ao verificar o pagamento. Por favor, tente novamente ou entre em contato com o suporte.');
+                } finally {
+                    // Reabilita o botão
+                    confirmBtn.disabled = false;
+                    btnText.style.display = 'inline-block';
+                    btnSpinner.style.display = 'none';
+                }
+            };
+
+
             // Método alternativo para copiar texto
             function fallbackCopyMethod(text) {
                 try {
@@ -778,14 +1235,14 @@
                     textArea.style.left = '0';
                     textArea.style.position = 'fixed';
                     textArea.style.opacity = '0';
-                    
+
                     document.body.appendChild(textArea);
                     textArea.focus();
                     textArea.select();
-                    
+
                     const successful = document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    
+
                     if (successful) {
                         alert('Chave PIX copiada com sucesso!');
                     } else {
@@ -799,16 +1256,16 @@
 
             // Event Listeners
             document.addEventListener('visibilitychange', handleVisibilityChange);
-            
+
             // Initialize
             initializePagamento();
-        
+
             // Função para voltar para a página do evento
             window.voltarParaEvento = function() {
                 // Limpa dados do pagamento antes de sair
                 clearCountdownTimer();
                 clearPaymentRelatedLocalStorage();
-                
+
                 // Redireciona para a rota que leva à página de origem
                 window.location.href = '/voltar-para-evento';
             };
