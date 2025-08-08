@@ -985,9 +985,9 @@ def comprovante(payment_id):
                 CASE WHEN e.DTINICIO = e.DTFIM
                     THEN CONCAT(e.DTINICIO,' ',e.HRINICIO)
                     ELSE CONCAT(e.DTINICIO,' ',e.HRINICIO,' - ',e.DTFIM) END AS DTEVENTO,
-                CONCAT(ei.NOME,' ',ei.SOBRENOME) as NOME_COMPLETO,
-                i.KM_DESCRICAO, ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO,
-                ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, e.OBS
+                CONCAT(ei.NOME,' ',ei.SOBRENOME) as NOME_COMPLETO, i.KM_DESCRICAO, 
+                ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, ei.IDPAGAMENTO, 
+                ei.FLEMAIL, ei.IDINSCRICAO, e.OBS, ei.CPF, ei.DTNASCIMENTO
             FROM EVENTO e, EVENTO_ITENS i, EVENTO_INSCRICAO ei
             WHERE i.IDITEM = ei.IDITEMEVENTO
             AND e.IDEVENTO = ei.IDEVENTO
@@ -1017,7 +1017,9 @@ def comprovante(payment_id):
             'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[8],
             'inscricao': str(receipt_data[9]),
-            'obs': receipt_data[12]
+            'obs': receipt_data[12],
+            'cpf': receipt_data[13],
+            'dtnascimento': receipt_data[14]
         }
         
         app.logger.info("Dados da Inscrição:")
@@ -7343,7 +7345,98 @@ def get_minhas_inscricoes():
             'error': str(e)
         }), 500
 
+# Adicione esta nova rota ao seu Flask app:
 
+@app.route('/lista-eventos-direto', methods=['POST'])
+def lista_eventos_direto():
+    try:
+        cpf = request.form.get('cpf')
+        data_nascimento = request.form.get('data_nascimento')
+        
+        # Validações básicas
+        if not cpf or not data_nascimento:
+            # Se não tiver os dados, redireciona para a página normal
+            return redirect('/lista-eventos')
+        
+        # Remover formatação do CPF (manter apenas números)
+        cpf_numeros = ''.join(filter(str.isdigit, cpf))
+        
+        if len(cpf_numeros) != 11:
+            return redirect('/lista-eventos')
+        
+        # Buscar as inscrições diretamente
+        cursor = mysql.connection.cursor()
+        query = """
+            SELECT 
+                e.DESCRICAO, 
+                e.LOCAL, 
+                CASE 
+                    WHEN e.DTINICIO = e.DTFIM THEN CONCAT(e.DTINICIO, ' ', e.HRINICIO)
+                    ELSE CONCAT(e.DTINICIO, ' ', e.HRINICIO, ' - ', e.DTFIM)
+                END AS DTEVENTO,
+                CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO,
+                i.KM_DESCRICAO, 
+                ei.VLINSCRICAO, 
+                ei.VLTOTAL, 
+                ei.FORMAPGTO,
+                ei.IDPAGAMENTO, 
+                ei.DTPAGAMENTO, 
+                ei.FLEMAIL, 
+                ei.IDINSCRICAO, 
+                e.OBS
+            FROM EVENTO_INSCRICAO ei
+            INNER JOIN EVENTO_ITENS i ON i.IDITEM = ei.IDITEMEVENTO
+            INNER JOIN EVENTO e ON e.IDEVENTO = ei.IDEVENTO
+            WHERE ei.STATUS = 'A'
+              AND ei.DTNASCIMENTO = %s
+              AND ei.CPF = %s
+              AND STR_TO_DATE(e.DTFIM, '%%d/%%m/%%Y') >= CURDATE()
+        """
+        
+        cursor.execute(query, (data_nascimento, cpf_numeros))
+        inscricoes = cursor.fetchall()
+        cursor.close()
+        
+        # Converter para lista de dicionários
+        inscricoes_list = []
+        for inscricao in inscricoes:
+            # Formatar DTPAGAMENTO se for um objeto datetime
+            dt_pagamento = inscricao[9]
+            if dt_pagamento:
+                if isinstance(dt_pagamento, datetime):
+                    dt_pagamento_formatada = dt_pagamento.strftime('%d/%m/%Y %H:%M:%S')
+                else:
+                    dt_pagamento_formatada = str(dt_pagamento)
+            else:
+                dt_pagamento_formatada = ''
+            
+            inscricoes_list.append({
+                'DESCRICAO': inscricao[0],
+                'LOCAL': inscricao[1],
+                'DTEVENTO': inscricao[2],
+                'NOME_COMPLETO': inscricao[3],
+                'KM_DESCRICAO': inscricao[4],
+                'VLINSCRICAO': inscricao[5],
+                'VLTOTAL': inscricao[6],
+                'FORMAPGTO': inscricao[7],
+                'IDPAGAMENTO': inscricao[8],
+                'DTPAGAMENTO': dt_pagamento_formatada,
+                'FLEMAIL': inscricao[10],
+                'IDINSCRICAO': inscricao[11],
+                'OBS': inscricao[12]
+            })
+        
+        # Renderizar a página com os dados já carregados
+        return render_template('lista_eventos.html', 
+                             inscricoes_carregadas=True,
+                             inscricoes=inscricoes_list,
+                             total=len(inscricoes_list),
+                             cpf=cpf,
+                             data_nascimento=data_nascimento)
+        
+    except Exception as e:
+        # Em caso de erro, redireciona para a página normal
+        return redirect('/lista-eventos')
 
 ################
 
