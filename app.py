@@ -6709,7 +6709,7 @@ def atleta_detalhes(idatleta):
 
 ##### AREAL SLOPE ###########
 
-@app.route('/arealslope2')
+@app.route('/arealslope')
 def arealslope():
     """Página de inscrição do evento Areal Slope"""
     try:
@@ -7447,4 +7447,5 @@ def lista_eventos_direto():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
