@@ -1,0 +1,518 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    line-height: 1.6;
+}
+
+/* Timer fixo */
+.timer-container {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(220, 53, 69, 0.7); /* Vermelho com transparência */
+    color: white;
+    padding: 8px 15px;
+    border-radius: 0 0 10px 10px;
+    z-index: 1000;
+    font-weight: bold;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    font-size: 14px;
+    white-space: nowrap; /* Evita quebra de linha */
+    max-width: 95vw; /* Limita a largura máxima */
+    overflow: hidden; /* Esconde conteúdo que exceder */
+    text-align: center;
+    backdrop-filter: blur(10px); /* Efeito de desfoque no fundo */
+    -webkit-backdrop-filter: blur(10px); /* Para Safari */
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Container principal */
+.container {
+    max-width: 800px;
+    margin: 60px auto 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+/* Header com informações do evento */
+.event-header {
+    background: linear-gradient(135deg, #4a5568 0%, #33425e 100%);
+    /*background: linear-gradient(135deg, #1d72cc, #2980b9);*/
+    color: white;
+    padding: 5px;
+    text-align: center;
+}
+
+.event-title {
+    font-size: 22px;
+    margin-bottom: 0px;
+}
+
+.lote-info {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Formulário */
+.form-container {
+    padding: 30px;
+}
+
+.form-title {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+    border-bottom: 2px solid #1d72cc;
+    padding-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.required {
+    color: #dc3545;
+}
+
+input[type="text"], input[type="email"], select, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus, input[type="email"]:focus, select:focus, textarea:focus {
+    border-color: #1d72cc;
+    outline: none;
+}
+
+/* ocultar o campo cupom sem precisar excluir */
+#cupom {
+    display: none;
+}
+.cupom-label {
+    display: none;
+}
+
+
+.checkbox-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.checkbox-item input[type="radio"] {
+    margin: 0;
+}
+
+/* Valores da inscrição */
+.valores-container {
+    background: #f8f9fa;
+    border: 2px solid #28a745;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    display: none;
+}
+
+.valores-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #28a745;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.valor-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0px;
+    padding: 5px 0;
+}
+
+.valor-total {
+    border-top: 2px solid #28a745;
+    font-weight: bold;
+    font-size: 18px;
+    color: #28a745;
+}
+
+/* Termo de responsabilidade */
+.termo-container {
+    margin: 30px 0;
+}
+
+.termo-texto {
+    height: 120px;
+    overflow-y: auto;
+    border: 2px solid #ddd;
+    padding: 15px;
+    background: #f9f9f9;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.termo-aceite {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Botões */
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #1d72cc;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #155a9e;
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-container {
+    text-align: center;
+    margin-top: 30px;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 30px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #dc3545;
+}
+
+.modal-text {
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    display: none;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .checkbox-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .container {
+        margin: 60px 10px 20px;
+    }
+
+    .timer-container {
+        font-size: 13px; /* Fonte menor no mobile */
+        padding: 6px 12px;
+        max-width: 90vw;
+    }
+
+}
+
+/* Para dispositivos muito pequenos */
+@media (max-width: 480px) {
+    .timer-container {
+        font-size: 13px;
+        padding: 5px 10px;
+        max-width: 85vw;
+    }
+}
+
+/* Efeito de pulsação para dar destaque */
+.timer-container {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
+    }
+    50% {
+        box-shadow: 0 2px 20px rgba(220, 53, 69, 0.5);
+    }
+    100% {
+        box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
+    }
+}
+
+/* Estilo para o texto do timer */
+.timer-container #timer {
+    font-family: 'Courier New', monospace; /* Fonte monoespaçada para números */
+    font-weight: bolder;
+}
+
+/* Estilos para o widget de valores flutuante - Desktop */
+.valores-widget-desktop {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 280px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: none; /* Será mostrado via JavaScript */
+}
+
+.valores-widget-desktop .widget-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.valores-widget-desktop .widget-lote {
+    font-size: 14px;
+    margin-bottom: 15px;
+    text-align: center;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.valores-widget-desktop .valor-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.valores-widget-desktop .valor-row.total {
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    padding-top: 8px;
+    margin-top: 10px;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.valores-widget-desktop .valor-row span:first-child {
+    opacity: 0.9;
+}
+
+.valores-widget-desktop .valor-row span:last-child {
+    font-weight: 600;
+}
+
+/* Estilos para o widget de valores - Mobile */
+.valores-widget-mobile {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 15px 20px;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: none; /* Será mostrado via JavaScript */
+}
+
+.valores-widget-mobile .widget-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.valores-widget-mobile .widget-info {
+    flex: 1;
+}
+
+.valores-widget-mobile .widget-lote {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.valores-widget-mobile .widget-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.valores-widget-mobile .valor-detalhes {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.valores-widget-mobile .widget-total {
+    text-align: right;
+}
+
+.valores-widget-mobile .total-label {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.valores-widget-mobile .total-valor {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Responsividade */
+@media (min-width: 768px) {
+    .valores-widget-desktop {
+        display: block !important;
+    }
+    .valores-widget-mobile {
+        display: none !important;
+    }
+    /* Adicionar margem ao corpo para não sobrepor o widget */
+    body {
+        margin-right: 300px;
+    }
+}
+
+@media (max-width: 767px) {
+    .valores-widget-desktop {
+        display: none !important;
+    }
+    .valores-widget-mobile {
+        display: block !important;
+    }
+    /* Adicionar padding bottom para não sobrepor o conteúdo */
+    body {
+        padding-bottom: 100px;
+    }
+}
+
+/* Animações */
+.valores-widget-desktop,
+.valores-widget-mobile {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Ocultar o container de valores original quando o widget estiver ativo */
+.valores-container.hidden {
+    display: none !important;
+}
+
+.optional {
+    font-weight: normal;
+    font-size: 0.9em;
+    color: #666;
+    font-style: italic;
+}
+
+/* Spinner de loading para busca de dados */
+.cpf-loading {
+    position: relative;
+}
+
+.cpf-spinner {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: none;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
