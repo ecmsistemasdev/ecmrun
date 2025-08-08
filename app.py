@@ -921,35 +921,35 @@ def process_payment():
 #         app.logger.error(f"Erro no processamento: {str(e)}")
 #         return jsonify({"error": str(e)}), 400
 
-def get_receipt_data(payment_id):
-    """Função separada para buscar dados do comprovante"""
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute('''
-            SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
-                CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
-                CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
-                CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-                I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
-            FROM ecmrun.INSCRICAO I
-            JOIN ecmrun.ATLETA A ON A.IDATLETA = I.IDATLETA
-            JOIN ecmrun.EVENTO E ON E.IDEVENTO = I.IDEVENTO
-            JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
-            WHERE I.FLSTATUS = 'CONFIRMADO'
-            AND I.IDPAGAMENTO = %s
-        ''', (payment_id,))
+# def get_receipt_data(payment_id):
+#     """Função separada para buscar dados do comprovante"""
+#     try:
+#         cur = mysql.connection.cursor()
+#         cur.execute('''
+#             SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
+#                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
+#                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
+#                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
+#                 I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
+#             FROM ecmrun.INSCRICAO I
+#             JOIN ecmrun.ATLETA A ON A.IDATLETA = I.IDATLETA
+#             JOIN ecmrun.EVENTO E ON E.IDEVENTO = I.IDEVENTO
+#             JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
+#             WHERE I.FLSTATUS = 'CONFIRMADO'
+#             AND I.IDPAGAMENTO = %s
+#         ''', (payment_id,))
         
-        data = cur.fetchone()
-        cur.close()
-        return data
-    except Exception as e:
-        app.logger.error(f"Erro ao buscar dados: {str(e)}")
-        raise
+#         data = cur.fetchone()
+#         cur.close()
+#         return data
+#     except Exception as e:
+#         app.logger.error(f"Erro ao buscar dados: {str(e)}")
+#         raise
 
 def send_organizer_notification(receipt_data):
     try:
         msg = Message(
-            f'Nova Inscrição - 4º Desafio 200k - ID {receipt_data["inscricao"]}',
+            f'Nova Inscrição - {receipt_data["evento"]} - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'ecmsistemasdeveloper@gmail.com'),
             recipients=['kelioesteves@hotmail.com']
             #recipients=['ecmsistemasdeveloper@gmail.com']
@@ -1834,10 +1834,8 @@ def send_email(receipt_data):
         # Recuperar o email do atleta do banco de dados
         cur = mysql.connection.cursor()
         cur.execute('''
-            SELECT A.EMAIL
-            FROM ecmrun.ATLETA A
-            JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA
-            WHERE I.IDPAGAMENTO = %s
+            SELECT EMAIL FROM EVENTO_INSCRICAO
+            WHERE IDPAGAMENTO = %s
         ''', (receipt_data['inscricao'],))
         
         email_result = cur.fetchone()
@@ -2301,24 +2299,11 @@ def gerar_pix():
                     'message': 'Erro ao processar valores. Verifique se os valores são numéricos válidos.'
                 }), 400
         
-        # camisa = data.get('camiseta')
-        # apoio = data.get('apoio')
-        # equipe = data.get('equipe')
-        # equipe200 = data.get('nome_equipe')
-        # integrantes = data.get('integrantes')
-        # idatleta = data.get('idatleta')
-
         # Store in session
         session['valorTotal'] = valor_total
         session['valorAtual'] = valor_atual
         session['valorTaxa'] = valor_taxa
         session['formaPagto'] = 'PIX'
-        # session['Camisa'] = camisa
-        # session['Equipe'] = equipe
-        # session['Apoio'] = apoio
-        # session['Equipe200'] = equipe200
-        # session['Integrantes'] = integrantes
-        # session['idAtleta'] = idatleta
         
         # Validate minimum transaction amount
         if valor_total < 1:
@@ -2508,26 +2493,85 @@ def gerar_pix():
         }), 500
 
 
-@app.route('/recuperar-qrcode/<payment_id>', methods=['GET'])
+#### não excluir por enquanto, uma nova foi criada abaixo dessa e vou testar
+# @app.route('/recuperar-qrcode/<payment_id>', methods=['GET'])
+# def recuperar_qrcode(payment_id):
+#     try:
+#         # Recupera o pagamento do Mercado Pago
+#         payment = sdk.payment().get(payment_id)
+#         if payment['status'] == 404:
+#             return jsonify({'success': False, 'message': 'Pagamento não encontrado'})
+            
+#         # Extrai os dados do QR code
+#         point_of_interaction = payment.get('point_of_interaction', {})
+#         transaction_data = point_of_interaction.get('transaction_data', {})
+        
+#         return jsonify({
+#             'success': True,
+#             'qr_code': transaction_data.get('qr_code'),
+#             'qr_code_base64': transaction_data.get('qr_code_base64')
+#         })
+#     except Exception as e:
+#         return jsonify({'success': False, 'message': str(e)})
+        
+
+# se ocorrer erro, volta a função anterior, comentada acima
+@app.route('/recuperar-qrcode/<payment_id>')
 def recuperar_qrcode(payment_id):
     try:
-        # Recupera o pagamento do Mercado Pago
-        payment = sdk.payment().get(payment_id)
-        if payment['status'] == 404:
-            return jsonify({'success': False, 'message': 'Pagamento não encontrado'})
+        print(f"=== RECUPERANDO QR CODE ===")
+        print(f"Payment ID: {payment_id}")
+        
+        # Buscar o status no Mercado Pago
+        payment_response = sdk.payment().get(payment_id)
+        payment_data = payment_response["response"]
+        
+        print(f"Status no MP: {payment_data.get('status')}")
+        
+        if payment_data.get('status') in ['pending', 'in_process', 'approved']:
+            # Extrair informações do QR Code
+            qr_code = None
+            qr_code_base64 = None
             
-        # Extrai os dados do QR code
-        point_of_interaction = payment.get('point_of_interaction', {})
-        transaction_data = point_of_interaction.get('transaction_data', {})
-        
-        return jsonify({
-            'success': True,
-            'qr_code': transaction_data.get('qr_code'),
-            'qr_code_base64': transaction_data.get('qr_code_base64')
-        })
+            # Buscar nas transações do pagamento
+            if 'point_of_interaction' in payment_data:
+                poi = payment_data['point_of_interaction']
+                if 'transaction_data' in poi:
+                    transaction_data = poi['transaction_data']
+                    if 'qr_code' in transaction_data:
+                        qr_code = transaction_data['qr_code']
+                    if 'qr_code_base64' in transaction_data:
+                        qr_code_base64 = transaction_data['qr_code_base64']
+            
+            if qr_code and qr_code_base64:
+                print("QR Code encontrado e recuperado com sucesso")
+                return jsonify({
+                    'success': True,
+                    'qr_code': qr_code,
+                    'qr_code_base64': qr_code_base64,
+                    'status': payment_data.get('status')
+                })
+            else:
+                print("QR Code não encontrado nos dados do pagamento")
+                return jsonify({
+                    'success': False,
+                    'message': 'QR Code não disponível para este pagamento'
+                })
+        else:
+            print(f"Status do pagamento não permite recuperação: {payment_data.get('status')}")
+            return jsonify({
+                'success': False,
+                'message': f'Pagamento com status: {payment_data.get("status")}'
+            })
+            
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-        
+        print(f"ERRO ao recuperar QR Code: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
 
 # @app.route('/verificar-pagamento/<payment_id>')
 # def verificar_pagamento(payment_id):
@@ -2660,56 +2704,96 @@ def recuperar_qrcode(payment_id):
 @app.route('/verificar-pagamento/<payment_id>')
 def verificar_pagamento(payment_id):
     try:
+        print(f"=== VERIFICAÇÃO DE PAGAMENTO INICIADA ===")
+        print(f"Payment ID recebido: {payment_id}")
+        
         # Buscar o status diretamente do Mercado Pago
         payment_response = sdk.payment().get(payment_id)
         payment = payment_response["response"]
 
-        print(f"Status do pagamento recebido: {payment['status']}")
+        print(f"Status do pagamento no MP: {payment['status']}")
+        print(f"Dados completos do pagamento: {payment}")
         
         if payment["status"] == "approved":
-
+            print("Pagamento aprovado, processando...")
+            
             data_e_hora_atual = datetime.now()
             fuso_horario = timezone('America/Manaus')
             data_pagamento = data_e_hora_atual.astimezone(fuso_horario)
-            # data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
+            
+            print(f"Data do pagamento: {data_pagamento}")
 
-
-            # Verificar se já não foi processado antes
+            # Buscar o registro pelo ID do pagamento
             cur = mysql.connection.cursor()
-            cur.execute("SELECT IDINSCRICAO FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+            cur.execute("SELECT IDINSCRICAO, STATUS FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
             existing_record = cur.fetchone()
+            
+            print(f"Registro encontrado: {existing_record}")
 
             if existing_record:
-
-                cur.execute("""
-                    UPDATE EVENTO_INSCRICAO SET
-                        DTPAGAMENTO = %s,
-                        STATUS = %s  
-                    WHERE IDINSCRICAO = %s
+                idinscricao = existing_record[0]
+                status_atual = existing_record[1]
+                
+                print(f"ID Inscrição: {idinscricao}, Status atual: {status_atual}")
+                
+                # Verificar se já não foi processado (evitar reprocessamento)
+                if status_atual != 'A':  # Se não está aprovado ainda
+                    print("Atualizando status para aprovado...")
+                    
+                    cur.execute("""
+                        UPDATE EVENTO_INSCRICAO SET
+                            DTPAGAMENTO = %s,
+                            STATUS = %s  
+                        WHERE IDPAGAMENTO = %s
                     """, (
                         data_pagamento,         
                         'A',  # APROVADO         
-                        existing_record[0]      
-
-                ))
-
-                mysql.connection.commit()
-                cur.close()
-
-                return jsonify({
-                    'success': True,
-                    'status': 'approved',
-                    'message': 'Pagamento processado e registrado'
-                })
+                        payment_id
+                    ))
                     
+                    linhas_afetadas = cur.rowcount
+                    mysql.connection.commit()
+                    
+                    print(f"Update executado. Linhas afetadas: {linhas_afetadas}")
+                    print(f"Pagamento {payment_id} atualizado com sucesso")
+                    
+                    # Verificar se a atualização foi bem-sucedida
+                    cur.execute("SELECT STATUS, DTPAGAMENTO FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+                    verificacao = cur.fetchone()
+                    print(f"Verificação pós-update: {verificacao}")
+                    
+                else:
+                    print(f"Pagamento {payment_id} já foi processado anteriormente")
+                    
+                cur.close()
+            else:
+                print(f"ERRO: Registro não encontrado para payment_id: {payment_id}")
+                
+                # Buscar todos os registros para debug
+                cur.execute("SELECT IDINSCRICAO, IDPAGAMENTO, STATUS FROM EVENTO_INSCRICAO ORDER BY IDINSCRICAO DESC LIMIT 10")
+                todos_registros = cur.fetchall()
+                print(f"Últimos 10 registros na tabela: {todos_registros}")
+                
+                cur.close()
+                return jsonify({
+                    'success': False,
+                    'status': 'error',
+                    'message': 'Registro não encontrado'
+                }), 404
+                
+        print(f"=== VERIFICAÇÃO FINALIZADA ===")
+        
         return jsonify({
             'success': True,
             'status': payment["status"]
         })
         
     except Exception as e:
-        print(f"Erro ao verificar pagamento: {str(e)}")
-        # Ensure JSON is returned even on error
+        print(f"ERRO CRÍTICO ao verificar pagamento: {str(e)}")
+        print(f"Tipo do erro: {type(e)}")
+        import traceback
+        print(f"Traceback completo: {traceback.format_exc()}")
+        
         return jsonify({
             'success': False, 
             'message': str(e),
@@ -3132,11 +3216,11 @@ def criar_preferencia():
         preference_data = {
             "items": [
                 {
-                    "id": "200k-inscricao",
-                    "title": "Inscrição 4º Desafio 200k",
+                    "id": "ECM RUN TICHETS",
+                    "title": "Inscrição de Corrida",
                     "quantity": 1,
                     "unit_price": float(preco_final),
-                    "description": "Inscrição para o 4º Desafio 200k Porto Velho-Humaitá",
+                    "description": "Inscrição de Evento",
                     "category_id": "sports_tickets"
                 }
             ],
@@ -7064,7 +7148,7 @@ def verificar_cpf_inscrito(idevento):
 
         cur = mysql.connection.cursor()
         cur.execute("""
-            SELECT 1 FROM EVENTO_INSCRICAO WHERE STATUS = 'F' AND CPF = %s AND IDEVENTO = %s
+            SELECT 1 FROM EVENTO_INSCRICAO WHERE STATUS = 'A' AND CPF = %s AND IDEVENTO = %s
         """, (cpf, idevento))
 
         result = cur.fetchone()
