@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://ecmrun.com.br/static/img/logo_arealslope.jpeg">
+    <link rel="stylesheet" type="text/css" href="/static/css/lista_eventos.css"/>
+    <title>Minhas Inscrições - ECM Run</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    </div>
+
+    <!-- Formulário de Login -->
+    <div class="login-container" id="loginContainer">
+        <form class="login-form" id="loginForm">
+            <h2>Consultar Minhas Inscrições</h2>
+            
+            <div class="form-group">
+                <label for="cpf">CPF:</label>
+                <input type="text" id="cpf" name="cpf" required maxlength="14" 
+                       inputmode="numeric" pattern="[0-9.-]*">
+            </div>
+            
+            <div class="form-group">
+                <label for="dataNascimento">Data de Nascimento:</label>
+                <input type="text" id="dataNascimento" name="dataNascimento" required maxlength="10"
+                       inputmode="numeric" pattern="[0-9/]*" placeholder="DD/MM/AAAA">
+            </div>
+            
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            
+            <button type="submit" class="btn-consultar">Consultar</button>
+            <button type="button" class="btn-voltar" onclick="voltarPagina()">Voltar</button>
+        </form>
+    </div>
+
+    <!-- Container das Inscrições -->
+    <div class="inscricoes-container" id="inscricoesContainer">
+        <h2 class="inscricoes-title">Minhas Inscrições</h2>
+        
+        <div class="inscricoes-grid" id="inscricoesGrid">
+        </div>
+        
+        <button type="button" class="btn-nova-consulta" onclick="voltarLogin()">
+            Nova Consulta
+        </button>
+    </div>
+
+    <footer class="footer">
+        <p><b>"Tudo posso naquele que me fortalece."</b><br> Filipenses 4:13</p>
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+
+    <script>
+        $(document).ready(function() {
+            // Aplicar máscaras
+            $('#cpf').mask('000.000.000-00');
+            $('#dataNascimento').mask('00/00/0000');
+
+            // Permitir apenas números
+            $('#cpf, #dataNascimento').on('input', function() {
+                this.value = this.value.replace(/[^0-9./\-]/g, '');
+            });
+
+            // Submit do formulário
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const cpf = $('#cpf').val().replace(/[^0-9]/g, '');
+                const dataNascimento = $('#dataNascimento').val();
+                
+                // Validações
+                if (cpf.length !== 11) {
+                    showError('CPF deve conter 11 dígitos');
+                    return;
+                }
+                
+                if (!isValidDate(dataNascimento)) {
+                    showError('Data de nascimento inválida');
+                    return;
+                }
+                
+                // Fazer consulta
+                consultarInscricoes(cpf, dataNascimento);
+            });
+        });
+
+        function isValidDate(dateString) {
+            const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            const match = dateString.match(regex);
+            
+            if (!match) return false;
+            
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10);
+            const year = parseInt(match[3], 10);
+            
+            const date = new Date(year, month - 1, day);
+            
+            return date.getFullYear() === year &&
+                   date.getMonth() === month - 1 &&
+                   date.getDate() === day &&
+                   month >= 1 && month <= 12 &&
+                   day >= 1 && day <= 31;
+        }
+
+        function showError(message) {
+            $('#errorMessage').text(message).show();
+            setTimeout(() => {
+                $('#errorMessage').hide();
+            }, 5000);
+        }
+
+        function consultarInscricoes(cpf, dataNascimento) {
+            $.ajax({
+                url: '/api/minhas-inscricoes',
+                method: 'POST',
+                data: {
+                    cpf: cpf,
+                    data_nascimento: dataNascimento
+                },
+                success: function(response) {
+                    if (response.success) {
+                        exibirInscricoes(response.data);
+                    } else {
+                        showError(response.message || 'Erro ao consultar inscrições');
+                    }
+                },
+                error: function() {
+                    showError('Erro de conexão. Tente novamente.');
+                }
+            });
+        }
+
+        function exibirInscricoes(inscricoes) {
+            const grid = $('#inscricoesGrid');
+            grid.empty();
+            
+            if (inscricoes.length === 0) {
+                grid.append(`
+                    <div class="no-inscricoes">
+                        Nenhuma inscrição encontrada
+                    </div>
+                `);
+            } else {
+                inscricoes.forEach(inscricao => {
+                    const card = `
+                        <div class="inscricao-card">
+                            <div class="card-header">
+                                <div class="evento-nome">${inscricao.DESCRICAO}</div>
+                                <div class="evento-data">📅 ${inscricao.DTEVENTO}</div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="info-row">
+                                    <span class="info-label">Modalidade:</span>
+                                    <span class="info-value">
+                                        <span class="modalidade-badge">${inscricao.KM_DESCRICAO}</span>
+                                    </span>
+                                </div>
+                                
+                                <div class="info-row">
+                                    <span class="info-label">Valor:</span>
+                                    <span class="info-value valor-destaque">R$ ${inscricao.VLTOTAL}</span>
+                                </div>
+                                
+                                <!-- <div class="info-row">
+                                     <span class="info-label">Forma de Pagamento:</span>
+                                     <span class="info-value">${inscricao.FORMAPGTO}</span>
+                                 </div> -->
+                                
+                                <div class="info-row">
+                                    <span class="info-label">Data da Inscrição:</span>
+                                    <span class="info-value">${inscricao.DTPAGAMENTO}</span>
+                                </div>
+                            </div>
+                            
+                            <button class="btn-comprovante" onclick="gerarComprovante(${inscricao.IDINSCRICAO})">
+                                📄 Gerar Comprovante
+                            </button>
+                        </div>
+                    `;
+                    grid.append(card);
+                });
+            }
+            
+            $('#loginContainer').hide();
+            $('#inscricoesContainer').show();
+        }
+
+        function gerarComprovante(idInscricao) {
+            // Função será implementada posteriormente
+            alert('Função de comprovante será implementada posteriormente. ID: ' + idInscricao);
+        }
+
+        function voltarLogin() {
+            $('#inscricoesContainer').hide();
+            $('#loginContainer').show();
+            $('#loginForm')[0].reset();
+        }
+
+        function voltarPagina() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

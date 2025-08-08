@@ -2,7 +2,7 @@
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="/static/css/checkout.css"/>
-    <title>Pagamento Cartão - 4º Desafio 200k</title>
+    <title>Pagamento com Cartão de Crédito</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
@@ -12,10 +12,10 @@
 <body>
     <div class="logo-container">
         <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
-        <h1 class="header-title">4º Desafio 200k - Porto Velho-Humaitá</h1>
+        <h1 class="header-title">Pagamento com Cartão de Crédito</h1>
     </div>
 
-    <h1 class="title-h1">Pagamento com Cartão de Crédito</h1>
+    <!-- <h1 class="title-h1">Pagamento com Cartão de Crédito</h1> -->
 
     <form id="payment-form">
 
@@ -162,7 +162,17 @@
                 currency: 'BRL'
             }).format(storedAmount);
             
+            // Recuperar e exibir o ID do evento
+            const idEvento = localStorage.getItem('id_evento');
+            console.log('ID do Evento recuperado:', idEvento);
 
+            // Validar se o ID do evento existe
+            if (!idEvento) {
+                console.error('ID do evento não encontrado no localStorage');
+                alert('Erro: ID do evento não encontrado. Redirecionando para a página anterior.');
+                window.history.back();
+                return;
+            }
 
             // Adicionar listener para o checkbox
             const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
@@ -571,20 +581,53 @@
             });
 
 
-            function redirectToReceipt(paymentId) {
+            async function redirectToReceipt(paymentId) {
                 try {
-                    // Limpa dados do pagamento antes do redirecionamento
-                    //sessionStorage.removeItem('paymentData');
-                    //localStorage.removeItem('lastPaymentId');
+                    console.log('Verificando status do pagamento...');
                     
-                    // Redireciona para a página de recibo
-                    console.log('Redirecionando para:', `/comprovante/${paymentId}`);
-                    window.location.replace(`/comprovante/${paymentId}`);
+                    // Verificar e atualizar o status do pagamento antes de gerar o comprovante
+                    const verificationResponse = await fetch(`/verificar-pagamento/${paymentId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (!verificationResponse.ok) {
+                        throw new Error('Erro na verificação do pagamento');
+                    }
+                    
+                    const verificationData = await verificationResponse.json();
+                    console.log('Resultado da verificação:', verificationData);
+                    
+                    if (verificationData.success && verificationData.status === 'approved') {
+                        console.log('Pagamento verificado e aprovado. Redirecionando para comprovante...');
+                        window.location.replace(`/comprovante/${paymentId}`);
+                    } else {
+                        throw new Error('Pagamento não aprovado ou erro na verificação');
+                    }
+                    
                 } catch (error) {
-                    console.error('Erro ao redirecionar:', error);
+                    console.error('Erro ao verificar pagamento:', error);
                     alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
                 }
             }
+
+
+            // function redirectToReceipt(paymentId) {
+            //     try {
+            //         // Limpa dados do pagamento antes do redirecionamento
+            //         //sessionStorage.removeItem('paymentData');
+            //         //localStorage.removeItem('lastPaymentId');
+                    
+            //         // Redireciona para a página de recibo
+            //         console.log('Redirecionando para:', `/comprovante/${paymentId}`);
+            //         window.location.replace(`/comprovante/${paymentId}`);
+            //     } catch (error) {
+            //         console.error('Erro ao redirecionar:', error);
+            //         alert('Erro ao processar o pagamento. Por favor, entre em contato com o suporte.');
+            //     }
+            // }
 
             async function saveRegistration(paymentId) {
                 console.log('Iniciando saveRegistration com paymentId:', paymentId);
@@ -616,13 +659,7 @@
                         valor_atual: parseFloat(localStorage.getItem('valoratual') || 0),
                         valor_taxa: parseFloat(localStorage.getItem('valortaxa') || 0),
                         valor_total: parseFloat(localStorage.getItem('valortotal') || 0),
-                        forma_pagto: 'CARTAO DE CREDITO',
-                        camiseta: localStorage.getItem('camiseta'),
-                        equipe: localStorage.getItem('equipe'),
-                        apoio: localStorage.getItem('apoio'),
-                        equipe_nome: localStorage.getItem('nome_equipe'),
-                        integrantes: localStorage.getItem('integrantes'),
-                        cat_iditem: localStorage.getItem('cat_iditem')
+                        forma_pagto: 'CARTAO DE CREDITO'
                     };
                     
                     console.log('Payload (sem CPF):', payload);
@@ -701,13 +738,7 @@
 
                     // Get data from storage
                     const userData = {
-                        idAtleta: localStorage.getItem('user_idatleta'),
                         CPF: localStorage.getItem('user_cpf'),
-                        equipe: localStorage.getItem('equipe'),
-                        apoio: localStorage.getItem('apoio'),
-                        camiseta: localStorage.getItem('camiseta'),
-                        nome_equipe: localStorage.getItem('nome_equipe'),
-                        integrantes: localStorage.getItem('integrantes'),
                         valor_atual: vlinscricao,
                         valor_taxa: vltaxa,
                         valor_total: totalValue
@@ -748,7 +779,7 @@
                     const paymentData = {
                         transaction_amount: finalAmount,
                         token: cardToken.id,
-                        description: "Inscrição Desafio 200k",
+                        description: "ECM RUN Inscrição ",
                         installments: installments,
                         payment_method_id: cardTypeInfo.brand,
                         payer: {
@@ -812,47 +843,50 @@
                         console.log('Payment ID:', responseData.id);
 
                         try {
-                            // Aguarde a conclusão do saveRegistration antes de redirecionar
+                            // Aguarde a conclusão do saveRegistration antes de verificar e redirecionar
                             const registrationSuccess = await saveRegistration(responseData.id);
                             
                             if (registrationSuccess) {
-                                redirectToReceipt(responseData.id);
+                                // Agora chama a função que verifica o pagamento antes de redirecionar
+                                await redirectToReceipt(responseData.id);
                             } else {
                                 alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição, mas fique tranquilo sua inscrição esta garantida. Por favor, entre em contato com o suporte pelo WhatsApp (69) 99925-7724, ou aguarde que entraremos em contato.');
-                                // Você pode optar por redirecionar mesmo assim
-                                redirectToReceipt(responseData.id);
+                                // Mesmo assim, verifica o pagamento e redireciona
+                                await redirectToReceipt(responseData.id);
                             }
                         } catch (error) {
                             console.error('Erro ao salvar registro:', error);
                             alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
-                            // Você pode optar por redirecionar mesmo assim
-                            redirectToReceipt(responseData.id);
+                            // Mesmo assim, tenta verificar e redirecionar
+                            await redirectToReceipt(responseData.id);
                         }
                     }
 
-
-                   
                     // if (responseData.status === "approved") {
                     //     alert('Pagamento aprovado com sucesso!');
                         
-                    //     saveRegistration(responseData.id);
-                    
-                    //     redirectToReceipt(responseData.id);
-                    // } else {
-                    //     // Handle other statuses
-                    //     let statusMessage = '';
-                    //     switch (responseData.status) {
-                    //         case 'in_process':
-                    //             statusMessage = 'Pagamento em processamento. Aguarde a confirmação.';
-                    //             break;
-                    //         case 'rejected':
-                    //             statusMessage = 'Pagamento rejeitado. ' + (responseData.status_detail || '');
-                    //             break;
-                    //         default:
-                    //             statusMessage = `Status: ${responseData.status}`;
+                    //     // Verificar se o ID está correto
+                    //     console.log('Payment ID:', responseData.id);
+
+                    //     try {
+                    //         // Aguarde a conclusão do saveRegistration antes de redirecionar
+                    //         const registrationSuccess = await saveRegistration(responseData.id);
+                            
+                    //         if (registrationSuccess) {
+                    //             redirectToReceipt(responseData.id);
+                    //         } else {
+                    //             alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição, mas fique tranquilo sua inscrição esta garantida. Por favor, entre em contato com o suporte pelo WhatsApp (69) 99925-7724, ou aguarde que entraremos em contato.');
+                    //             // Você pode optar por redirecionar mesmo assim
+                    //             redirectToReceipt(responseData.id);
+                    //         }
+                    //     } catch (error) {
+                    //         console.error('Erro ao salvar registro:', error);
+                    //         alert('Pagamento aprovado, mas houve um problema ao registrar a inscrição. Por favor, entre em contato com o suporte.');
+                    //         // Você pode optar por redirecionar mesmo assim
+                    //         redirectToReceipt(responseData.id);
                     //     }
-                    //     alert(statusMessage);
                     // }
+
                 } catch (error) {
                     console.error('Erro detalhado:', error);
                     alert(`Erro ao processar pagamento: ${error.message}`);
