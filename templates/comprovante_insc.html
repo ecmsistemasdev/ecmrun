@@ -374,7 +374,7 @@
             </div>
 
             <div class="content-section back-button-section" style="text-align: center; margin-top: 1em;">
-                <button onclick="voltarParaEvento()" style="
+                <button onclick="irParaMinhasInscricoes()" style="
                     padding: 10px 20px; 
                     background-color: #4CAF50; 
                     color: white; 
@@ -382,9 +382,10 @@
                     border-radius: 4px; 
                     cursor: pointer; 
                     font-size: 14px;">
-                    Voltar
+                    Ver Minhas Inscrições
                 </button>
             </div>
+
             <div class="form-group">
                 <label>Termo de Responsabilidade:</label>
                 <div style="overflow-y: auto; font-size: 13px; text-align: justify; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;">
@@ -426,15 +427,39 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Função para voltar para a página do evento
-            window.voltarParaEvento = function() {
+            // Função para ir diretamente para minhas inscrições
+            window.irParaMinhasInscricoes = function() {
                 // Limpa dados do pagamento antes de sair
                 clearCountdownTimer();
                 clearPaymentRelatedLocalStorage();
                 
-                // Redireciona para a rota que leva à página de origem
-                window.location.href = '/voltar-para-evento';
+                // Cria um formulário temporário para enviar os dados via POST
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/lista-eventos-direto';
+                form.style.display = 'none';
+                
+                // Adiciona os campos CPF e data de nascimento
+                const cpfInput = document.createElement('input');
+                cpfInput.type = 'hidden';
+                cpfInput.name = 'cpf';
+                cpfInput.value = '{{ cpf }}';
+                form.appendChild(cpfInput);
+                
+                const dataInput = document.createElement('input');
+                dataInput.type = 'hidden';
+                dataInput.name = 'data_nascimento';
+                dataInput.value = '{{ dtnascimento }}';
+                form.appendChild(dataInput);
+                
+                // Adiciona o formulário ao body e submete
+                document.body.appendChild(form);
+                form.submit();
             };
+            
+            // Função de fallback caso as funções de limpeza não existam
+            window.clearCountdownTimer = window.clearCountdownTimer || function() {};
+            window.clearPaymentRelatedLocalStorage = window.clearPaymentRelatedLocalStorage || function() {};
         });
 
     </script>

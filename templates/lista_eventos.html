@@ -89,6 +89,24 @@
                 // Fazer consulta
                 consultarInscricoes(cpf, dataNascimento);
             });
+
+            // NOVO: Verifica se os dados já foram carregados pelo backend
+            {% if inscricoes_carregadas %}
+                // Preenche os campos do formulário
+                {% if cpf %}
+                $('#cpf').val('{{ cpf }}');
+                {% endif %}
+                
+                {% if data_nascimento %}
+                $('#dataNascimento').val('{{ data_nascimento }}');
+                {% endif %}
+                
+                // Carrega diretamente as inscrições
+                const inscricoes = {{ inscricoes | tojson }};
+                
+                // Exibe as inscrições automaticamente
+                exibirInscricoes(inscricoes);
+            {% endif %}
         });
 
         function isValidDate(dateString) {
@@ -104,10 +122,10 @@
             const date = new Date(year, month - 1, day);
             
             return date.getFullYear() === year &&
-                   date.getMonth() === month - 1 &&
-                   date.getDate() === day &&
-                   month >= 1 && month <= 12 &&
-                   day >= 1 && day <= 31;
+                date.getMonth() === month - 1 &&
+                date.getDate() === day &&
+                month >= 1 && month <= 12 &&
+                day >= 1 && day <= 31;
         }
 
         function showError(message) {
@@ -171,9 +189,9 @@
                                 </div>
                                 
                                 <!-- <div class="info-row">
-                                     <span class="info-label">Forma de Pagamento:</span>
-                                     <span class="info-value">${inscricao.FORMAPGTO}</span>
-                                 </div> -->
+                                    <span class="info-label">Forma de Pagamento:</span>
+                                    <span class="info-value">${inscricao.FORMAPGTO}</span>
+                                </div> -->
                                 
                                 <div class="info-row">
                                     <span class="info-label">Data da Inscrição:</span>
@@ -195,14 +213,20 @@
         }
 
         function gerarComprovante(idInscricao) {
-            // Função será implementada posteriormente
-            alert('Função de comprovante será implementada posteriormente. ID: ' + idInscricao);
+            // Abrir o comprovante em uma nova aba/janela
+            window.open(`/comprovante/${idInscricao}`, '_blank');
         }
 
         function voltarLogin() {
             $('#inscricoesContainer').hide();
             $('#loginContainer').show();
             $('#loginForm')[0].reset();
+            
+            // NOVO: Limpar os dados carregados automaticamente
+            {% if inscricoes_carregadas %}
+            // Recarregar a página para limpar os dados do backend
+            window.location.href = '/lista-eventos';
+            {% endif %}
         }
 
         function voltarPagina() {
