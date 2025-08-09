@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://ecmrun.com.br/static/img/logo_arealslope.jpeg">
+    <link rel="stylesheet" type="text/css" href="/static/css/arealslope.css"/>
+    <title>{{ evento.titulo }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <!-- <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    </div> -->
+
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+        <div class="login-controls">
+            <span id="userNameDisplay" class="user-name"></span>
+            <a href="/lista-eventos" id="inscricoesLink" class="inscricoes-link">Minhas Inscrições</a>
+        </div>
+    </div>
+
+
+    <!-- Header com banner do evento -->
+    <div class="event-header">
+        <div class="event-info">
+            <h1 class="event-title">{{ evento.titulo }}</h1>
+            <div class="event-details">
+                <div class="event-datetime">
+                    <span class="icon">📅</span>
+                    <span>Data: {{ evento.data }} - {{ evento.hora }}</span>
+                </div>
+                <div class="event-location">
+                    <span class="icon">📍</span>
+                    <span>{{ evento.local }}, {{ evento.cidade_uf }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="event-banner">
+            <img src="/static/img/banner_arealslopte.jpeg" alt="Banner do Evento" class="banner-image">
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Formulário de Inscrição (primeiro no mobile) -->
+        <div class="inscription-form-container">
+            <form class="registration-form">
+                <div class="form-title">Inscrição</div>
+
+                <div class="lotes-container">
+                    {% for lote in lotes %}
+                    <div class="lote-item" data-iditem="{{ lote.iditem }}">
+                        <h4 class="lote-title">{{ lote.descricao }} - {{ lote.delote }}</h4>
+
+                        {% if lote.status_lote == 'NÃO INICIADO' %}
+                            <div class="lote-status status-nao-iniciado">
+                                NÃO INICIADO
+                            </div>
+                        {% elif lote.status_lote == 'ABERTO' %}
+                            <div class="lote-pricing">
+                                <div class="price-breakdown">
+                                    <span class="price-value">R$ {{ lote.vlinscricao_formatada }}</span>
+                                    <span class="price-tax">(+ R$ {{ lote.vltaxa_formatada }} taxa)</span>
+                                </div>
+                                <div class="price-total-container">
+                                    <div class="price-total">
+                                        Total: R$ {{ lote.vltotal_formatada }}
+                                    </div>
+                                    <button type="button" class="inscricao-btn" data-iditem="{{ lote.iditem }}">
+                                        Inscreva-se
+                                    </button>
+                                </div>
+                                <div class="lote-deadline">
+                                    Inscrições até {{ lote.dtfim_formatada }}
+                                </div>
+                            </div>
+                        {% elif lote.status_lote == 'ESGOTADO' %}
+                            <div class="lote-status status-esgotado">
+                                ESGOTADO
+                            </div>
+                        {% elif lote.status_lote == 'ENCERRADO' %}
+                            <div class="lote-status status-encerrado">
+                                ENCERRADO
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        <div class="main-content">
+            <form>
+                <div class="info">
+                    <h3 class="info-title">Descrição do evento</h3>
+                    <br>
+                    📅 Data: 21 de fevereiro de 2026<br>
+                    🏃🏻 Concentração às 07:30 - Largada às 08:00 🕗<br>
+                    📍 Local: Sítio Don Enrique, Estrada do Santo Antônio, 1252, Triângulo, Porto Velho - RO
+                    <br><br>
+                    🏃‍♀️ <b>Sobre a Prova:</b><br>
+                    A Macaxeira Backyard Ultra Porto Velho é uma ultramaratona estilo "resta 1" onde os atletas devem percorrer 6,7km em menos de 1 hora. A cada hora cheia é dada uma nova largada, e quem não chegar a tempo ou não sair ao sinal do sino será desclassificado. A corrida continua até sobrar apenas um atleta, que deve completar uma volta solo para se consagrar campeão.<br><br>
+
+                    🌍 <b>Modalidades Disponíveis:</b><br>
+                    • Prova Principal (sem limite de voltas)<br>
+                    • Prova de Três Voltas (máximo 3 voltas)<br><br>
+
+                    💲 <b>Valores das Inscrições por Lote:</b><br>
+                    <b>LOTE 01:</b> 10/08/2025 à 19/08/2025 (até 40 inscrições)<br>
+                    • Três Voltas: R$ 159,90 + Taxa<br>
+                    • Principal: R$ 259,90 + Taxa<br><br>
+
+                    <b>LOTE 02:</b> 20/08/2025 à 13/09/2025 (até 60 inscrições)<br>
+                    • Três Voltas: R$ 189,90 + Taxa<br>
+                    • Principal: R$ 289,90 + Taxa<br><br>
+
+                    <b>LOTE 03:</b> 14/09/2025 à 31/10/2025<br>
+                    • Três Voltas: R$ 209,90 + Taxa<br>
+                    • Principal: R$ 309,90 + Taxa<br><br>
+
+                    💰 <b>Forma de Pagamento:</b><br>
+                    Pix e Cartão de Crédito<br><br>
+
+                    🏆 <b>Kit do Atleta:</b> Camiseta personalizada, número de peito e medalha de participação<br><br>
+
+                    🍽️ <b>Alimentação Inclusa:</b><br>
+                    • Frutas, biscoitos, bolos, pão, paçoca, amendoim<br>
+                    • Almoço: frango, carne, peixe, arroz, macarrão, farofa, salada<br>
+                    • Período noturno: caldo quente, pizzas e massas<br>
+                    • Hidratação: água, sucos, café, refrigerantes, isotônicos<br><br>
+
+                    🏅 <b>Premiação:</b><br>
+                    • Medalha de participação para todos que completarem ao menos uma volta<br>
+                    • Troféu apenas para o "último atleta em pé" que conseguir realizar sua volta solo<br><br>
+
+                    🔦 <b>Equipamento Obrigatório:</b><br>
+                    Lanterna para o período noturno (a partir das 18h)<br><br>
+
+                    🏕️ <b>Infraestrutura:</b><br>
+                    Arena completa com tendas, cadeiras, banheiros, pias, tomadas, alimentação e hidratação. Permitido apoio particular apenas na arena.<br><br>
+
+                    📱 Mais informações: (69) 99925-9005<br>
+                    📲 Instagram: @backyardmacaxeira
+                </div>
+            </form>
+
+            <form id="termoForm">
+                <div class="form-title">Regulamento</div>
+                <div class="termo">
+                    <br>
+                    <h3>REGULAMENTO DA MACAXEIRA BACKYARD ULTRA PORTO VELHO - RO</h3>
+                    <br>
+                    <h4>LOCAL E DATA</h4>
+                    <br>
+                    A prova será realizada no Sítio Don Enrique, localizada na Estrada do Santo Antônio, 1252, Triângulo, Porto Velho - RO, Brasil.
+                    <br><br>
+                    O evento iniciará às 08h00 do dia 21 de fevereiro de 2026 e não tem prazo para encerrar.
+                    <br><br>
+                    A corrida somente será dada como encerrada quando a "última pessoa em pé" finalizar sua volta solo.
+                    <br><br>
+
+                    <h4>SOBRE A PROVA</h4>
+                    <br>
+                    A Macaxeira Backyard Ultra Porto Velho - RO, é uma forma de ultramaratona de corrida ao estilo resta 1 que consiste em percorrer 6,7 km em menos de 1 hora.
+                    <br><br>
+                    A cada hora cheia é dada uma nova largada, onde o corredor que não chegar a tempo ou que não sair ao sinal do sino será considerado DNF (did not finish) e estará automaticamente desclassificado sendo impedido de entrar novamente no percurso.
+                    <br><br>
+                    A corrida iniciará pontualmente às 08hs e a cada hora cheia será dada uma nova largada, com avisos faltando 5, 3 e 1 min até o toque do sino às 08hs/09hs/10hs e assim por diante até restar somente um atleta no percurso e este realizar a volta completa dentro do tempo limite de 59'59" para se consagrar campeão da prova.
+                    <br><br>
+                    Caso este não chegue antes da hora virar, estará desclassificado e a prova acabará sem campeão. (Isso já aconteceu em alguns países). Macaxeira Backyard Ultra Porto Velho - RO, faz parte do calendário mundial da franquia Backyard Ultra, uma forma de ultramaratona criada pelo grande Lazarus Lake (mesmo criador da famosa e temida Barkley Marathons).
+                    <br><br>
+                    Nossa prova seguirá fielmente o padrão internacional e qualquer atitude que fuja às regras ocasionará a desclassificação do corredor, levando em consideração que a "permissão" de certas atividades consideradas "ilegais" podem vir a causar a desqualificação da Macaxeira Backyard Ultra Porto Velho - RO a fim de classificar um atleta para a final.
+                    <br><br>
+
+                    <h4>REGRAS</h4>
+                    <br>
+                    Os atletas devem percorrer 6,7km no tempo máximo de 59 minutos e 59 segundos.
+                    <br><br>
+                    Independente do tempo que se leve para realizar a volta, todos devem aguardar a próxima largada.
+                    <br><br>
+                    O tempo de espera até a próxima hora deve ser utilizado para descanso, alimentação, banheiro, troca de roupas entre outras necessidades, pois a prova não tem intervalos! Ela começará às 08h00 de sábado e só terminará quando todos desistirem, sobrando apenas 1 atleta. Isto deverá levar muitas horas! Na verdade, a torcida é para que leve alguns dias. O recorde atual é no Tennessee - EUA, com 108 voltas (108 horas). No Brasil, o recorde é 50 voltas (50 horas) na prova Valença RJ Backyard Ultra 2023.
+                    <br><br>
+                    Para avisar sobre a proximidade da próxima volta serão dados cinco apitos quando faltar 5min para a largada, três apitos faltando 3min e um apito no último minuto. É muito importante e obrigatório que neste momento todos que desejam seguir na prova estejam no brete de largada, pois ao soar do sino todos devem largar do brete! O corredor que esperar o sino tocar para então sair de sua tenda, por exemplo, estará desclassificado. A única exceção é ao corredor que ainda esteja no percurso neste momento, já que ele se mantém na prova chegando até 1 segundo antes da relargada. Porém, este deverá largar junto com seus colegas, sem tempo para descanso e reabastecimento.
+                    <br><br>
+                    Na arena da prova estará tudo o que vocês possam precisar pelos próximos dias! Não há como sair da área da prova, exceto para repetir o percurso de 6,7km o qual o atleta não poderá desviar a menos que seja para utilizar o "banheiro". Na arena teremos tendas, cadeiras, barraca, banheiro, pias, tomadas, alimentação, hidratação etc., Mas recomendamos que os atletas que puderem e quiserem tragam itens como colchão inflável, cobertor, barraca, cadeira e seus alimentos de preferência pessoal. É permitido apoio particular SOMENTE na arena, no intervalo entre a sua chegada e a hora da relargada.
+                    <br><br>
+                    Podem trazer seus familiares, treinador, fisioterapeuta, nutricionista, massagista... mas deixe claro que qualquer tipo de apoio no trajeto da prova é totalmente proibido! Eles e nós só poderemos te auxiliar na arena, após o término da volta.
+                    <br><br>
+                    É obrigatório o uso de lanterna durante a noite! Quem vier com o desejo de ultrapassar as 24hs não pode esquecer deste item. A prova será realizada com a maior parte em estrada de terra batida e o único ponto com luz será na arena da prova. Aos participantes que desejam apenas se desafiar um pouco mais ou utilizar a prova para um treino bem longo, mas que não pretendem entrar no período noturno estão dispensados deste equipamento. Sim, esta prova é para todos! Não há distinção entre gêneros, nem limites de idade e muito menos de condicionamento (Inclusive, é bem comum estas provas serem vencidas pelas mulheres e também há bastante pré-adolescentes fazendo várias voltas pelas Backyards do mundo).
+                    <br><br>
+                    Há quem corra visando a tão almejada moeda de prata e a vaga para o campeonato nacional, disposto a correr por 24hs/30hs/48hs ou mais e há também aqueles que desejam apenas testar seus limites num desafio pessoal com toda infraestrutura, segurança e torcida, mesmo que para duas, três, cinco ou dez voltas! Lembrando que a partir das 18hs já estará escuro.
+                    <br><br>
+                    Somente os atletas em prova podem circular no percurso durante a execução de sua volta! O atleta que finalizar a volta não poderá retornar ao trecho para buscar um colega. Os atletas desistentes ou DNF não podem entrar no percurso novamente. Ninguém pode circular no percurso da prova! Somente pessoal da organização para fiscalização e estes não podem auxiliar os atletas!
+                    <br><br>
+                    Qualquer tipo de auxílio durante o percurso é proibido! Inclusive o uso de BASTÕES e pacers! Os atletas não podem receber nenhum apoio externo entre a abertura da volta até cruzar a chegada. Apenas os próprios competidores podem auxiliar um colega necessitado com algum alimento/bebida.
+                    <br><br>
+                    Os atletas mais lentos, seja por necessidade ou por estratégia de prova, devem facilitar a ultrapassagem!
+                    <br><br>
+                    Mas pedimos que os atletas que desejarem ultrapassar, o façam com atenção.
+                    <br><br>
+
+                    <h4>PERCURSO</h4>
+                    <br>
+                    <b>Percurso diurno</b> (a partir das 08h00 até às 17h00): será de 6,7km que é o exigido por esta modalidade. A altimetria está com 123m de ganho de elevação por volta. O percurso será de terra batida na sua maior parte.
+                    <br><br>
+                    <b>Percurso noturno</b> (a partir das 18h00 até às 06h00): será de 6,7km que é o exigido por esta modalidade. A altimetria está com 123m de ganho de elevação por volta. Todo o percurso será na estrada do Santo Antônio, com largada dentro do sítio, seguindo pela estrada Santo Antônio lado direito, bate volta.
+                    <br><br>
+
+                    <h4>PREMIAÇÃO</h4>
+                    <br>
+                    Seguindo a tradição do modelo de prova, todos os atletas que realizarem pelo menos uma volta completa dentro do tempo limite receberão uma medalha de participação e, somente o "último atleta em pé" receberá o troféu, se conseguir realizar sua volta solo dentro do tempo limite.
+                    <br><br>
+
+                    <h4>EQUIPAMENTOS OBRIGATÓRIOS</h4>
+                    <br>
+                    Lanterna em condições de uso em todo o período noturno!
+                    <br><br>
+
+                    <h4>ITENS RECOMENDADOS</h4>
+                    <br>
+                    Roupas, tênis e meias extras, chinelo... Boné/viseira, bandanas, óculos de sol; Barraca, colchão inflável, isolante térmico cobertor, colete de sinalização;
+                    <br><br>
+                    Cobertor de emergência aluminizado, Antiatrito, protetor solar, repelente, itens de higiene pessoal;
+                    <br><br>
+                    Roupas de frio, corta vento, impermeável, luvas, itens de 1°s Socorros (agulhas para bolhas, antisséptico, atadura, gaze, esparadrapo...);
+                    <br><br>
+                    Medicamentos pessoais e spray para dores musculares, Alimentos, suplementos e bebidas específicos de sua dieta e gosto.
+                    <br><br>
+
+                    <h4>INSCRIÇÕES</h4>
+                    <br>
+                    As inscrições deverão ser realizadas somente através do link que será disponibilizado, 10/08/2025 a 31/10/2025, ou até o limite das vagas.
+                    <br><br>
+                    As inscrições contarão com 3 (três) lotes com valores e período descritos abaixo:
+                    <br><br>
+
+                    <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Modalidade</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">LOTE 01</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">LOTE 02</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">LOTE 03</th>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">TRÊS VOLTAS</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 159,90 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 189,90 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 209,90 + Taxa</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">PRINCIPAL</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 259,90 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 289,90 + Taxa</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">R$ 309,90 + Taxa</td>
+                        </tr>
+                    </table>
+
+                    <b>Período e quantidade de inscrição de cada Lote:</b>
+                    <br><br>
+                    • <b>LOTE 01:</b> 10/08/2025 à 19/08/2025 ou até atingir 40 inscrições<br>
+                    • <b>LOTE 02:</b> 20/08/2025 à 13/09/2025 ou até atingir 60 inscrições<br>
+                    • <b>LOTE 03:</b> 14/09/2025 à 31/10/2025<br><br>
+
+                    Para a prova Principal estão inclusos:
+                    <br><br>
+                    - Número de peito;<br>
+                    - Camiseta personalizada da prova;<br>
+                    - Utilização da infraestrutura local durante o evento;<br>
+                    - Medalha de participação;<br>
+                    - Troféu apenas para o último atleta a ficar em pé;<br>
+                    - Apoio alimentar e de hidratação durante a competição, sendo:<br><br>
+
+                    <b>Alimentos:</b> frutas, biscoitos salgados e doces, bolos, pão, paçoca, amendoim, batata frita, balas de goma e outros;<br><br>
+
+                    <b>Alimentação diurna:</b> Almoço (frango, carne bovina, peixe, arroz, macarrão, farofa, salada);<br><br>
+
+                    <b>Alimentação noturna / madrugada:</b> caldo quente, pizzas e massas;<br><br>
+
+                    <b>Hidratação:</b> água, sucos, café, refrigerantes, e bebida isotônica.<br><br>
+
+                    Haverá opção de inscrição para até três voltas. O objetivo é fomentar a modalidade a atletas mais iniciantes ou que ainda não se aventuraram em distâncias maiores e também proporcionar uma participação mais ativa aos amigos, familiares e apoios dos atletas que passaram longas horas correndo em nosso quintal.
+                    <br><br>
+                    Acreditamos que essa opção, além de ajudar os apoios a entenderem o que seus atletas irão enfrentar, irá desmistificar um pouco desta ainda nova modalidade estimulando os corredores a se desafiarem por "só mais uma volta".
+                    <br><br>
+                    Prova de três voltas incluirá os mesmo itens mencionados acima, com exceção dos troféus "last one standing".
+                    <br><br>
+
+                    <h4>OBSERVAÇÕES</h4>
+                    <br>
+                    No ato da inscrição, ao concordar com o regulamento, o (a) participante aceita todos os termos do regulamento e assume total responsabilidade por sua participação no evento de acordo com o TERMO DE RESPONSABILIDADE, parte integrante deste regulamento.
+                    <br><br>
+
+                    <h4>TERMO DE RESPONSABILIDADE</h4>
+                    <br>
+                    Eu, atleta no cadastramento da inscrição da MACAXEIRA BACKYARD ULTRA PORTO VELHO - RO, BRASIL, no perfeito uso de minhas faculdades, DECLARO para os devidos fins de direito que:
+                    <br><br>
+                    <b>1.</b> Estou ciente de que se trata de uma corrida de longas distâncias.
+                    <br><br>
+                    <b>2.</b> Atesto que estou em plenas condições físicas e psicológicas de participar desta CORRIDA e estou ciente que não existe nenhuma recomendação médica que me impeça de praticar atividades físicas.
+                    <br><br>
+                    <b>3.</b> Assumo, por minha livre e espontânea vontade, todos os riscos envolvidos e suas consequências pela participação nesta PROVA (que incluem possibilidade de invalidez e morte), isentando a organização, colaboradores e patrocinadores de TODA E QUALQUER RESPONSABILIDADE por quaisquer danos materiais, morais ou físicos, que porventura venha a sofrer, advindos da participação nesta PROVA.
+                    <br><br>
+                    <b>4.</b> Li, conheço, aceito e me submeto integralmente a todos os termos do regulamento da MACAXEIRA BACKYARD ULTRA PORTO VELHO - RO.
+                    <br><br>
+                    <b>5.</b> Em caso de participação neste evento, representando equipes de atletas ou prestadores de serviços e/ou qualquer mídia ou veículo, declaro ter pleno conhecimento, e que aceito o regulamento da corrida, bem como, a respeitar as áreas da organização destinadas as mesmas, e que está vedada minha participação nas estruturas de apoio a equipes montadas em locais inadequados, ou que interfiram no andamento do evento, e também locais sem autorização por escrito da organização, podendo ser retirado da CORRIDA e do local do evento em qualquer tempo.
+                    <br><br>
+                    <b>6.</b> Estou ciente das penalidades e possível desclassificação que posso sofrer caso descumpra o regulamento ou cometa falta grave. Excluo meu direito de reclamação sobre tais aspectos da corrida.
+                    <br><br>
+                    <b>7.</b> Autorizo o uso de minha imagem, assim como familiares e amigos, para fins de divulgação do evento, por fotos, vídeos e entrevistas em qualquer meio de comunicação, sem geração de ônus para a organizadora, mídia e patrocinadores.
+                    <br><br>
+                    <b>8.</b> Estou ciente que na hipótese de suspensão da prova por questões de segurança pública ou força maior, todos os eventuais custos referentes à locomoção, preparação, estadia, inscrição, entre outros gastos despendidos pelo atleta será suportados única e exclusivamente por mim, isentando a Comissão Organizadora pelo ressarcimento de qualquer destes custos.
+                    <br><br>
+                    <b>9.</b> Assumo todas as despesas de hospedagem, traslados, seguros, assistência médica e quaisquer outras despesas necessárias sob minha responsabilidade nesta corrida; antes, durante ou depois da mesma.
+                    <br><br>
+                    <b>10.</b> Compreendi e estou de acordo com todos os itens deste TERMO DE RESPONSABILIDADE, isentando quem quer que seja, de toda e qualquer responsabilidade legal de tudo o que vier a ocorrer com o (a) atleta sob minha responsabilidade por consequência da sua participação nesta corrida.
+                    <br><br>
+                    A Comissão Organizadora poderá, a seu critério ou conforme as necessidades do evento, alterar ou revogar este regulamento, total ou parcialmente, informando as mudanças.
+                    <br><br>
+                    Os casos omissos deste regulamento serão dirimidos pela Comissão Organizadora de forma soberana, não cabendo recurso a estas decisões.
+                    <br><br>
+
+                    <h4>CONTATOS</h4>
+                    <br>
+                    📲 Instagram: @backyardmacaxeira<br>
+                    📱 Kélio Esteves Xavier - (69) 99925-9005<br>
+                    Organizador da Macaxeira Backyard Ultra Porto Velho - RO.
+                    <br><br>
+                    
+                    <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f0f8ff; border-radius: 10px;">
+                        <b style="color: #1d72cc; font-size: 18px;">Ao se inscrever, o atleta declara ter lido e concordado integralmente com este regulamento.</b>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p><b>"Tudo posso naquele que me fortalece."</b><br> Filipenses 4:13</p>
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM Run - todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+
+    <script>
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     const inscricaoBtns = document.querySelectorAll('.inscricao-btn');
+
+        //     // Event listeners para botões de inscrição
+        //     inscricaoBtns.forEach(btn => {
+        //         btn.addEventListener('click', function() {
+        //             const iditem = this.getAttribute('data-iditem');
+
+        //             // Buscar dados do lote selecionado
+        //             fetch(`/api/lote-inscricao/${iditem}`)
+        //                 .then(response => response.json())
+        //                 .then(data => {
+        //                     if (data.error) {
+        //                         alert('Erro ao carregar dados do lote: ' + data.error);
+        //                         return;
+        //                     }
+
+        //                     // Armazenar dados do lote no localStorage
+        //                     localStorage.setItem('lote_iditem', data.iditem);
+        //                     localStorage.setItem('lote_descricao', data.descricao);
+        //                     localStorage.setItem('lote_vlinscricao', data.vlinscricao);
+        //                     localStorage.setItem('lote_vltaxa', data.vltaxa);
+        //                     localStorage.setItem('lote_vltotal', data.vltotal);
+        //                     localStorage.setItem('lote_vlinscricao_meia', data.vlinscricao_meia);
+        //                     localStorage.setItem('lote_vltaxa_meia', data.vltaxa_meia);
+        //                     localStorage.setItem('lote_vltotal_meia', data.vltotal_meia);
+
+        //                     // Redirecionar para página de inscrição
+        //                     window.location.href = '/inscricao-evento';
+        //                 })
+        //                 .catch(error => {
+        //                     console.error('Erro:', error);
+        //                     alert('Erro ao processar solicitação');
+        //                 });
+        //         });
+        //     });
+        // });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const inscricaoBtns = document.querySelectorAll('.inscricao-btn');
+
+            // Event listeners para botões de inscrição
+            inscricaoBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const iditem = this.getAttribute('data-iditem');
+
+                    // Buscar dados do lote selecionado
+                    fetch(`/api/lote-inscricao/${iditem}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                alert('Erro ao carregar dados do lote: ' + data.error);
+                                return;
+                            }
+                            console.log('*** IDEVENTO: ', data.idevento);
+
+                            // Armazenar dados do lote no localStorage
+                            localStorage.setItem('idevento', data.idevento);
+                            localStorage.setItem('lote_iditem', data.iditem);
+                            localStorage.setItem('titulo_evento', data.titulo);
+                            localStorage.setItem('lote_descricao', data.descricao);
+                            localStorage.setItem('lote_vlinscricao', data.vlinscricao);
+                            localStorage.setItem('lote_vltaxa', data.vltaxa);
+                            localStorage.setItem('lote_vltotal', data.vltotal);
+                            localStorage.setItem('lote_vlinscricao_meia', data.vlinscricao_meia);
+                            localStorage.setItem('lote_vltaxa_meia', data.vltaxa_meia);
+                            localStorage.setItem('lote_vltotal_meia', data.vltotal_meia);
+
+                            // ALTERAÇÃO: Redirecionar para nova página de inscrição
+                            window.location.href = '/gerar-token-inscricao/' + data.idevento;
+                            //window.location.href = '/inscricao-evento/' + data.idevento;
+
+                        })
+                        .catch(error => {
+                            console.error('Erro:', error);
+                            alert('Erro ao processar solicitação');
+                        });
+                });
+            });
+        });
+
+
+    </script>
+</body>
+</html>
