@@ -442,10 +442,150 @@
 
         // Configurar máscaras
         function configurarMascaras() {
-            $('#cpf').mask('000.000.000-00');
-            $('#dataNascimento').mask('00/00/0000');
-            $('#celular').mask('(00) 00000-0000');
-            $('#telEmergencia').mask('(00) 00000-0000');
+            configurarMascarasAvancadas();
+        //     $('#cpf').mask('000.000.000-00');
+        //     $('#dataNascimento').mask('00/00/0000');
+        //     $('#celular').mask('(00) 00000-0000');
+        //     $('#telEmergencia').mask('(00) 00000-0000');
+        }
+
+        // Nova função para configurar máscaras de forma mais robusta
+        function configurarMascarasAvancadas() {
+            // CPF
+            const cpfField = document.getElementById('cpf');
+            cpfField.addEventListener('input', function(e) {
+                aplicarMascaraCPF(this);
+            });
+            cpfField.addEventListener('keydown', function(e) {
+                // Permite teclas de controle
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    return;
+                }
+                // Bloqueia caracteres não numéricos
+                if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Data de Nascimento
+            const dataField = document.getElementById('dataNascimento');
+            dataField.addEventListener('input', function(e) {
+                aplicarMascaraData(this);
+            });
+            dataField.addEventListener('keydown', function(e) {
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    return;
+                }
+                if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Celular
+            const celularField = document.getElementById('celular');
+            celularField.addEventListener('input', function(e) {
+                aplicarMascaraTelefone(this);
+            });
+            celularField.addEventListener('keydown', function(e) {
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    return;
+                }
+                if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Telefone de Emergência
+            const telEmergenciaField = document.getElementById('telEmergencia');
+            telEmergenciaField.addEventListener('input', function(e) {
+                aplicarMascaraTelefone(this);
+            });
+            telEmergenciaField.addEventListener('keydown', function(e) {
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    return;
+                }
+                if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // Função para aplicar máscara de CPF
+        function aplicarMascaraCPF(campo) {
+            let valor = campo.value.replace(/\D/g, '');
+            const posicaoCursor = campo.selectionStart;
+            const valorAnterior = campo.value;
+            
+            if (valor.length <= 11) {
+                valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+                valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+                valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            }
+            
+            campo.value = valor;
+            
+            // Ajustar posição do cursor
+            setTimeout(() => {
+                let novaPosicao = posicaoCursor;
+                if (valor.length > valorAnterior.length) {
+                    // Se adicionou caracteres especiais, ajustar cursor
+                    if (valor.charAt(posicaoCursor - 1) === '.' || valor.charAt(posicaoCursor - 1) === '-') {
+                        novaPosicao = posicaoCursor + 1;
+                    }
+                }
+                campo.setSelectionRange(novaPosicao, novaPosicao);
+            }, 0);
+        }
+
+        // Função para aplicar máscara de data
+        function aplicarMascaraData(campo) {
+            let valor = campo.value.replace(/\D/g, '');
+            const posicaoCursor = campo.selectionStart;
+            const valorAnterior = campo.value;
+            
+            if (valor.length <= 8) {
+                valor = valor.replace(/(\d{2})(\d)/, '$1/$2');
+                valor = valor.replace(/(\d{2})\/(\d{2})(\d)/, '$1/$2/$3');
+            }
+            
+            campo.value = valor;
+            
+            // Ajustar posição do cursor
+            setTimeout(() => {
+                let novaPosicao = posicaoCursor;
+                if (valor.length > valorAnterior.length) {
+                    if (valor.charAt(posicaoCursor - 1) === '/') {
+                        novaPosicao = posicaoCursor + 1;
+                    }
+                }
+                campo.setSelectionRange(novaPosicao, novaPosicao);
+            }, 0);
+        }
+
+        // Função para aplicar máscara de telefone
+        function aplicarMascaraTelefone(campo) {
+            let valor = campo.value.replace(/\D/g, '');
+            const posicaoCursor = campo.selectionStart;
+            const valorAnterior = campo.value;
+            
+            if (valor.length <= 11) {
+                valor = valor.replace(/(\d{2})(\d)/, '($1) $2');
+                valor = valor.replace(/(\d{4,5})(\d{4})$/, '$1-$2');
+            }
+            
+            campo.value = valor;
+            
+            // Ajustar posição do cursor
+            setTimeout(() => {
+                let novaPosicao = posicaoCursor;
+                if (valor.length > valorAnterior.length) {
+                    const caracterAtual = valor.charAt(posicaoCursor - 1);
+                    if (['(', ')', ' ', '-'].includes(caracterAtual)) {
+                        novaPosicao = posicaoCursor + 1;
+                    }
+                }
+                campo.setSelectionRange(novaPosicao, novaPosicao);
+            }, 0);
         }
 
         // Configurar eventos
