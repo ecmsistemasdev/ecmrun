@@ -6842,7 +6842,7 @@ def arealslope():
 
 ##### BACKYARD ###########
 
-@app.route('/backyardmacaxeira')
+@app.route('/macaxeirabackyard')
 def backyard():
     """Página de inscrição do evento Areal Slope"""
     try:
@@ -7581,4 +7581,5 @@ def lista_eventos_direto():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
