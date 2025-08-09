@@ -66,10 +66,7 @@
                 <!-- CPF -->
                 <div class="form-group">
                     <label for="cpf">CPF <span class="required">*</span></label>
-                    <div class="cpf-loading">
-                        <input type="text" id="cpf" name="cpf" required maxlength="14" inputmode="numeric">
-                        <div class="cpf-spinner" id="cpfSpinner"></div>
-                    </div>
+                    <input type="text" id="cpf" name="cpf" required maxlength="14" inputmode="numeric">
                     <div class="error-message" id="cpfError"></div>
                 </div>
 
@@ -313,6 +310,22 @@
         </div>
     </div>
 
+    <!-- Modal de Loading CPF -->
+    <div id="loadingCpfModal" class="loading-modal">
+        <div class="loading-modal-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Buscando Dados...</div>
+        </div>
+    </div>
+
+    <!-- Modal de Loading Pagamento -->
+    <div id="loadingPagamentoModal" class="loading-modal">
+        <div class="loading-modal-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Aguarde, direcionando para área de pagamento...</div>
+        </div>
+    </div>
+
     <script>
         // Adicionar no início do script da página
         window.addEventListener('beforeunload', function() {
@@ -470,23 +483,23 @@
                 });
             });
 
-            // Validação do CPF ao sair do campo - COM SPINNER
+            // Validação do CPF ao sair do campo - COM MODAL DE LOADING
             $('#cpf').on('blur', function() {
                 const cpf = $(this).val().replace(/\D/g, '');
-                const spinner = document.getElementById('cpfSpinner');
                 
                 if (cpf.length !== 11) {
                     return;
                 }
 
-                // Mostrar spinner
-                spinner.style.display = 'block';
+                // Mostrar modal de loading
+                mostrarModal('loadingCpfModal');
 
                 // Primeira chamada para validar o formato do CPF
                 fetch(`/validar-cpf?cpf=${cpf}`)
                     .then(response => response.json())
                     .then(data => {
                         if (!data.valid) {
+                            fecharModal('loadingCpfModal');
                             showModal('CPF inválido');
                             $(this).val('');
                             setTimeout(() => {
@@ -501,6 +514,7 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.exists) {
+                            fecharModal('loadingCpfModal');
                             showModal('CPF já inscrito para o evento.');
                             $(this).val('');
                             setTimeout(() => {
@@ -514,23 +528,25 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        fecharModal('loadingCpfModal');
                         if (data.success) {
                             // Preencher formulário com dados encontrados - SEM MODAL
                             preencherFormularioComDados(data.dados);
+                        } else {
+                            fecharModal('loadingPagamentoModal'); 
+                            alert('Erro ao salvar inscrição: ' + (data.mensagem || 'Erro desconhecido'));
                         }
+
                         // Se não encontrou dados, não faz nada (formulário continua em branco)
                     })
                     .catch(error => {
+                        fecharModal('loadingCpfModal');
                         if (error !== 'CPF inválido' && error !== 'CPF já inscrito') {
                             console.error('Erro na validação do CPF:', error);
                         }
-                    })
-                    .finally(() => {
-                        // Esconder spinner sempre
-                        spinner.style.display = 'none';
                     });
             });
-        
+
             // Validação de data
             document.getElementById('dataNascimento').addEventListener('blur', function() {
                 if (this.value) {
@@ -547,7 +563,7 @@
             document.getElementById('estado').addEventListener('change', function() {
                 carregarCidades(this.value); // Remove o segundo parâmetro
             });           
-           
+        
             // Estado
             document.getElementById('estado').addEventListener('change', function() {
                 carregarCidades(this.value);
@@ -558,10 +574,12 @@
                 document.getElementById('btnProximo').disabled = !this.checked;
             });
 
-            // Submit do formulário
+            // Submit do formulário - COM MODAL DE LOADING
             document.getElementById('inscricaoForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 if (validarFormulario()) {
+                    // Mostrar modal de loading do pagamento
+                    mostrarModal('loadingPagamentoModal');
                     salvarInscricao();
                 }
             });
@@ -1120,6 +1138,7 @@
                 }
             })
             .catch(error => {
+                fecharModal('loadingPagamentoModal'); 
                 console.error('Erro:', error);
                 alert('Erro ao processar inscrição. Tente novamente.');
             });
