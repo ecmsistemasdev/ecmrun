@@ -80,9 +80,60 @@ def fn_email(valor):
     global var_email
     var_email = valor
 
+
+@app.route('/obter_eventos_ativos', methods=['GET'])
+def obter_eventos_ativos():
+    """Rota para obter eventos ativos para exibição na página principal"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT IDEVENTO, DESCRICAO, 
+                CASE WHEN DTINICIO=DTFIM 
+                    THEN DTINICIO ELSE CONCAT(DTINICIO,' - ',DTFIM)
+                END AS DTEVENTO, 
+                CONCAT(SUBSTR(INICIO_INSCRICAO,1,10),' A ',
+                       SUBSTR(FIM_INSCRICAO,1,10)) AS PERIODO_INSCRICAO,
+                ROTA
+            FROM EVENTO
+            WHERE ATIVO = 'S'
+            ORDER BY DTINICIO
+        """)
+        
+        # Busca todos os eventos
+        eventos = cur.fetchall()
+        cur.close()
+        
+        # Converte os resultados para uma lista de dicionários
+        eventos_lista = []
+        if eventos:
+            for evento in eventos:
+                evento_dict = {
+                    'IDEVENTO': evento[0],
+                    'DESCRICAO': evento[1],
+                    'DTEVENTO': evento[2],
+                    'PERIODO_INSCRICAO': evento[3],
+                    'ROTA': evento[4]
+                }
+                eventos_lista.append(evento_dict)
+        
+        return jsonify({
+            'success': True,
+            'eventos': eventos_lista,
+            'total': len(eventos_lista)
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao obter eventos ativos: {str(e)}',
+            'eventos': []
+        }), 500
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 # @app.route('/backyard2025/resultado')
 # def backyard2025_resultado():
