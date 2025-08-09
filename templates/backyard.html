@@ -11,9 +11,6 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body>
-    <!-- <div class="logo-container">
-        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
-    </div> -->
 
     <div class="logo-container">
         <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
@@ -333,7 +330,7 @@
                     Organizador da Macaxeira Backyard Ultra Porto Velho - RO.
                     <br><br>
                     
-                    <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f0f8ff; border-radius: 10px;">
+                    <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #ffffff; border-radius: 10px;">
                         <b style="color: #1d72cc; font-size: 18px;">Ao se inscrever, o atleta declara ter lido e concordado integralmente com este regulamento.</b>
                     </div>
                 </div>
@@ -343,95 +340,13 @@
     </div>
 
     <footer class="footer">
-        <p><b>"Tudo posso naquele que me fortalece."</b><br> Filipenses 4:13</p>
+        <p class="bible-verse">"Tudo posso naquele que me fortalece." - Filipenses 4:13</p>
         <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
-        <p class="footer-text">ECM Run - todos os direitos reservados</p>
+        <p class="footer-text">ECM RUN Esports - todos os direitos reservados</p>
         <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
     </footer>
+    
+    <script src="/static/js/backyard.js"></script>
 
-    <script>
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     const inscricaoBtns = document.querySelectorAll('.inscricao-btn');
-
-        //     // Event listeners para botões de inscrição
-        //     inscricaoBtns.forEach(btn => {
-        //         btn.addEventListener('click', function() {
-        //             const iditem = this.getAttribute('data-iditem');
-
-        //             // Buscar dados do lote selecionado
-        //             fetch(`/api/lote-inscricao/${iditem}`)
-        //                 .then(response => response.json())
-        //                 .then(data => {
-        //                     if (data.error) {
-        //                         alert('Erro ao carregar dados do lote: ' + data.error);
-        //                         return;
-        //                     }
-
-        //                     // Armazenar dados do lote no localStorage
-        //                     localStorage.setItem('lote_iditem', data.iditem);
-        //                     localStorage.setItem('lote_descricao', data.descricao);
-        //                     localStorage.setItem('lote_vlinscricao', data.vlinscricao);
-        //                     localStorage.setItem('lote_vltaxa', data.vltaxa);
-        //                     localStorage.setItem('lote_vltotal', data.vltotal);
-        //                     localStorage.setItem('lote_vlinscricao_meia', data.vlinscricao_meia);
-        //                     localStorage.setItem('lote_vltaxa_meia', data.vltaxa_meia);
-        //                     localStorage.setItem('lote_vltotal_meia', data.vltotal_meia);
-
-        //                     // Redirecionar para página de inscrição
-        //                     window.location.href = '/inscricao-evento';
-        //                 })
-        //                 .catch(error => {
-        //                     console.error('Erro:', error);
-        //                     alert('Erro ao processar solicitação');
-        //                 });
-        //         });
-        //     });
-        // });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const inscricaoBtns = document.querySelectorAll('.inscricao-btn');
-
-            // Event listeners para botões de inscrição
-            inscricaoBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const iditem = this.getAttribute('data-iditem');
-
-                    // Buscar dados do lote selecionado
-                    fetch(`/api/lote-inscricao/${iditem}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.error) {
-                                alert('Erro ao carregar dados do lote: ' + data.error);
-                                return;
-                            }
-                            console.log('*** IDEVENTO: ', data.idevento);
-
-                            // Armazenar dados do lote no localStorage
-                            localStorage.setItem('idevento', data.idevento);
-                            localStorage.setItem('lote_iditem', data.iditem);
-                            localStorage.setItem('titulo_evento', data.titulo);
-                            localStorage.setItem('lote_descricao', data.descricao);
-                            localStorage.setItem('lote_vlinscricao', data.vlinscricao);
-                            localStorage.setItem('lote_vltaxa', data.vltaxa);
-                            localStorage.setItem('lote_vltotal', data.vltotal);
-                            localStorage.setItem('lote_vlinscricao_meia', data.vlinscricao_meia);
-                            localStorage.setItem('lote_vltaxa_meia', data.vltaxa_meia);
-                            localStorage.setItem('lote_vltotal_meia', data.vltotal_meia);
-
-                            // ALTERAÇÃO: Redirecionar para nova página de inscrição
-                            window.location.href = '/gerar-token-inscricao/' + data.idevento;
-                            //window.location.href = '/inscricao-evento/' + data.idevento;
-
-                        })
-                        .catch(error => {
-                            console.error('Erro:', error);
-                            alert('Erro ao processar solicitação');
-                        });
-                });
-            });
-        });
-
-
-    </script>
 </body>
 </html>

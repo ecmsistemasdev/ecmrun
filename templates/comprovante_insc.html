@@ -196,22 +196,33 @@
         }
 
         .footer {
-            background-color: white;
-            padding: 20px 0;
+            background: linear-gradient(to bottom, #e3f2fd, #bbdefb, #90caf9);
+            padding: 30px 0;
             margin-top: auto;
             text-align: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .bible-verse {
+            font-size: 1.1em;
+            font-style: italic;
+            color: #1565c0;
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
         }
 
         .footer-logo {
             height: 60px;
             width: auto;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .footer-text {
-            font-size: 0.7em;
-            color: #333;
-            margin: 2px 0;
+            font-size: 0.9em;
+            color: #1565c0;
+            margin: 5px 0;
+            font-weight: 500;
         }
 
         .qr-container {
@@ -336,7 +347,7 @@
                 <div class="content-section">
                     <div class="distance-value-row">
                         <div class="info-box">
-                            <span class="info-label">Distância /<br>Modalidade:</span>
+                            <span class="info-label">Distância/Modalidade:</span>
                             <span class="info-value">{{ km }}</span>
                         </div>
                         <div class="info-box">
@@ -348,7 +359,7 @@
                 
                 <div class="content-section">
                     <div class="info-box full-width-box">
-                        <span class="info-label">Inscrição:</span>
+                        <span class="info-label">Cód. Inscrição:</span>
                         <span class="info-value">{{ inscricao }}</span>
                     </div>
                 </div>
@@ -418,8 +429,9 @@
             </div>
 
             <footer class="footer">
-                <img src="https://ecmrun.com.br/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
-                <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
+                <p class="bible-verse">"Tudo posso naquele que me fortalece." - Filipenses 4:13</p>
+                <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+                <p class="footer-text">ECM RUN Esports - todos os direitos reservados</p>
                 <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
             </footer>
         </div>
