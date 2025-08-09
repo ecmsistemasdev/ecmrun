@@ -1,0 +1,556 @@
+/* Reset e configurações base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Header com logo - REMOVIDO sticky */
+/* .logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+} */
+
+.logo-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.logo {
+    height: 50px;
+    width: auto;
+}
+
+.inscricoes-link {
+    text-align: right;
+    color: #4376ac;
+    text-decoration: none;
+    cursor: pointer;
+    width: 100%; /* Added to ensure full width alignment */
+}
+
+.inscricoes-link:hover {
+    text-decoration: underline;
+}
+
+/* Header do evento */
+.event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px;
+    background: linear-gradient(135deg, #e97618 0%, #a04c07 100%);
+    color: white;
+    gap: 30px;
+}
+
+.event-info {
+    flex: 1;
+    max-width: 60%;
+}
+
+.event-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.event-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.event-datetime {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px; /* Aumentado de 12px para 13px */
+}
+
+.event-datetime .icon {
+    font-size: 14px;
+}
+
+.event-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px; /* Aumentado de 12px para 13px */
+}
+
+.event-location .icon {
+    font-size: 14px;
+}
+
+.event-banner {
+    flex: 1;
+    max-width: 40%;
+    display: flex;
+    justify-content: center;
+}
+
+.banner-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    object-fit: cover;
+}
+
+/* Container principal */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* Conteúdo principal (esquerda) */
+.main-content {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.info-section, .regulamento-section {
+    background-color: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.info-title, .regulamento-title {
+    color: #1d72cc;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #1d72cc;
+    padding-bottom: 10px;
+}
+
+.event-description, .regulamento-content {
+    color: #555;
+    line-height: 1.7; /* Reduzido de 1.8 para 1.7 */
+    font-size: 14px; /* Reduzido em 1px do padrão */
+}
+
+.event-description p, .regulamento-content p {
+    margin-bottom: 14px; /* Reduzido de 15px para 14px */
+}
+
+/* Formulário de inscrição (direita) */
+.inscription-form-container {
+    flex: 1;
+    min-width: 350px;
+}
+
+.registration-form {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 20px; /* Mudado de 100px para 20px já que o header não é mais sticky */
+    overflow: hidden;
+}
+
+.form-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    margin: 0;
+}
+
+/* Lotes */
+.lotes-container {
+    padding: 20px;
+}
+
+.lote-item {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 0; /* Reduzido de 15px para 12px */
+    transition: all 0.3s ease;
+}
+
+.lote-item:last-child {
+    border-bottom: none;
+}
+
+.lote-item:hover {
+    background-color: #f8f9fa;
+    margin: 0 -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 12px; /* Mantém o padding reduzido */
+    padding-bottom: 12px;
+}
+
+.lote-title {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 6px; /* Reduzido de 8px para 6px */
+}
+
+/* Status dos lotes */
+.lote-status {
+    font-weight: bold;
+    text-align: left;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin-bottom: 6px; /* Reduzido de 8px para 6px */
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.status-nao-iniciado {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-esgotado, .status-encerrado {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Preços */
+.lote-pricing {
+    margin-bottom: 10px; /* Reduzido de 12px para 10px */
+}
+
+.price-breakdown {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 6px; /* Reduzido de 8px para 6px */
+}
+
+.price-value {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #1d72cc;
+}
+
+.price-tax {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.price-total-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px; /* Reduzido de 8px para 6px */
+}
+
+.price-total {
+    font-size: 0.95rem;
+    color: #28a745;
+    font-weight: bold;
+}
+
+.lote-deadline {
+    font-size: 0.8rem;
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Botão de inscrição - altura reduzida */
+.inscricao-btn {
+    padding: 6px 14px; /* Reduzido de 8px 16px para 6px 14px */
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: auto;
+    white-space: nowrap;
+}
+
+.inscricao-btn:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.inscricao-btn:active {
+    transform: translateY(0);
+}
+
+/* Footer */
+.footer {
+    background-color: #1d72cc;
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+    margin-top: 50px;
+}
+
+.footer-logo {
+    height: 40px;
+    margin: 15px 0;
+}
+
+.footer-text {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Info e Regulamento - ajuste específico para o conteúdo */
+.info, .termo {
+    font-size: 14px; /* Reduzido em 1px */
+    line-height: 1.6;
+}
+
+/* Responsividade */
+@media (min-width: 769px) {
+    /* Desktop - formulário à direita */
+    .container {
+        flex-direction: row;
+    }
+
+    .inscription-form-container {
+        order: 2;
+    }
+    
+    .main-content {
+        order: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        background-color: #fff;
+    }
+
+    .logo-container {
+        padding: 10px 15px;
+        order: 1;
+    }
+    
+    .logo {
+        height: 40px;
+    }
+    
+    .event-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 10px 15px 20px 15px;
+        order: 3;
+    }
+    
+    .event-info {
+        max-width: 100%;
+        order: 2;
+    }
+    
+    .event-banner {
+        max-width: 100%;
+        order: 1;
+        margin-bottom: 10px; /* Reduz espaço entre banner e título */
+        padding: 0 10px; /* Adiciona pequena margem lateral */
+    }
+
+    .event-title {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+    
+    .event-datetime, .event-location {
+        justify-content: center;
+        font-size: 14px; /* Aumentado para 14px no mobile também */
+    }
+    
+    .container {
+        flex-direction: column;
+        padding: 20px 15px;
+        gap: 20px;
+    }
+
+    /* Mobile - formulário primeiro */
+    .inscription-form-container {
+        order: 1;
+        flex: none;
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .main-content {
+        order: 2;
+        flex: none;
+        width: 100%;
+    }
+    
+    .registration-form {
+        position: static;
+        margin-top: 0;
+    }
+
+    /* Mobile - botão ao lado do total */
+    .inscricao-btn {
+        padding: 6px 14px; /* Mantém o padding reduzido */
+        font-size: 0.85rem;
+        width: auto;
+    }
+
+    .price-total-container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .info-section, .regulamento-section {
+        padding: 20px;
+    }
+    
+    .info-title, .regulamento-title {
+        font-size: 1.3rem;
+    }
+    
+    .form-title {
+        font-size: 1.1rem;
+        padding: 12px 20px;
+    }
+
+    .lotes-container {
+        padding: 15px;
+    }
+    
+    .lote-title {
+        font-size: 0.9rem;
+    }
+    
+    .price-value {
+        font-size: 0.95rem;
+    }
+    
+    .banner-image {
+        max-height: 200px;
+        width: 100%;
+    }
+
+    .lote-item:hover {
+        margin: 0 -15px;
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .event-title {
+        font-size: 1.3rem;
+    }
+    
+    .container {
+        padding: 15px 10px;
+    }
+    
+    .info-section, .regulamento-section {
+        padding: 15px;
+    }
+
+    .lotes-container {
+        padding: 12px;
+    }
+    
+    .lote-item {
+        padding: 10px 0; /* Reduzido de 12px para 10px */
+    }
+    
+    .inscricao-btn {
+        padding: 6px 12px; /* Reduzido */
+        font-size: 0.85rem;
+    }
+    
+    .banner-image {
+        max-height: 200px;
+        width: 100%;
+    }
+
+    .lote-item:hover {
+        margin: 0 -12px;
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.lote-item {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.lote-item:nth-child(1) { animation-delay: 0.1s; }
+.lote-item:nth-child(2) { animation-delay: 0.2s; }
+.lote-item:nth-child(3) { animation-delay: 0.3s; }
+.lote-item:nth-child(4) { animation-delay: 0.4s; }
+
+/* Estados especiais */
+.lote-item.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.inscricao-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.inscricao-btn:disabled:hover {
+    background-color: #6c757d;
+    transform: none;
+    box-shadow: none;
+}
+
+.status-nao-iniciado::before {
+    content: '⏳ ';
+}
+
+.status-esgotado::before {
+    content: '❌ ';
+}
+
+.status-encerrado::before {
+    content: '🔒 ';
+}
