@@ -37,12 +37,6 @@ sdk = mercadopago.SDK(os.getenv('MP_ACCESS_TOKEN'))
 app.secret_key = os.getenv('SECRET_KEY')
 CORS(app)
 
-# Configuração do Flask-Mail
-#app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')  # Substitua pelo seu servidor SMTP
-#app.config['MAIL_PORT'] = os.getenv('SMTP_PORT') 
-#app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') 
-#app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASSWORD') 
-#app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')  # Substitua pelo seu servidor SMTP
 app.config['MAIL_PORT'] = os.getenv('MAIL_PORT') 
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME') 
@@ -227,19 +221,6 @@ def format_time_difference(seconds):
     seconds = int(seconds % 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-# @app.route('/desafio200k/regulamento')
-# def regulamento200k():
-#     return render_template('regulamento200k.html')
-    
-# @app.route('/corracomultra')
-# def corracomultra():
-#     return render_template('corracomultra.html')
-
-
-# # Rotas do backyard
-# @app.route('/backyard/lancamento')
-# def backyard_lancamento():
-#     return render_template('backyardlancamento.html')
 
 # @app.route('/backyard/pesquisar_atleta/<nrpeito>')
 # def pesquisar_atleta(nrpeito):
@@ -721,231 +702,6 @@ def process_payment():
         return jsonify({"error": str(e)}), 400
 
 
-# @app.route('/process_payment', methods=['POST'])
-# def process_payment():
-#     try:
-#         app.logger.info("Dados recebidos:")
-#         payment_data = request.json
-#         # Log sensitive data securely
-#         safe_data = {**payment_data}
-#         if 'token' in safe_data:
-#             safe_data['token'] = '***HIDDEN***'
-#         if 'payer' in safe_data and 'identification' in safe_data['payer']:
-#             safe_data['payer']['identification']['number'] = '***HIDDEN***'
-#         app.logger.info(safe_data)
-        
-#         # Extract data with proper error handling
-#         try:
-#             installments = int(payment_data.get('installments', 1))
-#             transaction_amount = float(payment_data.get('transaction_amount', 0))
-            
-#             # Round to 2 decimal places to avoid floating point precision issues
-#             valor_total = round(float(payment_data.get('valor_total', 0)), 2)
-#             valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
-#             valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
-            
-#             # Ensure transaction_amount matches valor_total
-#             if abs(transaction_amount - valor_total) > 0.01:
-#                 app.logger.warning(f"Discrepância entre transaction_amount ({transaction_amount}) e valor_total ({valor_total})")
-#                 # Use valor_total as the source of truth
-#                 transaction_amount = valor_total
-                
-#             # Store other data safely
-#             idatleta = payment_data.get('idAtleta')
-#             vCPF = payment_data.get('CPF')
-#             camisa = payment_data.get('camiseta', '')
-#             apoio = payment_data.get('apoio', '')
-#             equipe = payment_data.get('equipe', '')
-#             equipe200 = payment_data.get('nome_equipe', '')
-#             integrantes = payment_data.get('integrantes', '')
-#         except (ValueError, TypeError) as e:
-#             raise ValueError(f"Erro ao processar valores numéricos: {str(e)}")
-
-#         # Store session data
-#         session['valorTotal'] = transaction_amount
-#         session['numeroParcelas'] = installments
-#         session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
-#         session['valorTotalsemJuros'] = valor_total
-#         session['valorAtual'] = valor_atual
-#         session['valorTaxa'] = valor_taxa
-#         session['formaPagto'] = 'CARTÃO DE CRÉDITO'
-#         session['Camisa'] = camisa
-#         session['Equipe'] = equipe
-#         session['Apoio'] = apoio
-#         session['Equipe200'] = equipe200
-#         session['Integrantes'] = integrantes
-#         session['idAtleta'] = idatleta
-#         session['CPF'] = vCPF
-
-#         # Validar dados recebidos
-#         required_fields = [
-#             'token', 
-#             'transaction_amount', 
-#             'installments', 
-#             'payment_method_id',
-#             'payer'
-#         ]
-        
-#         for field in required_fields:
-#             if field not in payment_data:
-#                 raise ValueError(f"Campo obrigatório ausente: {field}")
-        
-#         # Validate payer data
-#         if not payment_data['payer'].get('email'):
-#             raise ValueError("Email do pagador é obrigatório")
-        
-#         if 'identification' not in payment_data['payer']:
-#             raise ValueError("Identificação do pagador é obrigatória")
-        
-#         if not payment_data['payer']['identification'].get('type') or not payment_data['payer']['identification'].get('number'):
-#             raise ValueError("Tipo e número de documento são obrigatórios")
-
-#         # Gerar referência externa única
-#         external_reference = str(uuid.uuid4())
-        
-#         # Criar preferência de pagamento
-#         item_details = {
-#             "id": "DESAFIO_200K",
-#             "title": "Inscrição Desafio 200k",
-#             "description": "Inscrição para 4º Desafio 200km",
-#             "category_id": "SPORTS_EVENT",
-#             "quantity": 1,
-#             "currency_id": "BRL",
-#             "unit_price": valor_atual,
-#             "total_amount": transaction_amount
-#         }
-        
-#         # Preparar preferência de pagamento
-#         preference_data = {
-#             "items": [item_details],
-#             "notification_url": "https://ecmrun.com.br/webhook",
-#             "external_reference": external_reference
-#         }
-        
-#         # Criar preferência
-#         try:
-#             preference_response = sdk.preference().create(preference_data)
-            
-#             if "response" not in preference_response:
-#                 error_message = preference_response.get("message", "Erro desconhecido na criação da preferência")
-#                 app.logger.error(f"Erro na preferência: {error_message}")
-#                 raise ValueError(f"Erro ao criar preferência de pagamento: {error_message}")
-#         except Exception as e:
-#             app.logger.error(f"Exceção ao criar preferência: {str(e)}")
-#             raise ValueError(f"Erro ao criar preferência de pagamento: {str(e)}")
-
-#         payment_info = {
-#             "transaction_amount": transaction_amount,
-#             "token": payment_data['token'],
-#             "description": "Inscrição Desafio 200k",
-#             "statement_descriptor": "ECMRUN DESAFIO 200K",
-#             "installments": installments,
-#             "payment_method_id": payment_data['payment_method_id'],
-#             "external_reference": external_reference,
-#             "notification_url": "https://ecmrun.com.br/webhook",
-#             "payer": {
-#                 "email": payment_data['payer']['email'],
-#                 "identification": {
-#                     "type": payment_data['payer']['identification']['type'],
-#                     "number": payment_data['payer']['identification']['number']
-#                 },
-#                 "first_name": payment_data['payer']['first_name'],
-#                 "last_name": payment_data['payer']['last_name']
-#             },
-#             "additional_info": {
-#                 "items": [{
-#                     "id": "DESAFIO_200K",
-#                     "title": "Inscrição Desafio 200k",
-#                     "description": "Inscrição para 4º Desafio 200km",
-#                     "category_id": "SPORTS_EVENT",
-#                     "quantity": 1,
-#                     "unit_price": valor_atual
-#                 }],
-#                 "payer": {
-#                     "first_name": payment_data['payer']['first_name'],
-#                     "last_name": payment_data['payer']['last_name'],
-#                     "registration_date": datetime.now().isoformat()
-#                 },
-#                 "ip_address": request.remote_addr
-#             }
-#         }
-
-#         # Log payment info (exclude sensitive data)
-#         safe_payment_info = {**payment_info}
-#         safe_payment_info['token'] = '***HIDDEN***'
-#         safe_payment_info['payer']['identification']['number'] = '***HIDDEN***'
-#         app.logger.info("Dados do pagamento:")
-#         app.logger.info(safe_payment_info)
-
-#         # Processar pagamento
-#         try:
-#             payment_response = sdk.payment().create(payment_info)
-            
-#             app.logger.info("Resposta do pagamento:")
-#             app.logger.info(payment_response)
-            
-#             if "response" not in payment_response:
-#                 error_details = payment_response.get("cause", [{}])
-#                 error_message = "Erro desconhecido"
-                
-#                 if isinstance(error_details, list) and len(error_details) > 0:
-#                     error_message = error_details[0].get("description", "Erro desconhecido")
-                
-#                 return jsonify({
-#                     "error": "Erro ao processar pagamento",
-#                     "details": error_message
-#                 }), 400
-                
-#             payment_data = payment_response["response"]
-
-#             # Comentado para testes, mas precisa de um retorno
-#             # if payment_data.get("status") == "approved":
-#             #     ...
-#             # else:
-#             #     ...
-            
-#             # Adicione este retorno para substituir o bloco comentado
-#             return jsonify(payment_data), 200        
-            
-#         except Exception as e:
-#             app.logger.error(f"Exceção ao processar pagamento: {str(e)}")
-#             return jsonify({
-#                 "error": "Erro ao processar pagamento",
-#                 "details": str(e)
-#             }), 400
-        
-#     except ValueError as e:
-#         app.logger.error(f"Erro de validação: {str(e)}")
-#         return jsonify({"error": str(e)}), 400
-#     except Exception as e:
-#         app.logger.error(f"Erro no processamento: {str(e)}")
-#         return jsonify({"error": str(e)}), 400
-
-# def get_receipt_data(payment_id):
-#     """Função separada para buscar dados do comprovante"""
-#     try:
-#         cur = mysql.connection.cursor()
-#         cur.execute('''
-#             SELECT I.DTPAGAMENTO, E.DESCRICAO, E.LOCAL, 
-#                 CONCAT(E.DTINICIO,' ',E.HRINICIO,' - ',E.DTFIM) as DTEVENTO,
-#                 CONCAT(A.NOME,' ',A.SOBRENOME) as NOME_COMPLETO, 
-#                 CONCAT(M.DISTANCIA,' / ',M.DESCRICAO) AS DISTANCIA,
-#                 I.VALOR, I.VALOR_PGTO, I.FORMAPGTO, I.IDPAGAMENTO
-#             FROM ecmrun.INSCRICAO I
-#             JOIN ecmrun.ATLETA A ON A.IDATLETA = I.IDATLETA
-#             JOIN ecmrun.EVENTO E ON E.IDEVENTO = I.IDEVENTO
-#             JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM
-#             WHERE I.FLSTATUS = 'CONFIRMADO'
-#             AND I.IDPAGAMENTO = %s
-#         ''', (payment_id,))
-        
-#         data = cur.fetchone()
-#         cur.close()
-#         return data
-#     except Exception as e:
-#         app.logger.error(f"Erro ao buscar dados: {str(e)}")
-#         raise
-
 def send_organizer_notification(receipt_data):
     try:
         msg = Message(
@@ -1182,11 +938,6 @@ def comprovanteemail(payment_id):
         return "Erro ao buscar dados", 500
 
 
-@app.route('/pagpix')
-def pagpix():
-    return render_template('pagpix.html')
-
-
 @app.route('/get_evento_data')
 def get_evento_data():
     try:
@@ -1276,50 +1027,6 @@ def cupom200k():
     except Exception as e:
         print(f"Erro ao carregar página: {str(e)}")
         return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
-
-
-# @app.route('/desafio200k')
-# def desafio200k():
-#     try:
-#         cur = mysql.connection.cursor()
-#         cur.execute('''
-#             SELECT E.IDEVENTO, E.DESCRICAO, E.DTINICIO, E.DTFIM, E.HRINICIO,
-#                 E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
-#                 M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
-#                 M.VLINSCRICAO, M.VLMEIA, M.VLTAXA, E.INICIO_INSCRICAO_EXT, E.FIM_INSCRICAO_EXT
-#             FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
-#             WHERE M.IDEVENTO = E.IDEVENTO
-#                 AND E.IDEVENTO = 1
-#         ''')
-        
-#         results = cur.fetchall()
-#         cur.close()
-        
-#         if not results:
-#             return render_template('desafio200k.html', titulo="Evento não encontrado", modalidades=[])
-            
-#         evento_titulo = results[0][1]  # DESCRICAO do evento
-#         dt_incio = results[0][2]     
-#         modalidades = [{'id': row[9], 'descricao': row[10]} for row in results]
-#         vl200 = f'R$ {results[0][13]:,.2f}'
-#         vl100 = f'R$ {results[1][13]:,.2f}' 
-#         vl50 = f'R$ {results[2][13]:,.2f}'
-#         vl25 = f'R$ {results[3][13]:,.2f}'
-#         inicioinsc = results[0][16]
-#         fiminsc = results[0][17]      
-#         dt_inicioinsc = results[0][7]
-#         dt_fiminsc = results[0][8]     
-        
-#         #return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades, vlSolo=vl200, 
-#         #                       vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, inicio_insc=inicioinsc, fim_insc=fiminsc)
-
-#         return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades, vlSolo=vl200, 
-#                                vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, inicio_insc=inicioinsc, fim_insc=fiminsc, 
-#                                dt_inicio_insc=dt_inicioinsc, dt_fim_insc=dt_fiminsc, dt_inicio_evento=dt_incio)
-
-#     except Exception as e:
-#         print(f"Erro ao carregar página: {str(e)}")
-#         return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
 
 
 @app.route('/get_modalidade_valores/<int:iditem>')
@@ -2261,12 +1968,7 @@ def pagamento():
 def voltar_para_evento():
     # Recupera a página de origem armazenada
     pagina_origem = session.get('pagina_evento_origem')
-    
-    # # Limpa os dados da sessão relacionados ao pagamento
-    # session.pop('valoratual', None)
-    # session.pop('valortaxa', None)
-    # session.pop('pagina_evento_origem', None)
-    
+        
     # Se existe página de origem, redireciona para ela
     if pagina_origem:
         return redirect(pagina_origem)
@@ -2499,29 +2201,6 @@ def gerar_pix():
         }), 500
 
 
-#### não excluir por enquanto, uma nova foi criada abaixo dessa e vou testar
-# @app.route('/recuperar-qrcode/<payment_id>', methods=['GET'])
-# def recuperar_qrcode(payment_id):
-#     try:
-#         # Recupera o pagamento do Mercado Pago
-#         payment = sdk.payment().get(payment_id)
-#         if payment['status'] == 404:
-#             return jsonify({'success': False, 'message': 'Pagamento não encontrado'})
-            
-#         # Extrai os dados do QR code
-#         point_of_interaction = payment.get('point_of_interaction', {})
-#         transaction_data = point_of_interaction.get('transaction_data', {})
-        
-#         return jsonify({
-#             'success': True,
-#             'qr_code': transaction_data.get('qr_code'),
-#             'qr_code_base64': transaction_data.get('qr_code_base64')
-#         })
-#     except Exception as e:
-#         return jsonify({'success': False, 'message': str(e)})
-        
-
-# se ocorrer erro, volta a função anterior, comentada acima
 @app.route('/recuperar-qrcode/<payment_id>')
 def recuperar_qrcode(payment_id):
     try:
@@ -2578,135 +2257,6 @@ def recuperar_qrcode(payment_id):
         }), 500
 
 
-
-# @app.route('/verificar-pagamento/<payment_id>')
-# def verificar_pagamento(payment_id):
-#     try:
-#         # Buscar o status diretamente do Mercado Pago
-#         payment_response = sdk.payment().get(payment_id)
-#         payment = payment_response["response"]
-
-#         print(f"Status do pagamento recebido: {payment['status']}")
-        
-#         if payment["status"] == "approved":
-
-#             data_e_hora_atual = datetime.now()
-#             fuso_horario = timezone('America/Manaus')
-#             data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
-#             data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
-
-
-#             # Verificar se já não foi processado antes
-#             cur = mysql.connection.cursor()
-#             cur.execute("SELECT IDINSCRICAO FROM INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
-#             existing_record = cur.fetchone()
-            
-#             if existing_record:
-
-#                 cur.execute("""
-#                     UPDATE INSCRICAO SET
-#                         DTPAGAMENTO = %s,
-#                         FLSTATUS = %s  
-#                     WHERE IDINSCRICAO = %s
-#                     """, (
-#                         data_pagamento,         
-#                         'CONFIRMADO',           
-#                         existing_record[0]      
-
-#                 ))
-
-#                 mysql.connection.commit()
-#                 cur.close()
-
-#                 return jsonify({
-#                     'success': True,
-#                     'status': 'approved',
-#                     'message': 'Pagamento processado e registrado'
-#                 })
-
-#             else:
-
-#                 # Calculate valor_pgto (total payment)
-#                 valor = float(session.get('valorAtual', 0))
-#                 taxa = float(session.get('valorTaxa', 0))
-#                 valoratual = valor + taxa
-#                 valor_pgto = float(session.get('valorTotal', 0))
-#                 desconto = valoratual - valor_pgto
-#                 formaPagto = session.get('formaPagto')
-#                 camiseta = session.get('Camisa')
-#                 equipe = session.get('Equipe')
-#                 apoio = session.get('Apoio')
-#                 equipe200 = session.get('Equipe200')
-#                 integrantes = session.get('Integrantes')
-                                
-#                 # Get additional data from session
-#                 #idatleta = session.get('user_idatleta')
-#                 #cpf = session.get('user_cpf')
-
-#                 idatleta = session.get('idAtleta')
-#                 cpf = session.get('CPF')
-                
-#                 # Insert payment record
-#                 query = """
-#                 INSERT INTO INSCRICAO (
-#                     IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
-#                     NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-#                     VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
-#                     IDPAGAMENTO, FLMAIL, EQUIPE
-#                 ) VALUES (
-#                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-#                 )
-#                 """
-                
-#                 params = (
-#                     idatleta,                    # IDATLETA
-#                     cpf,                         # CPF
-#                     1,                           # IDEVENTO (hardcoded as 1 for this event)
-#                     session.get('cat_iditem'),   # IDITEM
-#                     camiseta,                    # CAMISETA
-#                     apoio,                       # APOIO
-#                     equipe200,                   # NOME_EQUIPE
-#                     integrantes,                 # INTEGRANTES
-#                     valor,                       # VALOR
-#                     taxa,                        # TAXA
-#                     desconto,                    # DESCONTO
-#                     valor_pgto,                  # VALOR_PGTO
-#                     data_pagamento,              # DTPAGAMENTO
-#                     'CONFIRMADO',                # FLSTATUS
-#                     formaPagto,                  # FORMAPGTO
-#                     payment_id,                  # IDPAGAMENTO
-#                     'N',
-#                     equipe
-#                 )
-                
-#                 cur.execute(query, params)
-#                 mysql.connection.commit()
-#                 cur.close()
-                
-#                 print("Registro de pagamento inserido com sucesso!")
-                
-#                 return jsonify({
-#                     'success': True,
-#                     'status': 'approved',
-#                     'message': 'Pagamento processado e registrado'
-#                 })
-                    
-#         return jsonify({
-#             'success': True,
-#             'status': payment["status"]
-#         })
-        
-#     except Exception as e:
-#         print(f"Erro ao verificar pagamento: {str(e)}")
-#         # Ensure JSON is returned even on error
-#         return jsonify({
-#             'success': False, 
-#             'message': str(e),
-#             'status': 'error'
-#         }), 500
-
-#################
-
 @app.route('/verificar-pagamento/<payment_id>')
 def verificar_pagamento(payment_id):
     try:
@@ -2731,29 +2281,44 @@ def verificar_pagamento(payment_id):
 
             # Buscar o registro pelo ID do pagamento
             cur = mysql.connection.cursor()
-            cur.execute("SELECT IDINSCRICAO, STATUS FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+            cur.execute("SELECT IDEVENTO, IDINSCRICAO, STATUS FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
             existing_record = cur.fetchone()
             
             print(f"Registro encontrado: {existing_record}")
 
             if existing_record:
-                idinscricao = existing_record[0]
-                status_atual = existing_record[1]
+                idevento = existing_record[0]
+                idinscricao = existing_record[1]
+                status_atual = existing_record[2]
                 
                 print(f"ID Inscrição: {idinscricao}, Status atual: {status_atual}")
                 
                 # Verificar se já não foi processado (evitar reprocessamento)
                 if status_atual != 'A':  # Se não está aprovado ainda
+
+                    # Gerar número de peito (pode implementar lógica específica)
+                    cur.execute("""
+                        SELECT COALESCE(MAX(NUPEITO), 0) + 1 as proximo_peito
+                        FROM EVENTO_INSCRICAO 
+                        WHERE STATUS = 'A' AND IDEVENTO = %s
+                    """, (idevento,))
+                    
+                    resultado = cur.fetchone()
+                    # numero_peito = resultado[0] if resultado else 1
+                    numero_peito = resultado[0] if resultado and resultado[0] else 1
+
                     print("Atualizando status para aprovado...")
                     
                     cur.execute("""
                         UPDATE EVENTO_INSCRICAO SET
                             DTPAGAMENTO = %s,
-                            STATUS = %s  
+                            STATUS = %s,
+                            NUPEITO = %s
                         WHERE IDPAGAMENTO = %s
                     """, (
                         data_pagamento,         
-                        'A',  # APROVADO         
+                        'A',  # APROVADO
+                        numero_peito,         
                         payment_id
                     ))
                     
@@ -2846,8 +2411,6 @@ def atualiza_idpagamento(cpf):
             'status': 'error'
         }), 500
 
-
-#################
 
 @app.route('/inscricao-temp/<cpf>', methods=['POST'])
 def inscricao_temp(cpf):
@@ -3029,147 +2592,6 @@ def inscricao_cartao(cpf):
         }), 500
 
 
-# @app.route('/inscricao-cartao/<cpf>', methods=['POST'])
-# def inscricao_cartao(cpf):
-#     try:
-#         # Obter dados do request JSON em vez de session
-#         data = request.json
-#         # Usar dados do request JSON
-#         valor = float(data.get('valor_atual', 0))
-#         taxa = float(data.get('valor_taxa', 0))
-#         valoratual = valor + taxa
-#         valor_pgto = float(data.get('valor_total', 0))
-#         desconto = valoratual - valor_pgto
-        
-#         idevento = data.get('id_evento')
-#         formaPagto = data.get('forma_pagto')
-#         # camiseta = data.get('camiseta')
-#         # equipe = data.get('equipe')
-#         # apoio = data.get('apoio')
-#         # equipe200 = data.get('equipe_nome')
-#         # integrantes = data.get('integrantes')
-#         idpagamento = data.get('payment_id')
-#         # cat_iditem = data.get('cat_iditem')
-        
-#         data_e_hora_atual = datetime.now()
-#         fuso_horario = timezone('America/Manaus')
-#         data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
-#         data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
-
-#         cur = mysql.connection.cursor()
-#         cur.execute("SELECT IDINSCRICAO FROM EVENTO_INSCRICAO WHERE STATUS = 'P' AND CPF = %s AND IDEVENTO = %s ", (cpf, idevento))
-#         existing_record = cur.fetchone()
-        
-#         if existing_record:
-#             cur = mysql.connection.cursor()
-
-#             cur.execute("""
-#                 UPDATE INSCRICAO 
-#                 SET IDITEM = %s, 
-#                     CAMISETA = %s,
-#                     APOIO = %s,
-#                     NOME_EQUIPE = %s, 
-#                     INTEGRANTES = %s,
-#                     VALOR = %s,
-#                     TAXA = %s,
-#                     DESCONTO = %s,
-#                     VALOR_PGTO = %s,
-#                     DTPAGAMENTO = %s,
-#                     FLSTATUS = %s,
-#                     FORMAPGTO = %s,
-#                     IDPAGAMENTO = %s,
-#                     FLMAIL = %s,
-#                     EQUIPE = %s,  
-#                 WHERE IDINSCRICAO = %s
-#                 """, (
-#                     cat_iditem,                 # IDITEM
-#                     camiseta,                   # CAMISETA
-#                     apoio,                      # APOIO
-#                     equipe200,                  # NOME_EQUIPE
-#                     integrantes,                # INTEGRANTES
-#                     valor,                      # VALOR
-#                     taxa,                       # TAXA
-#                     desconto,                   # DESCONTO
-#                     valor_pgto,                 # VALOR_PGTO
-#                     data_pagamento,             # DTPAGAMENTO
-#                     'CONFIRMADO',               # FLSTATUS
-#                     formaPagto,                 # FORMAPGTO
-#                     idpagamento,                # IDPAGAMENTO
-#                     'N',                        # FLMAIL
-#                     equipe,                     # EQUIPE
-#                     existing_record[0]          # IDINSCRICAO
-
-#             ))
-#             mysql.connection.commit()
-#             cur.close()
-        
-#         else:
-
-#             # Obter idatleta do banco baseado no CPF
-#             cur = mysql.connection.cursor()
-#             cur.execute("SELECT IDATLETA FROM ecmrun.ATLETA WHERE CPF = %s", (cpf,))
-#             atleta_record = cur.fetchone()
-            
-#             if atleta_record:
-#                 idatleta = atleta_record[0]
-#             else:
-#                 idatleta = None
-        
-#             # Insert payment record
-#             query = """
-#             INSERT INTO INSCRICAO (
-#                 IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
-#                 NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-#                 VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
-#                 IDPAGAMENTO, FLMAIL, EQUIPE
-#             ) VALUES (
-#                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-#             )
-#             """
-            
-#             params = (
-#                 idatleta,                   # IDATLETA
-#                 cpf,                        # CPF
-#                 1,                          # IDEVENTO (hardcoded as 1 for this event)
-#                 cat_iditem,                 # IDITEM
-#                 camiseta,                   # CAMISETA
-#                 apoio,                      # APOIO
-#                 equipe200,                  # NOME_EQUIPE
-#                 integrantes,                # INTEGRANTES
-#                 valor,                      # VALOR
-#                 taxa,                       # TAXA
-#                 desconto,                   # DESCONTO
-#                 valor_pgto,                 # VALOR_PGTO
-#                 data_pagamento,             # DTPAGAMENTO
-#                 'CONFIRMADO',               # FLSTATUS
-#                 formaPagto,                 # FORMAPGTO
-#                 idpagamento,                # IDPAGAMENTO
-#                 'N',                        # FLMAIL
-#                 equipe                      # EQUIPE
-#             )
-            
-#             cur.execute(query, params)
-#             mysql.connection.commit()
-#             cur.close()
-        
-#         print(f"inscrição inserida com sucesso para CPF {cpf} com payment_id {idpagamento}!")
-        
-#         return jsonify({
-#             'success': True,
-#             'status': 'inserido',
-#             'message': 'registrado'
-#         })
-        
-#     except Exception as e:
-#         print(f"Erro ao lançar pré-inscrição: {str(e)}")
-#         # Ensure JSON is returned even on error
-#         return jsonify({
-#             'success': False, 
-#             'message': str(e),
-#             'status': 'error'
-#         }), 500
-
-
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -3273,101 +2695,6 @@ def criar_preferencia():
         print("Erro detalhado:", str(e))
         return jsonify({"error": str(e)}), 400
 
-@app.route('/lanca-pagamento-cartao/<payment_id>')
-def lanca_pagamento_cartao(payment_id):
-    
-    try:    
-        # Verificar se já não foi processado antes
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM ecmrun.INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
-        existing_record = cur.fetchone()
-        
-        if not existing_record:
-            # Calculate valor_pgto (total payment)
-            valor = float(session.get('valorAtual', 0))
-            taxa = float(session.get('valorTaxa', 0))
-            valoratual = valor + taxa
-            valor_pgto = float(session.get('valorTotal', 0))
-            desconto = valoratual - valor_pgto 
-            formaPagto = 'CARTÃO DE CRÉDITO'
-            camiseta = session.get('Camisa')
-            equipe = session.get('Equipe')
-            apoio = session.get('Apoio')
-            equipe200 = session.get('Equipe200')
-            integrantes = session.get('Integrantes')
-
-            data_e_hora_atual = datetime.now()
-            fuso_horario = timezone('America/Manaus')
-            data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
-            data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
-                            
-            # Get additional data from session
-            idatleta = session.get('idAtleta')
-            cpf = session.get('CPF')
-            # idatleta = session.get('user_idatleta')
-            # cpf = session.get('user_cpf')
-            
-            # Insert payment record
-            query = """
-            INSERT INTO ecmrun.INSCRICAO (
-                IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
-                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-                VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
-                IDPAGAMENTO, FLMAIL, EQUIPE
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-            )
-            """
-            
-            params = (
-                idatleta,                            # IDATLETA
-                cpf,                                 # CPF
-                1,                                   # IDEVENTO (hardcoded as 1 for this event)
-                session.get('cat_iditem'),           # IDITEM
-                camiseta,                            # CAMISETA
-                apoio,                               # APOIO
-                equipe200,                           # NOME_EQUIPE
-                integrantes,                         # INTEGRANTES
-                valor,                               # VALOR
-                taxa,                                # TAXA
-                desconto,                            # DESCONTO
-                valor_pgto,                          # VALOR_PGTO
-                data_pagamento,                      # DTPAGAMENTO
-                'CONFIRMADO',                        # FLSTATUS
-                formaPagto,                          # FORMAPGTO
-                payment_id,                          # IDPAGAMENTO
-                'N',
-                equipe
-            )
-            
-            cur.execute(query, params)
-            mysql.connection.commit()
-            cur.close()
-            
-            print("Registro de pagamento inserido com sucesso!")
-            
-            return jsonify({
-                'success': True,
-                'status': 'approved',
-                'message': 'Pagamento processado e registrado'
-            })
-        else:
-            print("Pagamento já processado anteriormente")
-            return jsonify({
-                'success': True,
-                'status': 'approved',
-                'message': 'Pagamento já processado'
-            })
-    
-        
-    except Exception as e:
-        print(f"Erro ao gerar lançamento: {str(e)}")
-        # Ensure JSON is returned even on error
-        return jsonify({
-            'success': False, 
-            'message': str(e),
-            'status': 'error'
-        }), 500
 
 @app.route('/pesquisa-cupom/<int:categoria_id>/<cpf>/<cupom>')
 def pesquisa_cupom(categoria_id, cpf, cupom):
@@ -3404,109 +2731,6 @@ def pesquisa_cupom(categoria_id, cpf, cupom):
             'message': str(e)
         }), 500
 
-
-@app.route('/inscricao-copum/<id_cupom>', methods=['POST'])
-def inscricao_copum(id_cupom):
-    try:    
-        cur = mysql.connection.cursor()
-        query = "SELECT * FROM ecmrun.CUPOM WHERE IDCUPOM = %s"
-        print(f"Executando query: {query} com parâmetros: {id_cupom}")
-        
-        cur.execute(query, id_cupom)
-        result = cur.fetchone()
-        print(f"Resultado da query: {result}")
-        
-        if result:
-            # Extraindo dados do cupom
-            cupom = result[1]
-            cpf = result[2]
-            idpagamento = result[3]
-            formaPagto = result[4]
-            data_pagamento = result[5]
-            
-            # Corrigindo a conversão dos valores decimais
-            valor = float(result[6])
-            taxa = float(result[7])
-            valor_pgto = float(result[8])
-            valoratual = valor + taxa
-            iditem = result[9]
-            desconto = valoratual - valor_pgto 
-            
-            # Obtendo dados da sessão
-            camiseta = request.form.get('camiseta')
-            equipe = request.form.get('equipe')
-            apoio = request.form.get('apoio')
-            equipe200 = request.form.get('equipe200')
-            integrantes = request.form.get('integrantes')
-        
-            idatleta = session.get('user_idatleta')
-            
-            # Query de inserção
-            query = """
-            INSERT INTO ecmrun.INSCRICAO (
-                IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
-                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-                VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
-                IDPAGAMENTO, FLMAIL, EQUIPE, CUPOM
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-            )
-            """
-            
-            params = (
-                idatleta,          # IDATLETA
-                cpf,               # CPF
-                1,                 # IDEVENTO (hardcoded as 1 for this event)
-                iditem,            # IDITEM
-                camiseta,          # CAMISETA
-                apoio,             # APOIO
-                equipe200,         # NOME_EQUIPE
-                integrantes,       # INTEGRANTES
-                valor,             # VALOR
-                taxa,              # TAXA
-                desconto,          # DESCONTO
-                valor_pgto,        # VALOR_PGTO
-                data_pagamento,    # DTPAGAMENTO
-                'CONFIRMADO',      # FLSTATUS
-                formaPagto,        # FORMAPGTO
-                idpagamento,       # IDPAGAMENTO
-                'N',              # FLMAIL
-                equipe,           # EQUIPE
-                cupom             # CUPOM
-            )
-
-            print(f"INSERT: {query}")
-            print(f"Parametros: {params}")
-                    
-            cur.execute(query, params)
-            mysql.connection.commit()
-            
-            print("Registro de pagamento inserido com sucesso!")
-            
-            # Atualizando status do cupom
-            query = "UPDATE ecmrun.CUPOM SET UTILIZADO = 'S' WHERE IDCUPOM = %s"
-            print(f"Executando Update: {query} com parâmetros: {id_cupom}")
-            cur.execute(query, id_cupom)
-            mysql.connection.commit()
-            
-            cur.close()
-            
-            return jsonify({
-                'success': True,
-                'message': 'Inscrição processada com sucesso'
-            })
-        else:
-            print("Lancamento já processado anteriormente")
-            return jsonify({
-                'success': True,
-                'message': 'Inscrição processada anteriormente'
-            })
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Erro ao processar inscrição: {str(e)}'
-        }), 500
     
 @app.route('/gerar_cupom', methods=['POST'])
 def gerar_cupom():
@@ -3778,13 +3002,13 @@ def cadastrar_apoio():
     except Exception as e:
         return jsonify({'message': f'Erro interno do servidor: {str(e)}'}), 500
 
-#######################
 
-# Rota para renderizar a página principal
-@app.route('/listainscricao200k')
-def lista_inscricao():
-    print("DEBUG: Renderizando página listainscricao200k.html")
-    return render_template('listainscricao200k.html')
+# # Rota para renderizar a página principal
+# @app.route('/listainscricao200k')
+# def lista_inscricao():
+#     print("DEBUG: Renderizando página listainscricao200k.html")
+#     return render_template('listainscricao200k.html')
+
 
 # Rota para verificar senha
 @app.route('/verificar_senha1', methods=['POST'])
@@ -4076,9 +3300,6 @@ def logout_coordenador():
     session.pop('autenticado', None)
     return jsonify({'success': True})
 
-#########
-
-# ===== ROTAS PARA SISTEMA DE EQUIPES =====
 
 # Rota para buscar equipes por evento
 @app.route('/api/equipes/<int:evento_id>')
@@ -4416,11 +3637,10 @@ def get_apoios_atleta(atleta_id):
         print(f"DEBUG: Erro ao buscar apoios: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-###########
-@app.route('/apoio_organizacao200k')
-def apoio_organizacao200k():
-    """Rota para servir a página HTML de cadastro de apoio"""
-    return render_template('apoio_organizacao200k.html')
+# @app.route('/apoio_organizacao200k')
+# def apoio_organizacao200k():
+#     """Rota para servir a página HTML de cadastro de apoio"""
+#     return render_template('apoio_organizacao200k.html')
 
 @app.route('/obter_pontos_apoio_org200k', methods=['GET'])
 def obter_pontos_apoio_org200k():
@@ -4786,10 +4006,6 @@ def excluir_apoio_org200k(id_apoio):
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
 
-###########
-
-# Rotas Flask para administração do apoio organizacional
-
 @app.route('/api/apoio-admin002', methods=['GET'])
 def listar_apoio_admin002():
     """Lista todos os registros de apoio com seus itens"""
@@ -4840,55 +4056,6 @@ def listar_apoio_admin002():
     except Exception as e:
         return jsonify({'error': f'Erro ao listar apoio: {str(e)}'}), 500
 
-# @app.route('/api/apoio-admin002', methods=['GET'])
-# def listar_apoio_admin002():
-#     """Lista todos os registros de apoio com seus itens"""
-#     try:
-#         cur = mysql.connection.cursor()
-#         cur.execute("""
-#             SELECT 
-#                 a.IDAPOIO_ORG,
-#                 a.NOME,
-#                 a.CELULAR,
-#                 ai.ID as ITEM_ID,
-#                 ai.IDPONTO,
-#                 p.DE_PONTO,
-#                 ai.DTHR_INICIO,
-#                 ai.DTHR_FINAL
-#             FROM APOIO_ORG_200k a
-#             LEFT JOIN APOIO_ORG_ITENS_200k ai ON a.IDAPOIO_ORG = ai.IDAPOIO_ORG
-#             LEFT JOIN PONTO_APOIO_ORG_200k p ON ai.IDPONTO = p.IDPONTO
-#             ORDER BY a.IDAPOIO_ORG, ai.ID
-#         """)
-        
-#         registros = cur.fetchall()
-#         cur.close()
-        
-#         # Organizar dados por apoiador
-#         apoiadores = {}
-#         for registro in registros:
-#             id_apoio = registro[0]
-#             if id_apoio not in apoiadores:
-#                 apoiadores[id_apoio] = {
-#                     'IDAPOIO_ORG': registro[0],
-#                     'NOME': registro[1],
-#                     'CELULAR': registro[2],
-#                     'itens': []
-#                 }
-            
-#             if registro[3]:  # Se tem item
-#                 apoiadores[id_apoio]['itens'].append({
-#                     'ID': registro[3],
-#                     'IDPONTO': registro[4],
-#                     'DE_PONTO': registro[5],
-#                     'DTHR_INICIO': registro[6].strftime('%Y-%m-%dT%H:%M') if registro[6] else '',
-#                     'DTHR_FINAL': registro[7].strftime('%Y-%m-%dT%H:%M') if registro[7] else ''
-#                 })
-        
-#         return jsonify(list(apoiadores.values()))
-    
-#     except Exception as e:
-#         return jsonify({'error': f'Erro ao listar apoio: {str(e)}'}), 500
 
 @app.route('/api/pontos-apoio002', methods=['GET'])
 def listar_pontos_apoio002():
@@ -5112,332 +4279,222 @@ def listar_passagens_atletas():
         }), 500
 
 
-########
+# # Rota para exibir a página do dashboard
+# @app.route('/dashboard200k')
+# def dashboard200k():
+#     return render_template('dashboard200k.html')
 
-# Rota para exibir a página do dashboard
-@app.route('/dashboard200k')
-def dashboard200k():
-    return render_template('dashboard200k.html')
-
-# Rota para buscar dados das equipes
-@app.route('/dashboard_api/equipes')
-def dashboard_get_equipes():
-    try:
-        cursor = mysql.connection.cursor()
+# # Rota para buscar dados das equipes
+# @app.route('/dashboard_api/equipes')
+# def dashboard_get_equipes():
+#     try:
+#         cursor = mysql.connection.cursor()
         
-        query = """
-        SELECT CONCAT(e.NOME_EQUIPE,' (',em.DEREDUZ,')') as EQUIPE,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDEA = e.IDEA) AS KM25,
-          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-             AND  pp.KM = 25 AND pp.IDEA = e.IDEA) AS ATLETA25,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDEA = e.IDEA) AS KM50,
-          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-             AND  pp.KM = 50 AND pp.IDEA = e.IDEA) AS ATLETA50,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDEA = e.IDEA) AS KM75,
-          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-             AND  pp.KM = 75 AND pp.IDEA = e.IDEA) AS ATLETA75,          
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDEA = e.IDEA) AS KM100,
-          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-             AND  pp.KM = 100 AND pp.IDEA = e.IDEA) AS ATLETA100,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDEA = e.IDEA) AS KM125,
-          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-             AND  pp.KM = 125 AND pp.IDEA = e.IDEA) AS ATLETA125,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDEA = e.IDEA) AS KM150,
-          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-             AND  pp.KM = 150 AND pp.IDEA = e.IDEA) AS ATLETA150,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDEA = e.IDEA) AS KM175,
-          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-             AND  pp.KM = 175 AND pp.IDEA = e.IDEA) AS ATLETA175,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDEA = e.IDEA) AS KM200,
-          (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-             AND  pp.KM = 200 AND pp.IDEA = e.IDEA) AS ATLETA200,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
-           WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
-             AND IDEA = e.IDEA) AS ULTIMAPARCIAL,
-          CONCAT(
-            TIMESTAMPDIFF(HOUR, 
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
-                 AND IDEA = e.IDEA)
-            ),':',
-            LPAD(TIMESTAMPDIFF(MINUTE, 
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
-                 AND IDEA = e.IDEA)
-            ) % 60, 2, '0'),':',
-            LPAD(TIMESTAMPDIFF(SECOND, 
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
-                 AND IDEA = e.IDEA)
-            ) % 60, 2, '0')
-          ) AS TEMPO   
-        FROM EQUIPE e, EVENTO_MODALIDADE em
-        WHERE em.IDITEM = e.IDITEM
-        ORDER BY em.IDITEM
-        """
+#         query = """
+#         SELECT CONCAT(e.NOME_EQUIPE,' (',em.DEREDUZ,')') as EQUIPE,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDEA = e.IDEA) AS KM25,
+#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+#              AND  pp.KM = 25 AND pp.IDEA = e.IDEA) AS ATLETA25,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDEA = e.IDEA) AS KM50,
+#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+#              AND  pp.KM = 50 AND pp.IDEA = e.IDEA) AS ATLETA50,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDEA = e.IDEA) AS KM75,
+#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+#              AND  pp.KM = 75 AND pp.IDEA = e.IDEA) AS ATLETA75,          
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDEA = e.IDEA) AS KM100,
+#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+#              AND  pp.KM = 100 AND pp.IDEA = e.IDEA) AS ATLETA100,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDEA = e.IDEA) AS KM125,
+#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+#              AND  pp.KM = 125 AND pp.IDEA = e.IDEA) AS ATLETA125,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDEA = e.IDEA) AS KM150,
+#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+#              AND  pp.KM = 150 AND pp.IDEA = e.IDEA) AS ATLETA150,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDEA = e.IDEA) AS KM175,
+#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+#              AND  pp.KM = 175 AND pp.IDEA = e.IDEA) AS ATLETA175,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDEA = e.IDEA) AS KM200,
+#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
+#              AND  pp.KM = 200 AND pp.IDEA = e.IDEA) AS ATLETA200,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
+#            WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
+#              AND IDEA = e.IDEA) AS ULTIMAPARCIAL,
+#           CONCAT(
+#             TIMESTAMPDIFF(HOUR, 
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
+#                  AND IDEA = e.IDEA)
+#             ),':',
+#             LPAD(TIMESTAMPDIFF(MINUTE, 
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
+#                  AND IDEA = e.IDEA)
+#             ) % 60, 2, '0'),':',
+#             LPAD(TIMESTAMPDIFF(SECOND, 
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
+#                  AND IDEA = e.IDEA)
+#             ) % 60, 2, '0')
+#           ) AS TEMPO   
+#         FROM EQUIPE e, EVENTO_MODALIDADE em
+#         WHERE em.IDITEM = e.IDITEM
+#         ORDER BY em.IDITEM
+#         """
         
-        cursor.execute(query)
-        equipes = cursor.fetchall()
-        cursor.close()
+#         cursor.execute(query)
+#         equipes = cursor.fetchall()
+#         cursor.close()
         
-        equipes_list = []
-        for equipe in equipes:
-            equipes_list.append({
-                'EQUIPE': equipe[0],
-                'KM25': equipe[1].strftime('%d/%m/%y %H:%M') if equipe[1] else '',
-                'ATLETA25': equipe[2] if equipe[2] else '',
-                'KM50': equipe[3].strftime('%d/%m/%y %H:%M') if equipe[3] else '',
-                'ATLETA50': equipe[4] if equipe[4] else '',
-                'KM75': equipe[5].strftime('%d/%m/%y %H:%M') if equipe[5] else '',
-                'ATLETA75': equipe[6] if equipe[6] else '',
-                'KM100': equipe[7].strftime('%d/%m/%y %H:%M') if equipe[7] else '',
-                'ATLETA100': equipe[8] if equipe[8] else '',
-                'KM125': equipe[9].strftime('%d/%m/%y %H:%M') if equipe[9] else '',
-                'ATLETA125': equipe[10] if equipe[10] else '',
-                'KM150': equipe[11].strftime('%d/%m/%y %H:%M') if equipe[11] else '',
-                'ATLETA150': equipe[12] if equipe[12] else '',
-                'KM175': equipe[13].strftime('%d/%m/%y %H:%M') if equipe[13] else '',
-                'ATLETA175': equipe[14] if equipe[14] else '',
-                'KM200': equipe[15].strftime('%d/%m/%y %H:%M') if equipe[15] else '',
-                'ATLETA200': equipe[16] if equipe[16] else '',
-                'ULTIMAPARCIAL': equipe[17].strftime('%d/%m/%y %H:%M') if equipe[17] else '',
-                'TEMPO': equipe[18] if equipe[18] else ''
-            })
+#         equipes_list = []
+#         for equipe in equipes:
+#             equipes_list.append({
+#                 'EQUIPE': equipe[0],
+#                 'KM25': equipe[1].strftime('%d/%m/%y %H:%M') if equipe[1] else '',
+#                 'ATLETA25': equipe[2] if equipe[2] else '',
+#                 'KM50': equipe[3].strftime('%d/%m/%y %H:%M') if equipe[3] else '',
+#                 'ATLETA50': equipe[4] if equipe[4] else '',
+#                 'KM75': equipe[5].strftime('%d/%m/%y %H:%M') if equipe[5] else '',
+#                 'ATLETA75': equipe[6] if equipe[6] else '',
+#                 'KM100': equipe[7].strftime('%d/%m/%y %H:%M') if equipe[7] else '',
+#                 'ATLETA100': equipe[8] if equipe[8] else '',
+#                 'KM125': equipe[9].strftime('%d/%m/%y %H:%M') if equipe[9] else '',
+#                 'ATLETA125': equipe[10] if equipe[10] else '',
+#                 'KM150': equipe[11].strftime('%d/%m/%y %H:%M') if equipe[11] else '',
+#                 'ATLETA150': equipe[12] if equipe[12] else '',
+#                 'KM175': equipe[13].strftime('%d/%m/%y %H:%M') if equipe[13] else '',
+#                 'ATLETA175': equipe[14] if equipe[14] else '',
+#                 'KM200': equipe[15].strftime('%d/%m/%y %H:%M') if equipe[15] else '',
+#                 'ATLETA200': equipe[16] if equipe[16] else '',
+#                 'ULTIMAPARCIAL': equipe[17].strftime('%d/%m/%y %H:%M') if equipe[17] else '',
+#                 'TEMPO': equipe[18] if equipe[18] else ''
+#             })
         
-        return jsonify(equipes_list)
+#         return jsonify(equipes_list)
         
-    except Exception as e:
-        print(f"DEBUG: Erro ao buscar equipes: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+#     except Exception as e:
+#         print(f"DEBUG: Erro ao buscar equipes: {str(e)}")
+#         return jsonify({'error': str(e)}), 500
 
 
+# # Rota para buscar dados dos atletas solo
+# @app.route('/dashboard_api/atletas')
+# def dashboard_get_atletas():
+#     try:
+#         cursor = mysql.connection.cursor()
+        
+#         query = """
+#         SELECT CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDATLETA = a.IDATLETA) AS KM25,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDATLETA = a.IDATLETA) AS KM50,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDATLETA = a.IDATLETA) AS KM75,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDATLETA = a.IDATLETA) AS KM100,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDATLETA = a.IDATLETA) AS KM125,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDATLETA = a.IDATLETA) AS KM150,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDATLETA = a.IDATLETA) AS KM175,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA) AS KM200,
+#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
+#            WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
+#              AND IDATLETA = a.IDATLETA) AS ULTIMAPARCIAL,
+#           CONCAT(
+#             TIMESTAMPDIFF(HOUR, 
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
+#                  AND IDATLETA = a.IDATLETA)
+#             ),':',
+#             LPAD(TIMESTAMPDIFF(MINUTE, 
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
+#                  AND IDATLETA = a.IDATLETA)
+#             ) % 60, 2, '0'),':',
+#             LPAD(TIMESTAMPDIFF(SECOND, 
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
+#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
+#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
+#                  AND IDATLETA = a.IDATLETA)
+#             ) % 60, 2, '0')
+#           ) AS TEMPO   
+#         FROM ATLETA a, INSCRICAO i, EVENTO_MODALIDADE em
+#         WHERE em.IDITEM = i.IDITEM
+#         AND i.IDITEM = 1
+#         AND i.IDATLETA = a.IDATLETA
+#         ORDER BY a.NOME, a.SOBRENOME
+#         """
+        
+#         cursor.execute(query)
+#         atletas = cursor.fetchall()
+#         cursor.close()
+        
+#         atletas_list = []
+#         for atleta in atletas:
+#             atletas_list.append({
+#                 'NOME': atleta[0],
+#                 'KM25': atleta[1].strftime('%d/%m/%y %H:%M') if atleta[1] else '',
+#                 'KM50': atleta[2].strftime('%d/%m/%y %H:%M') if atleta[2] else '',
+#                 'KM75': atleta[3].strftime('%d/%m/%y %H:%M') if atleta[3] else '',
+#                 'KM100': atleta[4].strftime('%d/%m/%y %H:%M') if atleta[4] else '',
+#                 'KM125': atleta[5].strftime('%d/%m/%y %H:%M') if atleta[5] else '',
+#                 'KM150': atleta[6].strftime('%d/%m/%y %H:%M') if atleta[6] else '',
+#                 'KM175': atleta[7].strftime('%d/%m/%y %H:%M') if atleta[7] else '',
+#                 'KM200': atleta[8].strftime('%d/%m/%y %H:%M') if atleta[8] else '',
+#                 'ULTIMAPARCIAL': atleta[9].strftime('%d/%m/%y %H:%M') if atleta[9] else '',
+#                 'TEMPO': atleta[10] if atleta[10] else ''
+#             })
+        
+#         return jsonify(atletas_list)
+        
+#     except Exception as e:
+#         print(f"DEBUG: Erro ao buscar atletas: {str(e)}")
+#         return jsonify({'error': str(e)}), 500
 
 
-# Rota para buscar dados dos atletas solo
-@app.route('/dashboard_api/atletas')
-def dashboard_get_atletas():
-    try:
-        cursor = mysql.connection.cursor()
-        
-        query = """
-        SELECT CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDATLETA = a.IDATLETA) AS KM25,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDATLETA = a.IDATLETA) AS KM50,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDATLETA = a.IDATLETA) AS KM75,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDATLETA = a.IDATLETA) AS KM100,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDATLETA = a.IDATLETA) AS KM125,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDATLETA = a.IDATLETA) AS KM150,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDATLETA = a.IDATLETA) AS KM175,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA) AS KM200,
-          (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
-           WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
-             AND IDATLETA = a.IDATLETA) AS ULTIMAPARCIAL,
-          CONCAT(
-            TIMESTAMPDIFF(HOUR, 
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
-                 AND IDATLETA = a.IDATLETA)
-            ),':',
-            LPAD(TIMESTAMPDIFF(MINUTE, 
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
-                 AND IDATLETA = a.IDATLETA)
-            ) % 60, 2, '0'),':',
-            LPAD(TIMESTAMPDIFF(SECOND, 
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
-              (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-               WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
-                 AND IDATLETA = a.IDATLETA)
-            ) % 60, 2, '0')
-          ) AS TEMPO   
-        FROM ATLETA a, INSCRICAO i, EVENTO_MODALIDADE em
-        WHERE em.IDITEM = i.IDITEM
-        AND i.IDITEM = 1
-        AND i.IDATLETA = a.IDATLETA
-        ORDER BY a.NOME, a.SOBRENOME
-        """
-        
-        cursor.execute(query)
-        atletas = cursor.fetchall()
-        cursor.close()
-        
-        atletas_list = []
-        for atleta in atletas:
-            atletas_list.append({
-                'NOME': atleta[0],
-                'KM25': atleta[1].strftime('%d/%m/%y %H:%M') if atleta[1] else '',
-                'KM50': atleta[2].strftime('%d/%m/%y %H:%M') if atleta[2] else '',
-                'KM75': atleta[3].strftime('%d/%m/%y %H:%M') if atleta[3] else '',
-                'KM100': atleta[4].strftime('%d/%m/%y %H:%M') if atleta[4] else '',
-                'KM125': atleta[5].strftime('%d/%m/%y %H:%M') if atleta[5] else '',
-                'KM150': atleta[6].strftime('%d/%m/%y %H:%M') if atleta[6] else '',
-                'KM175': atleta[7].strftime('%d/%m/%y %H:%M') if atleta[7] else '',
-                'KM200': atleta[8].strftime('%d/%m/%y %H:%M') if atleta[8] else '',
-                'ULTIMAPARCIAL': atleta[9].strftime('%d/%m/%y %H:%M') if atleta[9] else '',
-                'TEMPO': atleta[10] if atleta[10] else ''
-            })
-        
-        return jsonify(atletas_list)
-        
-    except Exception as e:
-        print(f"DEBUG: Erro ao buscar atletas: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+# @app.route('/lancamento200k')
+# def lancamento200k():
+#     """Renderiza a página de lançamento"""
+#     return render_template('lancamento200k.html')
 
-#################
-
-@app.route('/lancamento200k')
-def lancamento200k():
-    """Renderiza a página de lançamento"""
-    return render_template('lancamento200k.html')
-
-@app.route('/api/lanca200k_parciais')
-def lanca200k_parciais():
-    """Busca as parciais disponíveis"""
-    print("DEBUG: Buscando parciais...")
+# @app.route('/api/lanca200k_parciais')
+# def lanca200k_parciais():
+#     """Busca as parciais disponíveis"""
+#     print("DEBUG: Buscando parciais...")
     
-#    if not session.get('autenticado'):
-#        print("DEBUG: Usuário não autenticado")
-#        return jsonify({'error': 'Não autenticado'}), 401
+# #    if not session.get('autenticado'):
+# #        print("DEBUG: Usuário não autenticado")
+# #        return jsonify({'error': 'Não autenticado'}), 401
     
-    try:
-        cursor = mysql.connection.cursor()
+#     try:
+#         cursor = mysql.connection.cursor()
 
-        print("DEBUG: Conexão com banco estabelecida")
+#         print("DEBUG: Conexão com banco estabelecida")
         
-        cursor.execute("""
-            SELECT KM, DEPARCIAL, IDPARCIAL FROM PARCIAIS_200K
-            WHERE KM <> 0
-            ORDER BY KM
-        """)
-        parciais = cursor.fetchall()
-        cursor.close()
+#         cursor.execute("""
+#             SELECT KM, DEPARCIAL, IDPARCIAL FROM PARCIAIS_200K
+#             WHERE KM <> 0
+#             ORDER BY KM
+#         """)
+#         parciais = cursor.fetchall()
+#         cursor.close()
         
-        print(f"DEBUG: Encontradas {len(parciais)} parciais")
+#         print(f"DEBUG: Encontradas {len(parciais)} parciais")
         
-        parciais_list = []
-        for parcial in parciais:
-            parciais_list.append({
-                'KM': parcial[0],
-                'DEPARCIAL': parcial[1],
-                'IDPARCIAL': parcial[2]
-            })
+#         parciais_list = []
+#         for parcial in parciais:
+#             parciais_list.append({
+#                 'KM': parcial[0],
+#                 'DEPARCIAL': parcial[1],
+#                 'IDPARCIAL': parcial[2]
+#             })
         
-        print(f"DEBUG: Retornando parciais: {parciais_list}")
-        return jsonify(parciais_list)
+#         print(f"DEBUG: Retornando parciais: {parciais_list}")
+#         return jsonify(parciais_list)
         
-    except Exception as e:
-        print(f"DEBUG: Erro ao buscar parciais: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/lanca200k_pesquisa_atleta', methods=['POST'])
-def lanca200k_pesquisa_atleta():
-    """Pesquisa atleta por número de peito"""
-    print("DEBUG: Pesquisando atleta...")
-        
-    try:
-        data = request.get_json()
-        km_parcial = data.get('km_parcial')
-        nu_peito = data.get('nu_peito')
-        
-        print(f"DEBUG: Pesquisando atleta - KM: {km_parcial}, Peito: {nu_peito}")
-        
-        cursor = mysql.connection.cursor()
-        
-        # Consulta corrigida - separando a lógica para atletas individuais e equipes
-        cursor.execute("""
-            SELECT 
-              i.IDATLETA, 
-              CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
-              COALESCE(ea.IDEA, 0) AS IDEA,
-              COALESCE(ea.KM_INI, 0) AS KM_INI,
-              COALESCE(ea.KM_FIM, 200) AS KM_FIM  
-            FROM INSCRICAO i 
-            INNER JOIN ATLETA a ON a.IDATLETA = i.IDATLETA
-            LEFT JOIN EQUIPE_ATLETAS ea ON ea.IDATLETA = i.IDATLETA
-            WHERE i.NUPEITO = %s
-              AND (
-                -- Atleta individual (não pertence a equipe)
-                ea.IDEA IS NULL
-                OR
-                -- Atleta de equipe (deve estar no intervalo correto)
-                (%s > ea.KM_INI AND %s <= ea.KM_FIM)
-              )
-        """, (nu_peito, km_parcial, km_parcial))
-        
-        atleta = cursor.fetchone()
-        
-        if atleta:
-            # Verificar se já existe lançamento para este atleta/equipe nesta parcial
-            idatleta = atleta[0]
-            idea = atleta[2]
-            
-            # Mapear KM para IDPARCIAL
-            km_to_idparcial = {
-                25: 2, 50: 3, 75: 4, 100: 5, 
-                125: 6, 150: 7, 175: 8, 200: 9
-            }
-            idparcial = km_to_idparcial.get(int(km_parcial), 0)
-            
-            print(f"DEBUG: Verificando duplicatas - IDATLETA: {idatleta}, IDEA: {idea}, IDPARCIAL: {idparcial}")
-            
-            # Verificar duplicatas
-            if idea == 0:
-                # Atleta individual - verificar por IDATLETA
-                cursor.execute("""
-                    SELECT COUNT(*) FROM PROVA_PARCIAIS_200K 
-                    WHERE IDATLETA = %s AND IDPARCIAL = %s
-                """, (idatleta, idparcial))
-            else:
-                # Equipe - verificar por IDEA
-                cursor.execute("""
-                    SELECT COUNT(*) FROM PROVA_PARCIAIS_200K 
-                    WHERE IDEA = %s AND IDPARCIAL = %s
-                """, (idea, idparcial))
-            
-            count = cursor.fetchone()[0]
-            cursor.close()
-            
-            if count > 0:
-                if idea == 0:
-                    message = f"Atleta já possui lançamento nesta parcial de {km_parcial}km"
-                else:
-                    message = f"Equipe já possui lançamento nesta parcial de {km_parcial}km"
-                
-                print(f"DEBUG: Lançamento duplicado detectado: {message}")
-                return jsonify({
-                    'success': False,
-                    'message': message
-                })
-            
-            print(f"DEBUG: Atleta encontrado: {atleta[1]}")
-            print(f"DEBUG: Dados do atleta - IDEA: {idea}, KM_INI: {atleta[3]}, KM_FIM: {atleta[4]}")
-            
-            return jsonify({
-                'success': True,
-                'atleta': {
-                    'IDATLETA': atleta[0],
-                    'NOME': atleta[1],
-                    'IDEA': atleta[2],
-                    'KM_INI': atleta[3],
-                    'KM_FIM': atleta[4]
-                }
-            })
-        else:
-            cursor.close()
-            print("DEBUG: Nenhum atleta encontrado")
-            return jsonify({
-                'success': False,
-                'message': 'Nº de Peito não existe ou Atleta não permitido para esta parcial'
-            })
-        
-    except Exception as e:
-        print(f"DEBUG: Erro ao pesquisar atleta: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+#     except Exception as e:
+#         print(f"DEBUG: Erro ao buscar parciais: {str(e)}")
+#         return jsonify({'error': str(e)}), 500
 
 # @app.route('/api/lanca200k_pesquisa_atleta', methods=['POST'])
 # def lanca200k_pesquisa_atleta():
@@ -5453,19 +4510,26 @@ def lanca200k_pesquisa_atleta():
         
 #         cursor = mysql.connection.cursor()
         
+#         # Consulta corrigida - separando a lógica para atletas individuais e equipes
 #         cursor.execute("""
 #             SELECT 
-#               i.IDATLETA, CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
-#               COALESCE((SELECT IDEA FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),0) AS IDEA,
-#               COALESCE((SELECT KM_INI+1 FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N') AS KM_INI,
-#               COALESCE((SELECT KM_FIM FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N') AS KM_FIM  
-#             FROM INSCRICAO i, ATLETA a 
-#             WHERE a.IDATLETA = i.IDATLETA
-#               AND (COALESCE((SELECT IDEA FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),0) = 0 
-#                 OR %s BETWEEN COALESCE((SELECT KM_INI+1 FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N')
-#                 AND COALESCE((SELECT KM_FIM FROM EQUIPE_ATLETAS WHERE IDATLETA = i.IDATLETA),'N')) 
-#               AND i.NUPEITO = %s
-#         """, (km_parcial, nu_peito))
+#               i.IDATLETA, 
+#               CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
+#               COALESCE(ea.IDEA, 0) AS IDEA,
+#               COALESCE(ea.KM_INI, 0) AS KM_INI,
+#               COALESCE(ea.KM_FIM, 200) AS KM_FIM  
+#             FROM INSCRICAO i 
+#             INNER JOIN ATLETA a ON a.IDATLETA = i.IDATLETA
+#             LEFT JOIN EQUIPE_ATLETAS ea ON ea.IDATLETA = i.IDATLETA
+#             WHERE i.NUPEITO = %s
+#               AND (
+#                 -- Atleta individual (não pertence a equipe)
+#                 ea.IDEA IS NULL
+#                 OR
+#                 -- Atleta de equipe (deve estar no intervalo correto)
+#                 (%s > ea.KM_INI AND %s <= ea.KM_FIM)
+#               )
+#         """, (nu_peito, km_parcial, km_parcial))
         
 #         atleta = cursor.fetchone()
         
@@ -5480,6 +4544,8 @@ def lanca200k_pesquisa_atleta():
 #                 125: 6, 150: 7, 175: 8, 200: 9
 #             }
 #             idparcial = km_to_idparcial.get(int(km_parcial), 0)
+            
+#             print(f"DEBUG: Verificando duplicatas - IDATLETA: {idatleta}, IDEA: {idea}, IDPARCIAL: {idparcial}")
             
 #             # Verificar duplicatas
 #             if idea == 0:
@@ -5511,6 +4577,8 @@ def lanca200k_pesquisa_atleta():
 #                 })
             
 #             print(f"DEBUG: Atleta encontrado: {atleta[1]}")
+#             print(f"DEBUG: Dados do atleta - IDEA: {idea}, KM_INI: {atleta[3]}, KM_FIM: {atleta[4]}")
+            
 #             return jsonify({
 #                 'success': True,
 #                 'atleta': {
@@ -5533,51 +4601,48 @@ def lanca200k_pesquisa_atleta():
 #         print(f"DEBUG: Erro ao pesquisar atleta: {str(e)}")
 #         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/lanca200k_confirmar', methods=['POST'])
-def lanca200k_confirmar():
-    """Confirma o lançamento do atleta"""
-    print("DEBUG: Confirmando lançamento...")
-    
-#    if not session.get('autenticado'):
-#        print("DEBUG: Usuário não autenticado")
-#        return jsonify({'error': 'Não autenticado'}), 401
-    
-    try:
-        data = request.get_json()
-        idea = data.get('idea')
-        idatleta = data.get('idatleta')
-        data_hora = data.get('data_hora')
-        km = data.get('km')
+
+# @app.route('/api/lanca200k_confirmar', methods=['POST'])
+# def lanca200k_confirmar():
+#     """Confirma o lançamento do atleta"""
+#     print("DEBUG: Confirmando lançamento...")
         
-        # Mapear KM para IDPARCIAL
-        km_to_idparcial = {
-            25: 2, 50: 3, 75: 4, 100: 5, 
-            125: 6, 150: 7, 175: 8, 200: 9
-        }
+#     try:
+#         data = request.get_json()
+#         idea = data.get('idea')
+#         idatleta = data.get('idatleta')
+#         data_hora = data.get('data_hora')
+#         km = data.get('km')
         
-        idparcial = km_to_idparcial.get(int(km), 0)
+#         # Mapear KM para IDPARCIAL
+#         km_to_idparcial = {
+#             25: 2, 50: 3, 75: 4, 100: 5, 
+#             125: 6, 150: 7, 175: 8, 200: 9
+#         }
         
-        print(f"DEBUG: Dados para insert - IDEA: {idea}, IDATLETA: {idatleta}, DATA_HORA: {data_hora}, KM: {km}, IDPARCIAL: {idparcial}")
+#         idparcial = km_to_idparcial.get(int(km), 0)
         
-        cursor = mysql.connection.cursor()
+#         print(f"DEBUG: Dados para insert - IDEA: {idea}, IDATLETA: {idatleta}, DATA_HORA: {data_hora}, KM: {km}, IDPARCIAL: {idparcial}")
         
-        cursor.execute("""
-            INSERT INTO PROVA_PARCIAIS_200K (IDEA, IDATLETA, DATA_HORA, IDPARCIAL, KM)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (idea, idatleta, data_hora, idparcial, km))
+#         cursor = mysql.connection.cursor()
         
-        mysql.connection.commit()
-        cursor.close()
+#         cursor.execute("""
+#             INSERT INTO PROVA_PARCIAIS_200K (IDEA, IDATLETA, DATA_HORA, IDPARCIAL, KM)
+#             VALUES (%s, %s, %s, %s, %s)
+#         """, (idea, idatleta, data_hora, idparcial, km))
         
-        print("DEBUG: Lançamento confirmado com sucesso")
-        return jsonify({
-            'success': True,
-            'message': 'Atleta Lançado com sucesso!'
-        })
+#         mysql.connection.commit()
+#         cursor.close()
         
-    except Exception as e:
-        print(f"DEBUG: Erro ao confirmar lançamento: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+#         print("DEBUG: Lançamento confirmado com sucesso")
+#         return jsonify({
+#             'success': True,
+#             'message': 'Atleta Lançado com sucesso!'
+#         })
+        
+#     except Exception as e:
+#         print(f"DEBUG: Erro ao confirmar lançamento: {str(e)}")
+#         return jsonify({'error': str(e)}), 500
 
 ###### CERTIFICADO #############
 @app.route('/certificado200k')
@@ -6450,7 +5515,6 @@ def relatorio200k_equipes():
         return jsonify({'success': False, 'error': 'Erro interno do servidor'})
 	    
 
-
 @app.route('/certificado200k_relatorio_geral')
 def certificado200k_relatorio_geral():
     """Gera relatório geral da prova"""
@@ -6972,7 +6036,7 @@ def backyard():
         print(f"Erro ao carregar página arealslope: {str(e)}")
         return f"Erro interno do servidor: {str(e)}", 500
 
-
+############################
 
 @app.route('/api/lote-inscricao/<int:iditem>')
 def get_lote_inscricao(iditem):
@@ -7080,15 +6144,15 @@ def evento_salvar_inscricao():
         dia, mes, ano = data_nasc_str.split('/')
         data_nasc_mysql = f"{ano}-{mes}-{dia}"  # yyyy-mm-dd
         
-        # Gerar número de peito (pode implementar lógica específica)
-        cursor.execute("""
-            SELECT COALESCE(MAX(NUPEITO), 0) + 1 as proximo_peito
-            FROM EVENTO_INSCRICAO 
-            WHERE IDEVENTO = %s
-        """, (dados.get('idevento', 1),))
+        # # Gerar número de peito (pode implementar lógica específica)
+        # cursor.execute("""
+        #     SELECT COALESCE(MAX(NUPEITO), 0) + 1 as proximo_peito
+        #     FROM EVENTO_INSCRICAO 
+        #     WHERE STATUS = 'A' AND IDEVENTO = %s
+        # """, (dados.get('idevento', 1),))
         
-        resultado = cursor.fetchone()
-        numero_peito = resultado[0] if resultado else 1
+        # resultado = cursor.fetchone()
+        # numero_peito = resultado[0] if resultado else 1
         
         data_e_hora_atual = datetime.now()
         fuso_horario = timezone('America/Manaus')
@@ -7099,11 +6163,11 @@ def evento_salvar_inscricao():
             INSERT INTO EVENTO_INSCRICAO (
                 IDEVENTO, IDITEMEVENTO, EMAIL, CPF, NOME, SOBRENOME, 
                 DTNASCIMENTO, IDADE, CELULAR, SEXO, EQUIPE, CAMISETA,
-                TEL_EMERGENCIA, CONT_EMERGENCIA, ESTADO, ID_CIDADE, DATANASC,
-                NUPEITO, DTINSCRICAO, VLINSCRICAO, VLTAXA, VLTOTAL,
+                TEL_EMERGENCIA, CONT_EMERGENCIA, ESTADO, ID_CIDADE, 
+                DATANASC, DTINSCRICAO, VLINSCRICAO, VLTAXA, VLTOTAL,
                 FORMAPGTO, CUPOM, STATUS, FLEMAIL, NOME_PEITO
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
         """
@@ -7126,7 +6190,6 @@ def evento_salvar_inscricao():
             dados['estado'],
             dados['id_cidade'],
             data_nasc_mysql,
-            numero_peito,
             data_inscricao,
             dados['vlinscricao'],
             dados['vltaxa'],
@@ -7147,7 +6210,6 @@ def evento_salvar_inscricao():
         return jsonify({
             'success': True,
             'inscricao_id': inscricao_id,
-            'numero_peito': numero_peito,
             'mensagem': 'Inscrição salva com sucesso'
         })
         
@@ -7576,9 +6638,6 @@ def lista_eventos_direto():
         # Em caso de erro, redireciona para a página normal
         return redirect('/lista-eventos')
 
-################
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
