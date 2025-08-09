@@ -532,20 +532,20 @@
                 loadingContainer.classList.add('hidden');
                 qrContainer.classList.remove('hidden');
 
-                // Se foi recuperado, garantir que o IDPAGAMENTO esteja atualizado
-                if (isRecovered) {
-                    const persistedData = getPersistedPaymentData();
-                    if (persistedData && persistedData.paymentId) {
-                        console.log('Garantindo que IDPAGAMENTO esteja atualizado para QR recuperado');
-                        atualizarIdPagamento(persistedData.paymentId).then(success => {
-                            if (success) {
-                                console.log('IDPAGAMENTO confirmado/atualizado para QR recuperado');
-                            } else {
-                                console.warn('Falha ao confirmar IDPAGAMENTO para QR recuperado');
-                            }
-                        });
-                    }
-                }
+                // // Se foi recuperado, garantir que o IDPAGAMENTO esteja atualizado
+                // if (isRecovered) {
+                //     const persistedData = getPersistedPaymentData();
+                //     if (persistedData && persistedData.paymentId) {
+                //         console.log('Garantindo que IDPAGAMENTO esteja atualizado para QR recuperado');
+                //         atualizarIdPagamento(persistedData.paymentId).then(success => {
+                //             if (success) {
+                //                 console.log('IDPAGAMENTO confirmado/atualizado para QR recuperado');
+                //             } else {
+                //                 console.warn('Falha ao confirmar IDPAGAMENTO para QR recuperado');
+                //             }
+                //         });
+                //     }
+                // }
 
                 // Inicia o timer apenas se não conseguir recuperar um existente
                 if (!recoverCountdownTimer()) {
@@ -767,9 +767,33 @@
                         displayQRCode(responseData.qr_code_base64, responseData.qr_code, false);
 
                         if (responseData.payment_id) {
+                            // CORREÇÃO: Atualizar ID do pagamento ANTES de iniciar verificação
+                            console.log('Atualizando ID do pagamento na base de dados:', responseData.payment_id);
+                            try {
+                                const updateSuccess = await atualizarIdPagamento(responseData.payment_id);
+                                if (updateSuccess) {
+                                    console.log('ID do pagamento atualizado com sucesso na base de dados');
+                                } else {
+                                    console.warn('Falha ao atualizar ID do pagamento na base de dados, mas continuando...');
+                                }
+                            } catch (error) {
+                                console.error('Erro ao atualizar ID do pagamento:', error);
+                            }
+                            
                             await startPaymentVerification(responseData.payment_id);
                         }
                     }
+
+
+                    // if (responseData.qr_code && responseData.qr_code_base64) {
+                    //     console.log('NOVO PAYMENT GERADO COM SUCESSO:', responseData.payment_id);
+                    //     persistPaymentData(responseData);
+                    //     displayQRCode(responseData.qr_code_base64, responseData.qr_code, false);
+
+                    //     if (responseData.payment_id) {
+                    //         await startPaymentVerification(responseData.payment_id);
+                    //     }
+                    // }
 
                 } catch (error) {
                     console.error('Erro ao gerar PIX:', error);
@@ -1110,10 +1134,35 @@
                             };
                             persistPaymentData(updatedData);
 
+                            // CORREÇÃO: Garantir que o ID seja atualizado também na recuperação
+                            try {
+                                console.log('Garantindo atualização do ID para pagamento recuperado');
+                                await atualizarIdPagamento(persistedData.paymentId);
+                            } catch (error) {
+                                console.error('Erro ao atualizar ID na recuperação:', error);
+                            }
+
                             displayQRCode(recoveredData.qr_code_base64, recoveredData.qr_code, true);
                             await startPaymentVerification(persistedData.paymentId);
                             return; // PARA AQUI - NÃO GERA NOVO PAYMENT
                         }
+
+
+                        // if (recoveredData && recoveredData.qr_code_base64) {
+                        //     console.log('QR Code recuperado com sucesso');
+                        //     // Atualiza os dados persistidos com o QR code recuperado
+                        //     const updatedData = {
+                        //         ...persistedData,
+                        //         qrCode: recoveredData.qr_code,
+                        //         qrCodeBase64: recoveredData.qr_code_base64,
+                        //         timestamp: Date.now()
+                        //     };
+                        //     persistPaymentData(updatedData);
+
+                        //     displayQRCode(recoveredData.qr_code_base64, recoveredData.qr_code, true);
+                        //     await startPaymentVerification(persistedData.paymentId);
+                        //     return; // PARA AQUI - NÃO GERA NOVO PAYMENT
+                        // }
 
                         // Se chegou até aqui, o payment existe mas não conseguiu recuperar o QR
                         console.log('Payment existe mas QR code expirado/indisponível');
