@@ -62,18 +62,18 @@
         <div class="form-container">
             <h2 class="form-title">Dados para Inscrição</h2>
             
-            <form id="inscricaoForm">
+            <form id="inscricaoForm" novalidate>
                 <!-- CPF -->
                 <div class="form-group">
                     <label for="cpf">CPF <span class="required">*</span></label>
-                    <input type="text" id="cpf" name="cpf" required maxlength="14" inputmode="numeric">
+                    <input type="text" id="cpf" name="cpf" maxlength="14" inputmode="numeric">
                     <div class="error-message" id="cpfError"></div>
                 </div>
 
                 <!-- Email -->
                 <div class="form-group">
                     <label for="email">E-mail <span class="required">*</span></label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email">
                     <div class="error-message" id="emailError"></div>
                 </div>
 
@@ -81,12 +81,12 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="nome">Nome <span class="required">*</span></label>
-                        <input type="text" id="nome" name="nome" required maxlength="25">
+                        <input type="text" id="nome" name="nome" maxlength="25">
                         <div class="error-message" id="nomeError"></div>
                     </div>
                     <div class="form-group">
                         <label for="sobrenome">Sobrenome <span class="required">*</span></label>
-                        <input type="text" id="sobrenome" name="sobrenome" required maxlength="150">
+                        <input type="text" id="sobrenome" name="sobrenome" maxlength="150">
                         <div class="error-message" id="sobrenomeError"></div>
                     </div>
                 </div>
@@ -95,13 +95,13 @@
                     <!-- Data de Nascimento -->
                     <div class="form-group">
                         <label for="dataNascimento">Data de Nascimento <span class="required">*</span></label>
-                        <input type="text" id="dataNascimento" name="dataNascimento" required placeholder="dd/mm/aaaa" inputmode="numeric">
+                        <input type="text" id="dataNascimento" name="dataNascimento" placeholder="dd/mm/aaaa" inputmode="numeric">
                         <div class="error-message" id="dataNascimentoError"></div>
                     </div>
                     <!-- Celular -->
                     <div class="form-group">
                         <label for="celular">Celular <span class="required">*</span></label>
-                        <input type="text" id="celular" name="celular" required  inputmode="numeric" >
+                        <input type="text" id="celular" name="celular" inputmode="numeric" >
                         <div class="error-message" id="celularError"></div>
                     </div>
                 </div>
@@ -111,11 +111,11 @@
                     <label>Sexo <span class="required">*</span></label>
                     <div class="checkbox-group">
                         <div class="checkbox-item">
-                            <input type="radio" id="masculino" name="sexo" value="M" required>
+                            <input type="radio" id="masculino" name="sexo" value="M">
                             <label for="masculino">Masculino</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="radio" id="feminino" name="sexo" value="F" required>
+                            <input type="radio" id="feminino" name="sexo" value="F">
                             <label for="feminino">Feminino</label>
                         </div>
                     </div>
@@ -127,23 +127,23 @@
                     <label>Tamanho da Camiseta <span class="required">*</span></label>
                     <div class="checkbox-group">
                         <div class="checkbox-item">
-                            <input type="radio" id="camisetaPP" name="camiseta" value="PP" required>
+                            <input type="radio" id="camisetaPP" name="camiseta" value="PP">
                             <label for="camisetaPP">PP</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="radio" id="camisetaP" name="camiseta" value="P" required>
+                            <input type="radio" id="camisetaP" name="camiseta" value="P">
                             <label for="camisetaP">P</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="radio" id="camisetaM" name="camiseta" value="M" required>
+                            <input type="radio" id="camisetaM" name="camiseta" value="M">
                             <label for="camisetaM">M</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="radio" id="camisetaG" name="camiseta" value="G" required>
+                            <input type="radio" id="camisetaG" name="camiseta" value="G">
                             <label for="camisetaG">G</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="radio" id="camisetaGG" name="camiseta" value="GG" required>
+                            <input type="radio" id="camisetaGG" name="camiseta" value="GG">
                             <label for="camisetaGG">GG</label>
                         </div>
                     </div>
@@ -154,14 +154,14 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="estado">Estado <span class="required">*</span></label>
-                        <select id="estado" name="estado" required>
+                        <select id="estado" name="estado">
                             <option value="">Selecione um estado</option>
                         </select>
                         <div class="error-message" id="estadoError"></div>
                     </div>
                     <div class="form-group">
                         <label for="cidade">Cidade <span class="required">*</span></label>
-                        <select id="cidade" name="cidade" required disabled>
+                        <select id="cidade" name="cidade" disabled>
                             <option value="">Primeiro selecione um estado</option>
                         </select>
                         <div class="error-message" id="cidadeError"></div>
@@ -326,6 +326,17 @@
         </div>
     </div>
 
+    <!-- Modal de Campo Obrigatório -->
+    <div id="campoObrigatorioModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Campo Obrigatório</div>
+            <div class="modal-text" id="campoObrigatorioText">
+                Mensagem do campo obrigatório
+            </div>
+            <button type="button" class="btn btn-primary" onclick="fecharModalEFocar()">OK</button>
+        </div>
+    </div>    
+
     <script>
         // Adicionar no início do script da página
         window.addEventListener('beforeunload', function() {
@@ -443,10 +454,6 @@
         // Configurar máscaras
         function configurarMascaras() {
             configurarMascarasAvancadas();
-        //     $('#cpf').mask('000.000.000-00');
-        //     $('#dataNascimento').mask('00/00/0000');
-        //     $('#celular').mask('(00) 00000-0000');
-        //     $('#telEmergencia').mask('(00) 00000-0000');
         }
 
         // Nova função para configurar máscaras de forma mais robusta
@@ -948,40 +955,36 @@
             document.getElementById('valoresContainer').style.display = 'block';
         }
 
-        // Validar CPF
-        function validarCPF(cpf) {
-            cpf = cpf.replace(/\D/g, '');
-            
-            if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
-                mostrarErro('cpfError', 'CPF inválido');
-                return false;
-            }
-
-            let soma = 0;
-            for (let i = 0; i < 9; i++) {
-                soma += parseInt(cpf.charAt(i)) * (10 - i);
-            }
-            let resto = 11 - (soma % 11);
-            if (resto === 10 || resto === 11) resto = 0;
-            if (resto !== parseInt(cpf.charAt(9))) {
-                mostrarErro('cpfError', 'CPF inválido');
-                return false;
-            }
-
-            soma = 0;
-            for (let i = 0; i < 10; i++) {
-                soma += parseInt(cpf.charAt(i)) * (11 - i);
-            }
-            resto = 11 - (soma % 11);
-            if (resto === 10 || resto === 11) resto = 0;
-            if (resto !== parseInt(cpf.charAt(10))) {
-                mostrarErro('cpfError', 'CPF inválido');
-                return false;
-            }
-
-            esconderErro('cpfError');
-            return true;
+    // Validar CPF - CORRIGIDA para não interferir com as validações modais
+    function validarCPF(cpf) {
+        cpf = cpf.replace(/\D/g, '');
+        
+        if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
+            return false; // Removido mostrarErro daqui
         }
+
+        let soma = 0;
+        for (let i = 0; i < 9; i++) {
+            soma += parseInt(cpf.charAt(i)) * (10 - i);
+        }
+        let resto = 11 - (soma % 11);
+        if (resto === 10 || resto === 11) resto = 0;
+        if (resto !== parseInt(cpf.charAt(9))) {
+            return false; // Removido mostrarErro daqui
+        }
+
+        soma = 0;
+        for (let i = 0; i < 10; i++) {
+            soma += parseInt(cpf.charAt(i)) * (11 - i);
+        }
+        resto = 11 - (soma % 11);
+        if (resto === 10 || resto === 11) resto = 0;
+        if (resto !== parseInt(cpf.charAt(10))) {
+            return false; // Removido mostrarErro daqui
+        }
+
+        return true; // CPF válido
+    }
 
         // Validar data
         function validarData(data) {
@@ -1014,116 +1017,143 @@
             return regex.test(email);
         }
 
-        // Validar formulário
+        let campoParaFocar = null;
+
+        // Validar formulário com mensagens modais específicas
         function validarFormulario() {
-            let valido = true;
-            
             // Email
-            const email = document.getElementById('email').value;
-            if (!email || !validarEmail(email)) {
-                mostrarErro('emailError', 'E-mail inválido');
-                valido = false;
-            } else {
-                esconderErro('emailError');
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                mostrarCampoObrigatorio('E-mail é obrigatório', 'email');
+                return false;
+            }
+            if (!validarEmail(email)) {
+                mostrarCampoObrigatorio('Por favor, insira um e-mail válido', 'email');
+                return false;
             }
 
             // CPF
             const cpf = document.getElementById('cpf').value.replace(/\D/g, '');
-            if (!cpf || !validarCPF(cpf)) {
-                valido = false;
+            if (!cpf) {
+                mostrarCampoObrigatorio('CPF é obrigatório', 'cpf');
+                return false;
+            }
+            if (!validarCPF(cpf)) {
+                mostrarCampoObrigatorio('Por favor, insira um CPF válido', 'cpf');
+                return false;
             }
 
             // Nome
             const nome = document.getElementById('nome').value.trim();
             if (!nome) {
-                mostrarErro('nomeError', 'Nome é obrigatório');
-                valido = false;
-            } else {
-                esconderErro('nomeError');
+                mostrarCampoObrigatorio('Nome é obrigatório', 'nome');
+                return false;
             }
 
             // Sobrenome
             const sobrenome = document.getElementById('sobrenome').value.trim();
             if (!sobrenome) {
-                mostrarErro('sobrenomeError', 'Sobrenome é obrigatório');
-                valido = false;
-            } else {
-                esconderErro('sobrenomeError');
+                mostrarCampoObrigatorio('Sobrenome é obrigatório', 'sobrenome');
+                return false;
             }
 
             // Data de nascimento
             const dataNasc = document.getElementById('dataNascimento').value;
-            if (!dataNasc || !validarData(dataNasc)) {
-                mostrarErro('dataNascimentoError', 'Data de nascimento inválida');
-                valido = false;
-            } else {
-                esconderErro('dataNascimentoError');
+            if (!dataNasc) {
+                mostrarCampoObrigatorio('Data de nascimento é obrigatória', 'dataNascimento');
+                return false;
+            }
+            if (!validarData(dataNasc)) {
+                mostrarCampoObrigatorio('Por favor, insira uma data de nascimento válida', 'dataNascimento');
+                return false;
             }
 
             // Celular
             const celular = document.getElementById('celular').value.replace(/\D/g, '');
-            if (!celular || celular.length !== 11) {
-                mostrarErro('celularError', 'Celular inválido');
-                valido = false;
-            } else {
-                esconderErro('celularError');
+            if (!celular) {
+                mostrarCampoObrigatorio('Celular é obrigatório', 'celular');
+                return false;
+            }
+            if (celular.length !== 11) {
+                mostrarCampoObrigatorio('Por favor, insira um celular válido com DDD', 'celular');
+                return false;
             }
 
             // Sexo
             const sexo = document.querySelector('input[name="sexo"]:checked');
             if (!sexo) {
-                mostrarErro('sexoError', 'Selecione o sexo');
-                valido = false;
-            } else {
-                esconderErro('sexoError');
+                mostrarCampoObrigatorio('Por favor, selecione o sexo', 'masculino');
+                return false;
             }
 
             // Camiseta
             const camiseta = document.querySelector('input[name="camiseta"]:checked');
             if (!camiseta) {
-                mostrarErro('camisetaError', 'Selecione o tamanho da camiseta');
-                valido = false;
-            } else {
-                esconderErro('camisetaError');
+                mostrarCampoObrigatorio('Por favor, selecione o tamanho da camiseta', 'camisetaPP');
+                return false;
             }
 
             // Estado
             const estado = document.getElementById('estado').value;
             if (!estado) {
-                mostrarErro('estadoError', 'Selecione um estado');
-                valido = false;
-            } else {
-                esconderErro('estadoError');
+                mostrarCampoObrigatorio('Por favor, selecione um estado', 'estado');
+                return false;
             }
 
             // Cidade
             const cidade = document.getElementById('cidade').value;
             if (!cidade) {
-                mostrarErro('cidadeError', 'Selecione uma cidade');
-                valido = false;
-            } else {
-                esconderErro('cidadeError');
+                mostrarCampoObrigatorio('Por favor, selecione uma cidade', 'cidade');
+                return false;
             }
 
             // Forma de pagamento
             const formaPagamento = document.querySelector('input[name="formaPagamento"]:checked');
             if (!formaPagamento) {
-                mostrarErro('formaPagamentoError', 'Selecione a forma de pagamento');
-                valido = false;
-            } else {
-                esconderErro('formaPagamentoError');
+                mostrarCampoObrigatorio('Por favor, selecione a forma de pagamento', 'pix');
+                return false;
             }
 
             // Termo de aceite
             const termoAceite = document.getElementById('termoAceite').checked;
             if (!termoAceite) {
-                mostrarErro('termoAceiteError', 'Você deve aceitar os termos');
-                valido = false;
-            } else {
-                esconderErro('termoAceiteError');
+                mostrarCampoObrigatorio('Você deve aceitar os termos de responsabilidade para prosseguir', 'termoAceite');
+                return false;
             }
 
-            return valido;
+            // Se chegou até aqui, todos os campos estão válidos
+            return true;
+        }
+
+        // Função para mostrar modal de campo obrigatório
+        function mostrarCampoObrigatorio(mensagem, campoId) {
+            campoParaFocar = campoId;
+            document.getElementById('campoObrigatorioText').textContent = mensagem;
+            document.getElementById('campoObrigatorioModal').style.display = 'block';
+        }
+
+        // Função para fechar modal e focar no campo
+        function fecharModalEFocar() {
+            document.getElementById('campoObrigatorioModal').style.display = 'none';
+            
+            if (campoParaFocar) {
+                const campo = document.getElementById(campoParaFocar);
+                if (campo) {
+                    // Scroll para o campo
+                    campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Focar no campo após um pequeno delay para garantir que o modal fechou
+                    setTimeout(() => {
+                        campo.focus();
+                        
+                        // Se for um campo de texto, selecionar o conteúdo
+                        if (campo.type === 'text' || campo.type === 'email') {
+                            campo.select();
+                        }
+                    }, 100);
+                }
+                campoParaFocar = null;
+            }
         }
 
         // Salvar inscrição (função consolidada)
