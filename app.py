@@ -90,53 +90,53 @@ def fn_email(valor):
 def index():
     return render_template("index.html")
 
-@app.route('/backyard2025/resultado')
-def backyard2025_resultado():
-    # Obter parâmetros de filtro
-    sexo_filter = request.args.get('sexo', '')
-    tipo_corrida_filter = request.args.get('tipo_corrida', '')
+# @app.route('/backyard2025/resultado')
+# def backyard2025_resultado():
+#     # Obter parâmetros de filtro
+#     sexo_filter = request.args.get('sexo', '')
+#     tipo_corrida_filter = request.args.get('tipo_corrida', '')
     
-    # Iniciar a consulta base
-    query = """
-        SELECT idatleta, concat(lpad(cast(nrpeito as char(3)),3,0),' - ', nome) as atleta, 
-        sexo, tipo_corrida, 
-        case when nr_voltas>0 then nr_voltas else 'DNF' end as nvoltas,
-        case when nr_voltas>0 then cast((nr_voltas * 6706) as char) else 'DNF' end as km
-        FROM 2025_atletas
-        WHERE 1=1
-    """
+#     # Iniciar a consulta base
+#     query = """
+#         SELECT idatleta, concat(lpad(cast(nrpeito as char(3)),3,0),' - ', nome) as atleta, 
+#         sexo, tipo_corrida, 
+#         case when nr_voltas>0 then nr_voltas else 'DNF' end as nvoltas,
+#         case when nr_voltas>0 then cast((nr_voltas * 6706) as char) else 'DNF' end as km
+#         FROM 2025_atletas
+#         WHERE 1=1
+#     """
     
-    # Adicionar filtros se fornecidos
-    if sexo_filter:
-        query += f" AND sexo = '{sexo_filter}'"
-    if tipo_corrida_filter:
-        query += f" AND tipo_corrida = '{tipo_corrida_filter}'"
+#     # Adicionar filtros se fornecidos
+#     if sexo_filter:
+#         query += f" AND sexo = '{sexo_filter}'"
+#     if tipo_corrida_filter:
+#         query += f" AND tipo_corrida = '{tipo_corrida_filter}'"
     
-    # Ordenação
-    query += " ORDER BY nr_voltas DESC, nome"
+#     # Ordenação
+#     query += " ORDER BY nr_voltas DESC, nome"
     
-    # Executar a consulta
-    cursor = mysql.connection.cursor()
-    cursor.execute(query)
-    atletas = cursor.fetchall()
+#     # Executar a consulta
+#     cursor = mysql.connection.cursor()
+#     cursor.execute(query)
+#     atletas = cursor.fetchall()
     
-    # Obter listas únicas para os filtros de dropdown
-    cursor.execute("SELECT DISTINCT sexo FROM 2025_atletas ORDER BY sexo")
-    sexos = [row[0] for row in cursor.fetchall()]
+#     # Obter listas únicas para os filtros de dropdown
+#     cursor.execute("SELECT DISTINCT sexo FROM 2025_atletas ORDER BY sexo")
+#     sexos = [row[0] for row in cursor.fetchall()]
     
-    cursor.execute("SELECT DISTINCT tipo_corrida FROM 2025_atletas ORDER BY tipo_corrida")
-    tipos_corrida = [row[0] for row in cursor.fetchall()]
+#     cursor.execute("SELECT DISTINCT tipo_corrida FROM 2025_atletas ORDER BY tipo_corrida")
+#     tipos_corrida = [row[0] for row in cursor.fetchall()]
     
-    cursor.close()
+#     cursor.close()
     
-    return render_template(
-        'backyard2025resultado.html', 
-        atletas=atletas, 
-        sexos=sexos, 
-        tipos_corrida=tipos_corrida,
-        sexo_filter=sexo_filter,
-        tipo_corrida_filter=tipo_corrida_filter
-    )
+#     return render_template(
+#         'backyard2025resultado.html', 
+#         atletas=atletas, 
+#         sexos=sexos, 
+#         tipos_corrida=tipos_corrida,
+#         sexo_filter=sexo_filter,
+#         tipo_corrida_filter=tipo_corrida_filter
+#     )
 
 
 @app.route('/listar-estados', methods=['GET'])
@@ -7581,5 +7581,4 @@ def lista_eventos_direto():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
 
