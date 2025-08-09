@@ -227,148 +227,148 @@ def format_time_difference(seconds):
     seconds = int(seconds % 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-@app.route('/desafio200k/regulamento')
-def regulamento200k():
-    return render_template('regulamento200k.html')
+# @app.route('/desafio200k/regulamento')
+# def regulamento200k():
+#     return render_template('regulamento200k.html')
     
-@app.route('/corracomultra')
-def corracomultra():
-    return render_template('corracomultra.html')
+# @app.route('/corracomultra')
+# def corracomultra():
+#     return render_template('corracomultra.html')
 
 
-# Rotas do backyard
-@app.route('/backyard/lancamento')
-def backyard_lancamento():
-    return render_template('backyardlancamento.html')
+# # Rotas do backyard
+# @app.route('/backyard/lancamento')
+# def backyard_lancamento():
+#     return render_template('backyardlancamento.html')
 
-@app.route('/backyard/pesquisar_atleta/<nrpeito>')
-def pesquisar_atleta(nrpeito):
-    try:
-        cur = mysql.connection.cursor()
+# @app.route('/backyard/pesquisar_atleta/<nrpeito>')
+# def pesquisar_atleta(nrpeito):
+#     try:
+#         cur = mysql.connection.cursor()
 
-        query = """
-            SELECT la.id, la.idlargada, a.idatleta, a.nome, a.nrpeito,
-                la.largada, a.tipo_corrida, la.nulargada, la.parcial, la.chegada,
-                CONCAT(LPAD(CAST(a.nrpeito AS CHAR(3)),3,'0'),' - ', a.nome) as atleta
-            FROM bm_largadas_atletas la, bm_atletas a
-            WHERE (la.chegada = '' OR la.chegada IS NULL)
-                AND la.idlargada = (
-                    SELECT MAX(idlargada) 
-                    FROM bm_largadas_atletas
-                    WHERE (chegada = '' OR chegada IS NULL)
-                    AND idatleta = a.idatleta
-                )
-                AND la.idatleta = a.idatleta
-                AND a.nrpeito = %s
-        """
+#         query = """
+#             SELECT la.id, la.idlargada, a.idatleta, a.nome, a.nrpeito,
+#                 la.largada, a.tipo_corrida, la.nulargada, la.parcial, la.chegada,
+#                 CONCAT(LPAD(CAST(a.nrpeito AS CHAR(3)),3,'0'),' - ', a.nome) as atleta
+#             FROM bm_largadas_atletas la, bm_atletas a
+#             WHERE (la.chegada = '' OR la.chegada IS NULL)
+#                 AND la.idlargada = (
+#                     SELECT MAX(idlargada) 
+#                     FROM bm_largadas_atletas
+#                     WHERE (chegada = '' OR chegada IS NULL)
+#                     AND idatleta = a.idatleta
+#                 )
+#                 AND la.idatleta = a.idatleta
+#                 AND a.nrpeito = %s
+#         """
         
-        cur.execute(query, (nrpeito,))
-        result = cur.fetchone()
+#         cur.execute(query, (nrpeito,))
+#         result = cur.fetchone()
         
-        if result:
-            columns = [desc[0] for desc in cur.description]
-            result_dict = dict(zip(columns, result))
+#         if result:
+#             columns = [desc[0] for desc in cur.description]
+#             result_dict = dict(zip(columns, result))
             
-            return jsonify({
-                'success': True,
-                'atleta': result_dict['atleta'],
-                'data': result_dict
-            })
-        else:
-            cur.execute("SELECT * FROM bm_atletas WHERE nrpeito = %s", (nrpeito,))
-            atleta_exists = cur.fetchone()
+#             return jsonify({
+#                 'success': True,
+#                 'atleta': result_dict['atleta'],
+#                 'data': result_dict
+#             })
+#         else:
+#             cur.execute("SELECT * FROM bm_atletas WHERE nrpeito = %s", (nrpeito,))
+#             atleta_exists = cur.fetchone()
             
-            return jsonify({
-                'success': False,
-                'message': 'Atleta não encontrado'
-            })
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Atleta não encontrado'
+#             })
             
-    except Exception as e:
-        print(f"Erro na consulta: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
-    finally:
-        cur.close()
+#     except Exception as e:
+#         print(f"Erro na consulta: {str(e)}")
+#         return jsonify({
+#             'success': False,
+#             'error': str(e)
+#         })
+#     finally:
+#         cur.close()
 
-@app.route('/backyard/lancar_chegada', methods=['POST'])
-def lancar_chegada():
-    try:
-        #data = request.get_json()
-        #nrpeito = data['nrpeito']
-        #chegada = data['chegada']
+# @app.route('/backyard/lancar_chegada', methods=['POST'])
+# def lancar_chegada():
+#     try:
+#         #data = request.get_json()
+#         #nrpeito = data['nrpeito']
+#         #chegada = data['chegada']
         
-        data = request.get_json()
-        nrpeito = data['nrpeito']
-        chegada = data['chegada'].replace(', ', ' ')  # Remove a vírgula e mantém apenas um espaço
+#         data = request.get_json()
+#         nrpeito = data['nrpeito']
+#         chegada = data['chegada'].replace(', ', ' ')  # Remove a vírgula e mantém apenas um espaço
 
 
-        cur = mysql.connection.cursor()
+#         cur = mysql.connection.cursor()
         
-        # Buscar dados do atleta
-        cur.execute("""
-            SELECT la.*, a.tipo_corrida 
-            FROM bm_largadas_atletas la, bm_atletas a
-            WHERE la.idatleta = a.idatleta
-            AND a.nrpeito = %s
-            AND (la.chegada = '' OR la.chegada IS NULL)
-        """, (nrpeito,))
+#         # Buscar dados do atleta
+#         cur.execute("""
+#             SELECT la.*, a.tipo_corrida 
+#             FROM bm_largadas_atletas la, bm_atletas a
+#             WHERE la.idatleta = a.idatleta
+#             AND a.nrpeito = %s
+#             AND (la.chegada = '' OR la.chegada IS NULL)
+#         """, (nrpeito,))
         
-        result = cur.fetchone()
-        if not result:
-            return jsonify({
-                'success': False,
-                'error': 'Atleta não encontrado'
-            })
+#         result = cur.fetchone()
+#         if not result:
+#             return jsonify({
+#                 'success': False,
+#                 'error': 'Atleta não encontrado'
+#             })
             
-        columns = [desc[0] for desc in cur.description]
-        atleta = dict(zip(columns, result))
+#         columns = [desc[0] for desc in cur.description]
+#         atleta = dict(zip(columns, result))
         
-        # Próxima ordem de chegada
-        cur.execute("""
-            SELECT COALESCE(MAX(ordem_chegada),0) as ID 
-            FROM bm_largadas_atletas 
-            WHERE idlargada = %s
-        """, (atleta['idlargada'],))
+#         # Próxima ordem de chegada
+#         cur.execute("""
+#             SELECT COALESCE(MAX(ordem_chegada),0) as ID 
+#             FROM bm_largadas_atletas 
+#             WHERE idlargada = %s
+#         """, (atleta['idlargada'],))
         
-        result = cur.fetchone()
-        ordem_chegada = (result[0] or 0) + 1
+#         result = cur.fetchone()
+#         ordem_chegada = (result[0] or 0) + 1
         
-        # Cálculo de tempo e status
-        segundos = calculate_seconds_difference(atleta['largada'], chegada)
-        tempo_chegada = format_time_difference(segundos)
+#         # Cálculo de tempo e status
+#         segundos = calculate_seconds_difference(atleta['largada'], chegada)
+#         tempo_chegada = format_time_difference(segundos)
         
-        vstatus = 'D' if segundos > 3599 else 'A'
+#         vstatus = 'D' if segundos > 3599 else 'A'
         
-        if atleta['idlargada'] == 3 and atleta['tipo_corrida'] == 'Três voltas':
-            vstatus = 'D'
+#         if atleta['idlargada'] == 3 and atleta['tipo_corrida'] == 'Três voltas':
+#             vstatus = 'D'
             
-        # Atualizar registro
-        cur.execute("""
-            UPDATE bm_largadas_atletas
-            SET 
-                chegada = %s,
-                tempochegada = %s,
-                ordem_chegada = %s,
-                usuario_chegada = %s
-            WHERE id = %s
-        """, (chegada, tempo_chegada, ordem_chegada, 'ADM', atleta['id']))
+#         # Atualizar registro
+#         cur.execute("""
+#             UPDATE bm_largadas_atletas
+#             SET 
+#                 chegada = %s,
+#                 tempochegada = %s,
+#                 ordem_chegada = %s,
+#                 usuario_chegada = %s
+#             WHERE id = %s
+#         """, (chegada, tempo_chegada, ordem_chegada, 'ADM', atleta['id']))
         
-        mysql.connection.commit()
+#         mysql.connection.commit()
         
-        return jsonify({
-            'success': True,
-            'message': 'Chegada lançada com sucesso'
-        })
+#         return jsonify({
+#             'success': True,
+#             'message': 'Chegada lançada com sucesso'
+#         })
         
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
-    finally:
-        cur.close()
+#     except Exception as e:
+#         return jsonify({
+#             'success': False,
+#             'error': str(e)
+#         })
+#     finally:
+#         cur.close()
 
 # Rota para renderizar a página eventos.html
 @app.route('/eventos')
@@ -1278,48 +1278,48 @@ def cupom200k():
         return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
 
 
-@app.route('/desafio200k')
-def desafio200k():
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute('''
-            SELECT E.IDEVENTO, E.DESCRICAO, E.DTINICIO, E.DTFIM, E.HRINICIO,
-                E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
-                M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
-                M.VLINSCRICAO, M.VLMEIA, M.VLTAXA, E.INICIO_INSCRICAO_EXT, E.FIM_INSCRICAO_EXT
-            FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
-            WHERE M.IDEVENTO = E.IDEVENTO
-                AND E.IDEVENTO = 1
-        ''')
+# @app.route('/desafio200k')
+# def desafio200k():
+#     try:
+#         cur = mysql.connection.cursor()
+#         cur.execute('''
+#             SELECT E.IDEVENTO, E.DESCRICAO, E.DTINICIO, E.DTFIM, E.HRINICIO,
+#                 E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
+#                 M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
+#                 M.VLINSCRICAO, M.VLMEIA, M.VLTAXA, E.INICIO_INSCRICAO_EXT, E.FIM_INSCRICAO_EXT
+#             FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+#             WHERE M.IDEVENTO = E.IDEVENTO
+#                 AND E.IDEVENTO = 1
+#         ''')
         
-        results = cur.fetchall()
-        cur.close()
+#         results = cur.fetchall()
+#         cur.close()
         
-        if not results:
-            return render_template('desafio200k.html', titulo="Evento não encontrado", modalidades=[])
+#         if not results:
+#             return render_template('desafio200k.html', titulo="Evento não encontrado", modalidades=[])
             
-        evento_titulo = results[0][1]  # DESCRICAO do evento
-        dt_incio = results[0][2]     
-        modalidades = [{'id': row[9], 'descricao': row[10]} for row in results]
-        vl200 = f'R$ {results[0][13]:,.2f}'
-        vl100 = f'R$ {results[1][13]:,.2f}' 
-        vl50 = f'R$ {results[2][13]:,.2f}'
-        vl25 = f'R$ {results[3][13]:,.2f}'
-        inicioinsc = results[0][16]
-        fiminsc = results[0][17]      
-        dt_inicioinsc = results[0][7]
-        dt_fiminsc = results[0][8]     
+#         evento_titulo = results[0][1]  # DESCRICAO do evento
+#         dt_incio = results[0][2]     
+#         modalidades = [{'id': row[9], 'descricao': row[10]} for row in results]
+#         vl200 = f'R$ {results[0][13]:,.2f}'
+#         vl100 = f'R$ {results[1][13]:,.2f}' 
+#         vl50 = f'R$ {results[2][13]:,.2f}'
+#         vl25 = f'R$ {results[3][13]:,.2f}'
+#         inicioinsc = results[0][16]
+#         fiminsc = results[0][17]      
+#         dt_inicioinsc = results[0][7]
+#         dt_fiminsc = results[0][8]     
         
-        #return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades, vlSolo=vl200, 
-        #                       vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, inicio_insc=inicioinsc, fim_insc=fiminsc)
+#         #return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades, vlSolo=vl200, 
+#         #                       vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, inicio_insc=inicioinsc, fim_insc=fiminsc)
 
-        return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades, vlSolo=vl200, 
-                               vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, inicio_insc=inicioinsc, fim_insc=fiminsc, 
-                               dt_inicio_insc=dt_inicioinsc, dt_fim_insc=dt_fiminsc, dt_inicio_evento=dt_incio)
+#         return render_template('desafio200k.html', titulo=evento_titulo, modalidades=modalidades, vlSolo=vl200, 
+#                                vlDupla=vl100, vlQuarteto=vl50, vlOcteto=vl25, inicio_insc=inicioinsc, fim_insc=fiminsc, 
+#                                dt_inicio_insc=dt_inicioinsc, dt_fim_insc=dt_fiminsc, dt_inicio_evento=dt_incio)
 
-    except Exception as e:
-        print(f"Erro ao carregar página: {str(e)}")
-        return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
+#     except Exception as e:
+#         print(f"Erro ao carregar página: {str(e)}")
+#         return render_template('desafio200k.html', titulo="Erro ao carregar evento", modalidades=[])
 
 
 @app.route('/get_modalidade_valores/<int:iditem>')
@@ -6842,7 +6842,7 @@ def arealslope():
 
 ##### BACKYARD ###########
 
-@app.route('/backyard')
+@app.route('/backyardmacaxeira')
 def backyard():
     """Página de inscrição do evento Areal Slope"""
     try:
