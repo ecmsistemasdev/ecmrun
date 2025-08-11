@@ -177,11 +177,9 @@ function configurarMascarasAvancadas() {
     });
 }
 
-// Função para aplicar máscara de CPF
 function aplicarMascaraCPF(campo) {
     let valor = campo.value.replace(/\D/g, '');
     const posicaoCursor = campo.selectionStart;
-    const valorAnterior = campo.value;
     
     if (valor.length <= 11) {
         valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
@@ -191,16 +189,22 @@ function aplicarMascaraCPF(campo) {
     
     campo.value = valor;
     
-    // Ajustar posição do cursor
+    // Sempre posicionar cursor no final quando o campo está completo
     setTimeout(() => {
-        let novaPosicao = posicaoCursor;
-        if (valor.length > valorAnterior.length) {
-            // Se adicionou caracteres especiais, ajustar cursor
-            if (valor.charAt(posicaoCursor - 1) === '.' || valor.charAt(posicaoCursor - 1) === '-') {
-                novaPosicao = posicaoCursor + 1;
+        if (valor.length === 14) { // CPF completo: 000.000.000-00
+            campo.setSelectionRange(valor.length, valor.length);
+            // Executar busca automaticamente quando CPF estiver completo
+            validarEBuscarCPF(valor.replace(/\D/g, ''));
+        } else {
+            // Para CPFs incompletos, manter a lógica original
+            let novaPosicao = posicaoCursor;
+            if (valor.length > campo.value.replace(/\D/g, '').length) {
+                if (valor.charAt(posicaoCursor - 1) === '.' || valor.charAt(posicaoCursor - 1) === '-') {
+                    novaPosicao = posicaoCursor + 1;
+                }
             }
+            campo.setSelectionRange(novaPosicao, novaPosicao);
         }
-        campo.setSelectionRange(novaPosicao, novaPosicao);
     }, 0);
 }
 
@@ -288,70 +292,6 @@ function configurarEventos() {
         document.getElementById(id).addEventListener('input', function() {
             this.value = this.value.toUpperCase();
         });
-    });
-
-    // Validação do CPF ao sair do campo - COM MODAL DE LOADING
-    $('#cpf').on('blur', function() {
-        const cpf = $(this).val().replace(/\D/g, '');
-        
-        if (cpf.length !== 11) {
-            return;
-        }
-
-        // Mostrar modal de loading
-        mostrarModal('loadingCpfModal');
-
-        // Primeira chamada para validar o formato do CPF
-        fetch(`/validar-cpf?cpf=${cpf}`)
-            .then(response => response.json())
-            .then(data => {
-                if (!data.valid) {
-                    fecharModal('loadingCpfModal');
-                    showModal('CPF inválido');
-                    $(this).val('');
-                    setTimeout(() => {
-                        $(this).focus();
-                    }, 100);
-                    return Promise.reject('CPF inválido');
-                }
-                
-                const idevento = dadosEvento.idevento;
-                return fetch(`/verifica-cpf-inscrito/${idevento}?cpf=${cpf}`);
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exists) {
-                    fecharModal('loadingCpfModal');
-                    showModal('CPF já inscrito para o evento.');
-                    $(this).val('');
-                    setTimeout(() => {
-                        $(this).focus();
-                    }, 100);
-                    return Promise.reject('CPF já inscrito');
-                }
-                
-                // Nova verificação: buscar dados existentes do CPF
-                return fetch(`/buscar-dados-cpf?cpf=${cpf}`);
-            })
-            .then(response => response.json())
-            .then(data => {
-                fecharModal('loadingCpfModal');
-                if (data.success) {
-                    // Preencher formulário com dados encontrados - SEM MODAL
-                    preencherFormularioComDados(data.dados);
-                } else {
-                    fecharModal('loadingPagamentoModal'); 
-                    alert('Erro ao salvar inscrição: ' + (data.mensagem || 'Erro desconhecido'));
-                }
-
-                // Se não encontrou dados, não faz nada (formulário continua em branco)
-            })
-            .catch(error => {
-                fecharModal('loadingCpfModal');
-                if (error !== 'CPF inválido' && error !== 'CPF já inscrito') {
-                    console.error('Erro na validação do CPF:', error);
-                }
-            });
     });
 
     // Validação de data
@@ -902,10 +842,6 @@ function salvarInscricao() {
                 localStorage.setItem('vlinscricao', vlinscricaoFinal.toString());
                 localStorage.setItem('valortotal', vltotalFinal.toString());
 
-                // localStorage.setItem('valoratual', vlinscricao.toString());
-                // localStorage.setItem('vlinscricao', vlinscricao.toString());
-                // localStorage.setItem('valortotal', valorTotal.toString());
-
                 console.log('Dados sendo enviados:', requestData);
                 
                 window.location.href = '/checkout';
@@ -951,3 +887,97 @@ window.addEventListener('beforeunload', function() {
         clearInterval(timerInterval);
     }
 });
+
+// Nova função para limpar formulário
+function limparFormulario() {
+    // Limpar campos de dados pessoais (exceto CPF)
+    document.getElementById('nome').value = '';
+    document.getElementById('sobrenome').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('dataNascimento').value = '';
+    document.getElementById('celular').value = '';
+    
+    // Desmarcar radio buttons
+    document.querySelectorAll('input[name="sexo"]').forEach(radio => radio.checked = false);
+    document.querySelectorAll('input[name="camiseta"]').forEach(radio => radio.checked = false);
+    
+    // Resetar selects para valores padrão
+    document.getElementById('estado').value = 'RO';
+    carregarCidades('RO', 7535); // Porto Velho como padrão
+    
+    // Limpar campos opcionais
+    document.getElementById('nomepeito').value = '';
+    document.getElementById('equipe').value = '';
+    document.getElementById('telEmergencia').value = '';
+    document.getElementById('contEmergencia').value = '';
+    document.getElementById('cupom').value = '';
+    
+    // Desmarcar forma de pagamento e termo
+    document.querySelectorAll('input[name="formaPagamento"]').forEach(radio => radio.checked = false);
+    document.getElementById('termoAceite').checked = false;
+    document.getElementById('btnProximo').disabled = true;
+    
+    // Ocultar container de valores e resetar widgets
+    document.getElementById('valoresContainer').style.display = 'none';
+    atualizarWidgetsValores(dadosEvento.vlinscricao, dadosEvento.vltaxa, dadosEvento.vltotal);
+}
+
+// Nova função para validar e buscar dados do CPF
+function validarEBuscarCPF(cpf) {
+    if (cpf.length !== 11) {
+        return;
+    }
+
+    // Mostrar modal de loading
+    mostrarModal('loadingCpfModal');
+
+    // Primeira chamada para validar o formato do CPF
+    fetch(`/validar-cpf?cpf=${cpf}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.valid) {
+                fecharModal('loadingCpfModal');
+                showModal('CPF inválido');
+                document.getElementById('cpf').value = '';
+                setTimeout(() => {
+                    document.getElementById('cpf').focus();
+                }, 100);
+                return Promise.reject('CPF inválido');
+            }
+            
+            const idevento = dadosEvento.idevento;
+            return fetch(`/verifica-cpf-inscrito/${idevento}?cpf=${cpf}`);
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                fecharModal('loadingCpfModal');
+                showModal('CPF já inscrito para o evento.');
+                document.getElementById('cpf').value = '';
+                setTimeout(() => {
+                    document.getElementById('cpf').focus();
+                }, 100);
+                return Promise.reject('CPF já inscrito');
+            }
+            
+            // Nova verificação: buscar dados existentes do CPF
+            return fetch(`/buscar-dados-cpf?cpf=${cpf}`);
+        })
+        .then(response => response.json())
+        .then(data => {
+            fecharModal('loadingCpfModal');
+            if (data.success && data.dados) {
+                // Preencher formulário com dados encontrados
+                preencherFormularioComDados(data.dados);
+            } else {
+                // Se não encontrou dados, limpar todos os campos exceto o CPF
+                limparFormulario();
+            }
+        })
+        .catch(error => {
+            fecharModal('loadingCpfModal');
+            if (error !== 'CPF inválido' && error !== 'CPF já inscrito') {
+                console.error('Erro na validação do CPF:', error);
+            }
+        });
+}
