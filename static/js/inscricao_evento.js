@@ -17,6 +17,7 @@ document.addEventListener('keydown', function(e) {
 let timerInterval;
 let tempoRestante = 15 * 60; // 15 minutos em segundos
 let dadosEvento = {};
+let inscricaoPendenteId = null; // NOVA VARIÁVEL
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
@@ -739,6 +740,7 @@ function salvarInscricao() {
         id_cidade: parseInt(document.getElementById('cidade').value),
         cupom: document.getElementById('cupom').value.trim().toUpperCase() || null,
         formapgto: document.querySelector('input[name="formaPagamento"]:checked').value,
+        inscricao_pendente_id: localStorage.getItem('inscricao_pendente_id') || null,
         
         // Valores baseados na idade
         vlinscricao: idade >= 60 ? dadosEvento.vlinscricao_meia : dadosEvento.vlinscricao,
@@ -922,6 +924,7 @@ function limparFormulario() {
     atualizarWidgetsValores(dadosEvento.vlinscricao, dadosEvento.vltaxa, dadosEvento.vltotal);
 }
 
+
 // Nova função para validar e buscar dados do CPF
 function validarEBuscarCPF(cpf) {
     if (cpf.length !== 11) {
@@ -960,7 +963,16 @@ function validarEBuscarCPF(cpf) {
                 return Promise.reject('CPF já inscrito');
             }
             
-            // Nova verificação: buscar dados existentes do CPF
+            // Verificar se tem registro pendente
+            if (data.has_pending) {
+                // Salvar ID da inscrição pendente para uso posterior
+                localStorage.setItem('inscricao_pendente_id', data.pending_id);
+            } else {
+                // Limpar qualquer ID pendente anterior
+                localStorage.removeItem('inscricao_pendente_id');
+            }
+            
+            // Buscar dados existentes do CPF (de qualquer evento/sistema)
             return fetch(`/buscar-dados-cpf?cpf=${cpf}`);
         })
         .then(response => response.json())
@@ -981,3 +993,64 @@ function validarEBuscarCPF(cpf) {
             }
         });
 }
+
+
+// // Nova função para validar e buscar dados do CPF
+// function validarEBuscarCPF(cpf) {
+//     if (cpf.length !== 11) {
+//         return;
+//     }
+
+//     // Mostrar modal de loading
+//     mostrarModal('loadingCpfModal');
+
+//     // Primeira chamada para validar o formato do CPF
+//     fetch(`/validar-cpf?cpf=${cpf}`)
+//         .then(response => response.json())
+//         .then(data => {
+//             if (!data.valid) {
+//                 fecharModal('loadingCpfModal');
+//                 showModal('CPF inválido');
+//                 document.getElementById('cpf').value = '';
+//                 setTimeout(() => {
+//                     document.getElementById('cpf').focus();
+//                 }, 100);
+//                 return Promise.reject('CPF inválido');
+//             }
+            
+//             const idevento = dadosEvento.idevento;
+//             return fetch(`/verifica-cpf-inscrito/${idevento}?cpf=${cpf}`);
+//         })
+//         .then(response => response.json())
+//         .then(data => {
+//             if (data.exists) {
+//                 fecharModal('loadingCpfModal');
+//                 showModal('CPF já inscrito para o evento.');
+//                 document.getElementById('cpf').value = '';
+//                 setTimeout(() => {
+//                     document.getElementById('cpf').focus();
+//                 }, 100);
+//                 return Promise.reject('CPF já inscrito');
+//             }
+            
+//             // Nova verificação: buscar dados existentes do CPF
+//             return fetch(`/buscar-dados-cpf?cpf=${cpf}`);
+//         })
+//         .then(response => response.json())
+//         .then(data => {
+//             fecharModal('loadingCpfModal');
+//             if (data.success && data.dados) {
+//                 // Preencher formulário com dados encontrados
+//                 preencherFormularioComDados(data.dados);
+//             } else {
+//                 // Se não encontrou dados, limpar todos os campos exceto o CPF
+//                 limparFormulario();
+//             }
+//         })
+//         .catch(error => {
+//             fecharModal('loadingCpfModal');
+//             if (error !== 'CPF inválido' && error !== 'CPF já inscrito') {
+//                 console.error('Erro na validação do CPF:', error);
+//             }
+//         });
+// }
