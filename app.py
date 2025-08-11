@@ -565,18 +565,23 @@ def checkout():
                          valor_total=valor_total,
                          mp_public_key=mp_public_key)
 
+
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
+    payment_id = None
+    cpf = None
+    
     try:
-        app.logger.info("Dados recebidos:")
+        app.logger.info("=== INÍCIO DO PROCESSAMENTO DE PAGAMENTO ===")
         payment_data = request.json
-        # Log sensitive data securely
+        
+        # Log dados recebidos (sem informações sensíveis)
         safe_data = {**payment_data}
         if 'token' in safe_data:
             safe_data['token'] = '***HIDDEN***'
         if 'payer' in safe_data and 'identification' in safe_data['payer']:
             safe_data['payer']['identification']['number'] = '***HIDDEN***'
-        app.logger.info(safe_data)
+        app.logger.info(f"Dados recebidos: {safe_data}")
         
         # Extract data with proper error handling
         try:
@@ -588,15 +593,19 @@ def process_payment():
             valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
             valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
             
+            # Store CPF for logging
+            cpf = payment_data.get('CPF')
+            
+            app.logger.info(f"Valores processados - CPF: {cpf}, Valor Total: R$ {valor_total}, Valor Atual: R$ {valor_atual}, Valor Taxa: R$ {valor_taxa}, Parcelas: {installments}")
+            
             # Ensure transaction_amount matches valor_total
             if abs(transaction_amount - valor_total) > 0.01:
-                app.logger.warning(f"Discrepância entre transaction_amount ({transaction_amount}) e valor_total ({valor_total})")
+                app.logger.warning(f"DISCREPÂNCIA DE VALORES - CPF: {cpf}, transaction_amount: R$ {transaction_amount}, valor_total: R$ {valor_total}")
                 # Use valor_total as the source of truth
                 transaction_amount = valor_total
                 
-            # Store other data safely
-            vCPF = payment_data.get('CPF')
         except (ValueError, TypeError) as e:
+            app.logger.error(f"ERRO AO PROCESSAR VALORES - CPF: {cpf}, Erro: {str(e)}")
             raise ValueError(f"Erro ao processar valores numéricos: {str(e)}")
 
         # Store session data
@@ -607,7 +616,7 @@ def process_payment():
         session['valorAtual'] = valor_atual
         session['valorTaxa'] = valor_taxa
         session['formaPagto'] = 'CARTÃO DE CRÉDITO'
-        session['CPF'] = vCPF
+        session['CPF'] = cpf
 
         # Validar dados recebidos
         required_fields = [
@@ -620,20 +629,27 @@ def process_payment():
         
         for field in required_fields:
             if field not in payment_data:
+                app.logger.error(f"CAMPO OBRIGATÓRIO AUSENTE - CPF: {cpf}, Campo: {field}")
                 raise ValueError(f"Campo obrigatório ausente: {field}")
         
         # Validate payer data
         if not payment_data['payer'].get('email'):
+            app.logger.error(f"EMAIL AUSENTE - CPF: {cpf}")
             raise ValueError("Email do pagador é obrigatório")
         
         if 'identification' not in payment_data['payer']:
+            app.logger.error(f"IDENTIFICAÇÃO AUSENTE - CPF: {cpf}")
             raise ValueError("Identificação do pagador é obrigatória")
         
         if not payment_data['payer']['identification'].get('type') or not payment_data['payer']['identification'].get('number'):
+            app.logger.error(f"DOCUMENTO INVÁLIDO - CPF: {cpf}")
             raise ValueError("Tipo e número de documento são obrigatórios")
+
+        app.logger.info(f"VALIDAÇÃO CONCLUÍDA - CPF: {cpf}, Email: {payment_data['payer']['email']}, Método: {payment_data['payment_method_id']}")
 
         # Gerar referência externa única
         external_reference = str(uuid.uuid4())
+        app.logger.info(f"REFERÊNCIA EXTERNA GERADA - CPF: {cpf}, Ref: {external_reference}")
         
         # Criar preferência de pagamento
         item_details = {
@@ -656,14 +672,18 @@ def process_payment():
         
         # Criar preferência
         try:
+            app.logger.info(f"CRIANDO PREFERÊNCIA - CPF: {cpf}")
             preference_response = sdk.preference().create(preference_data)
             
             if "response" not in preference_response:
                 error_message = preference_response.get("message", "Erro desconhecido na criação da preferência")
-                app.logger.error(f"Erro na preferência: {error_message}")
+                app.logger.error(f"ERRO NA PREFERÊNCIA - CPF: {cpf}, Erro: {error_message}")
                 raise ValueError(f"Erro ao criar preferência de pagamento: {error_message}")
+                
+            app.logger.info(f"PREFERÊNCIA CRIADA COM SUCESSO - CPF: {cpf}")
+            
         except Exception as e:
-            app.logger.error(f"Exceção ao criar preferência: {str(e)}")
+            app.logger.error(f"EXCEÇÃO NA PREFERÊNCIA - CPF: {cpf}, Erro: {str(e)}")
             raise ValueError(f"Erro ao criar preferência de pagamento: {str(e)}")
 
         payment_info = {
@@ -706,15 +726,16 @@ def process_payment():
         safe_payment_info = {**payment_info}
         safe_payment_info['token'] = '***HIDDEN***'
         safe_payment_info['payer']['identification']['number'] = '***HIDDEN***'
-        app.logger.info("Dados do pagamento:")
-        app.logger.info(safe_payment_info)
+        app.logger.info(f"ENVIANDO PAGAMENTO PARA MERCADOPAGO - CPF: {cpf}")
+        app.logger.debug(f"Dados do pagamento: {safe_payment_info}")
 
         # Processar pagamento
         try:
+            app.logger.info(f"PROCESSANDO PAGAMENTO - CPF: {cpf}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
             payment_response = sdk.payment().create(payment_info)
             
-            app.logger.info("Resposta do pagamento:")
-            app.logger.info(payment_response)
+            app.logger.info(f"RESPOSTA RECEBIDA DO MERCADOPAGO - CPF: {cpf}")
+            app.logger.debug(f"Resposta completa: {payment_response}")
             
             if "response" not in payment_response:
                 error_details = payment_response.get("cause", [{}])
@@ -722,36 +743,257 @@ def process_payment():
                 
                 if isinstance(error_details, list) and len(error_details) > 0:
                     error_message = error_details[0].get("description", "Erro desconhecido")
+                    error_code = error_details[0].get("code", "unknown")
+                    app.logger.error(f"ERRO NO PAGAMENTO - CPF: {cpf}, Código: {error_code}, Mensagem: {error_message}")
+                else:
+                    app.logger.error(f"ERRO NO PAGAMENTO - CPF: {cpf}, Detalhes: {error_details}")
                 
                 return jsonify({
                     "error": "Erro ao processar pagamento",
                     "details": error_message
                 }), 400
                 
-            payment_data = payment_response["response"]
-
-            # Comentado para testes, mas precisa de um retorno
-            # if payment_data.get("status") == "approved":
-            #     ...
-            # else:
-            #     ...
+            payment_result = payment_response["response"]
+            payment_id = payment_result.get("id")
+            status = payment_result.get("status")
+            status_detail = payment_result.get("status_detail")
             
-            # Adicione este retorno para substituir o bloco comentado
-            return jsonify(payment_data), 200        
+            # Log detalhado do resultado do pagamento
+            if status == "approved":
+                app.logger.info(f"🎉 PAGAMENTO APROVADO - CPF: {cpf}, ID: {payment_id}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
+                
+            elif status == "pending":
+                app.logger.warning(f"⏳ PAGAMENTO PENDENTE - CPF: {cpf}, ID: {payment_id}, Status Detail: {status_detail}, Valor: R$ {transaction_amount}")
+                
+            elif status == "rejected":
+                app.logger.error(f"❌ PAGAMENTO RECUSADO - CPF: {cpf}, ID: {payment_id}, Motivo: {status_detail}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
+                
+                # Log adicional para recusas com mais detalhes
+                if payment_result.get("failure_reason"):
+                    app.logger.error(f"MOTIVO DA RECUSA - CPF: {cpf}, ID: {payment_id}, Failure Reason: {payment_result.get('failure_reason')}")
+                
+                if payment_result.get("gateway_rejection_reason"):
+                    app.logger.error(f"REJEIÇÃO DO GATEWAY - CPF: {cpf}, ID: {payment_id}, Gateway Reason: {payment_result.get('gateway_rejection_reason')}")
+                    
+            else:
+                app.logger.warning(f"❓ STATUS DESCONHECIDO - CPF: {cpf}, ID: {payment_id}, Status: {status}, Status Detail: {status_detail}")
+
+            # Log informações adicionais importantes
+            if payment_result.get("fee_details"):
+                total_fees = sum([fee.get("amount", 0) for fee in payment_result["fee_details"]])
+                app.logger.info(f"TAXAS APLICADAS - CPF: {cpf}, ID: {payment_id}, Total em Taxas: R$ {total_fees}")
+                
+            if payment_result.get("installments", 0) > 1:
+                app.logger.info(f"PARCELAMENTO - CPF: {cpf}, ID: {payment_id}, Parcelas: {payment_result.get('installments')}")
+
+            app.logger.info(f"=== PROCESSAMENTO CONCLUÍDO - CPF: {cpf}, ID: {payment_id}, Status: {status} ===")
+            
+            return jsonify(payment_result), 200        
             
         except Exception as e:
-            app.logger.error(f"Exceção ao processar pagamento: {str(e)}")
+            app.logger.error(f"🔥 EXCEÇÃO NO PAGAMENTO - CPF: {cpf}, Erro: {str(e)}, Tipo: {type(e).__name__}")
+            app.logger.exception("Stack trace completo:")
             return jsonify({
                 "error": "Erro ao processar pagamento",
                 "details": str(e)
             }), 400
         
     except ValueError as e:
-        app.logger.error(f"Erro de validação: {str(e)}")
+        app.logger.error(f"ERRO DE VALIDAÇÃO - CPF: {cpf}, Erro: {str(e)}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        app.logger.error(f"Erro no processamento: {str(e)}")
+        app.logger.error(f"🔥 ERRO GERAL NO PROCESSAMENTO - CPF: {cpf}, Payment ID: {payment_id}, Erro: {str(e)}")
+        app.logger.exception("Stack trace completo:")
         return jsonify({"error": str(e)}), 400
+
+
+# @app.route('/process_payment', methods=['POST'])
+# def process_payment():
+#     try:
+#         app.logger.info("Dados recebidos:")
+#         payment_data = request.json
+#         # Log sensitive data securely
+#         safe_data = {**payment_data}
+#         if 'token' in safe_data:
+#             safe_data['token'] = '***HIDDEN***'
+#         if 'payer' in safe_data and 'identification' in safe_data['payer']:
+#             safe_data['payer']['identification']['number'] = '***HIDDEN***'
+#         app.logger.info(safe_data)
+        
+#         # Extract data with proper error handling
+#         try:
+#             installments = int(payment_data.get('installments', 1))
+#             transaction_amount = float(payment_data.get('transaction_amount', 0))
+            
+#             # Round to 2 decimal places to avoid floating point precision issues
+#             valor_total = round(float(payment_data.get('valor_total', 0)), 2)
+#             valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
+#             valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
+            
+#             # Ensure transaction_amount matches valor_total
+#             if abs(transaction_amount - valor_total) > 0.01:
+#                 app.logger.warning(f"Discrepância entre transaction_amount ({transaction_amount}) e valor_total ({valor_total})")
+#                 # Use valor_total as the source of truth
+#                 transaction_amount = valor_total
+                
+#             # Store other data safely
+#             vCPF = payment_data.get('CPF')
+#         except (ValueError, TypeError) as e:
+#             raise ValueError(f"Erro ao processar valores numéricos: {str(e)}")
+
+#         # Store session data
+#         session['valorTotal'] = transaction_amount
+#         session['numeroParcelas'] = installments
+#         session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
+#         session['valorTotalsemJuros'] = valor_total
+#         session['valorAtual'] = valor_atual
+#         session['valorTaxa'] = valor_taxa
+#         session['formaPagto'] = 'CARTÃO DE CRÉDITO'
+#         session['CPF'] = vCPF
+
+#         # Validar dados recebidos
+#         required_fields = [
+#             'token', 
+#             'transaction_amount', 
+#             'installments', 
+#             'payment_method_id',
+#             'payer'
+#         ]
+        
+#         for field in required_fields:
+#             if field not in payment_data:
+#                 raise ValueError(f"Campo obrigatório ausente: {field}")
+        
+#         # Validate payer data
+#         if not payment_data['payer'].get('email'):
+#             raise ValueError("Email do pagador é obrigatório")
+        
+#         if 'identification' not in payment_data['payer']:
+#             raise ValueError("Identificação do pagador é obrigatória")
+        
+#         if not payment_data['payer']['identification'].get('type') or not payment_data['payer']['identification'].get('number'):
+#             raise ValueError("Tipo e número de documento são obrigatórios")
+
+#         # Gerar referência externa única
+#         external_reference = str(uuid.uuid4())
+        
+#         # Criar preferência de pagamento
+#         item_details = {
+#             "id": "ECM RUN TICKETS",
+#             "title": "Inscrição de Evento",
+#             "description": "Inscrição de Corrida",
+#             "category_id": "SPORTS_EVENT",
+#             "quantity": 1,
+#             "currency_id": "BRL",
+#             "unit_price": valor_atual,
+#             "total_amount": transaction_amount
+#         }
+        
+#         # Preparar preferência de pagamento
+#         preference_data = {
+#             "items": [item_details],
+#             "notification_url": "https://ecmrun.com.br/webhook",
+#             "external_reference": external_reference
+#         }
+        
+#         # Criar preferência
+#         try:
+#             preference_response = sdk.preference().create(preference_data)
+            
+#             if "response" not in preference_response:
+#                 error_message = preference_response.get("message", "Erro desconhecido na criação da preferência")
+#                 app.logger.error(f"Erro na preferência: {error_message}")
+#                 raise ValueError(f"Erro ao criar preferência de pagamento: {error_message}")
+#         except Exception as e:
+#             app.logger.error(f"Exceção ao criar preferência: {str(e)}")
+#             raise ValueError(f"Erro ao criar preferência de pagamento: {str(e)}")
+
+#         payment_info = {
+#             "transaction_amount": transaction_amount,
+#             "token": payment_data['token'],
+#             "description": "Inscrição Corrida",
+#             "statement_descriptor": "ECMRUN TICKETS",
+#             "installments": installments,
+#             "payment_method_id": payment_data['payment_method_id'],
+#             "external_reference": external_reference,
+#             "notification_url": "https://ecmrun.com.br/webhook",
+#             "payer": {
+#                 "email": payment_data['payer']['email'],
+#                 "identification": {
+#                     "type": payment_data['payer']['identification']['type'],
+#                     "number": payment_data['payer']['identification']['number']
+#                 },
+#                 "first_name": payment_data['payer']['first_name'],
+#                 "last_name": payment_data['payer']['last_name']
+#             },
+#             "additional_info": {
+#                 "items": [{
+#                     "id": "ECM RUN TICKETS",
+#                     "title": "Inscrição de Evento",
+#                     "description": "Inscrição de corrida",
+#                     "category_id": "SPORTS_EVENT",
+#                     "quantity": 1,
+#                     "unit_price": valor_atual
+#                 }],
+#                 "payer": {
+#                     "first_name": payment_data['payer']['first_name'],
+#                     "last_name": payment_data['payer']['last_name'],
+#                     "registration_date": datetime.now().isoformat()
+#                 },
+#                 "ip_address": request.remote_addr
+#             }
+#         }
+
+#         # Log payment info (exclude sensitive data)
+#         safe_payment_info = {**payment_info}
+#         safe_payment_info['token'] = '***HIDDEN***'
+#         safe_payment_info['payer']['identification']['number'] = '***HIDDEN***'
+#         app.logger.info("Dados do pagamento:")
+#         app.logger.info(safe_payment_info)
+
+#         # Processar pagamento
+#         try:
+#             payment_response = sdk.payment().create(payment_info)
+            
+#             app.logger.info("Resposta do pagamento:")
+#             app.logger.info(payment_response)
+            
+#             if "response" not in payment_response:
+#                 error_details = payment_response.get("cause", [{}])
+#                 error_message = "Erro desconhecido"
+                
+#                 if isinstance(error_details, list) and len(error_details) > 0:
+#                     error_message = error_details[0].get("description", "Erro desconhecido")
+                
+#                 return jsonify({
+#                     "error": "Erro ao processar pagamento",
+#                     "details": error_message
+#                 }), 400
+                
+#             payment_data = payment_response["response"]
+
+#             # Comentado para testes, mas precisa de um retorno
+#             # if payment_data.get("status") == "approved":
+#             #     ...
+#             # else:
+#             #     ...
+            
+#             # Adicione este retorno para substituir o bloco comentado
+#             return jsonify(payment_data), 200        
+            
+#         except Exception as e:
+#             app.logger.error(f"Exceção ao processar pagamento: {str(e)}")
+#             return jsonify({
+#                 "error": "Erro ao processar pagamento",
+#                 "details": str(e)
+#             }), 400
+        
+#     except ValueError as e:
+#         app.logger.error(f"Erro de validação: {str(e)}")
+#         return jsonify({"error": str(e)}), 400
+#     except Exception as e:
+#         app.logger.error(f"Erro no processamento: {str(e)}")
+#         return jsonify({"error": str(e)}), 400
 
 
 def send_organizer_notification(receipt_data):
