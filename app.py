@@ -95,7 +95,7 @@ def obter_eventos_ativos():
                        SUBSTR(FIM_INSCRICAO,1,10)) AS PERIODO_INSCRICAO,
                 ROTA
             FROM EVENTO
-            WHERE ATIVO = 'S'
+            WHERE ATIVO = 'S' AND IDORGANIZADOR = 2
             ORDER BY DTINICIO
         """)
         
@@ -7313,3 +7313,4 @@ def lista_eventos_direto():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
