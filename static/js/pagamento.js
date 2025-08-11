@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check if all required localStorage data is present
         const requiredFields = [
             'user_name', 'user_email', 'user_cpf',
-            'categoria', 'valoratual', 'valortaxa', 'valortotal'
+            'valoratual', 'valortaxa', 'valortotal'
         ];
 
         const missingFields = [];
@@ -851,3 +851,4 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
 });
+
