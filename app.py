@@ -141,7 +141,8 @@ def index():
 #     sexo_filter = request.args.get('sexo', '')
 #     tipo_corrida_filter = request.args.get('tipo_corrida', '')
     
-#     # Iniciar a consulta base
+
+#     # Inici   r a consulta base
 #     query = """
 #         SELECT idatleta, concat(lpad(cast(nrpeito as char(3)),3,0),' - ', nome) as atleta, 
 #         sexo, tipo_corrida, 
@@ -6176,11 +6177,20 @@ def evento_salvar_inscricao():
         
         cursor = mysql.connection.cursor()
         
-        # Verificar se CPF já está inscrito neste evento
+        # Verificar se existe inscrição pendente para reaproveitamento
         cursor.execute("""
             SELECT IDINSCRICAO 
             FROM EVENTO_INSCRICAO 
-            WHERE CPF = %s AND IDEVENTO = %s
+            WHERE CPF = %s AND IDEVENTO = %s AND STATUS = 'P'
+        """, (dados['cpf'], dados.get('idevento', 1)))
+        
+        inscricao_pendente = cursor.fetchone()
+        
+        # Verificar se CPF já está aprovado neste evento
+        cursor.execute("""
+            SELECT IDINSCRICAO 
+            FROM EVENTO_INSCRICAO 
+            WHERE CPF = %s AND IDEVENTO = %s AND STATUS = 'A'
         """, (dados['cpf'], dados.get('idevento', 1)))
         
         if cursor.fetchone():
@@ -6194,66 +6204,100 @@ def evento_salvar_inscricao():
         data_nasc_str = dados['dtnascimento']  # dd/mm/yyyy
         dia, mes, ano = data_nasc_str.split('/')
         data_nasc_mysql = f"{ano}-{mes}-{dia}"  # yyyy-mm-dd
-        
-        # # Gerar número de peito (pode implementar lógica específica)
-        # cursor.execute("""
-        #     SELECT COALESCE(MAX(NUPEITO), 0) + 1 as proximo_peito
-        #     FROM EVENTO_INSCRICAO 
-        #     WHERE STATUS = 'A' AND IDEVENTO = %s
-        # """, (dados.get('idevento', 1),))
-        
-        # resultado = cursor.fetchone()
-        # numero_peito = resultado[0] if resultado else 1
-        
+                
         data_e_hora_atual = datetime.now()
         fuso_horario = timezone('America/Manaus')
         data_inscricao = data_e_hora_atual.astimezone(fuso_horario)
         
-        # Inserir inscrição
-        sql_insert = """
-            INSERT INTO EVENTO_INSCRICAO (
-                IDEVENTO, IDITEMEVENTO, EMAIL, CPF, NOME, SOBRENOME, 
-                DTNASCIMENTO, IDADE, CELULAR, SEXO, EQUIPE, CAMISETA,
-                TEL_EMERGENCIA, CONT_EMERGENCIA, ESTADO, ID_CIDADE, 
-                DATANASC, DTINSCRICAO, VLINSCRICAO, VLTAXA, VLTOTAL,
-                FORMAPGTO, CUPOM, STATUS, FLEMAIL, NOME_PEITO
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        if inscricao_pendente:
+            # UPDATE da inscrição existente
+            sql_update = """
+                UPDATE EVENTO_INSCRICAO SET 
+                    IDITEMEVENTO = %s, EMAIL = %s, NOME = %s, SOBRENOME = %s, 
+                    DTNASCIMENTO = %s, IDADE = %s, CELULAR = %s, SEXO = %s, 
+                    EQUIPE = %s, CAMISETA = %s, TEL_EMERGENCIA = %s, 
+                    CONT_EMERGENCIA = %s, ESTADO = %s, ID_CIDADE = %s, 
+                    DATANASC = %s, DTINSCRICAO = %s, VLINSCRICAO = %s, 
+                    VLTAXA = %s, VLTOTAL = %s, FORMAPGTO = %s, CUPOM = %s, 
+                    NOME_PEITO = %s
+                WHERE IDINSCRICAO = %s
+            """
+            
+            valores = (
+                dados['iditemevento'],
+                dados['email'],
+                dados['nome'],
+                dados['sobrenome'],
+                dados['dtnascimento'],
+                dados['idade'],
+                dados['celular'],
+                dados['sexo'],
+                dados.get('equipe'),
+                dados['camiseta'],
+                dados.get('tel_emergencia'),
+                dados.get('cont_emergencia'),
+                dados['estado'],
+                dados['id_cidade'],
+                data_nasc_mysql,
+                data_inscricao,
+                dados['vlinscricao'],
+                dados['vltaxa'],
+                dados['vltotal'],
+                dados['formapgto'],
+                dados.get('cupom'),
+                dados['nomepeito'],
+                inscricao_pendente[0]
             )
-        """
-        
-        valores = (
-            dados.get('idevento', 1),
-            dados['iditemevento'],
-            dados['email'],
-            dados['cpf'],
-            dados['nome'],
-            dados['sobrenome'],
-            dados['dtnascimento'],
-            dados['idade'],
-            dados['celular'],
-            dados['sexo'],
-            dados.get('equipe'),
-            dados['camiseta'],
-            dados.get('tel_emergencia'),
-            dados.get('cont_emergencia'),
-            dados['estado'],
-            dados['id_cidade'],
-            data_nasc_mysql,
-            data_inscricao,
-            dados['vlinscricao'],
-            dados['vltaxa'],
-            dados['vltotal'],
-            dados['formapgto'],
-            dados.get('cupom'),
-            dados.get('status', 'P'),
-            'N',
-            dados['nomepeito']
-        )
-        
-        cursor.execute(sql_insert, valores)
-        inscricao_id = cursor.lastrowid
+            
+            cursor.execute(sql_update, valores)
+            inscricao_id = inscricao_pendente[0]
+            
+        else:
+            # INSERT nova inscrição
+            sql_insert = """
+                INSERT INTO EVENTO_INSCRICAO (
+                    IDEVENTO, IDITEMEVENTO, EMAIL, CPF, NOME, SOBRENOME, 
+                    DTNASCIMENTO, IDADE, CELULAR, SEXO, EQUIPE, CAMISETA,
+                    TEL_EMERGENCIA, CONT_EMERGENCIA, ESTADO, ID_CIDADE, 
+                    DATANASC, DTINSCRICAO, VLINSCRICAO, VLTAXA, VLTOTAL,
+                    FORMAPGTO, CUPOM, STATUS, FLEMAIL, NOME_PEITO
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+            """
+            
+            valores = (
+                dados.get('idevento', 1),
+                dados['iditemevento'],
+                dados['email'],
+                dados['cpf'],
+                dados['nome'],
+                dados['sobrenome'],
+                dados['dtnascimento'],
+                dados['idade'],
+                dados['celular'],
+                dados['sexo'],
+                dados.get('equipe'),
+                dados['camiseta'],
+                dados.get('tel_emergencia'),
+                dados.get('cont_emergencia'),
+                dados['estado'],
+                dados['id_cidade'],
+                data_nasc_mysql,
+                data_inscricao,
+                dados['vlinscricao'],
+                dados['vltaxa'],
+                dados['vltotal'],
+                dados['formapgto'],
+                dados.get('cupom'),
+                dados.get('status', 'P'),
+                'N',
+                dados['nomepeito']
+            )
+            
+            cursor.execute(sql_insert, valores)
+            inscricao_id = cursor.lastrowid
         
         mysql.connection.commit()
         cursor.close()
@@ -6261,7 +6305,8 @@ def evento_salvar_inscricao():
         return jsonify({
             'success': True,
             'inscricao_id': inscricao_id,
-            'mensagem': 'Inscrição salva com sucesso'
+            'mensagem': 'Inscrição salva com sucesso',
+            'is_update': bool(inscricao_pendente)
         })
         
     except Exception as e:
@@ -6270,6 +6315,119 @@ def evento_salvar_inscricao():
             'success': False,
             'mensagem': 'Erro interno do servidor'
         }), 500
+
+
+# @app.route('/evento_salvar_inscricao', methods=['POST'])
+# def evento_salvar_inscricao():
+#     try:
+#         dados = request.get_json()
+        
+#         # Validações básicas
+#         if not dados:
+#             return jsonify({
+#                 'success': False,
+#                 'mensagem': 'Dados não fornecidos'
+#             }), 400
+        
+#         # Campos obrigatórios
+#         campos_obrigatorios = [
+#             'email', 'cpf', 'nome', 'sobrenome', 'dtnascimento', 
+#             'idade', 'celular', 'sexo', 'camiseta', 'id_cidade', 'formapgto'
+#         ]
+        
+#         for campo in campos_obrigatorios:
+#             if not dados.get(campo):
+#                 return jsonify({
+#                     'success': False,
+#                     'mensagem': f'Campo {campo} é obrigatório'
+#                 }), 400
+        
+#         cursor = mysql.connection.cursor()
+        
+#         # Verificar se CPF já está inscrito neste evento
+#         cursor.execute("""
+#             SELECT IDINSCRICAO 
+#             FROM EVENTO_INSCRICAO 
+#             WHERE CPF = %s AND IDEVENTO = %s
+#         """, (dados['cpf'], dados.get('idevento', 1)))
+        
+#         if cursor.fetchone():
+#             cursor.close()
+#             return jsonify({
+#                 'success': False,
+#                 'mensagem': 'CPF já inscrito neste evento'
+#             }), 400
+        
+#         # Converter data de nascimento para formato MySQL
+#         data_nasc_str = dados['dtnascimento']  # dd/mm/yyyy
+#         dia, mes, ano = data_nasc_str.split('/')
+#         data_nasc_mysql = f"{ano}-{mes}-{dia}"  # yyyy-mm-dd
+                
+#         data_e_hora_atual = datetime.now()
+#         fuso_horario = timezone('America/Manaus')
+#         data_inscricao = data_e_hora_atual.astimezone(fuso_horario)
+        
+#         # Inserir inscrição
+#         sql_insert = """
+#             INSERT INTO EVENTO_INSCRICAO (
+#                 IDEVENTO, IDITEMEVENTO, EMAIL, CPF, NOME, SOBRENOME, 
+#                 DTNASCIMENTO, IDADE, CELULAR, SEXO, EQUIPE, CAMISETA,
+#                 TEL_EMERGENCIA, CONT_EMERGENCIA, ESTADO, ID_CIDADE, 
+#                 DATANASC, DTINSCRICAO, VLINSCRICAO, VLTAXA, VLTOTAL,
+#                 FORMAPGTO, CUPOM, STATUS, FLEMAIL, NOME_PEITO
+#             ) VALUES (
+#                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+#                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+#             )
+#         """
+        
+#         valores = (
+#             dados.get('idevento', 1),
+#             dados['iditemevento'],
+#             dados['email'],
+#             dados['cpf'],
+#             dados['nome'],
+#             dados['sobrenome'],
+#             dados['dtnascimento'],
+#             dados['idade'],
+#             dados['celular'],
+#             dados['sexo'],
+#             dados.get('equipe'),
+#             dados['camiseta'],
+#             dados.get('tel_emergencia'),
+#             dados.get('cont_emergencia'),
+#             dados['estado'],
+#             dados['id_cidade'],
+#             data_nasc_mysql,
+#             data_inscricao,
+#             dados['vlinscricao'],
+#             dados['vltaxa'],
+#             dados['vltotal'],
+#             dados['formapgto'],
+#             dados.get('cupom'),
+#             dados.get('status', 'P'),
+#             'N',
+#             dados['nomepeito']
+#         )
+        
+#         cursor.execute(sql_insert, valores)
+#         inscricao_id = cursor.lastrowid
+        
+#         mysql.connection.commit()
+#         cursor.close()
+        
+#         return jsonify({
+#             'success': True,
+#             'inscricao_id': inscricao_id,
+#             'mensagem': 'Inscrição salva com sucesso'
+#         })
+        
+#     except Exception as e:
+#         app.logger.error(f"Erro ao salvar inscrição: {e}")
+#         return jsonify({
+#             'success': False,
+#             'mensagem': 'Erro interno do servidor'
+#         }), 500
 
 @app.route('/gerar-token-inscricao/<int:idevento>')
 def gerar_token_inscricao(idevento):
@@ -6331,7 +6489,6 @@ def inscricao_evento(idevento):
     return render_template('inscricao_evento.html', evento=evento)
 
 
-
 @app.route('/api/lote-inscricao/<int:iditem>')
 def api_lote_inscricao(iditem):
     """API para retornar dados do lote para inscrição"""
@@ -6391,25 +6548,59 @@ def verificar_cpf_inscrito(idevento):
     
     try:
         cur = mysql.connection.cursor()
-        cur.execute("""
-            DELETE FROM EVENTO_INSCRICAO WHERE STATUS = 'P' AND CPF = %s AND IDEVENTO = %s
-        """, (cpf, idevento))
-
-        mysql.connection.commit()
-        cur.close()
-
-
-        cur = mysql.connection.cursor()
+        
+        # Verificar se existe inscrição aprovada (STATUS = 'A')
         cur.execute("""
             SELECT 1 FROM EVENTO_INSCRICAO WHERE STATUS = 'A' AND CPF = %s AND IDEVENTO = %s
         """, (cpf, idevento))
-
-        result = cur.fetchone()
+        
+        result_aprovado = cur.fetchone()
+        
+        # Verificar se existe inscrição pendente (STATUS = 'P')
+        cur.execute("""
+            SELECT IDINSCRICAO FROM EVENTO_INSCRICAO WHERE STATUS = 'P' AND CPF = %s AND IDEVENTO = %s
+        """, (cpf, idevento))
+        
+        result_pendente = cur.fetchone()
         cur.close()
         
-        return jsonify({'exists': bool(result)})
+        return jsonify({
+            'exists': bool(result_aprovado),
+            'has_pending': bool(result_pendente),
+            'pending_id': result_pendente[0] if result_pendente else None
+        })
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# @app.route('/verifica-cpf-inscrito/<int:idevento>', methods=['GET'])
+# def verificar_cpf_inscrito(idevento):
+#     cpf = request.args.get('cpf', '')
+#     # Remove caracteres não numéricos
+#     cpf = ''.join(filter(str.isdigit, cpf))
+    
+#     try:
+#         cur = mysql.connection.cursor()
+#         cur.execute("""
+#             DELETE FROM EVENTO_INSCRICAO WHERE STATUS = 'P' AND CPF = %s AND IDEVENTO = %s
+#         """, (cpf, idevento))
+
+#         mysql.connection.commit()
+#         cur.close()
+
+
+#         cur = mysql.connection.cursor()
+#         cur.execute("""
+#             SELECT 1 FROM EVENTO_INSCRICAO WHERE STATUS = 'A' AND CPF = %s AND IDEVENTO = %s
+#         """, (cpf, idevento))
+
+#         result = cur.fetchone()
+#         cur.close()
+        
+#         return jsonify({'exists': bool(result)})
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/buscar-dados-cpf', methods=['GET'])
