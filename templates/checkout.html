@@ -57,14 +57,16 @@
         <div class="form-group">
             <label>Número do Cartão</label>
             <div class="card-input-container">
-                <input 
+                <input type="tel" id="card-number" name="card_number" class="form-control" 
+                       placeholder="0000 0000 0000 0000" required inputmode="numeric" pattern="[0-9\s]*">                
+                <!-- <input 
                     type="text" 
                     id="card-number" 
                     placeholder="Número do cartão" 
                     maxlength="19" 
                     pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
                     required
-                >
+                > -->
                 <img id="card-brand-icon" src="" alt="Card brand" class="card-brand-icon">
             </div>
         </div>
@@ -72,26 +74,30 @@
         <div class="card-fields-row">
             <div class="form-col expiry-field">
                 <label>Data de Validade</label>
-                <input 
+                <input type="tel" id="expiration-date" name="expiry_date" class="form-control" 
+                       placeholder="MM/AA" required maxlength="5" inputmode="numeric" pattern="[0-9/]*">
+                <!-- <input 
                     type="text" 
                     id="expiration-date" 
                     placeholder="MM/AA" 
                     maxlength="5" 
                     pattern="\d{2}/\d{2}"
                     required
-                >
+                > -->
             </div>
         
             <div class="form-col cvv-field">
                 <label>CVV</label>
-                <input 
+                <input type="tel" id="security-code" name="security_code" class="form-control" 
+                       placeholder="123" required maxlength="4" inputmode="numeric" pattern="[0-9]*">
+                <!-- <input 
                     type="text" 
                     id="security-code" 
                     placeholder="CVV" 
                     maxlength="4"
                     pattern="\d{3,4}"
                     required
-                >
+                > -->
             </div>
         </div>
 
@@ -106,7 +112,9 @@
         
             <div class="form-col doc-number">
                 <label>Número do Documento</label>
-                <input type="text" name="doc_number" id="doc_number" placeholder="Somente números" required>
+                <input type="tel" id="doc_number" name="doc_number" class="form-control" 
+                       placeholder="000.000.000-00" required inputmode="numeric">                
+                <!-- <input type="text" name="doc_number" id="doc_number" placeholder="Somente números" required> -->
             </div>
         </div>
 
@@ -149,6 +157,7 @@
     <script src="/static/js/checkout2.js"></script>
 </body>
 </html>
+
 
 
 
