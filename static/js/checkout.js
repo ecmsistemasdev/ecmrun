@@ -136,6 +136,28 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
 
+    // Função para permitir apenas números em campos específicos
+    function allowOnlyNumbers(input) {
+        input.addEventListener('input', function(e) {
+            // Remove todos os caracteres que não são dígitos
+            let value = e.target.value.replace(/\D/g, '');
+            e.target.value = value;
+        });
+    }
+    
+    // Função para CVV (permitir apenas números)
+    function setupCVVValidation() {
+        const cvvInput = document.getElementById('security-code');
+        cvvInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            // Limitar a 4 dígitos (American Express) ou 3 dígitos (outros)
+            if (value.length > 4) {
+                value = value.slice(0, 4);
+            }
+            e.target.value = value;
+        });
+    }
+    
     // Máscaras para documentos
     function formatCPF(value) {
         value = value.slice(0, 11);
@@ -655,4 +677,8 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.disabled = false;
         }
     });
+
+    setupCVVValidation();
+    
 });
+
