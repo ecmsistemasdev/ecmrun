@@ -600,6 +600,24 @@ def checkout():
                          valor_total=valor_total,
                          mp_public_key=mp_public_key)
 
+@app.route("/checkout3")
+@add_csp_header
+def checkout3():
+
+    # Get values from session
+    vlinscricao = session.get('valoratual', 0)
+    vltaxa = session.get('valortaxa', 0)
+    valor_total = float(vlinscricao) + float(vltaxa)
+    
+    # Obter a chave pública do Mercado Pago das variáveis de ambiente
+    mp_public_key = os.environ.get('MP_PUBLIC_KEY')
+    
+    return render_template('checkout3.html', 
+                         valor_inscricao=vlinscricao,
+                         valor_taxa=vltaxa,
+                         valor_total=valor_total,
+                         mp_public_key=mp_public_key)
+
 
 # @app.route('/process_payment', methods=['POST'])
 # def process_payment():
@@ -7551,6 +7569,7 @@ def pagina_teste():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
