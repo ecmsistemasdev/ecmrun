@@ -158,6 +158,11 @@ form {
     box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
+/* Adicionar após as regras existentes dos inputs */
+#card_holder_name {
+    text-transform: uppercase;
+}
+
 button {
     width: 100%;
     padding: 12px;
@@ -407,4 +412,5 @@ input:disabled {
     .selo-texto-container p {
         font-size: 12px;
     }
+
 }
