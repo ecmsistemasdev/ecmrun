@@ -538,15 +538,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Criando token do cartão...');
 
+            const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
+            const docType = document.querySelector('[name="doc_type"]').value;
+
             // Get data from storage
             const userData = {
-                CPF: localStorage.getItem('user_cpf'),
+                CPF: docNumber, // ✅ Agora funciona!
                 valor_atual: vlinscricao,
                 valor_taxa: vltaxa,
                 valor_total: totalValue,
-                device_id: deviceId
+                device_id: deviceId,
+                // Adicionar dados do inscrito separadamente
+                inscrito_cpf: localStorage.getItem('user_cpf'),
+                inscrito_name: localStorage.getItem('user_name'),
+                inscrito_email: localStorage.getItem('user_email')
             };
-            
+                        
             console.log('userData: ', userData);
 
             // Create card token
@@ -570,10 +577,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Não foi possível gerar o token do cartão');
             }
 
-            // Get document info
-            const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
-            const docType = document.querySelector('[name="doc_type"]').value;
-
             // Calculate correct amount
             const finalAmount = Number(parseFloat(localStorage.getItem('valortotal') || 0).toFixed(2));
             const installments = parseInt(document.querySelector('[name="installments"]').value);
@@ -587,7 +590,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 payment_method_id: cardTypeInfo.brand,
                 device_id: deviceId,
                 payer: {
-                    email: document.querySelector('[name="email"]').value,
+                    email: document.querySelector('[name="email"]').value || localStorage.getItem('user_email'), // Fallback
                     identification: {
                         type: docType,
                         number: docNumber
