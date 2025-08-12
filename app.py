@@ -845,7 +845,8 @@ def checkout():
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
     payment_id = None
-    cpf = None
+    cpf_inscrito = None
+    cpf_pagador = None
     
     try:
         app.logger.info("=== INÍCIO DO PROCESSAMENTO DE PAGAMENTO ===")
@@ -869,23 +870,37 @@ def process_payment():
             valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
             valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
             
-            # Store CPF and device ID for logging
-            cpf = payment_data.get('CPF')
+            # SEPARAR DADOS DO INSCRITO E DO PAGADOR
+            # Dados do inscrito (vão para o banco)
+            cpf_inscrito = payment_data.get('CPF_inscrito') or payment_data.get('CPF')  # fallback para compatibilidade
+            nome_inscrito = payment_data.get('nome_inscrito')
+            email_inscrito = payment_data.get('email_inscrito')
+            id_evento = payment_data.get('id_evento')
+            
+            # Dados do pagador (titular do cartão)
+            cpf_pagador = payment_data['payer']['identification']['number']
+            nome_pagador = f"{payment_data['payer']['first_name']} {payment_data['payer']['last_name']}"
+            email_pagador = payment_data['payer']['email']
+            
             device_id = payment_data.get('device_id')
             
-            app.logger.info(f"Valores processados - CPF: {cpf}, Device ID: {device_id}, Valor Total: R$ {valor_total}, Valor Atual: R$ {valor_atual}, Valor Taxa: R$ {valor_taxa}, Parcelas: {installments}")
+            # Log separado dos dados
+            app.logger.info(f"📝 INSCRITO: {nome_inscrito} (CPF: {cpf_inscrito}) - Evento: {id_evento}")
+            app.logger.info(f"💳 PAGADOR: {nome_pagador} (CPF: {cpf_pagador}) - Email: {email_pagador}")
+            app.logger.info(f"💰 VALORES: Total: R$ {valor_total}, Atual: R$ {valor_atual}, Taxa: R$ {valor_taxa}, Parcelas: {installments}")
+            app.logger.info(f"🔧 DEVICE: {device_id}")
             
             # Ensure transaction_amount matches valor_total
             if abs(transaction_amount - valor_total) > 0.01:
-                app.logger.warning(f"DISCREPÂNCIA DE VALORES - CPF: {cpf}, transaction_amount: R$ {transaction_amount}, valor_total: R$ {valor_total}")
+                app.logger.warning(f"DISCREPÂNCIA DE VALORES - Inscrito: {cpf_inscrito}, transaction_amount: R$ {transaction_amount}, valor_total: R$ {valor_total}")
                 # Use valor_total as the source of truth
                 transaction_amount = valor_total
                 
         except (ValueError, TypeError) as e:
-            app.logger.error(f"ERRO AO PROCESSAR VALORES - CPF: {cpf}, Erro: {str(e)}")
+            app.logger.error(f"ERRO AO PROCESSAR VALORES - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Erro: {str(e)}")
             raise ValueError(f"Erro ao processar valores numéricos: {str(e)}")
 
-        # Store session data
+        # Store session data (usar dados do inscrito para sessão)
         session['valorTotal'] = transaction_amount
         session['numeroParcelas'] = installments
         session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
@@ -893,8 +908,10 @@ def process_payment():
         session['valorAtual'] = valor_atual
         session['valorTaxa'] = valor_taxa
         session['formaPagto'] = 'CARTÃO DE CRÉDITO'
-        session['CPF'] = cpf
+        session['CPF'] = cpf_inscrito  # CPF do inscrito para a sessão
         session['deviceId'] = device_id
+        session['pagador_cpf'] = cpf_pagador  # CPF do pagador separado
+        session['pagador_nome'] = nome_pagador
 
         # Validar dados recebidos
         required_fields = [
@@ -908,32 +925,37 @@ def process_payment():
         
         for field in required_fields:
             if field not in payment_data:
-                app.logger.error(f"CAMPO OBRIGATÓRIO AUSENTE - CPF: {cpf}, Campo: {field}")
+                app.logger.error(f"CAMPO OBRIGATÓRIO AUSENTE - Inscrito: {cpf_inscrito}, Campo: {field}")
                 raise ValueError(f"Campo obrigatório ausente: {field}")
         
         # Validate payer data
         if not payment_data['payer'].get('email'):
-            app.logger.error(f"EMAIL AUSENTE - CPF: {cpf}")
+            app.logger.error(f"EMAIL AUSENTE - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}")
             raise ValueError("Email do pagador é obrigatório")
         
         if 'identification' not in payment_data['payer']:
-            app.logger.error(f"IDENTIFICAÇÃO AUSENTE - CPF: {cpf}")
+            app.logger.error(f"IDENTIFICAÇÃO AUSENTE - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}")
             raise ValueError("Identificação do pagador é obrigatória")
         
         if not payment_data['payer']['identification'].get('type') or not payment_data['payer']['identification'].get('number'):
-            app.logger.error(f"DOCUMENTO INVÁLIDO - CPF: {cpf}")
+            app.logger.error(f"DOCUMENTO INVÁLIDO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}")
             raise ValueError("Tipo e número de documento são obrigatórios")
 
         # Validate device ID
         if not device_id or len(device_id.strip()) < 10:
-            app.logger.error(f"DEVICE ID INVÁLIDO - CPF: {cpf}, Device ID: {device_id}")
+            app.logger.error(f"DEVICE ID INVÁLIDO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Device ID: {device_id}")
             raise ValueError("Device ID é obrigatório e deve ter pelo menos 10 caracteres")
 
-        app.logger.info(f"VALIDAÇÃO CONCLUÍDA - CPF: {cpf}, Device ID: {device_id}, Email: {payment_data['payer']['email']}, Método: {payment_data['payment_method_id']}")
+        # Validar dados do inscrito
+        if not cpf_inscrito:
+            app.logger.error(f"CPF DO INSCRITO AUSENTE - Pagador: {cpf_pagador}")
+            raise ValueError("CPF do inscrito é obrigatório")
+
+        app.logger.info(f"VALIDAÇÃO CONCLUÍDA - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Device ID: {device_id}, Método: {payment_data['payment_method_id']}")
 
         # Gerar referência externa única
         external_reference = str(uuid.uuid4())
-        app.logger.info(f"REFERÊNCIA EXTERNA GERADA - CPF: {cpf}, Ref: {external_reference}")
+        app.logger.info(f"REFERÊNCIA EXTERNA GERADA - Inscrito: {cpf_inscrito}, Ref: {external_reference}")
         
         # Criar preferência de pagamento
         item_details = {
@@ -956,20 +978,21 @@ def process_payment():
         
         # Criar preferência
         try:
-            app.logger.info(f"CRIANDO PREFERÊNCIA - CPF: {cpf}")
+            app.logger.info(f"CRIANDO PREFERÊNCIA - Inscrito: {cpf_inscrito}")
             preference_response = sdk.preference().create(preference_data)
             
             if "response" not in preference_response:
                 error_message = preference_response.get("message", "Erro desconhecido na criação da preferência")
-                app.logger.error(f"ERRO NA PREFERÊNCIA - CPF: {cpf}, Erro: {error_message}")
+                app.logger.error(f"ERRO NA PREFERÊNCIA - Inscrito: {cpf_inscrito}, Erro: {error_message}")
                 raise ValueError(f"Erro ao criar preferência de pagamento: {error_message}")
                 
-            app.logger.info(f"PREFERÊNCIA CRIADA COM SUCESSO - CPF: {cpf}")
+            app.logger.info(f"PREFERÊNCIA CRIADA COM SUCESSO - Inscrito: {cpf_inscrito}")
             
         except Exception as e:
-            app.logger.error(f"EXCEÇÃO NA PREFERÊNCIA - CPF: {cpf}, Erro: {str(e)}")
+            app.logger.error(f"EXCEÇÃO NA PREFERÊNCIA - Inscrito: {cpf_inscrito}, Erro: {str(e)}")
             raise ValueError(f"Erro ao criar preferência de pagamento: {str(e)}")
 
+        # DADOS DO PAGAMENTO CORRIGIDOS - device_id apenas em um lugar
         payment_info = {
             "transaction_amount": transaction_amount,
             "token": payment_data['token'],
@@ -979,7 +1002,7 @@ def process_payment():
             "payment_method_id": payment_data['payment_method_id'],
             "external_reference": external_reference,
             "notification_url": "https://ecmrun.com.br/webhook",
-            "device_id": device_id,
+            "device_id": device_id,  # APENAS AQUI
             "payer": {
                 "email": payment_data['payer']['email'],
                 "identification": {
@@ -1001,11 +1024,11 @@ def process_payment():
                 "payer": {
                     "first_name": payment_data['payer']['first_name'],
                     "last_name": payment_data['payer']['last_name'],
-                    "registration_date": datetime.now().isoformat(),
-                    "device_id": device_id
+                    "registration_date": datetime.now().isoformat()
+                    # device_id REMOVIDO daqui
                 },
-                "ip_address": request.remote_addr,
-                "device_id": device_id
+                "ip_address": request.remote_addr or "127.0.0.1"
+                # device_id REMOVIDO daqui também
             }
         }
 
@@ -1013,15 +1036,15 @@ def process_payment():
         safe_payment_info = {**payment_info}
         safe_payment_info['token'] = '***HIDDEN***'
         safe_payment_info['payer']['identification']['number'] = '***HIDDEN***'
-        app.logger.info(f"ENVIANDO PAGAMENTO PARA MERCADOPAGO - CPF: {cpf}, Device ID: {device_id}")
+        app.logger.info(f"ENVIANDO PAGAMENTO PARA MERCADOPAGO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}")
         app.logger.debug(f"Dados do pagamento: {safe_payment_info}")
 
         # Processar pagamento
         try:
-            app.logger.info(f"PROCESSANDO PAGAMENTO - CPF: {cpf}, Device ID: {device_id}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
+            app.logger.info(f"PROCESSANDO PAGAMENTO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
             payment_response = sdk.payment().create(payment_info)
             
-            app.logger.info(f"RESPOSTA RECEBIDA DO MERCADOPAGO - CPF: {cpf}, Device ID: {device_id}")
+            app.logger.info(f"RESPOSTA RECEBIDA DO MERCADOPAGO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}")
             app.logger.debug(f"Resposta completa: {payment_response}")
             
             if "response" not in payment_response:
@@ -1031,9 +1054,9 @@ def process_payment():
                 if isinstance(error_details, list) and len(error_details) > 0:
                     error_message = error_details[0].get("description", "Erro desconhecido")
                     error_code = error_details[0].get("code", "unknown")
-                    app.logger.error(f"ERRO NO PAGAMENTO - CPF: {cpf}, Device ID: {device_id}, Código: {error_code}, Mensagem: {error_message}")
+                    app.logger.error(f"ERRO NO PAGAMENTO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Código: {error_code}, Mensagem: {error_message}")
                 else:
-                    app.logger.error(f"ERRO NO PAGAMENTO - CPF: {cpf}, Device ID: {device_id}, Detalhes: {error_details}")
+                    app.logger.error(f"ERRO NO PAGAMENTO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Detalhes: {error_details}")
                 
                 return jsonify({
                     "error": "Erro ao processar pagamento",
@@ -1047,42 +1070,42 @@ def process_payment():
             
             # Log detalhado do resultado do pagamento
             if status == "approved":
-                app.logger.info(f"🎉 PAGAMENTO APROVADO - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
-                
+                app.logger.info(f"🎉 PAGAMENTO APROVADO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, ID: {payment_id}, Valor: R$ {transaction_amount}")
+                                
             elif status == "pending":
-                app.logger.warning(f"⏳ PAGAMENTO PENDENTE - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Status Detail: {status_detail}, Valor: R$ {transaction_amount}")
+                app.logger.warning(f"⏳ PAGAMENTO PENDENTE - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, ID: {payment_id}, Status Detail: {status_detail}")
                 
             elif status == "rejected":
-                app.logger.error(f"❌ PAGAMENTO RECUSADO - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Motivo: {status_detail}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
+                app.logger.error(f"❌ PAGAMENTO RECUSADO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, ID: {payment_id}, Motivo: {status_detail}")
                 
                 # Log adicional para recusas com mais detalhes
                 if payment_result.get("failure_reason"):
-                    app.logger.error(f"MOTIVO DA RECUSA - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Failure Reason: {payment_result.get('failure_reason')}")
+                    app.logger.error(f"MOTIVO DA RECUSA - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, ID: {payment_id}, Failure Reason: {payment_result.get('failure_reason')}")
                 
                 if payment_result.get("gateway_rejection_reason"):
-                    app.logger.error(f"REJEIÇÃO DO GATEWAY - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Gateway Reason: {payment_result.get('gateway_rejection_reason')}")
+                    app.logger.error(f"REJEIÇÃO DO GATEWAY - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, ID: {payment_id}, Gateway Reason: {payment_result.get('gateway_rejection_reason')}")
                     
             else:
-                app.logger.warning(f"❓ STATUS DESCONHECIDO - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Status: {status}, Status Detail: {status_detail}")
+                app.logger.warning(f"❓ STATUS DESCONHECIDO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, ID: {payment_id}, Status: {status}")
 
             # Log informações adicionais importantes
             if payment_result.get("fee_details"):
                 total_fees = sum([fee.get("amount", 0) for fee in payment_result["fee_details"]])
-                app.logger.info(f"TAXAS APLICADAS - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Total em Taxas: R$ {total_fees}")
+                app.logger.info(f"TAXAS APLICADAS - Inscrito: {cpf_inscrito}, ID: {payment_id}, Total em Taxas: R$ {total_fees}")
                 
             if payment_result.get("installments", 0) > 1:
-                app.logger.info(f"PARCELAMENTO - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Parcelas: {payment_result.get('installments')}")
+                app.logger.info(f"PARCELAMENTO - Inscrito: {cpf_inscrito}, ID: {payment_id}, Parcelas: {payment_result.get('installments')}")
 
             # Log do device_id se presente na resposta
             if payment_result.get("device_id"):
-                app.logger.info(f"DEVICE ID CONFIRMADO - CPF: {cpf}, Device ID Enviado: {device_id}, Device ID Resposta: {payment_result.get('device_id')}")
+                app.logger.info(f"DEVICE ID CONFIRMADO - Inscrito: {cpf_inscrito}, Device ID Enviado: {device_id}, Device ID Resposta: {payment_result.get('device_id')}")
 
-            app.logger.info(f"=== PROCESSAMENTO CONCLUÍDO - CPF: {cpf}, Device ID: {device_id}, ID: {payment_id}, Status: {status} ===")
+            app.logger.info(f"=== PROCESSAMENTO CONCLUÍDO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, ID: {payment_id}, Status: {status} ===")
             
             return jsonify(payment_result), 200        
             
         except Exception as e:
-            app.logger.error(f"🔥 EXCEÇÃO NO PAGAMENTO - CPF: {cpf}, Device ID: {device_id}, Erro: {str(e)}, Tipo: {type(e).__name__}")
+            app.logger.error(f"🔥 EXCEÇÃO NO PAGAMENTO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Erro: {str(e)}, Tipo: {type(e).__name__}")
             app.logger.exception("Stack trace completo:")
             return jsonify({
                 "error": "Erro ao processar pagamento",
@@ -1090,13 +1113,12 @@ def process_payment():
             }), 400
         
     except ValueError as e:
-        app.logger.error(f"ERRO DE VALIDAÇÃO - CPF: {cpf}, Device ID: {payment_data.get('device_id', 'N/A')}, Erro: {str(e)}")
+        app.logger.error(f"ERRO DE VALIDAÇÃO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Erro: {str(e)}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        app.logger.error(f"🔥 ERRO GERAL NO PROCESSAMENTO - CPF: {cpf}, Device ID: {payment_data.get('device_id', 'N/A')}, Payment ID: {payment_id}, Erro: {str(e)}")
+        app.logger.error(f"🔥 ERRO GERAL NO PROCESSAMENTO - Inscrito: {cpf_inscrito}, Pagador: {cpf_pagador}, Payment ID: {payment_id}, Erro: {str(e)}")
         app.logger.exception("Stack trace completo:")
         return jsonify({"error": str(e)}), 400
-
 
 def send_organizer_notification(receipt_data):
     try:
@@ -7550,6 +7572,7 @@ def pagina_teste():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
