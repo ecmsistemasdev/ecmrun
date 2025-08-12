@@ -144,28 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
 
-    // Função para permitir apenas números em campos específicos
-    function allowOnlyNumbers(input) {
-        input.addEventListener('input', function(e) {
-            // Remove todos os caracteres que não são dígitos
-            let value = e.target.value.replace(/\D/g, '');
-            e.target.value = value;
-        });
-    }
-    
-    // Função para CVV (permitir apenas números)
-    function setupCVVValidation() {
-        const cvvInput = document.getElementById('security-code');
-        cvvInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            // Limitar a 4 dígitos (American Express) ou 3 dígitos (outros)
-            if (value.length > 4) {
-                value = value.slice(0, 4);
-            }
-            e.target.value = value;
-        });
-    }
-
     // Máscaras para documentos
     function formatCPF(value) {
         value = value.slice(0, 11);
@@ -304,7 +282,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-
     // Função para atualizar o valor total com juros
     function updateTotalAmount(installmentData) {
         const amountElement = document.getElementById('transaction-amount');
@@ -325,50 +302,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 currency: 'BRL'
             }).format(totalWithInterest);
             
-            // Atualizar o valor no localStorage para uso posterior
-            localStorage.setItem('valorTotalComJuros', totalWithInterest);
-        }
-    }
-
-
-    // Função atualizada para obter parcelas
-    async function getInstallments(amount, paymentMethodId) {
-        try {
-            console.log('Calculando parcelas para:', { amount, paymentMethodId });
-            
-            const response = await mp.getInstallments({
-                amount: String(amount),
-                locale: 'pt-BR',
-                payment_method_id: paymentMethodId,
-            });
-
-            console.log('Resposta do getInstallments:', response);
-
-            if (response && response.length > 0) {
-                const installmentSelect = document.getElementById('installments');
-                installmentSelect.innerHTML = ''; // Limpa as opções existentes
-
-                response[0].payer_costs.forEach((cost) => {
-                    const formattedAmount = new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                    }).format(cost.installment_amount);
-
-                    const optionText = cost.recommended_message || 
-                        `${cost.installments}x de ${formattedAmount}`;
-
-                    const option = document.createElement('option');
-                    option.value = cost.installments;
-                    option.textContent = optionText;
-                    installmentSelect.appendChild(option);
-                });
-            } else {
-                console.error('Nenhuma opção de parcelamento disponível');
-                document.getElementById('installments').innerHTML = '<option value="">Nenhuma parcela disponível</option>';
-            }
-        } catch (error) {
-            console.error('Erro detalhado ao obter parcelas:', error);
-            document.getElementById('installments').innerHTML = '<option value="">Erro ao carregar parcelas</option>';
+            // Atualizar o valor no para uso posterior
+            // PROBLEMA IDENTIFICADO: NÃO PODE USAR localStorage
+            // localStorage.setItem('valorTotalComJuros', totalWithInterest);
         }
     }
 
@@ -462,7 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-
     async function redirectToReceipt(paymentId) {
         try {
             console.log('Atualizando ID do pagamento...');
@@ -524,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Manipulador do envio do formulário
+    // Manipulador do envio do formulário - CORRIGIDO
     document.getElementById('payment-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -536,11 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Display loading state
             const submitButton = e.target.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.textContent;
-            // Mostrar modal de processamento
-            document.getElementById('processing-modal').style.display = 'flex';
-            submitButton.disabled = true;
-
-            
             submitButton.textContent = 'Processando...';
             submitButton.disabled = true;
             
@@ -565,30 +495,50 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Criando token do cartão...');
 
+            // CORREÇÃO 1: Buscar CPF do campo de documento do pagador, não do inscrito
             const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
             const docType = document.querySelector('[name="doc_type"]').value;
+            const email = document.querySelector('[name="email"]').value || userEmail.value;
 
-            // Get data from storage
+            // CORREÇÃO 2: Separar dados do pagador e do inscrito
             const userData = {
-                CPF: docNumber, // ✅ Agora funciona!
+                CPF: docNumber, // CPF do PAGADOR
                 valor_atual: vlinscricao,
                 valor_taxa: vltaxa,
                 valor_total: totalValue,
                 device_id: deviceId,
-                // Adicionar dados do inscrito separadamente
+                // Dados do inscrito (podem ser diferentes do pagador)
                 inscrito_cpf: localStorage.getItem('user_cpf'),
                 inscrito_name: localStorage.getItem('user_name'),
-                inscrito_email: localStorage.getItem('user_email')
+                inscrito_email: localStorage.getItem('user_email'),
+                // ID do evento
+                id_evento: idEvento
             };
                         
             console.log('userData: ', userData);
 
+            // CORREÇÃO 3: Validar campos obrigatórios
+            const expirationDate = document.getElementById('expiration-date').value;
+            const securityCode = document.getElementById('security-code').value;
+            
+            if (!expirationDate || expirationDate.length !== 5) {
+                throw new Error('Data de validade inválida. Use o formato MM/AA');
+            }
+            
+            if (!securityCode || securityCode.length < 3) {
+                throw new Error('Código de segurança inválido');
+            }
+            
+            if (!email) {
+                throw new Error('Email é obrigatório');
+            }
+
             // Create card token
             const cardFormData = {
                 cardNumber: cardNumber,
-                cardExpirationMonth: document.getElementById('expiration-date').value.split('/')[0],
-                cardExpirationYear: '20' + document.getElementById('expiration-date').value.split('/')[1],
-                securityCode: document.getElementById('security-code').value,
+                cardExpirationMonth: expirationDate.split('/')[0],
+                cardExpirationYear: '20' + expirationDate.split('/')[1],
+                securityCode: securityCode,
                 cardholderName: fullName
             };
 
@@ -608,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const finalAmount = Number(parseFloat(localStorage.getItem('valortotal') || 0).toFixed(2));
             const installments = parseInt(document.querySelector('[name="installments"]').value);
 
-            // Create payment data
+            // CORREÇÃO 4: Estrutura de dados correta para a API
             const paymentData = {
                 transaction_amount: finalAmount,
                 token: cardToken.id,
@@ -617,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 payment_method_id: cardTypeInfo.brand,
                 device_id: deviceId,
                 payer: {
-                    email: document.querySelector('[name="email"]').value || localStorage.getItem('user_email'), // Fallback
+                    email: email,
                     identification: {
                         type: docType,
                         number: docNumber
@@ -625,6 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     first_name: firstName,
                     last_name: lastName
                 },
+                // Incluir todos os dados extras
                 ...userData
             };
 
@@ -682,26 +633,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Erro ao processar redirecionamento:', error);
                     alert('Pagamento aprovado, mas houve um erro no redirecionamento. Por favor, entre em contato com o suporte.');
                 }
+            } else {
+                // CORREÇÃO 5: Tratar outros status
+                let message = 'Pagamento não foi aprovado.';
+                if (responseData.status === 'pending') {
+                    message = 'Pagamento está pendente de aprovação.';
+                } else if (responseData.status === 'rejected') {
+                    message = 'Pagamento foi rejeitado.';
+                }
+                
+                if (responseData.status_detail) {
+                    message += ` Motivo: ${responseData.status_detail}`;
+                }
+                
+                alert(message);
             }
-
 
         } catch (error) {
             console.error('Erro detalhado:', error);
             alert(`Erro ao processar pagamento: ${error.message}`);
         } finally {
-            // Esconder modal de processamento
-            document.getElementById('processing-modal').style.display = 'none';
-            const submitButton = document.querySelector('button[type="submit"]');
-            submitButton.disabled = false;            
             // Reset button state
-            // const submitButton = document.querySelector('button[type="submit"]');
-            // submitButton.textContent = 'Finalizar Pagamento';
-            // submitButton.disabled = false;
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.textContent = 'Finalizar Pagamento';
+            submitButton.disabled = false;
         }
     });
-    
-    setupCVVValidation();
-    
 });
-
-
