@@ -558,14 +558,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const finalAmount = Number(parseFloat(localStorage.getItem('valortotal') || 0).toFixed(2));
             const installments = parseInt(document.querySelector('[name="installments"]').value);
 
-            // CORREÇÃO 4: Estrutura de dados correta para a API
+            // CORREÇÃO 4: Estrutura de dados correta para a API (SEM device_id duplicado)
             const paymentData = {
                 transaction_amount: finalAmount,
                 token: cardToken.id,
                 description: "ECM RUN Inscrição ",
                 installments: installments,
                 payment_method_id: cardTypeInfo.brand,
-                device_id: deviceId,
+                // REMOVIDO: device_id aqui causa erro na API do Mercado Pago
                 payer: {
                     email: email,
                     identification: {
@@ -575,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     first_name: firstName,
                     last_name: lastName
                 },
-                // Incluir todos os dados extras
+                // Incluir todos os dados extras (que contém device_id interno)
                 ...userData
             };
 
