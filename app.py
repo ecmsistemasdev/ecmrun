@@ -7412,8 +7412,144 @@ def lista_eventos_direto():
         # Em caso de erro, redireciona para a página normal
         return redirect('/lista-eventos')
 
+
+##### TESTE ###########
+
+@app.route('/paginateste')
+def pagina_teste():
+    """Página de inscrição do evento teste"""
+    try:
+        # Buscar dados do evento
+        cur = mysql.connection.cursor()
+        
+        # Query para dados básicos do evento
+        cur.execute("""
+            SELECT DESCRICAO, DTINICIO, HRINICIO, LOCAL, CIDADEUF 
+            FROM EVENTO WHERE IDEVENTO = 4
+        """)
+        evento_data = cur.fetchone()
+        
+        if not evento_data:
+            cur.close()
+            return "Evento não encontrado", 404
+        
+        # Query para lotes do evento
+        cur.execute("""
+            SELECT 
+              ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
+              ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
+              ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
+              ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
+              (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
+              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
+              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
+              -- Quantidade total de inscrições no evento
+              (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
+              -- Status do lote
+              CASE 
+                WHEN CURDATE() < ei.DTINICIO THEN
+                  CASE 
+                    -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
+                    WHEN EXISTS (
+                      SELECT 1 FROM EVENTO_ITENS lote_ant
+                      WHERE lote_ant.IDITEM = (
+                        SELECT IDITEM FROM EVENTO_ITENS WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
+                      )
+                      AND (
+                        SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
+                      ) >= lote_ant.NUATLETAS
+                    ) THEN 'ABERTO'
+                    ELSE 'NÃO INICIADO'
+                  END
+                WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
+                  CASE 
+                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
+                    ELSE 'ESGOTADO'
+                  END
+                WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
+                ELSE 'ENCERRADO'
+              END AS STATUS_LOTE
+            FROM EVENTO_ITENS ei
+            WHERE ei.IDEVENTO = 4
+            ORDER BY ei.LOTE
+        """)
+        
+        lotes_data = cur.fetchall()
+        cur.close()
+        
+        # Função para formatar valores em formato brasileiro
+        def formatar_valor_brasileiro(valor):
+            """Converte valor decimal para formato brasileiro (vírgula como separador decimal)"""
+            if valor is None:
+                return "0,00"
+            return f"{float(valor):.2f}".replace('.', ',')
+        
+        # Preparar dados para o template
+        evento = {
+            'titulo': evento_data[0],
+            'data': evento_data[1],
+            'hora': evento_data[2],
+            'local': evento_data[3],
+            'cidade_uf': evento_data[4]
+        }
+        
+        # Processar lotes
+        lotes = []
+        for lote in lotes_data:
+            # Converter data DTFIM para formato brasileiro
+            dtfim_formatada = ""
+            if lote[3]:  # DTFIM
+                if isinstance(lote[3], str):
+                    # Se já é string, assumir formato YYYY-MM-DD
+                    try:
+                        dt = datetime.strptime(lote[3], '%Y-%m-%d')
+                        dtfim_formatada = dt.strftime('%d/%m/%Y')
+                    except:
+                        dtfim_formatada = lote[3]
+                else:
+                    # Se é objeto date
+                    dtfim_formatada = lote[3].strftime('%d/%m/%Y')
+            
+            lote_info = {
+                'iditem': lote[0],
+                'descricao': lote[1],
+                'dtinicio': lote[2],
+                'dtfim': lote[3],
+                'dtfim_formatada': dtfim_formatada,
+                'nuatletas': lote[4],
+                'lote': lote[5],
+                'delote': lote[6],
+                'iditem_proximo_lote': lote[7],
+                'vlinscricao': lote[8],
+                'vltaxa': lote[9],
+                'vltotal': lote[10],
+                # Valores formatados em padrão brasileiro
+                'vlinscricao_formatada': formatar_valor_brasileiro(lote[8]),
+                'vltaxa_formatada': formatar_valor_brasileiro(lote[9]),
+                'vltotal_formatada': formatar_valor_brasileiro(lote[10]),
+                'vl_meia': lote[11],
+                'vl_taxa_meia': lote[12],
+                'vl_total_meia': lote[13],
+                # Valores de meia entrada formatados
+                'vl_meia_formatada': formatar_valor_brasileiro(lote[11]),
+                'vl_taxa_meia_formatada': formatar_valor_brasileiro(lote[12]),
+                'vl_total_meia_formatada': formatar_valor_brasileiro(lote[13]),
+                'qtd_inscricoes': lote[14],
+                'status_lote': lote[15]
+            }
+            lotes.append(lote_info)
+        
+        return render_template('paginateste.html', evento=evento, lotes=lotes)
+        
+    except Exception as e:
+        print(f"Erro ao carregar página arealslope: {str(e)}")
+        return f"Erro interno do servidor: {str(e)}", 500
+
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
