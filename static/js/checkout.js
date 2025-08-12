@@ -528,8 +528,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Display loading state
             const submitButton = e.target.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.textContent;
-            submitButton.textContent = 'Processando...';
+            // Mostrar modal de processamento
+            document.getElementById('processing-modal').style.display = 'flex';
             submitButton.disabled = true;
+            
+            // submitButton.textContent = 'Processando...';
+            // submitButton.disabled = true;
             
             // Validate fields
             const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
@@ -671,14 +675,20 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erro detalhado:', error);
             alert(`Erro ao processar pagamento: ${error.message}`);
         } finally {
-            // Reset button state
+            // Esconder modal de processamento
+            document.getElementById('processing-modal').style.display = 'none';
             const submitButton = document.querySelector('button[type="submit"]');
-            submitButton.textContent = 'Finalizar Pagamento';
             submitButton.disabled = false;
+            
+            // Reset button state
+            // const submitButton = document.querySelector('button[type="submit"]');
+            // submitButton.textContent = 'Finalizar Pagamento';
+            // submitButton.disabled = false;
         }
     });
 
     setupCVVValidation();
     
 });
+
 
