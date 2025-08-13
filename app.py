@@ -2667,6 +2667,32 @@ def verificar_pagamento(payment_id):
         print(f"Status do pagamento no MP: {payment['status']}")
         print(f"Dados completos do pagamento: {payment}")
         
+        # NOVA FUNCIONALIDADE: Extrair valores de taxa e líquido
+        valor_taxa_mp = 0.0
+        valor_liquido = 0.0
+        
+        # Valor total da transação
+        valor_total_transacao = float(payment.get("transaction_amount", 0))
+        
+        # Calcular taxa total do Mercado Pago
+        if payment.get("fee_details"):
+            for fee in payment["fee_details"]:
+                valor_taxa_mp += float(fee.get("amount", 0))
+            
+            print(f"Taxas aplicadas pelo MP: R$ {valor_taxa_mp:.2f}")
+            
+            # Calcular valor líquido (valor total - taxas)
+            valor_liquido = valor_total_transacao - valor_taxa_mp
+            
+        else:
+            # Se não houver fee_details, assumir que não há taxa (improvável)
+            valor_liquido = valor_total_transacao
+            print("Nenhuma taxa encontrada nos detalhes do pagamento")
+        
+        print(f"Valor da transação: R$ {valor_total_transacao:.2f}")
+        print(f"Taxa total MP: R$ {valor_taxa_mp:.2f}")
+        print(f"Valor líquido: R$ {valor_liquido:.2f}")
+        
         if payment["status"] == "approved":
             print("Pagamento aprovado, processando...")
             
@@ -2783,21 +2809,26 @@ def verificar_pagamento(payment_id):
                     resultado = cur.fetchone()
                     numero_peito = resultado[0] if resultado and resultado[0] else 1
 
-                    print("Atualizando status para aprovado e IDPESSOA...")
+                    print("Atualizando status para aprovado, IDPESSOA e valores das taxas...")
+                    print(f"Taxa MP: R$ {valor_taxa_mp:.2f}, Valor Líquido: R$ {valor_liquido:.2f}")
                     
-                    # Atualizar a inscrição com o pagamento aprovado e IDPESSOA
+                    # ATUALIZAÇÃO COM OS NOVOS CAMPOS: VLTAXAMP e VLLIQUIDO
                     cur.execute("""
                         UPDATE EVENTO_INSCRICAO SET
                             DTPAGAMENTO = %s,
                             STATUS = %s,
                             NUPEITO = %s,
-                            IDPESSOA = %s
+                            IDPESSOA = %s,
+                            VLTAXAMP = %s,
+                            VLLIQUIDO = %s
                         WHERE IDPAGAMENTO = %s
                     """, (
                         data_pagamento,         
                         'A',  # APROVADO
                         numero_peito,
-                        idpessoa,         
+                        idpessoa,
+                        valor_taxa_mp,      # Valor da taxa do Mercado Pago
+                        valor_liquido,      # Valor líquido (total - taxas)
                         payment_id
                     ))
                     
@@ -2807,9 +2838,14 @@ def verificar_pagamento(payment_id):
                     print(f"Update executado. Linhas afetadas: {linhas_afetadas}")
                     print(f"Pagamento {payment_id} atualizado com sucesso")
                     print(f"IDPESSOA {idpessoa} vinculado à inscrição")
+                    print(f"Taxa MP: R$ {valor_taxa_mp:.2f} - Valor Líquido: R$ {valor_liquido:.2f}")
                     
                     # Verificar se a atualização foi bem-sucedida
-                    cur.execute("SELECT STATUS, DTPAGAMENTO, IDPESSOA FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+                    cur.execute("""
+                        SELECT STATUS, DTPAGAMENTO, IDPESSOA, VLTAXAMP, VLLIQUIDO 
+                        FROM EVENTO_INSCRICAO 
+                        WHERE IDPAGAMENTO = %s
+                    """, (payment_id,))
                     verificacao = cur.fetchone()
                     print(f"Verificação pós-update: {verificacao}")
                     
@@ -2834,9 +2870,13 @@ def verificar_pagamento(payment_id):
                 
         print(f"=== VERIFICAÇÃO FINALIZADA ===")
         
+        # RETORNO MELHORADO: incluir as informações de taxa e valor líquido
         return jsonify({
             'success': True,
-            'status': payment["status"]
+            'status': payment["status"],
+            'valor_taxa_mp': round(valor_taxa_mp, 2),
+            'valor_liquido': round(valor_liquido, 2),
+            'valor_total': round(valor_total_transacao, 2)
         })
         
     except Exception as e:
@@ -2874,9 +2914,15 @@ def verificar_pagamento(payment_id):
             
 #             print(f"Data do pagamento: {data_pagamento}")
 
-#             # Buscar o registro pelo ID do pagamento
+#             # Buscar o registro pelo ID do pagamento (incluindo CPF)
 #             cur = mysql.connection.cursor()
-#             cur.execute("SELECT IDEVENTO, IDINSCRICAO, STATUS FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+#             cur.execute("""
+#                 SELECT IDEVENTO, IDINSCRICAO, STATUS, CPF, EMAIL, NOME, SOBRENOME, 
+#                        DTNASCIMENTO, DATANASC, CELULAR, SEXO, TEL_EMERGENCIA, 
+#                        CONT_EMERGENCIA, ESTADO, ID_CIDADE, IDPESSOA
+#                 FROM EVENTO_INSCRICAO 
+#                 WHERE IDPAGAMENTO = %s
+#             """, (payment_id,))
 #             existing_record = cur.fetchone()
             
 #             print(f"Registro encontrado: {existing_record}")
@@ -2885,11 +2931,85 @@ def verificar_pagamento(payment_id):
 #                 idevento = existing_record[0]
 #                 idinscricao = existing_record[1]
 #                 status_atual = existing_record[2]
+#                 cpf = existing_record[3]
+#                 email = existing_record[4]
+#                 nome = existing_record[5]
+#                 sobrenome = existing_record[6]
+#                 dt_nascimento = existing_record[7]
+#                 data_nasc = existing_record[8]
+#                 celular = existing_record[9]
+#                 sexo = existing_record[10]
+#                 tel_emergencia = existing_record[11]
+#                 cont_emergencia = existing_record[12]
+#                 estado = existing_record[13]
+#                 id_cidade = existing_record[14]
+#                 idpessoa_atual = existing_record[15]
                 
-#                 print(f"ID Inscrição: {idinscricao}, Status atual: {status_atual}")
+#                 print(f"ID Inscrição: {idinscricao}, Status atual: {status_atual}, CPF: {cpf}")
                 
 #                 # Verificar se já não foi processado (evitar reprocessamento)
 #                 if status_atual != 'A':  # Se não está aprovado ainda
+
+#                     # Verificar se existe registro na tabela PESSOA com o CPF
+#                     print(f"Verificando se existe pessoa com CPF: {cpf}")
+#                     cur.execute("SELECT IDPESSOA FROM PESSOA WHERE CPF = %s", (cpf,))
+#                     pessoa_existente = cur.fetchone()
+                    
+#                     idpessoa = None
+                    
+#                     if pessoa_existente:
+#                         # CASO 2: Existe registro - fazer UPDATE na tabela PESSOA
+#                         idpessoa = pessoa_existente[0]
+#                         print(f"Pessoa encontrada com ID: {idpessoa}. Atualizando dados...")
+                        
+#                         cur.execute("""
+#                             UPDATE PESSOA SET
+#                                 EMAIL = %s,
+#                                 NOME = %s,
+#                                 SOBRENOME = %s,
+#                                 DTNASCIMENTO = %s,
+#                                 DATANASC = %s,
+#                                 CELULAR = %s,
+#                                 SEXO = %s,
+#                                 TEL_EMERGENCIA = %s,
+#                                 CONT_EMERGENCIA = %s,
+#                                 ESTADO = %s,
+#                                 ID_CIDADE = %s
+#                             WHERE CPF = %s
+#                         """, (
+#                             email, nome, sobrenome, dt_nascimento, data_nasc,
+#                             celular, sexo, tel_emergencia, cont_emergencia,
+#                             estado, id_cidade, cpf
+#                         ))
+                        
+#                         print(f"Dados da pessoa {idpessoa} atualizados com sucesso")
+                        
+#                     else:
+#                         # CASO 1: Não existe registro - fazer INSERT na tabela PESSOA
+#                         print("Pessoa não encontrada. Criando novo registro...")
+                        
+#                         cur.execute("""
+#                             INSERT INTO PESSOA (
+#                                 EMAIL, CPF, NOME, SOBRENOME, DATANASC, DTNASCIMENTO,
+#                                 CELULAR, SEXO, TEL_EMERGENCIA, CONT_EMERGENCIA,
+#                                 ESTADO, ID_CIDADE, DTCADASTRO
+#                             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+#                         """, (
+#                             email, cpf, nome, sobrenome, data_nasc, dt_nascimento,
+#                             celular, sexo, tel_emergencia, cont_emergencia,
+#                             estado, id_cidade, data_e_hora_atual.astimezone(fuso_horario)
+#                         ))
+                        
+#                         # Buscar o ID da pessoa recém-criada
+#                         cur.execute("SELECT IDPESSOA FROM PESSOA WHERE CPF = %s", (cpf,))
+#                         novo_registro = cur.fetchone()
+                        
+#                         if novo_registro:
+#                             idpessoa = novo_registro[0]
+#                             print(f"Nova pessoa criada com ID: {idpessoa}")
+#                         else:
+#                             print("ERRO: Não foi possível recuperar o ID da pessoa criada")
+#                             raise Exception("Falha ao criar registro na tabela PESSOA")
 
 #                     # Gerar número de peito (pode implementar lógica específica)
 #                     cur.execute("""
@@ -2899,21 +3019,23 @@ def verificar_pagamento(payment_id):
 #                     """, (idevento,))
                     
 #                     resultado = cur.fetchone()
-#                     # numero_peito = resultado[0] if resultado else 1
 #                     numero_peito = resultado[0] if resultado and resultado[0] else 1
 
-#                     print("Atualizando status para aprovado...")
+#                     print("Atualizando status para aprovado e IDPESSOA...")
                     
+#                     # Atualizar a inscrição com o pagamento aprovado e IDPESSOA
 #                     cur.execute("""
 #                         UPDATE EVENTO_INSCRICAO SET
 #                             DTPAGAMENTO = %s,
 #                             STATUS = %s,
-#                             NUPEITO = %s
+#                             NUPEITO = %s,
+#                             IDPESSOA = %s
 #                         WHERE IDPAGAMENTO = %s
 #                     """, (
 #                         data_pagamento,         
 #                         'A',  # APROVADO
-#                         numero_peito,         
+#                         numero_peito,
+#                         idpessoa,         
 #                         payment_id
 #                     ))
                     
@@ -2922,9 +3044,10 @@ def verificar_pagamento(payment_id):
                     
 #                     print(f"Update executado. Linhas afetadas: {linhas_afetadas}")
 #                     print(f"Pagamento {payment_id} atualizado com sucesso")
+#                     print(f"IDPESSOA {idpessoa} vinculado à inscrição")
                     
 #                     # Verificar se a atualização foi bem-sucedida
-#                     cur.execute("SELECT STATUS, DTPAGAMENTO FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
+#                     cur.execute("SELECT STATUS, DTPAGAMENTO, IDPESSOA FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
 #                     verificacao = cur.fetchone()
 #                     print(f"Verificação pós-update: {verificacao}")
                     
@@ -2965,6 +3088,7 @@ def verificar_pagamento(payment_id):
 #             'message': str(e),
 #             'status': 'error'
 #         }), 500
+
 
 
 @app.route('/atualiza-idpagamento/<cpf>', methods=['POST'])
@@ -7551,6 +7675,7 @@ def pagina_teste():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
