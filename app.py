@@ -437,83 +437,86 @@ def format_time_difference(seconds):
 #     finally:
 #         cur.close()
 
+
+
+
 # Rota para renderizar a página eventos.html
-@app.route('/eventos')
-def eventos():
-    return render_template('eventos.html')
+#@app.route('/eventos')
+#def eventos():
+#    return render_template('eventos.html')
 
 # Get all eventos
-@app.route('/api/eventos')
-def get_eventos():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO ORDER BY DTINICIO DESC")
-    eventos = [{'IDEVENTO': row[0], 'DESCRICAO': row[1]} for row in cur.fetchall()]
-    cur.close()
-    return jsonify(eventos)
+#@app.route('/api/eventos')
+#def get_eventos():
+#    cur = mysql.connection.cursor()
+#    cur.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO ORDER BY DTINICIO DESC")
+#    eventos = [{'IDEVENTO': row[0], 'DESCRICAO': row[1]} for row in cur.fetchall()]
+#    cur.close()
+#    return jsonify(eventos)
 
 # Get specific evento
-@app.route('/api/eventos/<int:evento_id>')
-def get_evento(evento_id):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT IDEVENTO, DESCRICAO, DTINICIO, DTFIM, HRINICIO, 
-               INICIO_INSCRICAO, FIM_INSCRICAO, 
-               INICIO_INSCRICAO_EXT, FIM_INSCRICAO_EXT 
-        FROM EVENTO WHERE IDEVENTO = %s
-    """, (evento_id,))
-    row = cur.fetchone()
-    cur.close()
-    
-    if row:
-        evento = {
-            'IDEVENTO': row[0],
-            'DESCRICAO': row[1],
-            'DTINICIO': row[2], # .strftime('%d/%m/%Y') if row[2] else '',
-            'DTFIM': row[3], #.strftime('%d/%m/%Y') if row[3] else '',
-            'HRINICIO': row[4], #.strftime('%H:%M') if row[4] else '',
-            'INICIO_INSCRICAO': row[5], #.strftime('%d/%m/%Y %H:%M:%S') if row[5] else '',
-            'FIM_INSCRICAO': row[6], #.strftime('%d/%m/%Y %H:%M:%S') if row[6] else '',
-            'INICIO_INSCRICAO_EXT': row[7], #.strftime('%d/%m/%Y %H:%M:%S') if row[7] else '',
-            'FIM_INSCRICAO_EXT': row[8] #.strftime('%d/%m/%Y %H:%M:%S') if row[8] else ''
-        }
-        return jsonify(evento)
-    return jsonify(None)
+#@app.route('/api/eventos/<int:evento_id>')
+#def get_evento(evento_id):
+#    cur = mysql.connection.cursor()
+#    cur.execute("""
+#        SELECT IDEVENTO, DESCRICAO, DTINICIO, DTFIM, HRINICIO, 
+#               INICIO_INSCRICAO, FIM_INSCRICAO, 
+#               INICIO_INSCRICAO_EXT, FIM_INSCRICAO_EXT 
+#        FROM EVENTO WHERE IDEVENTO = %s
+#    """, (evento_id,))
+#    row = cur.fetchone()
+#    cur.close()
+#    
+#    if row:
+#        evento = {
+#            'IDEVENTO': row[0],
+#            'DESCRICAO': row[1],
+#            'DTINICIO': row[2], # .strftime('%d/%m/%Y') if row[2] else '',
+#            'DTFIM': row[3], #.strftime('%d/%m/%Y') if row[3] else '',
+#            'HRINICIO': row[4], #.strftime('%H:%M') if row[4] else '',
+#            'INICIO_INSCRICAO': row[5], #.strftime('%d/%m/%Y %H:%M:%S') if row[5] else '',
+#            'FIM_INSCRICAO': row[6], #.strftime('%d/%m/%Y %H:%M:%S') if row[6] else '',
+#            'INICIO_INSCRICAO_EXT': row[7], #.strftime('%d/%m/%Y %H:%M:%S') if row[7] else '',
+#            'FIM_INSCRICAO_EXT': row[8] #.strftime('%d/%m/%Y %H:%M:%S') if row[8] else ''
+#        }
+#        return jsonify(evento)
+#    return jsonify(None)
 
 # Update evento
-@app.route('/api/eventos', methods=['PUT'])
-def update_evento():
-    data = request.json
-    
-    # Converter as datas do formato brasileiro para o formato do MySQL
-    dtinicio = data['DTINICIO'] #datetime.strptime(data['DTINICIO'], '%d/%m/%Y').strftime('%Y-%m-%d')
-    dtfim = data['DTFIM'] #datetime.strptime(data['DTFIM'], '%d/%m/%Y').strftime('%Y-%m-%d')
-    hrinicio = data['HRINICIO']
-    inicio_inscricao = data['INICIO_INSCRICAO'] #datetime.strptime(data['INICIO_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-    fim_inscricao = data['FIM_INSCRICAO'] #datetime.strptime(data['FIM_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-    inicio_inscricao_ext = data['INICIO_INSCRICAO_EXT'] #datetime.strptime(data['INICIO_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-    fim_inscricao_ext = data['FIM_INSCRICAO_EXT'] #datetime.strptime(data['FIM_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-    
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        UPDATE EVENTO 
-        SET DESCRICAO = %s, 
-            DTINICIO = %s,
-            DTFIM = %s,
-            HRINICIO = %s,
-            INICIO_INSCRICAO = %s,
-            FIM_INSCRICAO = %s,
-            INICIO_INSCRICAO_EXT = %s,
-            FIM_INSCRICAO_EXT = %s
-        WHERE IDEVENTO = %s
-    """, (
-        data['DESCRICAO'], dtinicio, dtfim, hrinicio,
-        inicio_inscricao, fim_inscricao,
-        inicio_inscricao_ext, fim_inscricao_ext,
-        data['IDEVENTO']
-    ))
-    mysql.connection.commit()
-    cur.close()
-    return jsonify({'message': 'Evento atualizado com sucesso'})
+#@app.route('/api/eventos', methods=['PUT'])
+#def update_evento():
+#    data = request.json
+#    
+#    # Converter as datas do formato brasileiro para o formato do MySQL
+#    dtinicio = data['DTINICIO'] #datetime.strptime(data['DTINICIO'], '%d/%m/%Y').strftime('%Y-%m-%d')
+#    dtfim = data['DTFIM'] #datetime.strptime(data['DTFIM'], '%d/%m/%Y').strftime('%Y-%m-%d')
+#    hrinicio = data['HRINICIO']
+#    inicio_inscricao = data['INICIO_INSCRICAO'] #datetime.strptime(data['INICIO_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+#    fim_inscricao = data['FIM_INSCRICAO'] #datetime.strptime(data['FIM_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+#    inicio_inscricao_ext = data['INICIO_INSCRICAO_EXT'] #datetime.strptime(data['INICIO_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+#    fim_inscricao_ext = data['FIM_INSCRICAO_EXT'] #datetime.strptime(data['FIM_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+#    
+#    cur = mysql.connection.cursor()
+#    cur.execute("""
+#        UPDATE EVENTO 
+#        SET DESCRICAO = %s, 
+#            DTINICIO = %s,
+#            DTFIM = %s,
+#            HRINICIO = %s,
+#            INICIO_INSCRICAO = %s,
+#            FIM_INSCRICAO = %s,
+#            INICIO_INSCRICAO_EXT = %s,
+#            FIM_INSCRICAO_EXT = %s
+#        WHERE IDEVENTO = %s
+#    """, (
+#        data['DESCRICAO'], dtinicio, dtfim, hrinicio,
+#        inicio_inscricao, fim_inscricao,
+#        inicio_inscricao_ext, fim_inscricao_ext,
+#        data['IDEVENTO']
+#    ))
+#    mysql.connection.commit()
+#    cur.close()
+#    return jsonify({'message': 'Evento atualizado com sucesso'})
 
 # Get modalidades for evento
 @app.route('/api/modalidades/<int:evento_id>')
@@ -7671,10 +7674,375 @@ def pagina_teste():
         return f"Erro interno do servidor: {str(e)}", 500
 
 
+#### nova pagina evento ###########################
+
+@app.route('/eventos')
+def eventos_page():
+    """Renderiza a página de cadastro de eventos"""
+    return render_template('eventos.html')
+
+@app.route('/api/eventos', methods=['POST'])
+def criar_evento():
+    """API para criar um novo evento"""
+    try:
+        data = request.get_json()
+        
+        # Validação dos campos obrigatórios
+        campos_obrigatorios = ['titulo', 'datainicio', 'datafim', 'dslink', 'idorganizador']
+        for campo in campos_obrigatorios:
+            if not data.get(campo):
+                return jsonify({'error': f'Campo {campo} é obrigatório'}), 400
+        
+        # Validação e limpeza do dslink
+        dslink = data.get('dslink', '').lower()
+        dslink = re.sub(r'[^a-z0-9-]', '', dslink)
+        
+        if not dslink:
+            return jsonify({'error': 'Link do evento deve conter apenas letras, números e hífen'}), 400
+        
+        # Verificar se o dslink já existe
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT COUNT(*) FROM EVENTO1 WHERE DSLINK = %s", (dslink,))
+        if cursor.fetchone()[0] > 0:
+            cursor.close()
+            return jsonify({'error': 'Este link já está em uso. Escolha outro.'}), 400
+        
+        # Validação de datas
+        try:
+            data_inicio = datetime.strptime(data['datainicio'], '%Y-%m-%d').date()
+            data_fim = datetime.strptime(data['datafim'], '%Y-%m-%d').date()
+            
+            if data_fim < data_inicio:
+                return jsonify({'error': 'Data de fim deve ser posterior à data de início'}), 400
+                
+            # Validação de datas de inscrição (se fornecidas)
+            if data.get('inicioinscricao') and data.get('fiminscricao'):
+                inicio_inscricao = datetime.strptime(data['inicioinscricao'], '%Y-%m-%d').date()
+                fim_inscricao = datetime.strptime(data['fiminscricao'], '%Y-%m-%d').date()
+                
+                if fim_inscricao < inicio_inscricao:
+                    return jsonify({'error': 'Data fim de inscrição deve ser posterior ao início'}), 400
+                    
+        except ValueError:
+            return jsonify({'error': 'Formato de data inválido'}), 400
+        
+        # Inserir evento no banco
+        query = """
+            INSERT INTO EVENTO1 
+            (TITULO, SUBTITULO, DATAINICIO, DATAFIM, HRINICIO, DSLINK, 
+             DESCRICAO, REGULAMENTO, INICIOINSCRICAO, FIMINSCRICAO, 
+             ENDERECO, CIDADEUF, IDORGANIZADOR, OBS, ATIVO)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        valores = (
+            data.get('titulo', '').strip(),
+            data.get('subtitulo', '').strip() if data.get('subtitulo') else None,
+            data['datainicio'],
+            data['datafim'],
+            data.get('hrinicio') if data.get('hrinicio') else None,
+            dslink,
+            data.get('descricao', ''),
+            data.get('regulamento', ''),
+            data.get('inicioinscricao') if data.get('inicioinscricao') else None,
+            data.get('fiminscricao') if data.get('fiminscricao') else None,
+            data.get('endereco', '').strip() if data.get('endereco') else None,
+            data.get('cidadeuf', '').strip() if data.get('cidadeuf') else None,
+            int(data['idorganizador']),
+            data.get('obs', '').strip() if data.get('obs') else None,
+            data.get('ativo', 'S')
+        )
+        
+        cursor.execute(query, valores)
+        mysql.connection.commit()
+        evento_id = cursor.lastrowid
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Evento cadastrado com sucesso!',
+            'evento_id': evento_id,
+            'link_evento': f'/evento/{dslink}'
+        }), 201
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
+
+@app.route('/api/eventos/<int:evento_id>', methods=['GET'])
+def obter_evento(evento_id):
+    """API para obter dados de um evento específico"""
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+            SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
+                   HRINICIO, DSLINK, DESCRICAO, REGULAMENTO, 
+                   INICIOINSCRICAO, FIMINSCRICAO, ENDERECO, CIDADEUF, 
+                   IDORGANIZADOR, OBS, ATIVO
+            FROM EVENTO1 
+            WHERE IDEVENTO = %s
+        """
+        cursor.execute(query, (evento_id,))
+        evento = cursor.fetchone()
+        cursor.close()
+        
+        if not evento:
+            return jsonify({'error': 'Evento não encontrado'}), 404
+        
+        # Converter para dicionário
+        campos = ['idevento', 'titulo', 'subtitulo', 'datainicio', 'datafim',
+                 'hrinicio', 'dslink', 'descricao', 'regulamento',
+                 'inicioinscricao', 'fiminscricao', 'endereco', 'cidadeuf',
+                 'idorganizador', 'obs', 'ativo']
+        
+        evento_dict = {}
+        for i, campo in enumerate(campos):
+            valor = evento[i]
+            # Converter datas para string
+            if campo in ['datainicio', 'datafim', 'inicioinscricao', 'fiminscricao'] and valor:
+                evento_dict[campo] = valor.strftime('%Y-%m-%d')
+            else:
+                evento_dict[campo] = valor
+        
+        return jsonify(evento_dict)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/eventos', methods=['GET'])
+def listar_eventos():
+    """API para listar eventos de um organizador"""
+    try:
+        idorganizador = request.args.get('idorganizador')
+        ativo = request.args.get('ativo', 'S')  # Padrão é listar apenas eventos ativos
+        
+        if not idorganizador:
+            return jsonify({'error': 'ID do organizador é obrigatório'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Query base
+        query = """
+            SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
+                   HRINICIO, DSLINK, ENDERECO, CIDADEUF, ATIVO
+            FROM EVENTO1 
+            WHERE IDORGANIZADOR = %s
+        """
+        params = [idorganizador]
+        
+        # Filtro por status ativo (se especificado)
+        if ativo and ativo.upper() in ['S', 'N']:
+            query += " AND ATIVO = %s"
+            params.append(ativo.upper())
+        
+        query += " ORDER BY DATAINICIO DESC"
+        
+        cursor.execute(query, params)
+        eventos = cursor.fetchall()
+        cursor.close()
+        
+        # Converter para lista de dicionários
+        eventos_list = []
+        for evento in eventos:
+            evento_dict = {
+                'idevento': evento[0],
+                'titulo': evento[1],
+                'subtitulo': evento[2],
+                'datainicio': evento[3].strftime('%Y-%m-%d') if evento[3] else None,
+                'datafim': evento[4].strftime('%Y-%m-%d') if evento[4] else None,
+                'hrinicio': evento[5],
+                'dslink': evento[6],
+                'endereco': evento[7],
+                'cidadeuf': evento[8],
+                'ativo': evento[9]
+            }
+            eventos_list.append(evento_dict)
+        
+        return jsonify(eventos_list)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/eventos/<int:evento_id>', methods=['PUT'])
+def atualizar_evento(evento_id):
+    """API para atualizar um evento existente"""
+    try:
+        data = request.get_json()
+        
+        # Verificar se o evento existe e pertence ao organizador
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT IDORGANIZADOR, DSLINK 
+            FROM EVENTO1 
+            WHERE IDEVENTO = %s
+        """, (evento_id,))
+        
+        evento_atual = cursor.fetchone()
+        if not evento_atual:
+            cursor.close()
+            return jsonify({'error': 'Evento não encontrado'}), 404
+        
+        # Verificar se o organizador é o mesmo (opcional - depende da regra de negócio)
+        if data.get('idorganizador') and int(data['idorganizador']) != evento_atual[0]:
+            cursor.close()
+            return jsonify({'error': 'Você não tem permissão para editar este evento'}), 403
+        
+        # Validação e limpeza do dslink se fornecido
+        dslink_atual = evento_atual[1]
+        if 'dslink' in data:
+            dslink = data['dslink'].lower()
+            dslink = re.sub(r'[^a-z0-9-]', '', dslink)
+            
+            if not dslink:
+                cursor.close()
+                return jsonify({'error': 'Link do evento deve conter apenas letras, números e hífen'}), 400
+            
+            # Verificar se o novo dslink já existe (exceto no evento atual)
+            if dslink != dslink_atual:
+                cursor.execute("SELECT COUNT(*) FROM EVENTO1 WHERE DSLINK = %s AND IDEVENTO != %s", (dslink, evento_id))
+                if cursor.fetchone()[0] > 0:
+                    cursor.close()
+                    return jsonify({'error': 'Este link já está em uso. Escolha outro.'}), 400
+            
+            data['dslink'] = dslink
+        
+        # Validação de datas
+        if 'datainicio' in data and 'datafim' in data:
+            try:
+                data_inicio = datetime.strptime(data['datainicio'], '%Y-%m-%d').date()
+                data_fim = datetime.strptime(data['datafim'], '%Y-%m-%d').date()
+                
+                if data_fim < data_inicio:
+                    cursor.close()
+                    return jsonify({'error': 'Data de fim deve ser posterior à data de início'}), 400
+                    
+            except ValueError:
+                cursor.close()
+                return jsonify({'error': 'Formato de data inválido'}), 400
+        
+        # Construir query de update dinamicamente
+        campos_update = []
+        valores = []
+        
+        campos_permitidos = [
+            'titulo', 'subtitulo', 'datainicio', 'datafim', 'hrinicio',
+            'dslink', 'descricao', 'regulamento', 'inicioinscricao',
+            'fiminscricao', 'endereco', 'cidadeuf', 'obs', 'ativo'
+        ]
+        
+        for campo in campos_permitidos:
+            if campo in data:
+                campos_update.append(f"{campo.upper()} = %s")
+                valores.append(data[campo])
+        
+        if not campos_update:
+            cursor.close()
+            return jsonify({'error': 'Nenhum campo válido fornecido para atualização'}), 400
+        
+        valores.append(evento_id)
+        query = f"UPDATE EVENTO1 SET {', '.join(campos_update)} WHERE IDEVENTO = %s"
+        
+        cursor.execute(query, valores)
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Evento atualizado com sucesso!'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
+
+@app.route('/api/eventos/<int:evento_id>', methods=['DELETE'])
+def deletar_evento(evento_id):
+    """API para deletar (desativar) um evento"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Verificar se o evento existe
+        cursor.execute("SELECT COUNT(*) FROM EVENTO1 WHERE IDEVENTO = %s", (evento_id,))
+        if cursor.fetchone()[0] == 0:
+            cursor.close()
+            return jsonify({'error': 'Evento não encontrado'}), 404
+        
+        # Em vez de deletar fisicamente, apenas desativar
+        cursor.execute("UPDATE EVENTO1 SET ATIVO = 'N' WHERE IDEVENTO = %s", (evento_id,))
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Evento desativado com sucesso!'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
+
+@app.route('/api/eventos/verificar-link', methods=['POST'])
+def verificar_link():
+    """API para verificar se um dslink está disponível"""
+    try:
+        data = request.get_json()
+        dslink = data.get('dslink', '').lower()
+        dslink = re.sub(r'[^a-z0-9-]', '', dslink)
+        
+        if not dslink:
+            return jsonify({
+                'disponivel': False,
+                'message': 'Link deve conter apenas letras, números e hífen'
+            })
+        
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT COUNT(*) FROM EVENTO1 WHERE DSLINK = %s", (dslink,))
+        count = cursor.fetchone()[0]
+        cursor.close()
+        
+        disponivel = count == 0
+        message = 'Link disponível!' if disponivel else 'Este link já está em uso'
+        
+        return jsonify({
+            'disponivel': disponivel,
+            'message': message,
+            'dslink': dslink
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/evento/<dslink>')
+def visualizar_evento(dslink):
+    """Página pública para visualizar um evento"""
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+            SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
+                   HRINICIO, DESCRICAO, REGULAMENTO, ENDERECO, CIDADEUF,
+                   INICIOINSCRICAO, FIMINSCRICAO, ATIVO
+            FROM EVENTO1 
+            WHERE DSLINK = %s AND ATIVO = 'S'
+        """
+        cursor.execute(query, (dslink,))
+        evento = cursor.fetchone()
+        cursor.close()
+        
+        if not evento:
+            return render_template('404.html', message='Evento não encontrado'), 404
+        
+        # Você pode criar um template específico para exibir o evento
+        return render_template('evento_publico.html', evento=evento)
+        
+    except Exception as e:
+        return render_template('500.html', error=str(e)), 500
+
+
+
+###############################
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
