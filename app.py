@@ -7686,7 +7686,6 @@ def criar_evento():
     """API para criar um novo evento"""
     try:
         data = request.get_json()
-		id_organizador = 2
         
         # Validação dos campos obrigatórios
         campos_obrigatorios = ['titulo', 'datainicio', 'datafim', 'dslink', 'idorganizador']
@@ -7749,7 +7748,7 @@ def criar_evento():
             data.get('fiminscricao') if data.get('fiminscricao') else None,
             data.get('endereco', '').strip() if data.get('endereco') else None,
             data.get('cidadeuf', '').strip() if data.get('cidadeuf') else None,
-            id_organizador,  #int(data['idorganizador']),
+            int(data['idorganizador']),
             data.get('obs', '').strip() if data.get('obs') else None,
             data.get('ativo', 'S')
         )
@@ -7813,7 +7812,7 @@ def obter_evento(evento_id):
 def listar_eventos():
     """API para listar eventos de um organizador"""
     try:
-        idorganizador = 2 #request.args.get('idorganizador')
+        request.args.get('idorganizador')
         ativo = request.args.get('ativo', 'S')  # Padrão é listar apenas eventos ativos
         
         if not idorganizador:
@@ -7867,8 +7866,7 @@ def listar_eventos():
 def atualizar_evento(evento_id):
     """API para atualizar um evento existente"""
     try:
-        #data = request.get_json()
-        id_organizador = 2
+        data = request.get_json()
 		
         # Verificar se o evento existe e pertence ao organizador
         cursor = mysql.connection.cursor()
@@ -7884,9 +7882,9 @@ def atualizar_evento(evento_id):
             return jsonify({'error': 'Evento não encontrado'}), 404
         
         # Verificar se o organizador é o mesmo (opcional - depende da regra de negócio)
-        #if data.get('idorganizador') and int(data['idorganizador']) != evento_atual[0]:
-        #    cursor.close()
-        #    return jsonify({'error': 'Você não tem permissão para editar este evento'}), 403
+        if data.get('idorganizador') and int(data['idorganizador']) != evento_atual[0]:
+            cursor.close()
+            return jsonify({'error': 'Você não tem permissão para editar este evento'}), 403
         
         # Validação e limpeza do dslink se fornecido
         dslink_atual = evento_atual[1]
@@ -8044,6 +8042,7 @@ def visualizar_evento(dslink):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
