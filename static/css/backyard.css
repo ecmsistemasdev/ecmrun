@@ -377,7 +377,7 @@ body {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: linear-gradient(135deg, #1d72cc 0%, #0f4f8c 100%);
+        background: linear-gradient(135deg, #e97618 0%, #a04c07 100%);
         color: white;
         gap: 30px;
         box-sizing: border-box; /* Importante para respeitar a largura */
@@ -607,4 +607,5 @@ body {
     content: '🔒 ';
 
 }
+
 
