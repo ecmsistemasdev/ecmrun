@@ -354,6 +354,33 @@ body {
     .main-content {
         order: 1;
     }
+    
+    /* Ajuste do header do evento para alinhamento com o container */
+    .event-header {
+        max-width: 1200px; /* Mesma largura do container principal */
+        margin: 0 auto; /* Centraliza o header */
+        padding: 30px 20px; /* Ajusta o padding para ficar igual ao container */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #1d72cc 0%, #0f4f8c 100%);
+        color: white;
+        gap: 30px;
+        box-sizing: border-box; /* Importante para respeitar a largura */
+    }
+    
+    /* Garantir que o conteúdo do header se alinhe corretamente */
+    .event-info {
+        flex: 2; /* Dá mais espaço para o texto */
+        max-width: 60%;
+    }
+    
+    .event-banner {
+        flex: 1; /* Espaço menor para o banner */
+        max-width: 40%;
+        display: flex;
+        justify-content: flex-end; /* Alinha o banner à direita */
+    }
 }
 
 @media (max-width: 768px) {
@@ -564,4 +591,5 @@ body {
 
 .status-encerrado::before {
     content: '🔒 ';
+
 }
