@@ -1,540 +1,628 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciamento de Eventos</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <title>Cadastro de Evento</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        * {
             margin: 0;
-            padding: 15px;
-            background-color: #f0f0f0;
-            min-height: 100vh;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .logo-container {
-            width: 100%;
-            height: 60px;
-            background-color: white;
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
             display: flex;
-            justify-content: flex-start;
-            padding-left: 20px;
             align-items: center;
-            margin-bottom: 10px;
-        }        
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
         .logo {
-            width: 60px;
-            height: 60px;
+            height: 50px;
+            width: auto;
         }
 
-        form {
-            width: 50%;
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .main-form {
             background: white;
-            padding: 20px;
-            border-radius: 7px;
-            min-width: 300px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
 
-        .form-title {
-            background-color: #647e99;
-            color: white;
-            padding: 10px;
-            margin: -20px -20px 20px -20px;
-            border-radius: 7px 7px 0 0;
-            font-weight: bold;
-            font-size: 18px;
-            text-align: center;
-        }
-
         .form-group {
-            margin-bottom: 5px;
-            padding-top: 5px;
+            margin-bottom: 20px;
         }
 
-        input[type="text"],
-        input[type="datetime-local"],
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 14px;
-            height: 40px;
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 2px;
-            color: #333;
-            font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
         }
 
-        .info-table {
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        textarea {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
         }
 
-        .info-table th {
-            background-color: #647e99;
-            color: white;
-            padding: 10px;
-            text-align: left;
-            font-size: 14px;
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        input[type="time"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
         }
 
-        .info-table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-        }
-
-        .divider {
-            height: 1px;
-            background-color: #4376ac;
-            margin: 25px 0;
-        }
-
-        button {
-            background-color: #4376ac;
-            color: white;
-            margin-top: 25px;
-            padding: 12px 30px;
+        .btn {
+            padding: 12px 24px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            width: auto;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
             display: inline-block;
+            text-align: center;
         }
 
-        button:hover {
-            background-color: #0056b3;
+        .btn-primary {
+            background: #3498db;
+            color: white;
         }
 
-        /* Modal styles */
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .editor-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
         .modal {
             display: none;
             position: fixed;
-            top: 0;
+            z-index: 1000;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
-            padding: 15px;
-            box-sizing: border-box;
         }
 
         .modal-content {
             background-color: white;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 5px;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
             width: 90%;
-            max-width: 400px;
-            position: relative;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
-        .modal-content .form-group {
-            margin-bottom: 15px;
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
         }
 
-        .modal-content input[type="text"] {
-            margin-bottom: 10px;
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
         }
 
+        .close:hover {
+            color: #333;
+        }
+
+        .editor-container {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            min-height: 300px;
+        }
+
+        .editor-toolbar {
+            background: #f8f9fa;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .editor-content {
+            padding: 15px;
+            min-height: 250px;
+            outline: none;
+        }
+
+        .toolbar-btn {
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .toolbar-btn:hover {
+            background: #e9ecef;
+        }
+
+        .toolbar-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsividade */
         @media (max-width: 768px) {
-            form {
-                width: calc(100% - 35px);
-                margin: 0px 20px 20px 20px;
-            }
-            .table-container {
-                overflow-x: auto;
-            }
-
-            .modal {
+            .container {
                 padding: 10px;
             }
 
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .main-form {
+                padding: 20px;
+            }
+
             .modal-content {
-                margin: 5% auto;
-                padding: 15px;
+                margin: 10% auto;
                 width: 95%;
+                padding: 20px;
             }
 
-            .modal-content .form-group {
-                margin-bottom: 10px;
+            .editor-buttons {
+                justify-content: center;
             }
 
-            .modal-content input[type="text"] {
-                margin-bottom: 5px;
-            }         
-        }
-        
-        .close {
-            position: absolute;
-            right: 20px;
-            top: 10px;
-            cursor: pointer;
-            font-size: 28px;
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .toolbar-btn {
+                padding: 8px 12px;
+                font-size: 16px;
+            }
         }
 
-        .footer {
-            background-color: white;
-            padding: 20px 0;
-            margin-top: auto;
-            text-align: center;
-            width: 100%;
-        }
+        @media (max-width: 480px) {
+            .editor-toolbar {
+                gap: 3px;
+            }
 
-        .footer-logo {
-            height: 60px;
-            width: auto;
-            margin-bottom: 10px;
-        }
-
-        .footer-text {
-            font-size: 0.7em;
-            color: #333;
-            margin: 2px 0;
-        }
-
-        a {
-            color: #4376ac;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
+            .toolbar-btn {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="logo-container">
-        <img src="/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+    <div class="container">
+        <div class="header">
+            <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+            <h1>Cadastro de Evento</h1>
+        </div>
+
+        <div id="messages"></div>
+
+        <form id="eventoForm" class="main-form">
+            <div class="form-group">
+                <label for="titulo">Título do Evento *</label>
+                <input type="text" id="titulo" name="titulo" required maxlength="80">
+            </div>
+
+            <div class="form-group">
+                <label for="subtitulo">Subtítulo</label>
+                <input type="text" id="subtitulo" name="subtitulo" maxlength="100">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="datainicio">Data de Início *</label>
+                    <input type="date" id="datainicio" name="datainicio" required>
+                </div>
+                <div class="form-group">
+                    <label for="datafim">Data de Fim *</label>
+                    <input type="date" id="datafim" name="datafim" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="hrinicio">Horário de Início</label>
+                <input type="time" id="hrinicio" name="hrinicio">
+            </div>
+
+            <div class="form-group">
+                <label for="dslink">Link do Evento (apenas letras, números e hífen) *</label>
+                <input type="text" id="dslink" name="dslink" required maxlength="25" placeholder="ex: meu-evento-2024">
+                <small style="color: #666; font-size: 14px;">Este será seu link: meusite.com.br/<span id="linkPreview"></span></small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="inicioinscricao">Início das Inscrições</label>
+                    <input type="date" id="inicioinscricao" name="inicioinscricao">
+                </div>
+                <div class="form-group">
+                    <label for="fiminscricao">Fim das Inscrições</label>
+                    <input type="date" id="fiminscricao" name="fiminscricao">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="endereco">Endereço</label>
+                <input type="text" id="endereco" name="endereco" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <label for="cidadeuf">Cidade/UF</label>
+                <input type="text" id="cidadeuf" name="cidadeuf" maxlength="80">
+            </div>
+
+            <div class="editor-buttons">
+                <button type="button" class="btn btn-secondary" onclick="openModal('descricaoModal')">
+                    Editar Descrição
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="openModal('regulamentoModal')">
+                    Editar Regulamento
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label for="obs">Observações</label>
+                <textarea id="obs" name="obs" rows="3" maxlength="200"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Salvar Evento</button>
+            </div>
+        </form>
     </div>
 
-    <form id="eventoForm">
-        <div class="form-title">Gerenciamento de Eventos</div>
-        
-        <div class="form-group">
-            <label for="evento">Selecione o Evento:</label>
-            <select id="evento" name="evento">
-                <option value="">Selecione um evento</option>
-            </select>
-        </div>
-
-        <div id="eventoDetails" style="display: none;">
-            <div class="form-group">
-                <label for="descricao">Descrição:</label>
-                <input type="text" id="descricao" name="descricao">
-            </div>
-
-            <div class="form-group">
-                <label for="dtinicio">Data Início:</label>
-                <input type="text" id="dtinicio" name="dtinicio">
-            </div>
-
-            <div class="form-group">
-                <label for="dtfim">Data Fim:</label>
-                <input type="text" id="dtfim" name="dtfim">
-            </div>
-
-            <div class="form-group">
-                <label for="hrinicio">Hora Início:</label>
-                <input type="text" id="hrinicio" name="hrinicio">
-            </div>
-
-            <div class="form-group">
-                <label for="inicio_inscricao">Início Inscrição:</label>
-                <input type="text" id="inicio_inscricao" name="inicio_inscricao">
-            </div>
-
-            <div class="form-group">
-                <label for="fim_inscricao">Fim Inscrição:</label>
-                <input type="text" id="fim_inscricao" name="fim_inscricao">
-            </div>
-
-            <div class="form-group">
-                <label for="inicio_inscricao_ext">Início Inscrição Estendida:</label>
-                <input type="text" id="inicio_inscricao_ext" name="inicio_inscricao_ext">
-            </div>
-
-            <div class="form-group">
-                <label for="fim_inscricao_ext">Fim Inscrição Estendida:</label>
-                <input type="text" id="fim_inscricao_ext" name="fim_inscricao_ext">
-            </div>
-
-            <button type="button" id="saveEvento">Salvar Alterações</button>
-
-            <div class="divider"></div>
-
-            <div class="table-container">
-                <table class="info-table">
-                    <thead>
-                        <tr>
-                            <th>Descrição</th>
-                            <th>Valor Inscrição</th>
-                            <th>Taxa</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="modalidadesTable">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </form>
-
-    <!-- Modal -->
-    <div id="editModal" class="modal">
+    <!-- Modal Descrição -->
+    <div id="descricaoModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <div class="form-title">Editar Modalidade</div>
-            <form id="modalidadeForm">
-                <input type="hidden" id="editIditem">
-                <div class="form-group">
-                    <label for="editDescricao">Descrição:</label>
-                    <input type="text" id="editDescricao" name="editDescricao">
+            <div class="modal-header">
+                <h2>Editar Descrição do Evento</h2>
+                <span class="close" onclick="closeModal('descricaoModal')">&times;</span>
+            </div>
+            <div class="editor-container">
+                <div class="editor-toolbar">
+                    <button type="button" class="toolbar-btn" onclick="formatText('bold')"><b>B</b></button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('italic')"><i>I</i></button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('underline')"><u>U</u></button>
+                    <select onchange="formatText('fontName', this.value)" class="toolbar-btn">
+                        <option value="">Fonte</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                    <select onchange="formatText('fontSize', this.value)" class="toolbar-btn">
+                        <option value="">Tamanho</option>
+                        <option value="1">8pt</option>
+                        <option value="2">10pt</option>
+                        <option value="3">12pt</option>
+                        <option value="4">14pt</option>
+                        <option value="5">18pt</option>
+                        <option value="6">24pt</option>
+                        <option value="7">36pt</option>
+                    </select>
+                    <input type="color" class="color-picker" onchange="formatText('foreColor', this.value)" title="Cor do texto">
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyLeft')">⬅</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyCenter')">⬌</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyRight')">➡</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('insertUnorderedList')">• Lista</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('insertOrderedList')">1. Lista</button>
                 </div>
-                <div class="form-group">
-                    <label for="editVlinscricao">Valor Inscrição:</label>
-                    <input type="text" id="editVlinscricao" name="editVlinscricao">
-                </div>
-                <div class="form-group">
-                    <label for="editVltaxa">Taxa:</label>
-                    <input type="text" id="editVltaxa" name="editVltaxa">
-                </div>
-                <button type="button" id="saveModalidade">Salvar</button>
-            </form>
+                <div id="descricaoEditor" class="editor-content" contenteditable="true" 
+                     placeholder="Digite a descrição do evento aqui..."></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-success" onclick="saveEditor('descricao')">Salvar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('descricaoModal')">Cancelar</button>
+            </div>
         </div>
     </div>
 
-    <footer class="footer">
-        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
-        <p class="footer-text">ECM Run - 2025, todos os direitos reservados</p>
-        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
-    </footer>
+    <!-- Modal Regulamento -->
+    <div id="regulamentoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Regulamento do Evento</h2>
+                <span class="close" onclick="closeModal('regulamentoModal')">&times;</span>
+            </div>
+            <div class="editor-container">
+                <div class="editor-toolbar">
+                    <button type="button" class="toolbar-btn" onclick="formatText('bold')"><b>B</b></button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('italic')"><i>I</i></button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('underline')"><u>U</u></button>
+                    <select onchange="formatText('fontName', this.value)" class="toolbar-btn">
+                        <option value="">Fonte</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                    <select onchange="formatText('fontSize', this.value)" class="toolbar-btn">
+                        <option value="">Tamanho</option>
+                        <option value="1">8pt</option>
+                        <option value="2">10pt</option>
+                        <option value="3">12pt</option>
+                        <option value="4">14pt</option>
+                        <option value="5">18pt</option>
+                        <option value="6">24pt</option>
+                        <option value="7">36pt</option>
+                    </select>
+                    <input type="color" class="color-picker" onchange="formatText('foreColor', this.value)" title="Cor do texto">
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyLeft')">⬅</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyCenter')">⬌</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyRight')">➡</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('insertUnorderedList')">• Lista</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('insertOrderedList')">1. Lista</button>
+                </div>
+                <div id="regulamentoEditor" class="editor-content" contenteditable="true" 
+                     placeholder="Digite o regulamento do evento aqui..."></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-success" onclick="saveEditor('regulamento')">Salvar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('regulamentoModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        $(document).ready(function() {
-            // Apply masks
-            $('#dtinicio, #dtfim').mask('00/00/0000');
-            $('#hrinicio').mask('00:00');
-            $('#inicio_inscricao, #fim_inscricao').mask('00/00/0000 00:00:00');
-            //$('#editVlinscricao, #editVltaxa').mask('#.##0,00', {reverse: true});
-            $('#editVlinscricao, #editVltaxa').mask('#.##0,00', {
-                reverse: true,
-                onChange: function(value, e) {
-                    // Formata o valor quando sair do campo
-                    var cleanValue = value.replace(/\D/g, '');
-                    if (cleanValue.length === 1) {
-                        cleanValue = '00' + cleanValue;
-                    } else if (cleanValue.length === 2) {
-                        cleanValue = '0' + cleanValue;
-                    }
-                    return cleanValue;
-                }
-            });            
+        // Variáveis globais para armazenar conteúdo dos editores
+        let descricaoContent = '';
+        let regulamentoContent = '';
 
-            // Load eventos
-            $.ajax({
-                url: '/api/eventos',
-                method: 'GET',
-                success: function(data) {
-                    const select = $('#evento');
-                    select.empty();
-                    select.append('<option value="">Selecione um evento</option>');
-                    data.forEach(evento => {
-                        select.append(`<option value="${evento.IDEVENTO}">${evento.DESCRICAO}</option>`);
-                    });
-                },
-                error: function(xhr, status, error) {
-                    console.error('Erro ao carregar eventos:', error);
-                    alert('Erro ao carregar eventos. Por favor, tente novamente.');
-                }
-            });
+        // Função para validar e formatar o campo dslink
+        document.getElementById('dslink').addEventListener('input', function(e) {
+            let value = e.target.value;
+            // Remove caracteres não permitidos e converte para minúsculo
+            value = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+            e.target.value = value;
+            
+            // Atualiza o preview do link
+            document.getElementById('linkPreview').textContent = value || '[seu-link]';
+        });
 
-            // Handle evento selection
-            $('#evento').change(function() {
-                const eventoId = $(this).val();
-                if (eventoId) {
-                    $.ajax({
-                        url: `/api/eventos/${eventoId}`,
-                        method: 'GET',
-                        success: function(data) {
-                            $('#descricao').val(data.DESCRICAO);
-                            $('#dtinicio').val(data.DTINICIO);
-                            $('#dtfim').val(data.DTFIM);
-                            $('#hrinicio').val(data.HRINICIO);
-                            $('#inicio_inscricao').val(data.INICIO_INSCRICAO);
-                            $('#fim_inscricao').val(data.FIM_INSCRICAO);
-                            $('#inicio_inscricao_ext').val(data.INICIO_INSCRICAO_EXT);
-                            $('#fim_inscricao_ext').val(data.FIM_INSCRICAO_EXT);
-                            $('#eventoDetails').show();
-                            loadModalidades(eventoId);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Erro ao carregar evento:', error);
-                            alert('Erro ao carregar dados do evento. Por favor, tente novamente.');
-                        }
-                    });
+        // Funções do modal
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Funções do editor de texto
+        function formatText(command, value = null) {
+            document.execCommand(command, false, value);
+        }
+
+        function saveEditor(type) {
+            if (type === 'descricao') {
+                descricaoContent = document.getElementById('descricaoEditor').innerHTML;
+                closeModal('descricaoModal');
+                showMessage('Descrição salva com sucesso!', 'success');
+            } else if (type === 'regulamento') {
+                regulamentoContent = document.getElementById('regulamentoEditor').innerHTML;
+                closeModal('regulamentoModal');
+                showMessage('Regulamento salvo com sucesso!', 'success');
+            }
+        }
+
+        // Função para mostrar mensagens
+        function showMessage(message, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageClass = type === 'success' ? 'success-message' : 'error-message';
+            messagesDiv.innerHTML = `<div class="${messageClass}">${message}</div>`;
+            
+            // Remove a mensagem após 5 segundos
+            setTimeout(() => {
+                messagesDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // Função para obter ID do organizador do localStorage
+        function getIdOrganizador() {
+            // Simular localStorage (já que não está disponível aqui)
+            // Em uma aplicação real, seria: return localStorage.getItem('idorganizador');
+            return '1'; // Valor simulado
+        }
+
+        // Submissão do formulário
+        document.getElementById('eventoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = {};
+            
+            // Coletar dados do formulário
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            // Adicionar conteúdos dos editores
+            data.descricao = descricaoContent;
+            data.regulamento = regulamentoContent;
+            data.idorganizador = getIdOrganizador();
+            data.ativo = 'S'; // Padrão ativo
+
+            // Validações
+            if (!data.titulo || !data.datainicio || !data.datafim || !data.dslink) {
+                showMessage('Por favor, preencha todos os campos obrigatórios.', 'error');
+                return;
+            }
+
+            if (new Date(data.datafim) < new Date(data.datainicio)) {
+                showMessage('A data de fim deve ser posterior à data de início.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/eventos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('Evento cadastrado com sucesso!', 'success');
+                    // Reset form
+                    e.target.reset();
+                    descricaoContent = '';
+                    regulamentoContent = '';
+                    document.getElementById('descricaoEditor').innerHTML = '';
+                    document.getElementById('regulamentoEditor').innerHTML = '';
+                    document.getElementById('linkPreview').textContent = '[seu-link]';
                 } else {
-                    $('#eventoDetails').hide();
+                    showMessage(result.error || 'Erro ao cadastrar evento.', 'error');
                 }
-            });
-
-            function loadModalidades(eventoId) {
-                $.ajax({
-                    url: `/api/modalidades/${eventoId}`,
-                    method: 'GET',
-                    success: function(data) {
-                        const tbody = $('#modalidadesTable');
-                        tbody.empty();
-                        data.forEach(modalidade => {
-                            // Formata os valores para exibição
-                            const vlInscricao = formatarValorBRL(modalidade.VLINSCRICAO);
-                            const vlTaxa = formatarValorBRL(modalidade.VLTAXA);
-                            
-                            tbody.append(`
-                                <tr>
-                                    <td>${modalidade.DESCRICAO}</td>
-                                    <td>R$ ${vlInscricao}</td>
-                                    <td>R$ ${vlTaxa}</td>
-                                    <td><a href="#" class="edit-modalidade" data-id="${modalidade.IDITEM}">Editar</a></td>
-                                </tr>
-                            `);
-                        });
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Erro ao carregar modalidades:', error);
-                        alert('Erro ao carregar modalidades. Por favor, tente novamente.');
-                    }
-                });
+            } catch (error) {
+                showMessage('Erro de conexão. Tente novamente.', 'error');
             }
+        });
 
-            // Função para formatar valores em BRL
-            function formatarValorBRL(valor) {
-                if (typeof valor === 'string') {
-                    valor = parseFloat(valor);
-                }
-                return valor.toFixed(2).replace('.', ',');
-            }
-
-            // Handle modalidade edit
-            $(document).on('click', '.edit-modalidade', function(e) {
-                e.preventDefault();
-                const iditem = $(this).data('id');
-                $.ajax({
-                    url: `/api/modalidade/${iditem}`,
-                    method: 'GET',
-                    success: function(data) {
-                        $('#editIditem').val(data.IDITEM);
-                        $('#editDescricao').val(data.DESCRICAO);
-                        // Formata os valores para exibição
-                        $('#editVlinscricao').val(formatarValorBRL(data.VLINSCRICAO));
-                        $('#editVltaxa').val(formatarValorBRL(data.VLTAXA));
-                        $('#editModal').show();
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Erro ao carregar modalidade:', error);
-                        alert('Erro ao carregar dados da modalidade. Por favor, tente novamente.');
-                    }
-                });
-            });
-
-            // Close modal
-            $('.close').click(function() {
-                $('#editModal').hide();
-            });
-
-            // Save evento changes
-            $('#saveEvento').click(function() {
-                const eventoData = {
-                    IDEVENTO: $('#evento').val(),
-                    DESCRICAO: $('#descricao').val(),
-                    DTINICIO: $('#dtinicio').val(),
-                    DTFIM: $('#dtfim').val(),
-                    HRINICIO: $('#hrinicio').val(),
-                    INICIO_INSCRICAO: $('#inicio_inscricao').val(),
-                    FIM_INSCRICAO: $('#fim_inscricao').val(),
-                    INICIO_INSCRICAO_EXT: $('#inicio_inscricao_ext').val(),
-                    FIM_INSCRICAO_EXT: $('#fim_inscricao_ext').val()
-                };
-
-                $.ajax({
-                    url: '/api/eventos',
-                    method: 'PUT',
-                    data: JSON.stringify(eventoData),
-                    contentType: 'application/json',
-                    success: function(response) {
-                        alert('Evento atualizado com sucesso!');
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Erro ao atualizar evento:', error);
-                        alert('Erro ao atualizar evento. Por favor, tente novamente.');
-                    }
-                });
-            });
-
-            // Save modalidade changes
-            $('#saveModalidade').click(function() {
-                const vlInscricao = $('#editVlinscricao').val().replace(/\./g, '').replace(',', '.');
-                const vlTaxa = $('#editVltaxa').val().replace(/\./g, '').replace(',', '.');
-
-                const modalidadeData = {
-                    IDITEM: $('#editIditem').val(),
-                    DESCRICAO: $('#editDescricao').val(),
-                    VLINSCRICAO: vlInscricao,
-                    VLTAXA: vlTaxa
-                };
-
-                $.ajax({
-                    url: '/api/modalidade',
-                    method: 'PUT',
-                    data: JSON.stringify(modalidadeData),
-                    contentType: 'application/json',
-                    success: function(response) {
-                        $('#editModal').hide();
-                        loadModalidades($('#evento').val());
-                        alert('Modalidade atualizada com sucesso!');
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Erro ao atualizar modalidade:', error);
-                        alert('Erro ao atualizar modalidade. Por favor, tente novamente.');
-                    }
-                });
-            });
-
-            // Close modal when clicking outside
-            $(window).click(function(event) {
-                if ($(event.target).is('.modal')) {
-                    $('.modal').hide();
-                }
-            });
-
-            // Prevent form submission on enter
-            $('form').on('submit', function(e) {
-                e.preventDefault();
-                return false;
-            });
-
-            // Add error handling for masks
-            $('.money').on('input', function() {
-                let value = $(this).val().replace(/\D/g, '');
-                value = (value / 100).toFixed(2);
-                $(this).val(value);
-            });
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Definir data mínima como hoje
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('datainicio').setAttribute('min', today);
+            document.getElementById('datafim').setAttribute('min', today);
+            document.getElementById('inicioinscricao').setAttribute('min', today);
+            document.getElementById('fiminscricao').setAttribute('min', today);
         });
     </script>
 </body>
