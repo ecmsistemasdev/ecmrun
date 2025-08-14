@@ -356,6 +356,19 @@ body {
         order: 1;
     }
     
+    /* Ajuste do logo-container para alinhamento com o container */
+    .logo-container {
+        max-width: 1200px; /* Mesma largura do container principal */
+        margin: 0 auto; /* Centraliza o container do logo */
+        padding: 15px 20px; /* Ajusta o padding para ficar igual ao container */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        box-sizing: border-box; /* Importante para respeitar a largura */
+    }
+    
     /* Ajuste do header do evento para alinhamento com o container */
     .event-header {
         max-width: 1200px; /* Mesma largura do container principal */
@@ -594,3 +607,4 @@ body {
     content: '🔒 ';
 
 }
+
