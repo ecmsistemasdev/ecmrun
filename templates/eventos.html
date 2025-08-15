@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Evento</title>
+    <title>Sistema de Eventos</title>
     <style>
         * {
             margin: 0;
@@ -46,6 +46,109 @@
             font-weight: 600;
         }
 
+        /* Estilos de autenticação */
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .auth-form {
+            text-align: center;
+        }
+
+        .auth-form h2 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        /* Estilos da lista de eventos */
+        .events-list {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .events-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .events-header h2 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+
+        .event-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event-item:last-child {
+            border-bottom: none;
+        }
+
+        .event-info {
+            flex-grow: 1;
+        }
+
+        .event-title {
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .event-details {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .event-status {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #999;
+        }
+
         .main-form {
             background: white;
             padding: 30px;
@@ -72,6 +175,7 @@
         }
 
         input[type="text"],
+        input[type="password"],
         input[type="date"],
         input[type="time"],
         textarea {
@@ -84,6 +188,7 @@
         }
 
         input[type="text"]:focus,
+        input[type="password"]:focus,
         input[type="date"]:focus,
         input[type="time"]:focus,
         textarea:focus {
@@ -131,6 +236,20 @@
             background: #229954;
         }
 
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
         .editor-buttons {
             display: flex;
             gap: 10px;
@@ -151,12 +270,12 @@
 
         .modal-content {
             background-color: white;
-            margin: 5% auto;
+            margin: 2% auto;
             padding: 30px;
             border-radius: 10px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 80vh;
+            width: 95%;
+            max-width: 1000px;
+            max-height: 90vh;
             overflow-y: auto;
         }
 
@@ -184,7 +303,7 @@
         .editor-container {
             border: 2px solid #ddd;
             border-radius: 8px;
-            min-height: 300px;
+            height: 400px;
         }
 
         .editor-toolbar {
@@ -198,8 +317,9 @@
 
         .editor-content {
             padding: 15px;
-            min-height: 250px;
+            height: 350px;
             outline: none;
+            overflow-y: auto;
         }
 
         .toolbar-btn {
@@ -255,6 +375,109 @@
             border: 1px solid #f5c6cb;
         }
 
+        .back-btn {
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .lote-item {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+
+        .lote-item.editing {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .lote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .lote-title {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+
+        .lote-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lote-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .lote-detail {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .lote-detail strong {
+            color: #2c3e50;
+        }
+
+        .lote-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .lote-inputs .form-group {
+            margin-bottom: 10px;
+        }
+
+        .lote-inputs label {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .lote-inputs input {
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .remove-lote-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lote-item-container {
+            position: relative;
+        }
+
         /* Responsividade */
         @media (max-width: 768px) {
             .container {
@@ -281,7 +504,7 @@
             }
 
             .modal-content {
-                margin: 10% auto;
+                margin: 5% auto;
                 width: 95%;
                 padding: 20px;
             }
@@ -298,6 +521,25 @@
                 padding: 8px 12px;
                 font-size: 16px;
             }
+
+            .event-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .event-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .lote-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .lote-details {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 480px) {
@@ -309,90 +551,144 @@
                 padding: 6px 8px;
                 font-size: 12px;
             }
+
+            .auth-container {
+                margin: 20px auto;
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
-            <h1>Cadastro de Evento</h1>
+        <!-- Tela de Login -->
+        <div id="authScreen">
+            <div class="auth-container">
+                <form id="authForm" class="auth-form">
+                    <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo" style="margin-bottom: 20px;">
+                    <h2>Acesso Restrito</h2>
+                    <div class="form-group">
+                        <input type="password" id="senha" placeholder="Digite a senha" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
+                </form>
+            </div>
         </div>
 
-        <div id="messages"></div>
-
-        <form id="eventoForm" class="main-form">
-            <div class="form-group">
-                <label for="titulo">Título do Evento *</label>
-                <input type="text" id="titulo" name="titulo" required maxlength="80">
+        <!-- Tela Principal -->
+        <div id="mainScreen" class="hidden">
+            <div class="header">
+                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+                <h1>Sistema de Eventos</h1>
+                <button type="button" class="btn btn-secondary" onclick="logout()">Sair</button>
             </div>
 
-            <div class="form-group">
-                <label for="subtitulo">Subtítulo</label>
-                <input type="text" id="subtitulo" name="subtitulo" maxlength="100">
-            </div>
+            <div id="messages"></div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="datainicio">Data de Início *</label>
-                    <input type="date" id="datainicio" name="datainicio" required>
-                </div>
-                <div class="form-group">
-                    <label for="datafim">Data de Fim *</label>
-                    <input type="date" id="datafim" name="datafim" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="hrinicio">Horário de Início</label>
-                <input type="time" id="hrinicio" name="hrinicio">
-            </div>
-
-            <div class="form-group">
-                <label for="dslink">Link do Evento (apenas letras, números e hífen) *</label>
-                <input type="text" id="dslink" name="dslink" required maxlength="25" placeholder="ex: meu-evento-2024">
-                <small style="color: #666; font-size: 14px;">Este será seu link: meusite.com.br/<span id="linkPreview"></span></small>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="inicioinscricao">Início das Inscrições</label>
-                    <input type="date" id="inicioinscricao" name="inicioinscricao">
-                </div>
-                <div class="form-group">
-                    <label for="fiminscricao">Fim das Inscrições</label>
-                    <input type="date" id="fiminscricao" name="fiminscricao">
+            <!-- Lista de Eventos -->
+            <div id="eventsListScreen">
+                <div class="events-list">
+                    <div class="events-header">
+                        <h2>Meus Eventos</h2>
+                        <button type="button" class="btn btn-success" onclick="showCreateForm()">
+                            + Novo Evento
+                        </button>
+                    </div>
+                    <div id="eventsList">
+                        <!-- Lista será carregada via JavaScript -->
+                    </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="endereco">Endereço</label>
-                <input type="text" id="endereco" name="endereco" maxlength="100">
-            </div>
+            <!-- Formulário de Evento -->
+            <div id="eventFormScreen" class="hidden">
+                <div class="back-btn">
+                    <button type="button" class="btn btn-secondary" onclick="showEventsList()">
+                        ← Voltar para Lista
+                    </button>
+                </div>
 
-            <div class="form-group">
-                <label for="cidadeuf">Cidade/UF</label>
-                <input type="text" id="cidadeuf" name="cidadeuf" maxlength="80">
-            </div>
+                <form id="eventoForm" class="main-form">
+                    <h2 id="formTitle">Novo Evento</h2>
+                    <input type="hidden" id="eventoId" name="eventoId">
+                    
+                    <div class="form-group">
+                        <label for="titulo">Título do Evento *</label>
+                        <input type="text" id="titulo" name="titulo" required maxlength="80">
+                    </div>
 
-            <div class="editor-buttons">
-                <button type="button" class="btn btn-secondary" onclick="openModal('descricaoModal')">
-                    Editar Descrição
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="openModal('regulamentoModal')">
-                    Editar Regulamento
-                </button>
-            </div>
+                    <div class="form-group">
+                        <label for="subtitulo">Subtítulo</label>
+                        <input type="text" id="subtitulo" name="subtitulo" maxlength="100">
+                    </div>
 
-            <div class="form-group">
-                <label for="obs">Observações</label>
-                <textarea id="obs" name="obs" rows="3" maxlength="200"></textarea>
-            </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="datainicio">Data de Início *</label>
+                            <input type="date" id="datainicio" name="datainicio" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="datafim">Data de Fim *</label>
+                            <input type="date" id="datafim" name="datafim" required>
+                        </div>
+                    </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-success">Salvar Evento</button>
+                    <div class="form-group">
+                        <label for="hrinicio">Horário de Início</label>
+                        <input type="time" id="hrinicio" name="hrinicio">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dslink">Link do Evento (apenas letras, números e hífen) *</label>
+                        <input type="text" id="dslink" name="dslink" required maxlength="25" placeholder="ex: meu-evento-2024">
+                        <small style="color: #666; font-size: 14px;">Este será seu link: meusite.com.br/<span id="linkPreview"></span></small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="inicioinscricao">Início das Inscrições</label>
+                            <input type="date" id="inicioinscricao" name="inicioinscricao">
+                        </div>
+                        <div class="form-group">
+                            <label for="fiminscricao">Fim das Inscrições</label>
+                            <input type="date" id="fiminscricao" name="fiminscricao">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endereco">Endereço</label>
+                        <input type="text" id="endereco" name="endereco" maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cidadeuf">Cidade/UF</label>
+                        <input type="text" id="cidadeuf" name="cidadeuf" maxlength="80">
+                    </div>
+
+                    <div class="editor-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="openModal('descricaoModal')">
+                            Editar Descrição
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="openModal('regulamentoModal')">
+                            Editar Regulamento
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="openModal('lotesModal')">
+                            Itens/Lotes
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="obs">Observações</label>
+                        <textarea id="obs" name="obs" rows="3" maxlength="200"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success" id="submitBtn">Salvar Evento</button>
+                        <button type="button" class="btn btn-secondary" onclick="showEventsList()">Cancelar</button>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 
     <!-- Modal Descrição -->
@@ -425,9 +721,9 @@
                         <option value="7">36pt</option>
                     </select>
                     <input type="color" class="color-picker" onchange="formatText('foreColor', this.value)" title="Cor do texto">
-                    <button type="button" class="toolbar-btn" onclick="formatText('justifyLeft')">⬅</button>
-                    <button type="button" class="toolbar-btn" onclick="formatText('justifyCenter')">⬌</button>
-                    <button type="button" class="toolbar-btn" onclick="formatText('justifyRight')">➡</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyLeft')">←</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyCenter')">↔</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyRight')">→</button>
                     <button type="button" class="toolbar-btn" onclick="formatText('insertUnorderedList')">• Lista</button>
                     <button type="button" class="toolbar-btn" onclick="formatText('insertOrderedList')">1. Lista</button>
                 </div>
@@ -471,9 +767,9 @@
                         <option value="7">36pt</option>
                     </select>
                     <input type="color" class="color-picker" onchange="formatText('foreColor', this.value)" title="Cor do texto">
-                    <button type="button" class="toolbar-btn" onclick="formatText('justifyLeft')">⬅</button>
-                    <button type="button" class="toolbar-btn" onclick="formatText('justifyCenter')">⬌</button>
-                    <button type="button" class="toolbar-btn" onclick="formatText('justifyRight')">➡</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyLeft')">←</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyCenter')">↔</button>
+                    <button type="button" class="toolbar-btn" onclick="formatText('justifyRight')">→</button>
                     <button type="button" class="toolbar-btn" onclick="formatText('insertUnorderedList')">• Lista</button>
                     <button type="button" class="toolbar-btn" onclick="formatText('insertOrderedList')">1. Lista</button>
                 </div>
@@ -487,27 +783,239 @@
         </div>
     </div>
 
+    <!-- Modal Itens/Lotes -->
+    <div id="lotesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Gerenciar Itens/Lotes do Evento</h2>
+                <span class="close" onclick="closeModal('lotesModal')">&times;</span>
+            </div>
+            
+            <div id="lotesContent">
+                <!-- Lista de lotes existentes -->
+                <div id="lotesExistentes" class="hidden">
+                    <div class="events-header">
+                        <h3>Lotes Cadastrados</h3>
+                        <button type="button" class="btn btn-success btn-sm" onclick="showAddLoteForm()">
+                            + Adicionar Lote
+                        </button>
+                    </div>
+                    <div id="lotesLista"></div>
+                </div>
+                
+                <!-- Formulário para adicionar/editar lotes -->
+                <div id="lotesForm">
+                    <h3 id="lotesFormTitle">Adicionar Lotes</h3>
+                    <div id="lotesInputs">
+                        <!-- Os inputs serão gerados dinamicamente -->
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button type="button" class="btn btn-success" onclick="adicionarNovoLote()">+ Adicionar Mais Um</button>
+                        <button type="button" class="btn btn-primary" onclick="salvarLotes()">Salvar Todos</button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelarLotes()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
-        // Variáveis globais para armazenar conteúdo dos editores
+        // Variáveis globais
         let descricaoContent = '';
         let regulamentoContent = '';
+        let editingEventId = null;
+
+        let lotes = [];
+        let lotesCounter = 0;
+        let editingLotes = false;
+
+        // Função de autenticação
+        document.getElementById('authForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const senha = document.getElementById('senha').value;
+            
+            try {
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ senha: senha })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('authScreen').classList.add('hidden');
+                    document.getElementById('mainScreen').classList.remove('hidden');
+                    loadEventsList();
+                } else {
+                    showMessage('Senha incorreta!', 'error');
+                }
+            } catch (error) {
+                showMessage('Erro de conexão. Tente novamente.', 'error');
+            }
+        });
+
+        // Função de logout
+        function logout() {
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('senha').value = '';
+            showEventsList();
+        }
+
+        // Função para mostrar lista de eventos
+        function showEventsList() {
+            document.getElementById('eventsListScreen').classList.remove('hidden');
+            document.getElementById('eventFormScreen').classList.add('hidden');
+            loadEventsList();
+        }
+
+        // Função para mostrar formulário de criação
+        function showCreateForm() {
+            document.getElementById('eventsListScreen').classList.add('hidden');
+            document.getElementById('eventFormScreen').classList.remove('hidden');
+            document.getElementById('formTitle').textContent = 'Novo Evento';
+            document.getElementById('submitBtn').textContent = 'Salvar Evento';
+            document.getElementById('eventoForm').reset();
+            editingEventId = null;
+            descricaoContent = '';
+            regulamentoContent = '';
+            document.getElementById('descricaoEditor').innerHTML = '';
+            document.getElementById('regulamentoEditor').innerHTML = '';
+            document.getElementById('linkPreview').textContent = '[seu-link]';
+        }
+
+        // Função para carregar lista de eventos
+        async function loadEventsList() {
+            try {
+                const response = await fetch('/api/eventos?idorganizador=' + getIdOrganizador());
+                const eventos = await response.json();
+                
+                const listContainer = document.getElementById('eventsList');
+                
+                if (eventos.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Nenhum evento encontrado</h3>
+                            <p>Clique em "Novo Evento" para criar seu primeiro evento</p>
+                        </div>
+                    `;
+                } else {
+                    listContainer.innerHTML = eventos.map(evento => `
+                        <div class="event-item">
+                            <div class="event-info">
+                                <div class="event-title">${evento.titulo}</div>
+                                <div class="event-details">
+                                    ${evento.datainicio} a ${evento.datafim}
+                                    ${evento.endereco ? ' • ' + evento.endereco : ''}
+                                </div>
+                            </div>
+                            <div class="event-actions">
+                                <span class="event-status ${evento.ativo === 'S' ? 'status-active' : 'status-inactive'}">
+                                    ${evento.ativo === 'S' ? 'Ativo' : 'Inativo'}
+                                </span>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="editEvent(${evento.idevento})">
+                                    Editar
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="viewEvent('${evento.dslink}')">
+                                    Visualizar
+                                </button>
+                                ${evento.ativo === 'S' ? 
+                                    `<button type="button" class="btn btn-danger btn-sm" onclick="deactivateEvent(${evento.idevento})">Desativar</button>` :
+                                    ''
+                                }
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                showMessage('Erro ao carregar eventos.', 'error');
+            }
+        }
+
+        // Função para editar evento
+        async function editEvent(eventoId) {
+            try {
+                const response = await fetch(`/api/eventos/${eventoId}`);
+                const evento = await response.json();
+                
+                if (response.ok) {
+                    editingEventId = eventoId;
+                    document.getElementById('eventsListScreen').classList.add('hidden');
+                    document.getElementById('eventFormScreen').classList.remove('hidden');
+                    document.getElementById('formTitle').textContent = 'Editar Evento';
+                    document.getElementById('submitBtn').textContent = 'Atualizar Evento';
+                    
+                    // Preencher formulário
+                    Object.keys(evento).forEach(key => {
+                        const field = document.getElementById(key);
+                        if (field && evento[key] !== null) {
+                            field.value = evento[key];
+                        }
+                    });
+                    
+                    descricaoContent = evento.descricao || '';
+                    regulamentoContent = evento.regulamento || '';
+                    document.getElementById('descricaoEditor').innerHTML = descricaoContent;
+                    document.getElementById('regulamentoEditor').innerHTML = regulamentoContent;
+                    document.getElementById('linkPreview').textContent = evento.dslink || '[seu-link]';
+                } else {
+                    showMessage('Erro ao carregar evento.', 'error');
+                }
+            } catch (error) {
+                showMessage('Erro de conexão.', 'error');
+            }
+        }
+
+        // Função para visualizar evento
+        function viewEvent(dslink) {
+            window.open(`/evento/${dslink}`, '_blank');
+        }
+
+        // Função para desativar evento
+        async function deactivateEvent(eventoId) {
+            if (confirm('Tem certeza que deseja desativar este evento?')) {
+                try {
+                    const response = await fetch(`/api/eventos/${eventoId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        showMessage('Evento desativado com sucesso!', 'success');
+                        loadEventsList();
+                    } else {
+                        showMessage('Erro ao desativar evento.', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Erro de conexão.', 'error');
+                }
+            }
+        }
 
         // Função para validar e formatar o campo dslink
         document.getElementById('dslink').addEventListener('input', function(e) {
             let value = e.target.value;
-            // Remove caracteres não permitidos e converte para minúsculo
             value = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
             e.target.value = value;
-            
-            // Atualiza o preview do link
             document.getElementById('linkPreview').textContent = value || '[seu-link]';
         });
 
         // Funções do modal
+        // function openModal(modalId) {
+        //     document.getElementById(modalId).style.display = 'block';
+        //     document.body.style.overflow = 'hidden';
+        // }
+
         function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
-            document.body.style.overflow = 'hidden';
+            if (modalId === 'lotesModal') {
+                openLotesModal();
+            } else {
+                document.getElementById(modalId).style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
         }
+
 
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
@@ -551,11 +1059,10 @@
             }, 5000);
         }
 
-        // Função para obter ID do organizador do localStorage
+        // Função para obter ID do organizador
         function getIdOrganizador() {
-            // Simular localStorage (já que não está disponível aqui)
-            // Em uma aplicação real, seria: return localStorage.getItem('idorganizador');
-            return '1'; // Valor simulado
+            // Simular ID do organizador (em uma aplicação real, viria do sistema de autenticação)
+            return '1';
         }
 
         // Submissão do formulário
@@ -567,14 +1074,16 @@
             
             // Coletar dados do formulário
             for (let [key, value] of formData.entries()) {
-                data[key] = value;
+                if (key !== 'eventoId') {
+                    data[key] = value;
+                }
             }
 
             // Adicionar conteúdos dos editores
             data.descricao = descricaoContent;
             data.regulamento = regulamentoContent;
             data.idorganizador = getIdOrganizador();
-            data.ativo = 'S'; // Padrão ativo
+            data.ativo = 'S';
 
             // Validações
             if (!data.titulo || !data.datainicio || !data.datafim || !data.dslink) {
@@ -588,8 +1097,17 @@
             }
 
             try {
-                const response = await fetch('/api/eventos', {
-                    method: 'POST',
+                let response;
+                let method = 'POST';
+                let url = '/api/eventos';
+                
+                if (editingEventId) {
+                    method = 'PUT';
+                    url = `/api/eventos/${editingEventId}`;
+                }
+
+                response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -599,16 +1117,15 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showMessage('Evento cadastrado com sucesso!', 'success');
-                    // Reset form
-                    e.target.reset();
-                    descricaoContent = '';
-                    regulamentoContent = '';
-                    document.getElementById('descricaoEditor').innerHTML = '';
-                    document.getElementById('regulamentoEditor').innerHTML = '';
-                    document.getElementById('linkPreview').textContent = '[seu-link]';
+                    const message = editingEventId ? 'Evento atualizado com sucesso!' : 'Evento cadastrado com sucesso!';
+                    showMessage(message, 'success');
+                    
+                    // Voltar para lista após salvar
+                    setTimeout(() => {
+                        showEventsList();
+                    }, 2000);
                 } else {
-                    showMessage(result.error || 'Erro ao cadastrar evento.', 'error');
+                    showMessage(result.error || 'Erro ao salvar evento.', 'error');
                 }
             } catch (error) {
                 showMessage('Erro de conexão. Tente novamente.', 'error');
@@ -624,6 +1141,320 @@
             document.getElementById('inicioinscricao').setAttribute('min', today);
             document.getElementById('fiminscricao').setAttribute('min', today);
         });
+
+        async function openLotesModal() {
+            if (editingEventId) {
+                await carregarLotes(editingEventId);
+            } else {
+                // Novo evento - mostrar formulário vazio
+                mostrarFormularioLotes();
+            }
+            // Abrir o modal diretamente sem chamar openModal()
+            document.getElementById('lotesModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Função para carregar lotes existentes
+        async function carregarLotes(eventoId) {
+            try {
+                const response = await fetch(`/api/eventos/${eventoId}/lotes`);
+                const lotesData = await response.json();
+                
+                if (response.ok && lotesData.length > 0) {
+                    lotes = lotesData;
+                    mostrarLotesExistentes();
+                } else {
+                    mostrarFormularioLotes();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar lotes:', error);
+                mostrarFormularioLotes();
+            }
+        }
+
+        // Função para mostrar lotes existentes
+        function mostrarLotesExistentes() {
+            document.getElementById('lotesExistentes').classList.remove('hidden');
+            document.getElementById('lotesForm').classList.add('hidden');
+            
+            const lotesLista = document.getElementById('lotesLista');
+            
+            if (lotes.length === 0) {
+                lotesLista.innerHTML = '<div class="empty-state"><p>Nenhum lote cadastrado</p></div>';
+                return;
+            }
+            
+            // Agrupar lotes por KM
+            const lotesPorKm = {};
+            lotes.forEach(lote => {
+                const km = lote.KM;
+                if (!lotesPorKm[km]) {
+                    lotesPorKm[km] = [];
+                }
+                lotesPorKm[km].push(lote);
+            });
+            
+            let html = '';
+            Object.keys(lotesPorKm).sort((a, b) => parseFloat(a) - parseFloat(b)).forEach(km => {
+                html += `<div style="margin-bottom: 25px;">`;
+                html += `<h4 style="color: #2c3e50; margin-bottom: 15px;">${km} KM</h4>`;
+                
+                lotesPorKm[km].sort((a, b) => a.LOTE - b.LOTE).forEach(lote => {
+                    html += `
+                        <div class="lote-item">
+                            <div class="lote-header">
+                                <div class="lote-title">${lote.DELOTE}</div>
+                                <div class="lote-actions">
+                                    <button class="btn btn-primary btn-sm" onclick="editarLote(${lote.IDITEM})">Editar</button>
+                                    <button class="btn btn-danger btn-sm" onclick="excluirLote(${lote.IDITEM})">Excluir</button>
+                                </div>
+                            </div>
+                            <div class="lote-details">
+                                <div class="lote-detail">
+                                    <strong>Descrição:</strong> ${lote.DESCRICAO || '-'}
+                                </div>
+                                <div class="lote-detail">
+                                    <strong>Valor:</strong> R$ ${parseFloat(lote.VLINSCRICAO || 0).toFixed(2)}
+                                </div>
+                                <div class="lote-detail">
+                                    <strong>Início:</strong> ${formatDate(lote.DTINICIO)}
+                                </div>
+                                <div class="lote-detail">
+                                    <strong>Fim:</strong> ${formatDate(lote.DTFIM)}
+                                </div>
+                                <div class="lote-detail">
+                                    <strong>Nº Atletas:</strong> ${lote.NUATLETAS || '-'}
+                                </div>
+                                <div class="lote-detail">
+                                    <strong>Taxa:</strong> ${lote.PCTAXA}%
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            });
+            
+            lotesLista.innerHTML = html;
+        }
+
+        // Função para mostrar formulário de lotes
+        function mostrarFormularioLotes() {
+            document.getElementById('lotesExistentes').classList.add('hidden');
+            document.getElementById('lotesForm').classList.remove('hidden');
+            
+            lotes = [];
+            lotesCounter = 0;
+            adicionarNovoLote();
+        }
+
+        // Função para mostrar formulário de adição
+        function showAddLoteForm() {
+            mostrarFormularioLotes();
+            document.getElementById('lotesFormTitle').textContent = 'Adicionar Novos Lotes';
+        }
+
+        // Função para adicionar novo lote no formulário
+        function adicionarNovoLote() {
+            lotesCounter++;
+            const lotesInputs = document.getElementById('lotesInputs');
+            
+            const loteDiv = document.createElement('div');
+            loteDiv.className = 'lote-item-container';
+            loteDiv.innerHTML = `
+                <div class="lote-inputs" data-lote="${lotesCounter}">
+                    <button type="button" class="remove-lote-btn" onclick="removerLote(${lotesCounter})" title="Remover lote">×</button>
+                    
+                    <div class="form-group">
+                        <label>Descrição *</label>
+                        <input type="text" name="descricao_${lotesCounter}" maxlength="25" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>KM *</label>
+                        <input type="number" name="km_${lotesCounter}" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Valor Inscrição *</label>
+                        <input type="number" name="vlinscricao_${lotesCounter}" step="0.01" min="0" required onchange="calcularTaxa(${lotesCounter})">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Taxa (%)</label>
+                        <input type="text" name="pctaxa_${lotesCounter}" readonly style="background: #f8f9fa;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Data Início</label>
+                        <input type="date" name="dtinicio_${lotesCounter}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Data Fim</label>
+                        <input type="date" name="dtfim_${lotesCounter}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Nº Atletas</label>
+                        <input type="number" name="nuatletas_${lotesCounter}" min="1" step="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Lote *</label>
+                        <input type="number" name="lote_${lotesCounter}" min="1" required onchange="atualizarDescricaoLote(${lotesCounter})">
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Descrição do Lote</label>
+                        <input type="text" name="delote_${lotesCounter}" maxlength="25">
+                    </div>
+                </div>
+            `;
+            
+            lotesInputs.appendChild(loteDiv);
+        }
+
+        // Função para remover lote
+        function removerLote(id) {
+            const loteElement = document.querySelector(`[data-lote="${id}"]`).parentElement;
+            loteElement.remove();
+        }
+
+        // Função para calcular taxa automaticamente
+        function calcularTaxa(id) {
+            const valorInput = document.querySelector(`input[name="vlinscricao_${id}"]`);
+            const taxaInput = document.querySelector(`input[name="pctaxa_${id}"]`);
+            
+            const valor = parseFloat(valorInput.value) || 0;
+            let taxa = 0;
+            
+            if (valor <= 100) taxa = 10;
+            else if (valor <= 150) taxa = 9;
+            else if (valor <= 200) taxa = 8;
+            else taxa = 7;
+            
+            taxaInput.value = taxa;
+        }
+
+        // Função para atualizar descrição do lote automaticamente
+        function atualizarDescricaoLote(id) {
+            const loteInput = document.querySelector(`input[name="lote_${id}"]`);
+            const deloteInput = document.querySelector(`input[name="delote_${id}"]`);
+            
+            const numeroLote = parseInt(loteInput.value);
+            if (numeroLote) {
+                const sufixos = ['º', 'º', 'º', 'º', 'º'];
+                deloteInput.value = `${numeroLote}º LOTE`;
+            }
+        }
+
+        // Função para salvar lotes
+        async function salvarLotes() {
+            const lotesInputs = document.querySelectorAll('.lote-inputs');
+            const lotesData = [];
+            
+            for (let input of lotesInputs) {
+                const id = input.dataset.lote;
+                const loteData = {
+                    descricao: document.querySelector(`input[name="descricao_${id}"]`)?.value,
+                    km: parseFloat(document.querySelector(`input[name="km_${id}"]`)?.value) || 0,
+                    vlinscricao: parseFloat(document.querySelector(`input[name="vlinscricao_${id}"]`)?.value) || 0,
+                    pctaxa: parseFloat(document.querySelector(`input[name="pctaxa_${id}"]`)?.value) || 0,
+                    dtinicio: document.querySelector(`input[name="dtinicio_${id}"]`)?.value || null,
+                    dtfim: document.querySelector(`input[name="dtfim_${id}"]`)?.value || null,
+                    nuatletas: parseInt(document.querySelector(`input[name="nuatletas_${id}"]`)?.value) || null,
+                    lote: parseInt(document.querySelector(`input[name="lote_${id}"]`)?.value) || 1,
+                    delote: document.querySelector(`input[name="delote_${id}"]`)?.value
+                };
+                
+                // Validações
+                if (!loteData.descricao || !loteData.km || !loteData.vlinscricao) {
+                    showMessage('Preencha todos os campos obrigatórios dos lotes.', 'error');
+                    return;
+                }
+                
+                lotesData.push(loteData);
+            }
+            
+            try {
+                const eventoId = editingEventId || 'temp'; // Para novos eventos
+                const response = await fetch(`/api/eventos/${eventoId}/lotes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ lotes: lotesData })
+                });
+                
+                if (response.ok) {
+                    showMessage('Lotes salvos com sucesso!', 'success');
+                    closeModal('lotesModal');
+                    if (editingEventId) {
+                        await carregarLotes(editingEventId);
+                    }
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Erro ao salvar lotes.', 'error');
+                }
+            } catch (error) {
+                showMessage('Erro de conexão.', 'error');
+            }
+        }
+
+        // Função para cancelar edição de lotes
+        function cancelarLotes() {
+            if (editingEventId) {
+                carregarLotes(editingEventId);
+            } else {
+                closeModal('lotesModal');
+            }
+        }
+
+        // Função para editar lote específico
+        function editarLote(idItem) {
+            // Implementar edição individual se necessário
+            showMessage('Funcionalidade em desenvolvimento.', 'error');
+        }
+
+        // Função para excluir lote
+        async function excluirLote(idItem) {
+            if (confirm('Tem certeza que deseja excluir este lote?')) {
+                try {
+                    const response = await fetch(`/api/lotes/${idItem}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        showMessage('Lote excluído com sucesso!', 'success');
+                        await carregarLotes(editingEventId);
+                    } else {
+                        showMessage('Erro ao excluir lote.', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Erro de conexão.', 'error');
+                }
+            }
+        }
+
+        // Função auxiliar para formatação de data
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // MODIFICAR a função openModal existente para tratar o modal de lotes
+        // Substitua a função openModal existente por esta:
+        function openModal(modalId) {
+            if (modalId === 'lotesModal') {
+                openLotesModal();
+            } else {
+                document.getElementById(modalId).style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        }        
     </script>
 </body>
 </html>
