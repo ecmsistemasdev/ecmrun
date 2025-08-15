@@ -218,13 +218,13 @@
             background: #2980b9;
         }
 
-        .btn-secondary {
-            background: #95a5a6;
+        .editor-buttons .btn-secondary {
+            background: #3498db;
             color: white;
         }
 
-        .btn-secondary:hover {
-            background: #7f8c8d;
+        .editor-buttons .btn-secondary:hover {
+            background: #2980b9;
         }
 
         .btn-success {
@@ -1184,26 +1184,26 @@
                 return;
             }
             
-            // Agrupar lotes por KM
-            const lotesPorKm = {};
+            // Agrupar lotes por DESCRIÇÃO
+            const lotesPorDescricao = {};
             lotes.forEach(lote => {
-                const km = lote.KM;
-                if (!lotesPorKm[km]) {
-                    lotesPorKm[km] = [];
+                const descricao = lote.DESCRICAO;
+                if (!lotesPorDescricao[descricao]) {
+                    lotesPorDescricao[descricao] = [];
                 }
-                lotesPorKm[km].push(lote);
+                lotesPorDescricao[descricao].push(lote);
             });
             
             let html = '';
-            Object.keys(lotesPorKm).sort((a, b) => parseFloat(a) - parseFloat(b)).forEach(km => {
+            Object.keys(lotesPorDescricao).sort().forEach(descricao => {
                 html += `<div style="margin-bottom: 25px;">`;
-                html += `<h4 style="color: #2c3e50; margin-bottom: 15px;">${km} KM</h4>`;
+                html += `<h4 style="color: #2c3e50; margin-bottom: 15px;">${descricao}</h4>`;
                 
-                lotesPorKm[km].sort((a, b) => a.LOTE - b.LOTE).forEach(lote => {
+                lotesPorDescricao[descricao].sort((a, b) => a.LOTE - b.LOTE).forEach(lote => {
                     html += `
                         <div class="lote-item">
                             <div class="lote-header">
-                                <div class="lote-title">${lote.DELOTE}</div>
+                                <div class="lote-title">${lote.DELOTE} (${lote.KM} KM)</div>
                                 <div class="lote-actions">
                                     <button class="btn btn-primary btn-sm" onclick="editarLote(${lote.IDITEM})">Editar</button>
                                     <button class="btn btn-danger btn-sm" onclick="excluirLote(${lote.IDITEM})">Excluir</button>
@@ -1211,7 +1211,7 @@
                             </div>
                             <div class="lote-details">
                                 <div class="lote-detail">
-                                    <strong>Descrição:</strong> ${lote.DESCRICAO || '-'}
+                                    <strong>KM:</strong> ${lote.KM}
                                 </div>
                                 <div class="lote-detail">
                                     <strong>Valor:</strong> R$ ${parseFloat(lote.VLINSCRICAO || 0).toFixed(2)}
@@ -1441,8 +1441,26 @@
         // Função auxiliar para formatação de data
         function formatDate(dateString) {
             if (!dateString) return '-';
-            const date = new Date(dateString + 'T00:00:00');
-            return date.toLocaleDateString('pt-BR');
+            
+            try {
+                // Se já está no formato YYYY-MM-DD, usar diretamente
+                let date;
+                if (dateString.includes('-')) {
+                    const parts = dateString.split('T')[0]; // Remove a parte do tempo se existir
+                    date = new Date(parts + 'T12:00:00'); // Adiciona meio-dia para evitar problemas de timezone
+                } else {
+                    date = new Date(dateString);
+                }
+                
+                if (isNaN(date.getTime())) {
+                    return '-';
+                }
+                
+                return date.toLocaleDateString('pt-BR');
+            } catch (error) {
+                console.error('Erro ao formatar data:', error, dateString);
+                return '-';
+            }
         }
 
         // MODIFICAR a função openModal existente para tratar o modal de lotes
