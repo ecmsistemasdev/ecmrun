@@ -8403,44 +8403,45 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
 
+            # SELECT 
+            #   ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
+            #   ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
+            #   ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
+            #   ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
+            #   (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
+            #   (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
+            #   (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
+            #   -- Quantidade total de inscrições no evento
+            #   (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
+            #   -- Status do lote
+            #   CASE 
+            #     WHEN CURDATE() < ei.DTINICIO THEN
+            #       CASE 
+            #         -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
+            #         WHEN EXISTS (
+            #           SELECT 1 FROM EVENTO_ITEM lote_ant
+            #           WHERE lote_ant.IDITEM = (
+            #             SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
+            #           )
+            #           AND (
+            #             SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
+            #           ) >= lote_ant.NUATLETAS
+            #         ) THEN 'ABERTO'
+            #         ELSE 'NÃO INICIADO'
+            #       END
+            #     WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
+            #       CASE 
+            #         WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
+            #         ELSE 'ESGOTADO'
+            #       END
+            #     WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
+            #     ELSE 'ENCERRADO'
+            #   END AS STATUS_LOTE
+            # FROM EVENTO_ITEM ei
+            # WHERE ei.IDEVENTO = %s
+            # ORDER BY ei.LOTE
 
-            SELECT 
-              ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
-              ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
-              ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
-              ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
-              (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
-              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
-              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
-              -- Quantidade total de inscrições no evento
-              (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
-              -- Status do lote
-              CASE 
-                WHEN CURDATE() < ei.DTINICIO THEN
-                  CASE 
-                    -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
-                    WHEN EXISTS (
-                      SELECT 1 FROM EVENTO_ITEM lote_ant
-                      WHERE lote_ant.IDITEM = (
-                        SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
-                      )
-                      AND (
-                        SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
-                      ) >= lote_ant.NUATLETAS
-                    ) THEN 'ABERTO'
-                    ELSE 'NÃO INICIADO'
-                  END
-                WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
-                  CASE 
-                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
-                    ELSE 'ESGOTADO'
-                  END
-                WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
-                ELSE 'ENCERRADO'
-              END AS STATUS_LOTE
-            FROM EVENTO_ITEM ei
-            WHERE ei.IDEVENTO = %s
-            ORDER BY ei.LOTE
+
 
 
 
