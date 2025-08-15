@@ -7916,7 +7916,7 @@ def atualizar_evento(evento_id):
     try:
         data = request.get_json()
         
-        # Verificar se o evento existe e pertence ao organizador
+        # Verificar se o evento existe
         cursor = mysql.connection.cursor()
         cursor.execute("""
             SELECT IDORGANIZADOR, DSLINK 
@@ -8006,6 +8006,7 @@ def atualizar_evento(evento_id):
         
     except Exception as e:
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
+
 
 
 @app.route('/api/eventos/<int:evento_id>', methods=['DELETE'])
@@ -8440,6 +8441,7 @@ if __name__ == "__main__":
             FROM EVENTO_ITEM ei
             WHERE ei.IDEVENTO = %s
             ORDER BY ei.LOTE
+
 
 
 
