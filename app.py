@@ -7681,6 +7681,37 @@ def eventos_page():
     """Renderiza a página de cadastro de eventos"""
     return render_template('eventos.html')
 
+@app.route('/api/auth', methods=['POST'])
+def autenticar_admin():
+    """API para autenticação administrativa"""
+    try:
+        data = request.get_json()
+        senha_informada = data.get('senha', '').strip() if data else ''
+        
+        # Debug - remover após testar
+        print(f"Senha informada: '{senha_informada}'")
+        print(f"Senha esperada: '{senha_adm}'")
+        print(f"Senha ADM existe: {senha_adm is not None}")
+        
+        if not senha_adm:
+            print("ERRO: Senha administrativa não configurada no ambiente")
+            return jsonify({'error': 'Senha administrativa não configurada'}), 500
+        
+        if senha_informada == senha_adm:
+            print("Autenticação bem-sucedida")
+            return jsonify({
+                'success': True,
+                'message': 'Autenticado com sucesso'
+            }), 200
+        else:
+            print("Senha incorreta")
+            return jsonify({'error': 'Senha incorreta'}), 401
+            
+    except Exception as e:
+        print(f"Erro na autenticação: {str(e)}")
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+    
+
 @app.route('/api/eventos', methods=['POST'])
 def criar_evento():
     """API para criar um novo evento"""
@@ -7812,7 +7843,7 @@ def obter_evento(evento_id):
 def listar_eventos():
     """API para listar eventos de um organizador"""
     try:
-        request.args.get('idorganizador')
+        idorganizador = request.args.get('idorganizador')
         ativo = request.args.get('ativo', 'S')  # Padrão é listar apenas eventos ativos
         
         if not idorganizador:
@@ -7829,11 +7860,7 @@ def listar_eventos():
         """
         params = [idorganizador]
         
-        # Filtro por status ativo (se especificado)
-        if ativo and ativo.upper() in ['S', 'N']:
-            query += " AND ATIVO = %s"
-            params.append(ativo.upper())
-        
+        # Incluir eventos ativos e inativos para o painel administrativo
         query += " ORDER BY DATAINICIO DESC"
         
         cursor.execute(query, params)
@@ -7847,9 +7874,9 @@ def listar_eventos():
                 'idevento': evento[0],
                 'titulo': evento[1],
                 'subtitulo': evento[2],
-                'datainicio': evento[3].strftime('%Y-%m-%d') if evento[3] else None,
-                'datafim': evento[4].strftime('%Y-%m-%d') if evento[4] else None,
-                'hrinicio': evento[5],
+                'datainicio': evento[3].strftime('%d/%m/%Y') if evento[3] else None,
+                'datafim': evento[4].strftime('%d/%m/%Y') if evento[4] else None,
+                'hrinicio': str(evento[5]) if evento[5] else None,
                 'dslink': evento[6],
                 'endereco': evento[7],
                 'cidadeuf': evento[8],
@@ -7867,7 +7894,7 @@ def atualizar_evento(evento_id):
     """API para atualizar um evento existente"""
     try:
         data = request.get_json()
-		
+        
         # Verificar se o evento existe e pertence ao organizador
         cursor = mysql.connection.cursor()
         cursor.execute("""
@@ -7880,11 +7907,6 @@ def atualizar_evento(evento_id):
         if not evento_atual:
             cursor.close()
             return jsonify({'error': 'Evento não encontrado'}), 404
-        
-        # Verificar se o organizador é o mesmo (opcional - depende da regra de negócio)
-        if data.get('idorganizador') and int(data['idorganizador']) != evento_atual[0]:
-            cursor.close()
-            return jsonify({'error': 'Você não tem permissão para editar este evento'}), 403
         
         # Validação e limpeza do dslink se fornecido
         dslink_atual = evento_atual[1]
@@ -8035,6 +8057,221 @@ def visualizar_evento(dslink):
         return render_template('500.html', error=str(e)), 500
 
 
+@app.route('/api/eventos/<int:evento_id>/lotes', methods=['GET'])
+def get_lotes(evento_id):
+    """Buscar lotes de um evento"""
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+            SELECT IDITEM, IDEVENTO, DESCRICAO, KM, VLINSCRICAO, PCTAXA,
+                   DTINICIO, DTFIM, NUATLETAS, LOTE, DELOTE,
+                   IDITEM_ULTIMO_LOTE, IDITEM_PROXIMO_LOTE
+            FROM EVENTO_ITEM 
+            WHERE IDEVENTO = %s
+            ORDER BY KM, LOTE
+        """
+        cursor.execute(query, (evento_id,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        lotes = []
+        for row in cursor.fetchall():
+            lote_dict = dict(zip(columns, row))
+            # Converter Decimal para float para JSON
+            if lote_dict['KM']:
+                lote_dict['KM'] = float(lote_dict['KM'])
+            if lote_dict['VLINSCRICAO']:
+                lote_dict['VLINSCRICAO'] = float(lote_dict['VLINSCRICAO'])
+            if lote_dict['PCTAXA']:
+                lote_dict['PCTAXA'] = float(lote_dict['PCTAXA'])
+            lotes.append(lote_dict)
+        
+        cursor.close()
+        return jsonify(lotes)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/eventos/<int:evento_id>/lotes', methods=['POST'])
+def create_lotes(evento_id):
+    """Criar lotes para um evento"""
+    try:
+        data = request.json
+        lotes_data = data.get('lotes', [])
+        
+        if not lotes_data:
+            return jsonify({'error': 'Nenhum lote fornecido'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Primeiro, organizar lotes por KM para calcular relacionamentos
+        lotes_por_km = {}
+        for lote in lotes_data:
+            km = lote['km']
+            if km not in lotes_por_km:
+                lotes_por_km[km] = []
+            lotes_por_km[km].append(lote)
+        
+        # Ordenar lotes dentro de cada KM
+        for km in lotes_por_km:
+            lotes_por_km[km].sort(key=lambda x: x['lote'])
+        
+        # Obter próximo IDITEM
+        cursor.execute("SELECT COALESCE(MAX(IDITEM), 0) + 1 FROM EVENTO_ITEM")
+        next_id = cursor.fetchone()[0]
+        
+        # Inserir lotes e calcular relacionamentos
+        for km, lotes_km in lotes_por_km.items():
+            # Calcular IDITEM_ULTIMO_LOTE (será o IDITEM do último lote deste KM)
+            ultimo_lote_id = next_id + len(lotes_km) - 1
+            
+            for i, lote in enumerate(lotes_km):
+                iditem_atual = next_id + i
+                proximo_lote_id = next_id + i + 1 if i < len(lotes_km) - 1 else 0
+                
+                # Calcular PCTAXA baseado no valor
+                valor = float(lote['vlinscricao'])
+                if valor <= 100:
+                    pctaxa = 10
+                elif valor <= 150:
+                    pctaxa = 9
+                elif valor <= 200:
+                    pctaxa = 8
+                else:
+                    pctaxa = 7
+                
+                query = """
+                    INSERT INTO EVENTO_ITEM 
+                    (IDITEM, IDEVENTO, DESCRICAO, KM, VLINSCRICAO, PCTAXA, 
+                     DTINICIO, DTFIM, NUATLETAS, LOTE, DELOTE, 
+                     IDITEM_ULTIMO_LOTE, IDITEM_PROXIMO_LOTE)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                
+                cursor.execute(query, (
+                    iditem_atual,
+                    evento_id,
+                    lote['descricao'],
+                    lote['km'],
+                    lote['vlinscricao'],
+                    pctaxa,
+                    lote['dtinicio'] if lote['dtinicio'] else None,
+                    lote['dtfim'] if lote['dtfim'] else None,
+                    lote['nuatletas'] if lote['nuatletas'] else None,
+                    lote['lote'],
+                    lote['delote'],
+                    ultimo_lote_id,
+                    proximo_lote_id
+                ))
+            
+            next_id += len(lotes_km)
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'message': 'Lotes criados com sucesso'}), 201
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lotes/<int:iditem>', methods=['DELETE'])
+def delete_lote(iditem):
+    """Excluir um lote específico"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Buscar dados do lote antes de excluir
+        cursor.execute("SELECT IDEVENTO, KM, LOTE FROM EVENTO_ITEM WHERE IDITEM = %s", (iditem,))
+        lote_info = cursor.fetchone()
+        
+        if not lote_info:
+            return jsonify({'error': 'Lote não encontrado'}), 404
+        
+        evento_id, km, lote_num = lote_info
+        
+        # Excluir o lote
+        cursor.execute("DELETE FROM EVENTO_ITEM WHERE IDITEM = %s", (iditem,))
+        
+        # Reajustar os relacionamentos dos lotes restantes do mesmo KM
+        cursor.execute("""
+            SELECT IDITEM, LOTE FROM EVENTO_ITEM 
+            WHERE IDEVENTO = %s AND KM = %s 
+            ORDER BY LOTE
+        """, (evento_id, km))
+        
+        lotes_restantes = cursor.fetchall()
+        
+        if lotes_restantes:
+            ultimo_lote_id = lotes_restantes[-1][0]  # IDITEM do último lote
+            
+            for i, (lote_id, lote_ordem) in enumerate(lotes_restantes):
+                proximo_lote_id = lotes_restantes[i + 1][0] if i < len(lotes_restantes) - 1 else 0
+                
+                cursor.execute("""
+                    UPDATE EVENTO_ITEM 
+                    SET IDITEM_ULTIMO_LOTE = %s, IDITEM_PROXIMO_LOTE = %s 
+                    WHERE IDITEM = %s
+                """, (ultimo_lote_id, proximo_lote_id, lote_id))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'message': 'Lote excluído com sucesso'}), 200
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lotes/<int:iditem>', methods=['PUT'])
+def update_lote(iditem):
+    """Atualizar um lote específico"""
+    try:
+        data = request.json
+        cursor = mysql.connection.cursor()
+        
+        # Calcular PCTAXA baseado no novo valor
+        valor = float(data.get('vlinscricao', 0))
+        if valor <= 100:
+            pctaxa = 10
+        elif valor <= 150:
+            pctaxa = 9
+        elif valor <= 200:
+            pctaxa = 8
+        else:
+            pctaxa = 7
+        
+        query = """
+            UPDATE EVENTO_ITEM 
+            SET DESCRICAO = %s, KM = %s, VLINSCRICAO = %s, PCTAXA = %s,
+                DTINICIO = %s, DTFIM = %s, NUATLETAS = %s, 
+                LOTE = %s, DELOTE = %s
+            WHERE IDITEM = %s
+        """
+        
+        cursor.execute(query, (
+            data.get('descricao'),
+            data.get('km'),
+            data.get('vlinscricao'),
+            pctaxa,
+            data.get('dtinicio') if data.get('dtinicio') else None,
+            data.get('dtfim') if data.get('dtfim') else None,
+            data.get('nuatletas') if data.get('nuatletas') else None,
+            data.get('lote'),
+            data.get('delote'),
+            iditem
+        ))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'message': 'Lote atualizado com sucesso'}), 200
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+
 
 ###############################
 
@@ -8042,6 +8279,7 @@ def visualizar_evento(dslink):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
