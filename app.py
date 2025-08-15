@@ -55,7 +55,6 @@ app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
 app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
 app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
-app.config['MYSQL_CHARSET'] = 'utf8mb4' 
 
 mysql = MySQL(app)
 
@@ -8066,11 +8065,13 @@ def get_lotes(evento_id):
         cursor = mysql.connection.cursor()
         query = """
             SELECT IDITEM, IDEVENTO, DESCRICAO, KM, VLINSCRICAO, PCTAXA,
-                   DTINICIO, DTFIM, NUATLETAS, LOTE, DELOTE,
+                   DATE_FORMAT(DTINICIO, '%Y-%m-%d') as DTINICIO, 
+                   DATE_FORMAT(DTFIM, '%Y-%m-%d') as DTFIM, 
+                   NUATLETAS, LOTE, DELOTE,
                    IDITEM_ULTIMO_LOTE, IDITEM_PROXIMO_LOTE
             FROM EVENTO_ITEM 
             WHERE IDEVENTO = %s
-            ORDER BY KM, LOTE
+            ORDER BY DESCRICAO, LOTE
         """
         cursor.execute(query, (evento_id,))
         
@@ -8092,6 +8093,7 @@ def get_lotes(evento_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
 
 @app.route('/api/eventos/<int:evento_id>/lotes', methods=['POST'])
 def create_lotes(evento_id):
@@ -8105,30 +8107,30 @@ def create_lotes(evento_id):
         
         cursor = mysql.connection.cursor()
         
-        # Primeiro, organizar lotes por KM para calcular relacionamentos
-        lotes_por_km = {}
+        # Primeiro, organizar lotes por descrição para calcular relacionamentos
+        lotes_por_descricao = {}
         for lote in lotes_data:
-            km = lote['km']
-            if km not in lotes_por_km:
-                lotes_por_km[km] = []
-            lotes_por_km[km].append(lote)
+            descricao = lote['descricao']
+            if descricao not in lotes_por_descricao:
+                lotes_por_descricao[descricao] = []
+            lotes_por_descricao[descricao].append(lote)
         
-        # Ordenar lotes dentro de cada KM
-        for km in lotes_por_km:
-            lotes_por_km[km].sort(key=lambda x: x['lote'])
+        # Ordenar lotes dentro de cada descrição
+        for descricao in lotes_por_descricao:
+            lotes_por_descricao[descricao].sort(key=lambda x: x['lote'])
         
         # Obter próximo IDITEM
         cursor.execute("SELECT COALESCE(MAX(IDITEM), 0) + 1 FROM EVENTO_ITEM")
         next_id = cursor.fetchone()[0]
         
         # Inserir lotes e calcular relacionamentos
-        for km, lotes_km in lotes_por_km.items():
-            # Calcular IDITEM_ULTIMO_LOTE (será o IDITEM do último lote deste KM)
-            ultimo_lote_id = next_id + len(lotes_km) - 1
+        for descricao, lotes_desc in lotes_por_descricao.items():
+            # Calcular IDITEM_ULTIMO_LOTE (será o IDITEM do último lote desta descrição)
+            ultimo_lote_id = next_id + len(lotes_desc) - 1
             
-            for i, lote in enumerate(lotes_km):
+            for i, lote in enumerate(lotes_desc):
                 iditem_atual = next_id + i
-                proximo_lote_id = next_id + i + 1 if i < len(lotes_km) - 1 else 0
+                proximo_lote_id = next_id + i + 1 if i < len(lotes_desc) - 1 else 0
                 
                 # Calcular PCTAXA baseado no valor
                 valor = float(lote['vlinscricao'])
@@ -8140,6 +8142,10 @@ def create_lotes(evento_id):
                     pctaxa = 8
                 else:
                     pctaxa = 7
+                
+                # Tratar datas vazias
+                dtinicio = lote['dtinicio'] if lote['dtinicio'] and lote['dtinicio'].strip() else None
+                dtfim = lote['dtfim'] if lote['dtfim'] and lote['dtfim'].strip() else None
                 
                 query = """
                     INSERT INTO EVENTO_ITEM 
@@ -8156,8 +8162,8 @@ def create_lotes(evento_id):
                     lote['km'],
                     lote['vlinscricao'],
                     pctaxa,
-                    lote['dtinicio'] if lote['dtinicio'] else None,
-                    lote['dtfim'] if lote['dtfim'] else None,
+                    dtinicio,
+                    dtfim,
                     lote['nuatletas'] if lote['nuatletas'] else None,
                     lote['lote'],
                     lote['delote'],
@@ -8165,7 +8171,7 @@ def create_lotes(evento_id):
                     proximo_lote_id
                 ))
             
-            next_id += len(lotes_km)
+            next_id += len(lotes_desc)
         
         mysql.connection.commit()
         cursor.close()
@@ -8175,6 +8181,7 @@ def create_lotes(evento_id):
     except Exception as e:
         mysql.connection.rollback()
         return jsonify({'error': str(e)}), 500
+    
 
 @app.route('/api/lotes/<int:iditem>', methods=['DELETE'])
 def delete_lote(iditem):
@@ -8320,8 +8327,6 @@ if __name__ == "__main__":
             # FROM EVENTO_ITEM ei
             # WHERE ei.IDEVENTO = 1
             # ORDER BY ei.LOTE
-
-
 
 
 
