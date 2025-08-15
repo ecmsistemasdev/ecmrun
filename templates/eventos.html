@@ -478,6 +478,38 @@
             position: relative;
         }
 
+        /* Estilos para input de arquivo */
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        input[type="file"]::-webkit-file-upload-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        
+        input[type="file"]::-webkit-file-upload-button:hover {
+            background: #2980b9;
+        }
+        
         /* Responsividade */
         @media (max-width: 768px) {
             .container {
@@ -954,6 +986,8 @@
                 const response = await fetch(`/api/eventos/${eventoId}`);
                 const evento = await response.json();
                 
+                console.log('Dados do evento carregados:', evento); // Debug
+                
                 if (response.ok) {
                     editingEventId = eventoId;
                     document.getElementById('eventsListScreen').classList.add('hidden');
@@ -964,7 +998,7 @@
                     // Preencher formulário
                     Object.keys(evento).forEach(key => {
                         const field = document.getElementById(key);
-                        if (field && evento[key] !== null) {
+                        if (field && evento[key] !== null && key !== 'banner') {
                             field.value = evento[key];
                         }
                     });
@@ -976,21 +1010,27 @@
                     document.getElementById('linkPreview').textContent = evento.dslink || '[seu-link]';
                     
                     // Carregar banner se existir
+                    console.log('Banner do evento:', evento.banner ? 'existe' : 'não existe'); // Debug
+                    
                     if (evento.banner) {
-                        document.getElementById('bannerImage').src = `data:image/jpeg;base64,${evento.banner}`;
+                        const bannerSrc = `data:image/jpeg;base64,${evento.banner}`;
+                        document.getElementById('bannerImage').src = bannerSrc;
                         document.getElementById('bannerPreview').style.display = 'block';
-                        bannerData = `data:image/jpeg;base64,${evento.banner}`;
+                        bannerData = bannerSrc;
+                        
+                        console.log('Banner carregado com sucesso'); // Debug
                     } else {
                         removeBanner();
+                        console.log('Nenhum banner encontrado'); // Debug
                     }
                 } else {
                     showMessage('Erro ao carregar evento.', 'error');
                 }
             } catch (error) {
+                console.error('Erro ao carregar evento:', error);
                 showMessage('Erro de conexão.', 'error');
             }
         }
-
         // Função para visualizar evento
         function viewEvent(dslink) {
             window.open(`/evento/${dslink}`, '_blank');
@@ -1524,6 +1564,8 @@
             const file = event.target.files[0];
             if (!file) return;
             
+            console.log('Arquivo selecionado:', file.name, 'Tipo:', file.type, 'Tamanho:', file.size); // Debug
+            
             // Validar tipo de arquivo
             if (!file.type.startsWith('image/')) {
                 showMessage('Por favor, selecione apenas arquivos de imagem.', 'error');
@@ -1542,9 +1584,13 @@
             reader.onload = function(e) {
                 bannerData = e.target.result;
                 
+                console.log('Banner carregado:', bannerData.substring(0, 50) + '...'); // Debug
+                
                 // Mostrar preview
                 document.getElementById('bannerImage').src = e.target.result;
                 document.getElementById('bannerPreview').style.display = 'block';
+                
+                showMessage('Imagem carregada com sucesso!', 'success');
             };
             reader.readAsDataURL(file);
         }
