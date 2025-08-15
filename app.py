@@ -8063,36 +8063,65 @@ def get_lotes(evento_id):
     """Buscar lotes de um evento"""
     try:
         cursor = mysql.connection.cursor()
+        
+        # Primeiro, vamos testar se o evento existe
+        cursor.execute("SELECT COUNT(*) FROM EVENTO WHERE IDEVENTO = %s", (evento_id,))
+        if cursor.fetchone()[0] == 0:
+            cursor.close()
+            return jsonify({'error': 'Evento não encontrado'}), 404
+        
+        # Query mais simples para testar
         query = """
             SELECT IDITEM, IDEVENTO, DESCRICAO, KM, VLINSCRICAO, PCTAXA,
-                   DATE_FORMAT(DTINICIO, '%Y-%m-%d') as DTINICIO, 
-                   DATE_FORMAT(DTFIM, '%Y-%m-%d') as DTFIM, 
-                   NUATLETAS, LOTE, DELOTE,
+                   DTINICIO, DTFIM, NUATLETAS, LOTE, DELOTE,
                    IDITEM_ULTIMO_LOTE, IDITEM_PROXIMO_LOTE
             FROM EVENTO_ITEM 
             WHERE IDEVENTO = %s
             ORDER BY DESCRICAO, LOTE
         """
+        
         cursor.execute(query, (evento_id,))
         
         columns = [desc[0] for desc in cursor.description]
         lotes = []
+        
         for row in cursor.fetchall():
             lote_dict = dict(zip(columns, row))
+            
             # Converter Decimal para float para JSON
-            if lote_dict['KM']:
+            if lote_dict.get('KM'):
                 lote_dict['KM'] = float(lote_dict['KM'])
-            if lote_dict['VLINSCRICAO']:
+            if lote_dict.get('VLINSCRICAO'):
                 lote_dict['VLINSCRICAO'] = float(lote_dict['VLINSCRICAO'])
-            if lote_dict['PCTAXA']:
+            if lote_dict.get('PCTAXA'):
                 lote_dict['PCTAXA'] = float(lote_dict['PCTAXA'])
+            
+            # Tratar datas - converter para string no formato YYYY-MM-DD
+            if lote_dict.get('DTINICIO'):
+                if hasattr(lote_dict['DTINICIO'], 'strftime'):
+                    lote_dict['DTINICIO'] = lote_dict['DTINICIO'].strftime('%Y-%m-%d')
+                else:
+                    lote_dict['DTINICIO'] = str(lote_dict['DTINICIO']) if lote_dict['DTINICIO'] else None
+            
+            if lote_dict.get('DTFIM'):
+                if hasattr(lote_dict['DTFIM'], 'strftime'):
+                    lote_dict['DTFIM'] = lote_dict['DTFIM'].strftime('%Y-%m-%d')
+                else:
+                    lote_dict['DTFIM'] = str(lote_dict['DTFIM']) if lote_dict['DTFIM'] else None
+            
             lotes.append(lote_dict)
         
         cursor.close()
-        return jsonify(lotes)
+        return jsonify(lotes), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Erro ao buscar lotes: {str(e)}")  # Log do erro no servidor
+        import traceback
+        traceback.print_exc()  # Print do stack trace completo
+        
+        if 'cursor' in locals():
+            cursor.close()
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
     
 
 @app.route('/api/eventos/<int:evento_id>/lotes', methods=['POST'])
