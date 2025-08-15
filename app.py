@@ -7758,13 +7758,25 @@ def criar_evento():
         except ValueError:
             return jsonify({'error': 'Formato de data inválido'}), 400
         
+        # Processar banner se fornecido
+        banner_blob = None
+        if data.get('banner'):
+            try:
+                # Remove o prefixo "data:image/...;base64," se presente
+                banner_data = data['banner']
+                if 'base64,' in banner_data:
+                    banner_data = banner_data.split('base64,')[1]
+                banner_blob = base64.b64decode(banner_data)
+            except Exception as e:
+                return jsonify({'error': 'Erro ao processar imagem do banner'}), 400
+        
         # Inserir evento no banco
         query = """
             INSERT INTO EVENTO1 
             (TITULO, SUBTITULO, DATAINICIO, DATAFIM, HRINICIO, DSLINK, 
              DESCRICAO, REGULAMENTO, INICIOINSCRICAO, FIMINSCRICAO, 
-             ENDERECO, CIDADEUF, IDORGANIZADOR, OBS, ATIVO)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             ENDERECO, CIDADEUF, IDORGANIZADOR, OBS, ATIVO, BANNER)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         
         valores = (
@@ -7782,7 +7794,8 @@ def criar_evento():
             data.get('cidadeuf', '').strip() if data.get('cidadeuf') else None,
             int(data['idorganizador']),
             data.get('obs', '').strip() if data.get('obs') else None,
-            data.get('ativo', 'S')
+            data.get('ativo', 'S'),
+            banner_blob
         )
         
         cursor.execute(query, valores)
@@ -7800,6 +7813,8 @@ def criar_evento():
     except Exception as e:
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
 
+
+
 @app.route('/api/eventos/<int:evento_id>', methods=['GET'])
 def obter_evento(evento_id):
     """API para obter dados de um evento específico"""
@@ -7809,7 +7824,7 @@ def obter_evento(evento_id):
             SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
                    HRINICIO, DSLINK, DESCRICAO, REGULAMENTO, 
                    INICIOINSCRICAO, FIMINSCRICAO, ENDERECO, CIDADEUF, 
-                   IDORGANIZADOR, OBS, ATIVO
+                   IDORGANIZADOR, OBS, ATIVO, BANNER
             FROM EVENTO1 
             WHERE IDEVENTO = %s
         """
@@ -7824,7 +7839,7 @@ def obter_evento(evento_id):
         campos = ['idevento', 'titulo', 'subtitulo', 'datainicio', 'datafim',
                  'hrinicio', 'dslink', 'descricao', 'regulamento',
                  'inicioinscricao', 'fiminscricao', 'endereco', 'cidadeuf',
-                 'idorganizador', 'obs', 'ativo']
+                 'idorganizador', 'obs', 'ativo', 'banner']
         
         evento_dict = {}
         for i, campo in enumerate(campos):
@@ -7832,6 +7847,9 @@ def obter_evento(evento_id):
             # Converter datas para string
             if campo in ['datainicio', 'datafim', 'inicioinscricao', 'fiminscricao'] and valor:
                 evento_dict[campo] = valor.strftime('%Y-%m-%d')
+            elif campo == 'banner' and valor:
+                # Converter BLOB para base64
+                evento_dict[campo] = base64.b64encode(valor).decode('utf-8')
             else:
                 evento_dict[campo] = valor
         
@@ -7839,6 +7857,7 @@ def obter_evento(evento_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/eventos', methods=['GET'])
 def listar_eventos():
@@ -7942,6 +7961,17 @@ def atualizar_evento(evento_id):
                 cursor.close()
                 return jsonify({'error': 'Formato de data inválido'}), 400
         
+        # Processar banner se fornecido
+        if 'banner' in data and data['banner']:
+            try:
+                banner_data = data['banner']
+                if 'base64,' in banner_data:
+                    banner_data = banner_data.split('base64,')[1]
+                data['banner'] = base64.b64decode(banner_data)
+            except Exception as e:
+                cursor.close()
+                return jsonify({'error': 'Erro ao processar imagem do banner'}), 400
+        
         # Construir query de update dinamicamente
         campos_update = []
         valores = []
@@ -7949,7 +7979,7 @@ def atualizar_evento(evento_id):
         campos_permitidos = [
             'titulo', 'subtitulo', 'datainicio', 'datafim', 'hrinicio',
             'dslink', 'descricao', 'regulamento', 'inicioinscricao',
-            'fiminscricao', 'endereco', 'cidadeuf', 'obs', 'ativo'
+            'fiminscricao', 'endereco', 'cidadeuf', 'obs', 'ativo', 'banner'
         ]
         
         for campo in campos_permitidos:
@@ -7975,6 +8005,7 @@ def atualizar_evento(evento_id):
         
     except Exception as e:
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
+
 
 @app.route('/api/eventos/<int:evento_id>', methods=['DELETE'])
 def deletar_evento(evento_id):
@@ -8040,19 +8071,71 @@ def visualizar_evento(dslink):
         query = """
             SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
                    HRINICIO, DESCRICAO, REGULAMENTO, ENDERECO, CIDADEUF,
-                   INICIOINSCRICAO, FIMINSCRICAO, ATIVO
+                   INICIOINSCRICAO, FIMINSCRICAO, ATIVO, BANNER
             FROM EVENTO1 
             WHERE DSLINK = %s AND ATIVO = 'S'
         """
         cursor.execute(query, (dslink,))
         evento = cursor.fetchone()
-        cursor.close()
         
         if not evento:
+            cursor.close()
             return render_template('404.html', message='Evento não encontrado'), 404
         
+        evento_id = evento[0]
+        
+        # Carregar itens do evento
+        query_itens = """
+            SELECT 
+              ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
+              ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
+              ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
+              ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
+              (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
+              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
+              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
+              (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
+              CASE 
+                WHEN CURDATE() < ei.DTINICIO THEN
+                  CASE 
+                    WHEN EXISTS (
+                      SELECT 1 FROM EVENTO_ITEM lote_ant
+                      WHERE lote_ant.IDITEM = (
+                        SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
+                      )
+                      AND (
+                        SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
+                      ) >= lote_ant.NUATLETAS
+                    ) THEN 'ABERTO'
+                    ELSE 'NÃO INICIADO'
+                  END
+                WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
+                  CASE 
+                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
+                    ELSE 'ESGOTADO'
+                  END
+                WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
+                ELSE 'ENCERRADO'
+              END AS STATUS_LOTE
+            FROM EVENTO_ITEM ei
+            WHERE ei.IDEVENTO = %s
+            ORDER BY ei.LOTE
+        """
+        
+        cursor.execute(query_itens, (evento_id,))
+        itens = cursor.fetchall()
+        cursor.close()
+        
+        # Processar banner se existir
+        banner_base64 = None
+        if evento[13]:  # BANNER
+            banner_base64 = base64.b64encode(evento[13]).decode('utf-8')
+        
         # Você pode criar um template específico para exibir o evento
-        return render_template('evento_publico.html', evento=evento)
+        return render_template('evento_publico.html', 
+                             evento=evento, 
+                             itens=itens, 
+                             banner=banner_base64)
         
     except Exception as e:
         return render_template('500.html', error=str(e)), 500
@@ -8319,43 +8402,43 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)
 
 
-            # SELECT 
-            #   ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
-            #   ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
-            #   ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
-            #   ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
-            #   (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
-            #   (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
-            #   (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
-            #   -- Quantidade total de inscrições no evento
-            #   (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
-            #   -- Status do lote
-            #   CASE 
-            #     WHEN CURDATE() < ei.DTINICIO THEN
-            #       CASE 
-            #         -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
-            #         WHEN EXISTS (
-            #           SELECT 1 FROM EVENTO_ITEM lote_ant
-            #           WHERE lote_ant.IDITEM = (
-            #             SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
-            #           )
-            #           AND (
-            #             SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
-            #           ) >= lote_ant.NUATLETAS
-            #         ) THEN 'ABERTO'
-            #         ELSE 'NÃO INICIADO'
-            #       END
-            #     WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
-            #       CASE 
-            #         WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
-            #         ELSE 'ESGOTADO'
-            #       END
-            #     WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
-            #     ELSE 'ENCERRADO'
-            #   END AS STATUS_LOTE
-            # FROM EVENTO_ITEM ei
-            # WHERE ei.IDEVENTO = 1
-            # ORDER BY ei.LOTE
+            SELECT 
+              ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
+              ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
+              ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
+              ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
+              (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
+              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
+              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
+              -- Quantidade total de inscrições no evento
+              (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
+              -- Status do lote
+              CASE 
+                WHEN CURDATE() < ei.DTINICIO THEN
+                  CASE 
+                    -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
+                    WHEN EXISTS (
+                      SELECT 1 FROM EVENTO_ITEM lote_ant
+                      WHERE lote_ant.IDITEM = (
+                        SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
+                      )
+                      AND (
+                        SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
+                      ) >= lote_ant.NUATLETAS
+                    ) THEN 'ABERTO'
+                    ELSE 'NÃO INICIADO'
+                  END
+                WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
+                  CASE 
+                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
+                    ELSE 'ESGOTADO'
+                  END
+                WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
+                ELSE 'ENCERRADO'
+              END AS STATUS_LOTE
+            FROM EVENTO_ITEM ei
+            WHERE ei.IDEVENTO = %s
+            ORDER BY ei.LOTE
 
 
 
