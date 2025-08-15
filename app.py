@@ -7687,7 +7687,8 @@ def autenticar_admin():
     try:
         data = request.get_json()
         senha_informada = data.get('senha', '').strip() if data else ''
-        
+        senha_adm = os.getenv('SENHA_ADM')
+		
         # Debug - remover após testar
         print(f"Senha informada: '{senha_informada}'")
         print(f"Senha esperada: '{senha_adm}'")
@@ -8318,6 +8319,7 @@ if __name__ == "__main__":
             # FROM EVENTO_ITEM ei
             # WHERE ei.IDEVENTO = 1
             # ORDER BY ei.LOTE
+
 
 
 
