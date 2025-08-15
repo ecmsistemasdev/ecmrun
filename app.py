@@ -7821,7 +7821,6 @@ def obter_evento(evento_id):
     """API para obter dados de um evento específico"""
     try:
         cursor = mysql.connection.cursor()
-        # Adicione apenas o campo BANNER na query
         query = """
             SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
                    HRINICIO, DSLINK, DESCRICAO, REGULAMENTO, 
@@ -7837,7 +7836,7 @@ def obter_evento(evento_id):
         if not evento:
             return jsonify({'error': 'Evento não encontrado'}), 404
         
-        # Converter para dicionário (SEM processar o banner por enquanto)
+        # Converter para dicionário
         campos = ['idevento', 'titulo', 'subtitulo', 'datainicio', 'datafim',
                  'hrinicio', 'dslink', 'descricao', 'regulamento',
                  'inicioinscricao', 'fiminscricao', 'endereco', 'cidadeuf',
@@ -7849,17 +7848,21 @@ def obter_evento(evento_id):
             # Converter datas para string
             if campo in ['datainicio', 'datafim', 'inicioinscricao', 'fiminscricao'] and valor:
                 evento_dict[campo] = valor.strftime('%Y-%m-%d')
-            elif campo == 'banner':
-                # Por enquanto, apenas None para não processar
-                evento_dict[campo] = None
+            elif campo == 'banner' and valor:
+                # Converter BLOB para base64
+                evento_dict[campo] = base64.b64encode(valor).decode('utf-8')
+                print(f"Banner encontrado para evento {evento_id}, tamanho: {len(valor)} bytes")  # Debug
             else:
                 evento_dict[campo] = valor
+        
+        print(f"Retornando evento {evento_id}, banner presente: {evento_dict.get('banner') is not None}")  # Debug
         
         return jsonify(evento_dict)
         
     except Exception as e:
+        print(f"Erro ao obter evento {evento_id}: {str(e)}")  # Debug
         return jsonify({'error': str(e)}), 500
-
+		
 @app.route('/api/eventos', methods=['GET'])
 def listar_eventos():
     """API para listar eventos de um organizador"""
@@ -8440,6 +8443,7 @@ if __name__ == "__main__":
             # FROM EVENTO_ITEM ei
             # WHERE ei.IDEVENTO = %s
             # ORDER BY ei.LOTE
+
 
 
 
