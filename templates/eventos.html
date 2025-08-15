@@ -678,6 +678,17 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="banner">Banner/Imagem do Evento</label>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <input type="file" id="bannerFile" accept="image/*" onchange="handleBannerUpload(event)">
+                            <div id="bannerPreview" style="display: none;">
+                                <img id="bannerImage" src="" alt="Preview do banner" style="max-height: 200px; width: 100%; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;">
+                                <button type="button" class="btn btn-danger btn-sm" onclick="removeBanner()" style="margin-top: 10px;">Remover Banner</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="obs">Observações</label>
                         <textarea id="obs" name="obs" rows="3" maxlength="200"></textarea>
                     </div>
@@ -829,6 +840,7 @@
         let lotes = [];
         let lotesCounter = 0;
         let editingLotes = false;
+        let bannerData = null;
 
         // Função de autenticação
         document.getElementById('authForm').addEventListener('submit', async function(e) {
@@ -881,9 +893,11 @@
             editingEventId = null;
             descricaoContent = '';
             regulamentoContent = '';
+            bannerData = null; // Reset banner data
             document.getElementById('descricaoEditor').innerHTML = '';
             document.getElementById('regulamentoEditor').innerHTML = '';
             document.getElementById('linkPreview').textContent = '[seu-link]';
+            removeBanner(); // Remove qualquer banner preview
         }
 
         // Função para carregar lista de eventos
@@ -960,6 +974,15 @@
                     document.getElementById('descricaoEditor').innerHTML = descricaoContent;
                     document.getElementById('regulamentoEditor').innerHTML = regulamentoContent;
                     document.getElementById('linkPreview').textContent = evento.dslink || '[seu-link]';
+                    
+                    // Carregar banner se existir
+                    if (evento.banner) {
+                        document.getElementById('bannerImage').src = `data:image/jpeg;base64,${evento.banner}`;
+                        document.getElementById('bannerPreview').style.display = 'block';
+                        bannerData = `data:image/jpeg;base64,${evento.banner}`;
+                    } else {
+                        removeBanner();
+                    }
                 } else {
                     showMessage('Erro ao carregar evento.', 'error');
                 }
@@ -1084,6 +1107,11 @@
             data.regulamento = regulamentoContent;
             data.idorganizador = getIdOrganizador();
             data.ativo = 'S';
+            
+            // Adicionar banner se houver
+            if (bannerData) {
+                data.banner = bannerData;
+            }
 
             // Validações
             if (!data.titulo || !data.datainicio || !data.datafim || !data.dslink) {
@@ -1157,13 +1185,20 @@
         // Função para carregar lotes existentes
         async function carregarLotes(eventoId) {
             try {
+                console.log('Carregando lotes para evento:', eventoId); // Debug
                 const response = await fetch(`/api/eventos/${eventoId}/lotes`);
                 const lotesData = await response.json();
                 
+                console.log('Resposta da API:', lotesData); // Debug
+                console.log('Response OK:', response.ok); // Debug
+                console.log('Quantidade de lotes:', lotesData.length); // Debug
+                
                 if (response.ok && lotesData.length > 0) {
                     lotes = lotesData;
+                    console.log('Lotes carregados:', lotes); // Debug
                     mostrarLotesExistentes();
                 } else {
+                    console.log('Nenhum lote encontrado ou erro na resposta'); // Debug
                     mostrarFormularioLotes();
                 }
             } catch (error) {
@@ -1174,25 +1209,34 @@
 
         // Função para mostrar lotes existentes
         function mostrarLotesExistentes() {
+            console.log('Executando mostrarLotesExistentes()'); // Debug
+            console.log('Lotes disponíveis:', lotes); // Debug
+            
             document.getElementById('lotesExistentes').classList.remove('hidden');
             document.getElementById('lotesForm').classList.add('hidden');
             
             const lotesLista = document.getElementById('lotesLista');
             
             if (lotes.length === 0) {
+                console.log('Lista de lotes vazia'); // Debug
                 lotesLista.innerHTML = '<div class="empty-state"><p>Nenhum lote cadastrado</p></div>';
                 return;
             }
+            
+            console.log('Processando', lotes.length, 'lotes'); // Debug
             
             // Agrupar lotes por DESCRIÇÃO
             const lotesPorDescricao = {};
             lotes.forEach(lote => {
                 const descricao = lote.DESCRICAO;
+                console.log('Processando lote com descrição:', descricao); // Debug
                 if (!lotesPorDescricao[descricao]) {
                     lotesPorDescricao[descricao] = [];
                 }
                 lotesPorDescricao[descricao].push(lote);
             });
+            
+            console.log('Lotes agrupados por descrição:', lotesPorDescricao); // Debug
             
             let html = '';
             Object.keys(lotesPorDescricao).sort().forEach(descricao => {
@@ -1236,6 +1280,7 @@
                 html += `</div>`;
             });
             
+            console.log('HTML gerado:', html.substring(0, 200) + '...'); // Debug (primeiros 200 chars)
             lotesLista.innerHTML = html;
         }
 
@@ -1473,6 +1518,45 @@
                 document.body.style.overflow = 'hidden';
             }
         }        
+
+        // Função para lidar com o upload do banner
+        function handleBannerUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validar tipo de arquivo
+            if (!file.type.startsWith('image/')) {
+                showMessage('Por favor, selecione apenas arquivos de imagem.', 'error');
+                event.target.value = '';
+                return;
+            }
+            
+            // Validar tamanho (máximo 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('A imagem deve ter no máximo 5MB.', 'error');
+                event.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                bannerData = e.target.result;
+                
+                // Mostrar preview
+                document.getElementById('bannerImage').src = e.target.result;
+                document.getElementById('bannerPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Função para remover banner
+        function removeBanner() {
+            bannerData = null;
+            document.getElementById('bannerFile').value = '';
+            document.getElementById('bannerPreview').style.display = 'none';
+            document.getElementById('bannerImage').src = '';
+        }
+
     </script>
 </body>
 </html>
