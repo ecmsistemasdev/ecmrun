@@ -7813,11 +7813,15 @@ def criar_evento():
     except Exception as e:
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
 
+# VERSÃO SIMPLIFICADA - APENAS PARA TESTAR
+# Modifique apenas a rota obter_evento para incluir o campo BANNER
+
 @app.route('/api/eventos/<int:evento_id>', methods=['GET'])
 def obter_evento(evento_id):
     """API para obter dados de um evento específico"""
     try:
         cursor = mysql.connection.cursor()
+        # Adicione apenas o campo BANNER na query
         query = """
             SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
                    HRINICIO, DSLINK, DESCRICAO, REGULAMENTO, 
@@ -7833,7 +7837,7 @@ def obter_evento(evento_id):
         if not evento:
             return jsonify({'error': 'Evento não encontrado'}), 404
         
-        # Converter para dicionário
+        # Converter para dicionário (SEM processar o banner por enquanto)
         campos = ['idevento', 'titulo', 'subtitulo', 'datainicio', 'datafim',
                  'hrinicio', 'dslink', 'descricao', 'regulamento',
                  'inicioinscricao', 'fiminscricao', 'endereco', 'cidadeuf',
@@ -7845,9 +7849,9 @@ def obter_evento(evento_id):
             # Converter datas para string
             if campo in ['datainicio', 'datafim', 'inicioinscricao', 'fiminscricao'] and valor:
                 evento_dict[campo] = valor.strftime('%Y-%m-%d')
-            elif campo == 'banner' and valor:
-                # Converter BLOB para base64
-                evento_dict[campo] = base64.b64encode(valor).decode('utf-8')
+            elif campo == 'banner':
+                # Por enquanto, apenas None para não processar
+                evento_dict[campo] = None
             else:
                 evento_dict[campo] = valor
         
@@ -7855,7 +7859,6 @@ def obter_evento(evento_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/api/eventos', methods=['GET'])
 def listar_eventos():
@@ -8437,6 +8440,7 @@ if __name__ == "__main__":
             FROM EVENTO_ITEM ei
             WHERE ei.IDEVENTO = %s
             ORDER BY ei.LOTE
+
 
 
 
