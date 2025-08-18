@@ -2710,7 +2710,7 @@ def verificar_pagamento(payment_id):
             cur.execute("""
                 SELECT IDEVENTO, IDINSCRICAO, STATUS, CPF, EMAIL, NOME, SOBRENOME, 
                        DTNASCIMENTO, DATANASC, CELULAR, SEXO, TEL_EMERGENCIA, 
-                       CONT_EMERGENCIA, ESTADO, ID_CIDADE, IDPESSOA
+                       CONT_EMERGENCIA, ESTADO, ID_CIDADE, IDPESSOA, VLINSCRICAO
                 FROM EVENTO_INSCRICAO 
                 WHERE IDPAGAMENTO = %s
             """, (payment_id,))
@@ -2735,6 +2735,7 @@ def verificar_pagamento(payment_id):
                 estado = existing_record[13]
                 id_cidade = existing_record[14]
                 idpessoa_atual = existing_record[15]
+				vl_inscricao = existing_record[16]
                 
                 print(f"ID Inscrição: {idinscricao}, Status atual: {status_atual}, CPF: {cpf}")
                 
@@ -2814,7 +2815,9 @@ def verificar_pagamento(payment_id):
 
                     print("Atualizando status para aprovado, IDPESSOA e valores das taxas...")
                     print(f"Taxa MP: R$ {valor_taxa_mp:.2f}, Valor Líquido: R$ {valor_liquido:.2f}")
-                    
+
+					vl_credito = valor_total_transacao - valor_taxa_mp
+					
                     # ATUALIZAÇÃO COM OS NOVOS CAMPOS: VLTAXAMP e VLLIQUIDO
                     cur.execute("""
                         UPDATE EVENTO_INSCRICAO SET
@@ -2822,16 +2825,20 @@ def verificar_pagamento(payment_id):
                             STATUS = %s,
                             NUPEITO = %s,
                             IDPESSOA = %s,
+							VLPAGO = %s,
                             VLTAXAMP = %s,
-                            VLLIQUIDO = %s
+                            VLLIQUIDO = %s,
+							VLCREDITO = %s
                         WHERE IDPAGAMENTO = %s
                     """, (
                         data_pagamento,         
                         'A',  # APROVADO
                         numero_peito,
                         idpessoa,
+						valor_total_transacao,
                         valor_taxa_mp,      # Valor da taxa do Mercado Pago
                         valor_liquido,      # Valor líquido (total - taxas)
+						vl_credito,
                         payment_id
                     ))
                     
@@ -8443,6 +8450,7 @@ if __name__ == "__main__":
             # FROM EVENTO_ITEM ei
             # WHERE ei.IDEVENTO = %s
             # ORDER BY ei.LOTE
+
 
 
 
