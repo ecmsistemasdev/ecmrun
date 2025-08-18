@@ -2735,9 +2735,10 @@ def verificar_pagamento(payment_id):
                 estado = existing_record[13]
                 id_cidade = existing_record[14]
                 idpessoa_atual = existing_record[15]
-				vl_inscricao = existing_record[16]
+                vl_inscricao = existing_record[16]  # CORREÇÃO: Indentação corrigida
                 
                 print(f"ID Inscrição: {idinscricao}, Status atual: {status_atual}, CPF: {cpf}")
+                print(f"Valor da inscrição: R$ {vl_inscricao:.2f}")
                 
                 # Verificar se já não foi processado (evitar reprocessamento)
                 if status_atual != 'A':  # Se não está aprovado ainda
@@ -2813,32 +2814,36 @@ def verificar_pagamento(payment_id):
                     resultado = cur.fetchone()
                     numero_peito = resultado[0] if resultado and resultado[0] else 1
 
+                    # CORREÇÃO: Calcular vl_credito corretamente (lucro da plataforma)
+                    # VLCREDITO = Valor líquido (que caiu na conta) - Valor da inscrição
+                    vl_credito = valor_liquido - vl_inscricao
+
                     print("Atualizando status para aprovado, IDPESSOA e valores das taxas...")
                     print(f"Taxa MP: R$ {valor_taxa_mp:.2f}, Valor Líquido: R$ {valor_liquido:.2f}")
-
-					vl_credito = valor_total_transacao - valor_taxa_mp
-					
-                    # ATUALIZAÇÃO COM OS NOVOS CAMPOS: VLTAXAMP e VLLIQUIDO
+                    print(f"VL Crédito (lucro plataforma): R$ {vl_credito:.2f}")
+                    print(f"Cálculo: R$ {valor_liquido:.2f} (líquido) - R$ {vl_inscricao:.2f} (inscrição) = R$ {vl_credito:.2f} (lucro)")
+                    
+                    # ATUALIZAÇÃO COM OS NOVOS CAMPOS: VLPAGO e VLCREDITO
                     cur.execute("""
                         UPDATE EVENTO_INSCRICAO SET
                             DTPAGAMENTO = %s,
                             STATUS = %s,
                             NUPEITO = %s,
                             IDPESSOA = %s,
-							VLPAGO = %s,
+                            VLPAGO = %s,
                             VLTAXAMP = %s,
                             VLLIQUIDO = %s,
-							VLCREDITO = %s
+                            VLCREDITO = %s
                         WHERE IDPAGAMENTO = %s
                     """, (
                         data_pagamento,         
                         'A',  # APROVADO
                         numero_peito,
                         idpessoa,
-						valor_total_transacao,
-                        valor_taxa_mp,      # Valor da taxa do Mercado Pago
-                        valor_liquido,      # Valor líquido (total - taxas)
-						vl_credito,
+                        valor_total_transacao,  # Valor que o cliente pagou de fato
+                        valor_taxa_mp,          # Valor da taxa do Mercado Pago
+                        valor_liquido,          # Valor líquido (total - taxas)
+                        vl_credito,             # Lucro da plataforma (valor pago - valor inscrição)
                         payment_id
                     ))
                     
@@ -2849,10 +2854,11 @@ def verificar_pagamento(payment_id):
                     print(f"Pagamento {payment_id} atualizado com sucesso")
                     print(f"IDPESSOA {idpessoa} vinculado à inscrição")
                     print(f"Taxa MP: R$ {valor_taxa_mp:.2f} - Valor Líquido: R$ {valor_liquido:.2f}")
+                    print(f"Lucro Plataforma: R$ {vl_credito:.2f}")
                     
                     # Verificar se a atualização foi bem-sucedida
                     cur.execute("""
-                        SELECT STATUS, DTPAGAMENTO, IDPESSOA, VLTAXAMP, VLLIQUIDO 
+                        SELECT STATUS, DTPAGAMENTO, IDPESSOA, VLTAXAMP, VLLIQUIDO, VLPAGO, VLCREDITO 
                         FROM EVENTO_INSCRICAO 
                         WHERE IDPAGAMENTO = %s
                     """, (payment_id,))
@@ -2900,7 +2906,6 @@ def verificar_pagamento(payment_id):
             'message': str(e),
             'status': 'error'
         }), 500
-
 
 # @app.route('/verificar-pagamento/<payment_id>')
 # def verificar_pagamento(payment_id):
@@ -8450,6 +8455,7 @@ if __name__ == "__main__":
             # FROM EVENTO_ITEM ei
             # WHERE ei.IDEVENTO = %s
             # ORDER BY ei.LOTE
+
 
 
 
