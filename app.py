@@ -2737,8 +2737,12 @@ def verificar_pagamento(payment_id):
                 idpessoa_atual = existing_record[15]
                 vl_inscricao = existing_record[16]  # CORREÇÃO: Indentação corrigida
                 
+                # CORREÇÃO: Converter vl_inscricao para float para evitar erro de tipo
+                vl_inscricao_float = float(vl_inscricao) if vl_inscricao is not None else 0.0
+                
                 print(f"ID Inscrição: {idinscricao}, Status atual: {status_atual}, CPF: {cpf}")
-                print(f"Valor da inscrição: R$ {vl_inscricao:.2f}")
+                print(f"Valor da inscrição: R$ {vl_inscricao_float:.2f}")
+                print(f"Tipo de vl_inscricao: {type(vl_inscricao)} -> convertido para float: {type(vl_inscricao_float)}")
                 
                 # Verificar se já não foi processado (evitar reprocessamento)
                 if status_atual != 'A':  # Se não está aprovado ainda
@@ -2814,14 +2818,14 @@ def verificar_pagamento(payment_id):
                     resultado = cur.fetchone()
                     numero_peito = resultado[0] if resultado and resultado[0] else 1
 
-                    # CORREÇÃO: Calcular vl_credito corretamente (lucro da plataforma)
+                    # CORREÇÃO: Calcular vl_credito corretamente usando valores float
                     # VLCREDITO = Valor líquido (que caiu na conta) - Valor da inscrição
-                    vl_credito = valor_liquido - vl_inscricao
+                    vl_credito = valor_liquido - vl_inscricao_float
 
                     print("Atualizando status para aprovado, IDPESSOA e valores das taxas...")
                     print(f"Taxa MP: R$ {valor_taxa_mp:.2f}, Valor Líquido: R$ {valor_liquido:.2f}")
                     print(f"VL Crédito (lucro plataforma): R$ {vl_credito:.2f}")
-                    print(f"Cálculo: R$ {valor_liquido:.2f} (líquido) - R$ {vl_inscricao:.2f} (inscrição) = R$ {vl_credito:.2f} (lucro)")
+                    print(f"Cálculo: R$ {valor_liquido:.2f} (líquido) - R$ {vl_inscricao_float:.2f} (inscrição) = R$ {vl_credito:.2f} (lucro)")
                     
                     # ATUALIZAÇÃO COM OS NOVOS CAMPOS: VLPAGO e VLCREDITO
                     cur.execute("""
@@ -2906,6 +2910,7 @@ def verificar_pagamento(payment_id):
             'message': str(e),
             'status': 'error'
         }), 500
+
 
 # @app.route('/verificar-pagamento/<payment_id>')
 # def verificar_pagamento(payment_id):
@@ -8455,6 +8460,7 @@ if __name__ == "__main__":
             # FROM EVENTO_ITEM ei
             # WHERE ei.IDEVENTO = %s
             # ORDER BY ei.LOTE
+
 
 
 
