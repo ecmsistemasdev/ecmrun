@@ -634,21 +634,33 @@ def comprovante(payment_id):
         app.logger.info(f"Payment ID: {payment_id}")
         
         cur = mysql.connection.cursor()
-        # Execute a SQL com o payment_id
+        
         cur.execute('''
-            SELECT ei.DTPAGAMENTO, 
-                e.DESCRICAO, e.LOCAL, 
-                CASE WHEN e.DTINICIO = e.DTFIM
-                    THEN CONCAT(e.DTINICIO,' ',e.HRINICIO)
-                    ELSE CONCAT(e.DTINICIO,' ',e.HRINICIO,' - ',e.DTFIM) END AS DTEVENTO,
-                CONCAT(ei.NOME,' ',ei.SOBRENOME) as NOME_COMPLETO, i.KM_DESCRICAO, 
-                ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, ei.IDPAGAMENTO, 
-                ei.FLEMAIL, ei.IDINSCRICAO, e.OBS, ei.CPF, ei.DTNASCIMENTO
-            FROM EVENTO e, EVENTO_ITENS i, EVENTO_INSCRICAO ei
+            SELECT ei.DTPAGAMENTO,
+                   e.TITULO, 
+                   e.ENDERECO, 
+                   e.DATAINICIO,
+                   e.DATAFIM,
+                   e.HRINICIO,
+                   CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
+                   CASE WHEN i.KM=0
+                       THEN i.MODALIDADE
+                       ELSE CONCAT(i.KM,' KM') 
+                   END AS KM_DESCRICAO, 
+                   ei.VLINSCRICAO, 
+                   ei.VLTOTAL, 
+                   ei.FORMAPGTO, 
+                   ei.IDPAGAMENTO, 
+                   ei.FLEMAIL, 
+                   ei.IDINSCRICAO, 
+                   e.OBS, 
+                   ei.CPF, 
+                   ei.DTNASCIMENTO 
+            FROM EVENTO_INSCRICAO ei, EVENTO1 e, EVENTO_ITEM i
             WHERE i.IDITEM = ei.IDITEMEVENTO
-            AND e.IDEVENTO = ei.IDEVENTO
-            AND ei.STATUS = 'A'
-            AND ei.IDPAGAMENTO = %s
+              AND e.IDEVENTO = ei.IDEVENTO
+              AND ei.STATUS = 'A' 
+              AND ei.IDPAGAMENTO = %s 
         ''', (payment_id,))
         
         receipt_data = cur.fetchone()
@@ -658,36 +670,50 @@ def comprovante(payment_id):
             app.logger.info("Dados não encontrados")
             return "Dados não encontrados", 404
         
-        # Verificar se a data de pagamento é válida antes de formatar
+        # Obter os dados como datetime do MySQL
         data_pagamento = receipt_data[0]
-        if data_pagamento is not None:
-            data_pagamento_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M')
+        data_inicio = receipt_data[3]
+        data_fim = receipt_data[4]
+        hr_inicio = receipt_data[5]
+        
+        # Formatar data de pagamento
+        if isinstance(data_pagamento, datetime):
+            data_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M:%S')
         else:
-            data_pagamento_formatada = "Data não informada"
-            app.logger.warning(f"DTPAGAMENTO é NULL para payment_id: {payment_id}")
+            data_formatada = str(data_pagamento)
+        
+        # Formatar data do evento
+        if isinstance(data_inicio, datetime) and isinstance(data_fim, datetime):
+            if data_inicio.date() == data_fim.date():
+                # Mesmo dia
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio}"
+            else:
+                # Dias diferentes
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio} - {data_fim.strftime('%d/%m/%Y')}"
+        else:
+            # Fallback se não for datetime
+            data_evento = f"{data_inicio} {hr_inicio}"
 
         # Estruturar os dados do comprovante
         receipt_data_dict = { 
-            'data': data_pagamento_formatada,  
+            'data': data_formatada,
             'evento': receipt_data[1],
             'endereco': receipt_data[2],
-            'dataevento': receipt_data[3],
-            'participante': receipt_data[4],
-            'km': receipt_data[5],
-            'valor': f'R$ {receipt_data[6]:,.2f}' if receipt_data[6] is not None else 'R$ 0,00',  # Verificar valor também
-            'valortotal': f'R$ {receipt_data[7]:,.2f}' if receipt_data[7] is not None else 'R$ 0,00',  # Verificar valor também
-            'formapgto': receipt_data[8],
-            'inscricao': str(receipt_data[9]),
-            'obs': receipt_data[12],
-            'cpf': receipt_data[13],
-            'dtnascimento': receipt_data[14]
+            'dataevento': data_evento,
+            'participante': receipt_data[6],
+            'km': receipt_data[7],
+            'valor': f'R$ {receipt_data[8]:,.2f}',  # Formatar valor
+            'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
+            'formapgto': receipt_data[10],
+            'inscricao': str(receipt_data[11]),
+            'obs': receipt_data[14]
         }
         
         app.logger.info("Dados da Inscrição:")
         app.logger.info(receipt_data)
 
-        flemail = receipt_data[10]
-        id_inscricao = receipt_data[11]
+        flemail = receipt_data[12]
+        id_inscricao = receipt_data[13]
         app.logger.info(f' FLEMAIL: { flemail }')
         app.logger.info(f' ID INSC: { id_inscricao }')
 
@@ -722,21 +748,33 @@ def vercomprovante(payment_id):
         app.logger.info(f"Payment ID: {payment_id}")
         
         cur = mysql.connection.cursor()
-        # Execute a SQL com o payment_id
+        
         cur.execute('''
-            SELECT ei.DTPAGAMENTO, 
-                e.DESCRICAO, e.LOCAL, 
-                CASE WHEN e.DTINICIO = e.DTFIM
-                    THEN CONCAT(e.DTINICIO,' ',e.HRINICIO)
-                    ELSE CONCAT(e.DTINICIO,' ',e.HRINICIO,' - ',e.DTFIM) END AS DTEVENTO,
-                CONCAT(ei.NOME,' ',ei.SOBRENOME) as NOME_COMPLETO,
-                i.KM_DESCRICAO, ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO,
-                ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, e.OBS
-            FROM EVENTO e, EVENTO_ITENS i, EVENTO_INSCRICAO ei
+            SELECT ei.DTPAGAMENTO,
+                   e.TITULO, 
+                   e.ENDERECO, 
+                   e.DATAINICIO,
+                   e.DATAFIM,
+                   e.HRINICIO,
+                   CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
+                   CASE WHEN i.KM=0
+                       THEN i.MODALIDADE
+                       ELSE CONCAT(i.KM,' KM') 
+                   END AS KM_DESCRICAO, 
+                   ei.VLINSCRICAO, 
+                   ei.VLTOTAL, 
+                   ei.FORMAPGTO, 
+                   ei.IDPAGAMENTO, 
+                   ei.FLEMAIL, 
+                   ei.IDINSCRICAO, 
+                   e.OBS, 
+                   ei.CPF, 
+                   ei.DTNASCIMENTO 
+            FROM EVENTO_INSCRICAO ei, EVENTO1 e, EVENTO_ITEM i
             WHERE i.IDITEM = ei.IDITEMEVENTO
-            AND e.IDEVENTO = ei.IDEVENTO
-            AND ei.STATUS = 'A'
-            AND ei.IDPAGAMENTO = %s
+              AND e.IDEVENTO = ei.IDEVENTO
+              AND ei.STATUS = 'A' 
+              AND ei.IDPAGAMENTO = %s 
         ''', (payment_id,))
         
         receipt_data = cur.fetchone()
@@ -746,32 +784,48 @@ def vercomprovante(payment_id):
             app.logger.info("Dados não encontrados")
             return "Dados não encontrados", 404
         
-        # Converter a data de string para datetime
+        # Obter os dados como datetime do MySQL
         data_pagamento = receipt_data[0]
-
-        flemail = receipt_data[10]
-        id_inscricao = receipt_data[11]
-        app.logger.info(f' FLMAIL: { flemail }')
-        app.logger.info(f' ID INSC: { id_inscricao }')
-
+        data_inicio = receipt_data[3]
+        data_fim = receipt_data[4]
+        hr_inicio = receipt_data[5]
         
+        # Formatar data de pagamento
+        if isinstance(data_pagamento, datetime):
+            data_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M:%S')
+        else:
+            data_formatada = str(data_pagamento)
+        
+        # Formatar data do evento
+        if isinstance(data_inicio, datetime) and isinstance(data_fim, datetime):
+            if data_inicio.date() == data_fim.date():
+                # Mesmo dia
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio}"
+            else:
+                # Dias diferentes
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio} - {data_fim.strftime('%d/%m/%Y')}"
+        else:
+            # Fallback se não for datetime
+            data_evento = f"{data_inicio} {hr_inicio}"
+
         # Estruturar os dados do comprovante
         receipt_data_dict = { 
-            'data': data_pagamento.strftime('%d/%m/%Y %H:%M'),  
+            'data': data_formatada,
             'evento': receipt_data[1],
             'endereco': receipt_data[2],
-            'dataevento': receipt_data[3],
-            'participante': receipt_data[4],
-            'km': receipt_data[5],
-            'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
-            'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
-            'formapgto': receipt_data[8],
-            'inscricao': str(receipt_data[9]),
-            'obs': receipt_data[12]
+            'dataevento': data_evento,
+            'participante': receipt_data[6],
+            'km': receipt_data[7],
+            'valor': f'R$ {receipt_data[8]:,.2f}',  # Formatar valor
+            'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
+            'formapgto': receipt_data[10],
+            'inscricao': str(receipt_data[11]),
+            'obs': receipt_data[14]
         }
-
+        
         app.logger.info("Dados da Inscrição:")
         app.logger.info(receipt_data)
+
 
         return render_template('vercomprovante.html', **receipt_data_dict)
 
@@ -786,21 +840,35 @@ def comprovanteemail(payment_id):
         app.logger.info(f"Payment ID: {payment_id}")
         
         cur = mysql.connection.cursor()
+        
+        cur = mysql.connection.cursor()
         # Execute a SQL com o payment_id
         cur.execute('''
-            SELECT ei.DTPAGAMENTO, 
-                e.DESCRICAO, e.LOCAL, 
-                CASE WHEN e.DTINICIO = e.DTFIM
-                    THEN CONCAT(e.DTINICIO,' ',e.HRINICIO)
-                    ELSE CONCAT(e.DTINICIO,' ',e.HRINICIO,' - ',e.DTFIM) END AS DTEVENTO,
-                CONCAT(ei.NOME,' ',ei.SOBRENOME) as NOME_COMPLETO,
-                i.KM_DESCRICAO, ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO,
-                ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, e.OBS
-            FROM EVENTO e, EVENTO_ITENS i, EVENTO_INSCRICAO ei
+            SELECT ei.DTPAGAMENTO,
+                   e.TITULO, 
+                   e.ENDERECO, 
+                   e.DATAINICIO,
+                   e.DATAFIM,
+                   e.HRINICIO,
+                   CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
+                   CASE WHEN i.KM=0
+                       THEN i.MODALIDADE
+                       ELSE CONCAT(i.KM,' KM') 
+                   END AS KM_DESCRICAO, 
+                   ei.VLINSCRICAO, 
+                   ei.VLTOTAL, 
+                   ei.FORMAPGTO, 
+                   ei.IDPAGAMENTO, 
+                   ei.FLEMAIL, 
+                   ei.IDINSCRICAO, 
+                   e.OBS, 
+                   ei.CPF, 
+                   ei.DTNASCIMENTO 
+            FROM EVENTO_INSCRICAO ei, EVENTO1 e, EVENTO_ITEM i
             WHERE i.IDITEM = ei.IDITEMEVENTO
-            AND e.IDEVENTO = ei.IDEVENTO
-            AND ei.STATUS = 'A'
-            AND ei.IDPAGAMENTO = %s
+              AND e.IDEVENTO = ei.IDEVENTO
+              AND ei.STATUS = 'A' 
+              AND ei.IDPAGAMENTO = %s 
         ''', (payment_id,))
         
         receipt_data = cur.fetchone()
@@ -810,26 +878,48 @@ def comprovanteemail(payment_id):
             app.logger.info("Dados não encontrados")
             return "Dados não encontrados", 404
         
-        # Converter a data de string para datetime
+        # Obter os dados como datetime do MySQL
         data_pagamento = receipt_data[0]
+        data_inicio = receipt_data[3]
+        data_fim = receipt_data[4]
+        hr_inicio = receipt_data[5]
+        
+        # Formatar data de pagamento
+        if isinstance(data_pagamento, datetime):
+            data_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M:%S')
+        else:
+            data_formatada = str(data_pagamento)
+        
+        # Formatar data do evento
+        if isinstance(data_inicio, datetime) and isinstance(data_fim, datetime):
+            if data_inicio.date() == data_fim.date():
+                # Mesmo dia
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio}"
+            else:
+                # Dias diferentes
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio} - {data_fim.strftime('%d/%m/%Y')}"
+        else:
+            # Fallback se não for datetime
+            data_evento = f"{data_inicio} {hr_inicio}"
 
         # Estruturar os dados do comprovante
         receipt_data_dict = { 
-            'data': data_pagamento.strftime('%d/%m/%Y %H:%M'),  
+            'data': data_formatada,
             'evento': receipt_data[1],
             'endereco': receipt_data[2],
-            'dataevento': receipt_data[3],
-            'participante': receipt_data[4],
-            'km': receipt_data[5],
-            'valor': f'R$ {receipt_data[6]:,.2f}',  # Formatar valor
-            'valortotal': f'R$ {receipt_data[7]:,.2f}',  # Formatar valor
-            'formapgto': receipt_data[8],
-            'inscricao': str(receipt_data[9]),
-            'obs': receipt_data[12]
+            'dataevento': data_evento,
+            'participante': receipt_data[6],
+            'km': receipt_data[7],
+            'valor': f'R$ {receipt_data[8]:,.2f}',  # Formatar valor
+            'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
+            'formapgto': receipt_data[10],
+            'inscricao': str(receipt_data[11]),
+            'obs': receipt_data[14]
         }
         
         app.logger.info("Dados da Inscrição:")
-        app.logger.error(receipt_data)
+        app.logger.info(receipt_data)
+
 
         return render_template('comprovante_email.html', **receipt_data_dict)
 
