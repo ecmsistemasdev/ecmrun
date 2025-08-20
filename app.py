@@ -706,7 +706,7 @@ def comprovante(payment_id):
             'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[10],
             'inscricao': str(receipt_data[11]),
-            'obs': receipt_data[14]
+            'obs': receipt_data[14] if receipt_data[14] is not None else ''  # Evita mostrar None
         }
         
         app.logger.info("Dados da Inscrição:")
@@ -820,7 +820,7 @@ def vercomprovante(payment_id):
             'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[10],
             'inscricao': str(receipt_data[11]),
-            'obs': receipt_data[14]
+            'obs': receipt_data[14] if receipt_data[14] is not None else ''  # Evita mostrar None
         }
         
         app.logger.info("Dados da Inscrição:")
@@ -914,7 +914,7 @@ def comprovanteemail(payment_id):
             'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[10],
             'inscricao': str(receipt_data[11]),
-            'obs': receipt_data[14]
+            'obs': receipt_data[14] if receipt_data[14] is not None else ''  # Evita mostrar None
         }
         
         app.logger.info("Dados da Inscrição:")
