@@ -40,7 +40,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
     const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
     const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
-    console.info('Valor pag',totalValue)
+    console.info('Valor pag', totalValue);
+
+    // Função para criar chave única baseada em CPF + ID do evento
+    function createPaymentKey(cpf, eventoId) {
+        return `payment_${cpf}_${eventoId}`;
+    }
+
+    // Função para criar chave única para timer baseada em CPF + ID do evento
+    function createTimerKey(cpf, eventoId) {
+        return `timer_${cpf}_${eventoId}`;
+    }
 
     // Função para formatar moeda
     function formatCurrency(value) {
@@ -137,15 +147,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Salva o horário de início para recuperação apenas se for um timer novo
         if (startFromFull) {
-            localStorage.setItem('pixTimerStart', Date.now().toString());
-            localStorage.setItem('pixExpirationDuration', PIX_EXPIRATION_TIME.toString());
+            const cpf = localStorage.getItem('user_cpf');
+            const timerKey = createTimerKey(cpf, idEvento);
+            localStorage.setItem(`${timerKey}_start`, Date.now().toString());
+            localStorage.setItem(`${timerKey}_duration`, PIX_EXPIRATION_TIME.toString());
         }
     }
 
     // Função para recuperar o timer existente CORRIGIDA
     function recoverCountdownTimer() {
-        const timerStart = localStorage.getItem('pixTimerStart');
-        const expirationDuration = localStorage.getItem('pixExpirationDuration');
+        const cpf = localStorage.getItem('user_cpf');
+        const timerKey = createTimerKey(cpf, idEvento);
+        const timerStart = localStorage.getItem(`${timerKey}_start`);
+        const expirationDuration = localStorage.getItem(`${timerKey}_duration`);
 
         if (timerStart && expirationDuration) {
             const elapsed = Math.floor((Date.now() - parseInt(timerStart)) / 1000);
@@ -159,8 +173,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return true;
             } else {
                 console.log('Timer expirado, limpando dados');
-                localStorage.removeItem('pixTimerStart');
-                localStorage.removeItem('pixExpirationDuration');
+                localStorage.removeItem(`${timerKey}_start`);
+                localStorage.removeItem(`${timerKey}_duration`);
             }
         }
 
@@ -178,19 +192,25 @@ document.addEventListener('DOMContentLoaded', function() {
             timerElement.remove();
         }
 
-        localStorage.removeItem('pixTimerStart');
-        localStorage.removeItem('pixExpirationDuration');
+        const cpf = localStorage.getItem('user_cpf');
+        const timerKey = createTimerKey(cpf, idEvento);
+        localStorage.removeItem(`${timerKey}_start`);
+        localStorage.removeItem(`${timerKey}_duration`);
     }
 
-    // Função para persistir dados do pagamento com verificação
+    // Função para persistir dados do pagamento com verificação - CORRIGIDA
     function persistPaymentData(data) {
         if (!data) return false;
 
         try {
+            const cpf = localStorage.getItem('user_cpf');
+            const paymentKey = createPaymentKey(cpf, idEvento);
+            
             const paymentData = {
                 paymentId: data.payment_id,
                 qrCode: data.qr_code,
                 qrCodeBase64: data.qr_code_base64,
+                idEvento: idEvento,
                 timestamp: Date.now()
             };
 
@@ -200,8 +220,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
 
-            sessionStorage.setItem('paymentData', JSON.stringify(paymentData));
-            localStorage.setItem('lastPaymentId', data.payment_id); // Backup adicional
+            sessionStorage.setItem(paymentKey, JSON.stringify(paymentData));
+            localStorage.setItem(`${paymentKey}_backup`, data.payment_id); // Backup adicional
             return true;
         } catch (error) {
             console.error('Erro ao persistir dados:', error);
@@ -209,23 +229,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Função para recuperar dados do pagamento com validação
+    // Função para recuperar dados do pagamento com validação - CORRIGIDA
     function getPersistedPaymentData() {
         try {
-            const sessionData = sessionStorage.getItem('paymentData');
+            const cpf = localStorage.getItem('user_cpf');
+            const paymentKey = createPaymentKey(cpf, idEvento);
+            
+            const sessionData = sessionStorage.getItem(paymentKey);
             if (sessionData) {
                 const data = JSON.parse(sessionData);
-                // Verifica se os dados são válidos e não muito antigos (menos de 15 minutos)
-                if (data && data.timestamp && (Date.now() - data.timestamp) < 900000) {
+                // Verifica se os dados são válidos, são do evento correto e não muito antigos (menos de 15 minutos)
+                if (data && data.timestamp && data.idEvento === idEvento && 
+                    (Date.now() - data.timestamp) < 900000) {
                     return data;
                 }
             }
 
-
             // Se não encontrou no sessionStorage, tenta recuperar o ID do localStorage
-            const lastPaymentId = localStorage.getItem('lastPaymentId');
+            const lastPaymentId = localStorage.getItem(`${paymentKey}_backup`);
             if (lastPaymentId) {
-                return { paymentId: lastPaymentId };
+                return { paymentId: lastPaymentId, idEvento: idEvento };
             }
 
             return null;
@@ -248,8 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Limpa dados do pagamento antes do redirecionamento
-            sessionStorage.removeItem('paymentData');
-            localStorage.removeItem('lastPaymentId');
+            clearPaymentRelatedStorage();
 
             // Remove o listener de visibilidade
             document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -273,10 +295,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Adicione esta função que estava faltando
-    function clearPaymentRelatedLocalStorage() {
-        sessionStorage.removeItem('paymentData');
-        localStorage.removeItem('lastPaymentId');
+    // Função para limpar storage relacionado ao pagamento - CORRIGIDA
+    function clearPaymentRelatedStorage() {
+        const cpf = localStorage.getItem('user_cpf');
+        const paymentKey = createPaymentKey(cpf, idEvento);
+        
+        sessionStorage.removeItem(paymentKey);
+        localStorage.removeItem(`${paymentKey}_backup`);
     }
 
     // Função para recuperar QR Code CORRIGIDA
@@ -343,7 +368,6 @@ document.addEventListener('DOMContentLoaded', function() {
             startCountdownTimer(true); // Inicia do tempo total
         }
     }
-
 
     function validatePaymentData() {
         // Check if all required localStorage data is present
@@ -431,15 +455,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Função para verificar se já existe um pagamento válido para este evento - NOVA
+    async function checkExistingPayment(cpf, eventoId) {
+        try {
+            console.log('Verificando pagamento existente para:', { cpf, eventoId });
+            
+            const response = await fetch(`${baseURL}/verificar-pagamento-evento/${cpf}/${eventoId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.log('Nenhum pagamento existente encontrado');
+                return null;
+            }
+
+            const data = await response.json();
+            
+            if (data.success && data.payment_id && data.status !== 'approved') {
+                console.log('Pagamento existente encontrado:', data.payment_id);
+                return data.payment_id;
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Erro ao verificar pagamento existente:', error);
+            return null;
+        }
+    }
+
     // Função principal para gerar pagamento PIX com retry CORRIGIDA
     async function generatePixPayment(totalValue, isRetry = false) {
         try {
-            // VERIFICA SE JÁ EXISTE UM PAYMENT VÁLIDO ANTES DE GERAR NOVO
+            const cpf = localStorage.getItem('user_cpf');
+            
+            // PRIMEIRA VERIFICAÇÃO: Se não é retry, verifica se já existe um payment válido
             if (!isRetry) {
                 const persistedData = getPersistedPaymentData();
                 if (persistedData && persistedData.paymentId) {
-                    console.log('Payment já existe, não gerando novo:', persistedData.paymentId);
+                    console.log('Payment já existe no storage, não gerando novo:', persistedData.paymentId);
                     return;
+                }
+                
+                // Verifica se existe pagamento no servidor para este evento específico
+                const existingPaymentId = await checkExistingPayment(cpf, idEvento);
+                if (existingPaymentId) {
+                    console.log('Pagamento existente encontrado no servidor:', existingPaymentId);
+                    
+                    // Tenta recuperar o QR code deste pagamento
+                    const recoveredData = await recoverQRCode(existingPaymentId);
+                    if (recoveredData && recoveredData.qr_code_base64) {
+                        const paymentData = {
+                            payment_id: existingPaymentId,
+                            qr_code: recoveredData.qr_code,
+                            qr_code_base64: recoveredData.qr_code_base64
+                        };
+                        
+                        persistPaymentData(paymentData);
+                        displayQRCode(recoveredData.qr_code_base64, recoveredData.qr_code, true);
+                        await startPaymentVerification(existingPaymentId);
+                        return;
+                    }
                 }
             }
 
@@ -481,13 +559,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 valor_atual: vlinscricao,
                 valor_taxa: vltaxa,
                 valor_total: totalValue,
+                id_evento: idEvento, // IMPORTANTE: Incluir o ID do evento
                 ...userData
             };
 
             console.log('GERANDO NOVO PAYMENT PIX:', requestData);
 
             const response = await fetch(`${baseURL}/gerar-pix`, {
-                    method: 'POST',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -547,7 +626,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-
 
     // Função para verificar pagamento - VERSÃO CORRIGIDA
     async function startPaymentVerification(paymentId) {
@@ -651,11 +729,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.getElementById('totalAmount').textContent = formatCurrency(totalValue);
 
-            // PRIMEIRA PRIORIDADE: Tentar recuperar dados persistidos válidos
+            // PRIMEIRA PRIORIDADE: Tentar recuperar dados persistidos válidos para ESTE evento
             const persistedData = getPersistedPaymentData();
 
-            if (persistedData && persistedData.paymentId) {
-                console.log('Dados persistidos encontrados, verificando validade...', persistedData);
+            if (persistedData && persistedData.paymentId && persistedData.idEvento === idEvento) {
+                console.log('Dados persistidos encontrados para este evento, verificando validade...', persistedData);
 
                 // Se tem QR code completo e é recente (menos de 15 minutos)
                 if (persistedData.qrCodeBase64 && persistedData.qrCode &&
@@ -700,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // ÚLTIMA OPÇÃO: Só gera novo payment se realmente não existe nenhum válido
-            console.log('Nenhum pagamento válido encontrado, gerando novo...');
+            console.log('Nenhum pagamento válido encontrado para este evento, gerando novo...');
             await generatePixPayment(totalValue);
 
         } catch (error) {
@@ -805,7 +883,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-
     // Método alternativo para copiar texto
     function fallbackCopyMethod(text) {
         try {
@@ -844,11 +921,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.voltarParaEvento = function() {
         // Limpa dados do pagamento antes de sair
         clearCountdownTimer();
-        clearPaymentRelatedLocalStorage();
+        clearPaymentRelatedStorage();
 
         // Redireciona para a rota que leva à página de origem
         window.location.href = '/voltar-para-evento';
     };
 
 });
-
