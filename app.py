@@ -170,56 +170,6 @@ def index():
     return render_template("index.html")
 
 
-# @app.route('/backyard2025/resultado')
-# def backyard2025_resultado():
-#     # Obter parâmetros de filtro
-#     sexo_filter = request.args.get('sexo', '')
-#     tipo_corrida_filter = request.args.get('tipo_corrida', '')
-    
-
-#     # Inici   r a consulta base
-#     query = """
-#         SELECT idatleta, concat(lpad(cast(nrpeito as char(3)),3,0),' - ', nome) as atleta, 
-#         sexo, tipo_corrida, 
-#         case when nr_voltas>0 then nr_voltas else 'DNF' end as nvoltas,
-#         case when nr_voltas>0 then cast((nr_voltas * 6706) as char) else 'DNF' end as km
-#         FROM 2025_atletas
-#         WHERE 1=1
-#     """
-    
-#     # Adicionar filtros se fornecidos
-#     if sexo_filter:
-#         query += f" AND sexo = '{sexo_filter}'"
-#     if tipo_corrida_filter:
-#         query += f" AND tipo_corrida = '{tipo_corrida_filter}'"
-    
-#     # Ordenação
-#     query += " ORDER BY nr_voltas DESC, nome"
-    
-#     # Executar a consulta
-#     cursor = mysql.connection.cursor()
-#     cursor.execute(query)
-#     atletas = cursor.fetchall()
-    
-#     # Obter listas únicas para os filtros de dropdown
-#     cursor.execute("SELECT DISTINCT sexo FROM 2025_atletas ORDER BY sexo")
-#     sexos = [row[0] for row in cursor.fetchall()]
-    
-#     cursor.execute("SELECT DISTINCT tipo_corrida FROM 2025_atletas ORDER BY tipo_corrida")
-#     tipos_corrida = [row[0] for row in cursor.fetchall()]
-    
-#     cursor.close()
-    
-#     return render_template(
-#         'backyard2025resultado.html', 
-#         atletas=atletas, 
-#         sexos=sexos, 
-#         tipos_corrida=tipos_corrida,
-#         sexo_filter=sexo_filter,
-#         tipo_corrida_filter=tipo_corrida_filter
-#     )
-
-
 @app.route('/listar-estados', methods=['GET'])
 def listar_estados():
     try:
@@ -309,215 +259,6 @@ def format_time_difference(seconds):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-# @app.route('/backyard/pesquisar_atleta/<nrpeito>')
-# def pesquisar_atleta(nrpeito):
-#     try:
-#         cur = mysql.connection.cursor()
-
-#         query = """
-#             SELECT la.id, la.idlargada, a.idatleta, a.nome, a.nrpeito,
-#                 la.largada, a.tipo_corrida, la.nulargada, la.parcial, la.chegada,
-#                 CONCAT(LPAD(CAST(a.nrpeito AS CHAR(3)),3,'0'),' - ', a.nome) as atleta
-#             FROM bm_largadas_atletas la, bm_atletas a
-#             WHERE (la.chegada = '' OR la.chegada IS NULL)
-#                 AND la.idlargada = (
-#                     SELECT MAX(idlargada) 
-#                     FROM bm_largadas_atletas
-#                     WHERE (chegada = '' OR chegada IS NULL)
-#                     AND idatleta = a.idatleta
-#                 )
-#                 AND la.idatleta = a.idatleta
-#                 AND a.nrpeito = %s
-#         """
-        
-#         cur.execute(query, (nrpeito,))
-#         result = cur.fetchone()
-        
-#         if result:
-#             columns = [desc[0] for desc in cur.description]
-#             result_dict = dict(zip(columns, result))
-            
-#             return jsonify({
-#                 'success': True,
-#                 'atleta': result_dict['atleta'],
-#                 'data': result_dict
-#             })
-#         else:
-#             cur.execute("SELECT * FROM bm_atletas WHERE nrpeito = %s", (nrpeito,))
-#             atleta_exists = cur.fetchone()
-            
-#             return jsonify({
-#                 'success': False,
-#                 'message': 'Atleta não encontrado'
-#             })
-            
-#     except Exception as e:
-#         print(f"Erro na consulta: {str(e)}")
-#         return jsonify({
-#             'success': False,
-#             'error': str(e)
-#         })
-#     finally:
-#         cur.close()
-
-# @app.route('/backyard/lancar_chegada', methods=['POST'])
-# def lancar_chegada():
-#     try:
-#         #data = request.get_json()
-#         #nrpeito = data['nrpeito']
-#         #chegada = data['chegada']
-        
-#         data = request.get_json()
-#         nrpeito = data['nrpeito']
-#         chegada = data['chegada'].replace(', ', ' ')  # Remove a vírgula e mantém apenas um espaço
-
-
-#         cur = mysql.connection.cursor()
-        
-#         # Buscar dados do atleta
-#         cur.execute("""
-#             SELECT la.*, a.tipo_corrida 
-#             FROM bm_largadas_atletas la, bm_atletas a
-#             WHERE la.idatleta = a.idatleta
-#             AND a.nrpeito = %s
-#             AND (la.chegada = '' OR la.chegada IS NULL)
-#         """, (nrpeito,))
-        
-#         result = cur.fetchone()
-#         if not result:
-#             return jsonify({
-#                 'success': False,
-#                 'error': 'Atleta não encontrado'
-#             })
-            
-#         columns = [desc[0] for desc in cur.description]
-#         atleta = dict(zip(columns, result))
-        
-#         # Próxima ordem de chegada
-#         cur.execute("""
-#             SELECT COALESCE(MAX(ordem_chegada),0) as ID 
-#             FROM bm_largadas_atletas 
-#             WHERE idlargada = %s
-#         """, (atleta['idlargada'],))
-        
-#         result = cur.fetchone()
-#         ordem_chegada = (result[0] or 0) + 1
-        
-#         # Cálculo de tempo e status
-#         segundos = calculate_seconds_difference(atleta['largada'], chegada)
-#         tempo_chegada = format_time_difference(segundos)
-        
-#         vstatus = 'D' if segundos > 3599 else 'A'
-        
-#         if atleta['idlargada'] == 3 and atleta['tipo_corrida'] == 'Três voltas':
-#             vstatus = 'D'
-            
-#         # Atualizar registro
-#         cur.execute("""
-#             UPDATE bm_largadas_atletas
-#             SET 
-#                 chegada = %s,
-#                 tempochegada = %s,
-#                 ordem_chegada = %s,
-#                 usuario_chegada = %s
-#             WHERE id = %s
-#         """, (chegada, tempo_chegada, ordem_chegada, 'ADM', atleta['id']))
-        
-#         mysql.connection.commit()
-        
-#         return jsonify({
-#             'success': True,
-#             'message': 'Chegada lançada com sucesso'
-#         })
-        
-#     except Exception as e:
-#         return jsonify({
-#             'success': False,
-#             'error': str(e)
-#         })
-#     finally:
-#         cur.close()
-
-
-
-
-# Rota para renderizar a página eventos.html
-#@app.route('/eventos')
-#def eventos():
-#    return render_template('eventos.html')
-
-# Get all eventos
-#@app.route('/api/eventos')
-#def get_eventos():
-#    cur = mysql.connection.cursor()
-#    cur.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO ORDER BY DTINICIO DESC")
-#    eventos = [{'IDEVENTO': row[0], 'DESCRICAO': row[1]} for row in cur.fetchall()]
-#    cur.close()
-#    return jsonify(eventos)
-
-# Get specific evento
-#@app.route('/api/eventos/<int:evento_id>')
-#def get_evento(evento_id):
-#    cur = mysql.connection.cursor()
-#    cur.execute("""
-#        SELECT IDEVENTO, DESCRICAO, DTINICIO, DTFIM, HRINICIO, 
-#               INICIO_INSCRICAO, FIM_INSCRICAO, 
-#               INICIO_INSCRICAO_EXT, FIM_INSCRICAO_EXT 
-#        FROM EVENTO WHERE IDEVENTO = %s
-#    """, (evento_id,))
-#    row = cur.fetchone()
-#    cur.close()
-#    
-#    if row:
-#        evento = {
-#            'IDEVENTO': row[0],
-#            'DESCRICAO': row[1],
-#            'DTINICIO': row[2], # .strftime('%d/%m/%Y') if row[2] else '',
-#            'DTFIM': row[3], #.strftime('%d/%m/%Y') if row[3] else '',
-#            'HRINICIO': row[4], #.strftime('%H:%M') if row[4] else '',
-#            'INICIO_INSCRICAO': row[5], #.strftime('%d/%m/%Y %H:%M:%S') if row[5] else '',
-#            'FIM_INSCRICAO': row[6], #.strftime('%d/%m/%Y %H:%M:%S') if row[6] else '',
-#            'INICIO_INSCRICAO_EXT': row[7], #.strftime('%d/%m/%Y %H:%M:%S') if row[7] else '',
-#            'FIM_INSCRICAO_EXT': row[8] #.strftime('%d/%m/%Y %H:%M:%S') if row[8] else ''
-#        }
-#        return jsonify(evento)
-#    return jsonify(None)
-
-# Update evento
-#@app.route('/api/eventos', methods=['PUT'])
-#def update_evento():
-#    data = request.json
-#    
-#    # Converter as datas do formato brasileiro para o formato do MySQL
-#    dtinicio = data['DTINICIO'] #datetime.strptime(data['DTINICIO'], '%d/%m/%Y').strftime('%Y-%m-%d')
-#    dtfim = data['DTFIM'] #datetime.strptime(data['DTFIM'], '%d/%m/%Y').strftime('%Y-%m-%d')
-#    hrinicio = data['HRINICIO']
-#    inicio_inscricao = data['INICIO_INSCRICAO'] #datetime.strptime(data['INICIO_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-#    fim_inscricao = data['FIM_INSCRICAO'] #datetime.strptime(data['FIM_INSCRICAO'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-#    inicio_inscricao_ext = data['INICIO_INSCRICAO_EXT'] #datetime.strptime(data['INICIO_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-#    fim_inscricao_ext = data['FIM_INSCRICAO_EXT'] #datetime.strptime(data['FIM_INSCRICAO_EXT'], '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-#    
-#    cur = mysql.connection.cursor()
-#    cur.execute("""
-#        UPDATE EVENTO 
-#        SET DESCRICAO = %s, 
-#            DTINICIO = %s,
-#            DTFIM = %s,
-#            HRINICIO = %s,
-#            INICIO_INSCRICAO = %s,
-#            FIM_INSCRICAO = %s,
-#            INICIO_INSCRICAO_EXT = %s,
-#            FIM_INSCRICAO_EXT = %s
-#        WHERE IDEVENTO = %s
-#    """, (
-#        data['DESCRICAO'], dtinicio, dtfim, hrinicio,
-#        inicio_inscricao, fim_inscricao,
-#        inicio_inscricao_ext, fim_inscricao_ext,
-#        data['IDEVENTO']
-#    ))
-#    mysql.connection.commit()
-#    cur.close()
-#    return jsonify({'message': 'Evento atualizado com sucesso'})
 
 # Get modalidades for evento
 @app.route('/api/modalidades/<int:evento_id>')
@@ -603,248 +344,6 @@ def checkout():
                          valor_taxa=vltaxa,
                          valor_total=valor_total,
                          mp_public_key=mp_public_key)
-
-
-# @app.route('/process_payment', methods=['POST'])
-# def process_payment():
-#     payment_id = None
-#     cpf = None
-    
-#     try:
-#         app.logger.info("=== INÍCIO DO PROCESSAMENTO DE PAGAMENTO ===")
-#         payment_data = request.json
-        
-#         # Log dados recebidos (sem informações sensíveis)
-#         safe_data = {**payment_data}
-#         if 'token' in safe_data:
-#             safe_data['token'] = '***HIDDEN***'
-#         if 'payer' in safe_data and 'identification' in safe_data['payer']:
-#             safe_data['payer']['identification']['number'] = '***HIDDEN***'
-#         app.logger.info(f"Dados recebidos: {safe_data}")
-        
-#         # Extract data with proper error handling
-#         try:
-#             installments = int(payment_data.get('installments', 1))
-#             transaction_amount = float(payment_data.get('transaction_amount', 0))
-            
-#             # Round to 2 decimal places to avoid floating point precision issues
-#             valor_total = round(float(payment_data.get('valor_total', 0)), 2)
-#             valor_atual = round(float(payment_data.get('valor_atual', 0)), 2)
-#             valor_taxa = round(float(payment_data.get('valor_taxa', 0)), 2)
-            
-#             # Store CPF for logging
-#             cpf = payment_data.get('CPF')
-            
-#             app.logger.info(f"Valores processados - CPF: {cpf}, Valor Total: R$ {valor_total}, Valor Atual: R$ {valor_atual}, Valor Taxa: R$ {valor_taxa}, Parcelas: {installments}")
-            
-#             # Ensure transaction_amount matches valor_total
-#             if abs(transaction_amount - valor_total) > 0.01:
-#                 app.logger.warning(f"DISCREPÂNCIA DE VALORES - CPF: {cpf}, transaction_amount: R$ {transaction_amount}, valor_total: R$ {valor_total}")
-#                 # Use valor_total as the source of truth
-#                 transaction_amount = valor_total
-                
-#         except (ValueError, TypeError) as e:
-#             app.logger.error(f"ERRO AO PROCESSAR VALORES - CPF: {cpf}, Erro: {str(e)}")
-#             raise ValueError(f"Erro ao processar valores numéricos: {str(e)}")
-
-#         # Store session data
-#         session['valorTotal'] = transaction_amount
-#         session['numeroParcelas'] = installments
-#         session['valorParcela'] = transaction_amount / installments if installments > 0 else transaction_amount
-#         session['valorTotalsemJuros'] = valor_total
-#         session['valorAtual'] = valor_atual
-#         session['valorTaxa'] = valor_taxa
-#         session['formaPagto'] = 'CARTÃO DE CRÉDITO'
-#         session['CPF'] = cpf
-
-#         # Validar dados recebidos
-#         required_fields = [
-#             'token', 
-#             'transaction_amount', 
-#             'installments', 
-#             'payment_method_id',
-#             'payer'
-#         ]
-        
-#         for field in required_fields:
-#             if field not in payment_data:
-#                 app.logger.error(f"CAMPO OBRIGATÓRIO AUSENTE - CPF: {cpf}, Campo: {field}")
-#                 raise ValueError(f"Campo obrigatório ausente: {field}")
-        
-#         # Validate payer data
-#         if not payment_data['payer'].get('email'):
-#             app.logger.error(f"EMAIL AUSENTE - CPF: {cpf}")
-#             raise ValueError("Email do pagador é obrigatório")
-        
-#         if 'identification' not in payment_data['payer']:
-#             app.logger.error(f"IDENTIFICAÇÃO AUSENTE - CPF: {cpf}")
-#             raise ValueError("Identificação do pagador é obrigatória")
-        
-#         if not payment_data['payer']['identification'].get('type') or not payment_data['payer']['identification'].get('number'):
-#             app.logger.error(f"DOCUMENTO INVÁLIDO - CPF: {cpf}")
-#             raise ValueError("Tipo e número de documento são obrigatórios")
-
-#         app.logger.info(f"VALIDAÇÃO CONCLUÍDA - CPF: {cpf}, Email: {payment_data['payer']['email']}, Método: {payment_data['payment_method_id']}")
-
-#         # Gerar referência externa única
-#         external_reference = str(uuid.uuid4())
-#         app.logger.info(f"REFERÊNCIA EXTERNA GERADA - CPF: {cpf}, Ref: {external_reference}")
-        
-#         # Criar preferência de pagamento
-#         item_details = {
-#             "id": "ECM RUN TICKETS",
-#             "title": "Inscrição de Evento",
-#             "description": "Inscrição de Corrida",
-#             "category_id": "SPORTS_EVENT",
-#             "quantity": 1,
-#             "currency_id": "BRL",
-#             "unit_price": valor_atual,
-#             "total_amount": transaction_amount
-#         }
-        
-#         # Preparar preferência de pagamento
-#         preference_data = {
-#             "items": [item_details],
-#             "notification_url": "https://ecmrun.com.br/webhook",
-#             "external_reference": external_reference
-#         }
-        
-#         # Criar preferência
-#         try:
-#             app.logger.info(f"CRIANDO PREFERÊNCIA - CPF: {cpf}")
-#             preference_response = sdk.preference().create(preference_data)
-            
-#             if "response" not in preference_response:
-#                 error_message = preference_response.get("message", "Erro desconhecido na criação da preferência")
-#                 app.logger.error(f"ERRO NA PREFERÊNCIA - CPF: {cpf}, Erro: {error_message}")
-#                 raise ValueError(f"Erro ao criar preferência de pagamento: {error_message}")
-                
-#             app.logger.info(f"PREFERÊNCIA CRIADA COM SUCESSO - CPF: {cpf}")
-            
-#         except Exception as e:
-#             app.logger.error(f"EXCEÇÃO NA PREFERÊNCIA - CPF: {cpf}, Erro: {str(e)}")
-#             raise ValueError(f"Erro ao criar preferência de pagamento: {str(e)}")
-
-#         payment_info = {
-#             "transaction_amount": transaction_amount,
-#             "token": payment_data['token'],
-#             "description": "Inscrição Corrida",
-#             "statement_descriptor": "ECMRUN TICKETS",
-#             "installments": installments,
-#             "payment_method_id": payment_data['payment_method_id'],
-#             "external_reference": external_reference,
-#             "notification_url": "https://ecmrun.com.br/webhook",
-#             "payer": {
-#                 "email": payment_data['payer']['email'],
-#                 "identification": {
-#                     "type": payment_data['payer']['identification']['type'],
-#                     "number": payment_data['payer']['identification']['number']
-#                 },
-#                 "first_name": payment_data['payer']['first_name'],
-#                 "last_name": payment_data['payer']['last_name']
-#             },
-#             "additional_info": {
-#                 "items": [{
-#                     "id": "ECM RUN TICKETS",
-#                     "title": "Inscrição de Evento",
-#                     "description": "Inscrição de corrida",
-#                     "category_id": "SPORTS_EVENT",
-#                     "quantity": 1,
-#                     "unit_price": valor_atual
-#                 }],
-#                 "payer": {
-#                     "first_name": payment_data['payer']['first_name'],
-#                     "last_name": payment_data['payer']['last_name'],
-#                     "registration_date": datetime.now().isoformat()
-#                 },
-#                 "ip_address": request.remote_addr
-#             }
-#         }
-
-#         # Log payment info (exclude sensitive data)
-#         safe_payment_info = {**payment_info}
-#         safe_payment_info['token'] = '***HIDDEN***'
-#         safe_payment_info['payer']['identification']['number'] = '***HIDDEN***'
-#         app.logger.info(f"ENVIANDO PAGAMENTO PARA MERCADOPAGO - CPF: {cpf}")
-#         app.logger.debug(f"Dados do pagamento: {safe_payment_info}")
-
-#         # Processar pagamento
-#         try:
-#             app.logger.info(f"PROCESSANDO PAGAMENTO - CPF: {cpf}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
-#             payment_response = sdk.payment().create(payment_info)
-            
-#             app.logger.info(f"RESPOSTA RECEBIDA DO MERCADOPAGO - CPF: {cpf}")
-#             app.logger.debug(f"Resposta completa: {payment_response}")
-            
-#             if "response" not in payment_response:
-#                 error_details = payment_response.get("cause", [{}])
-#                 error_message = "Erro desconhecido"
-                
-#                 if isinstance(error_details, list) and len(error_details) > 0:
-#                     error_message = error_details[0].get("description", "Erro desconhecido")
-#                     error_code = error_details[0].get("code", "unknown")
-#                     app.logger.error(f"ERRO NO PAGAMENTO - CPF: {cpf}, Código: {error_code}, Mensagem: {error_message}")
-#                 else:
-#                     app.logger.error(f"ERRO NO PAGAMENTO - CPF: {cpf}, Detalhes: {error_details}")
-                
-#                 return jsonify({
-#                     "error": "Erro ao processar pagamento",
-#                     "details": error_message
-#                 }), 400
-                
-#             payment_result = payment_response["response"]
-#             payment_id = payment_result.get("id")
-#             status = payment_result.get("status")
-#             status_detail = payment_result.get("status_detail")
-            
-#             # Log detalhado do resultado do pagamento
-#             if status == "approved":
-#                 app.logger.info(f"🎉 PAGAMENTO APROVADO - CPF: {cpf}, ID: {payment_id}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
-                
-#             elif status == "pending":
-#                 app.logger.warning(f"⏳ PAGAMENTO PENDENTE - CPF: {cpf}, ID: {payment_id}, Status Detail: {status_detail}, Valor: R$ {transaction_amount}")
-                
-#             elif status == "rejected":
-#                 app.logger.error(f"❌ PAGAMENTO RECUSADO - CPF: {cpf}, ID: {payment_id}, Motivo: {status_detail}, Valor: R$ {transaction_amount}, Método: {payment_data['payment_method_id']}")
-                
-#                 # Log adicional para recusas com mais detalhes
-#                 if payment_result.get("failure_reason"):
-#                     app.logger.error(f"MOTIVO DA RECUSA - CPF: {cpf}, ID: {payment_id}, Failure Reason: {payment_result.get('failure_reason')}")
-                
-#                 if payment_result.get("gateway_rejection_reason"):
-#                     app.logger.error(f"REJEIÇÃO DO GATEWAY - CPF: {cpf}, ID: {payment_id}, Gateway Reason: {payment_result.get('gateway_rejection_reason')}")
-                    
-#             else:
-#                 app.logger.warning(f"❓ STATUS DESCONHECIDO - CPF: {cpf}, ID: {payment_id}, Status: {status}, Status Detail: {status_detail}")
-
-#             # Log informações adicionais importantes
-#             if payment_result.get("fee_details"):
-#                 total_fees = sum([fee.get("amount", 0) for fee in payment_result["fee_details"]])
-#                 app.logger.info(f"TAXAS APLICADAS - CPF: {cpf}, ID: {payment_id}, Total em Taxas: R$ {total_fees}")
-                
-#             if payment_result.get("installments", 0) > 1:
-#                 app.logger.info(f"PARCELAMENTO - CPF: {cpf}, ID: {payment_id}, Parcelas: {payment_result.get('installments')}")
-
-#             app.logger.info(f"=== PROCESSAMENTO CONCLUÍDO - CPF: {cpf}, ID: {payment_id}, Status: {status} ===")
-            
-#             return jsonify(payment_result), 200        
-            
-#         except Exception as e:
-#             app.logger.error(f"🔥 EXCEÇÃO NO PAGAMENTO - CPF: {cpf}, Erro: {str(e)}, Tipo: {type(e).__name__}")
-#             app.logger.exception("Stack trace completo:")
-#             return jsonify({
-#                 "error": "Erro ao processar pagamento",
-#                 "details": str(e)
-#             }), 400
-        
-#     except ValueError as e:
-#         app.logger.error(f"ERRO DE VALIDAÇÃO - CPF: {cpf}, Erro: {str(e)}")
-#         return jsonify({"error": str(e)}), 400
-#     except Exception as e:
-#         app.logger.error(f"🔥 ERRO GERAL NO PROCESSAMENTO - CPF: {cpf}, Payment ID: {payment_id}, Erro: {str(e)}")
-#         app.logger.exception("Stack trace completo:")
-#         return jsonify({"error": str(e)}), 400
-
 
 
 @app.route('/process_payment', methods=['POST'])
@@ -1470,10 +969,6 @@ def get_modalidade_valores(iditem):
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/cadastro_atleta')
-def cadastro_atleta():
-    return render_template('cadastro_atleta.html')
-
 @app.route('/autenticar', methods=['POST'])
 def autenticar():
     email = request.form.get('email')
@@ -1484,211 +979,6 @@ def autenticar():
     session['verification_code'] = verification_code
     
     return render_template('autenticar200k.html', verification_code=verification_code)
-
-@app.route('/salvar-cadastro', methods=['POST'])
-def salvar_cadastro():
-    try:
-        data = request.get_json()
-        
-        # Pegar a data no formato YYYY-MM-DD do campo input date
-        data_nascimento_iso = data.get('data_nascimento')
-        
-        # Para o campo DATANASC (tipo DATE no banco de dados)
-        # Não precisa de formatação adicional, o MySQL aceita o formato ISO YYYY-MM-DD
-        
-        # Para o campo DTNASCIMENTO (VARCHAR) - mantido por compatibilidade
-        # Converter de YYYY-MM-DD para DD/MM/YYYY
-        if data_nascimento_iso:
-            date_parts = data_nascimento_iso.split('-')
-            if len(date_parts) == 3:
-                ano, mes, dia = date_parts
-                data_nascimento_str = f"{dia}/{mes}/{ano}"  # Formato DD/MM/YYYY
-            else:
-                data_nascimento_str = ""  # caso haja algum problema com o formato
-        else:
-            data_nascimento_str = ""
-        
-        # Gerar data e hora atual no formato requerido
-        data_cadastro = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        
-        # Criptografar a senha usando SHA-256
-        senha = data.get('senha')
-        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
-        
-        # Preparar query e parâmetros
-        query = """
-        INSERT INTO ecmrun.ATLETA (
-            CPF, 
-            NOME, 
-            SOBRENOME, 
-            DTNASCIMENTO, 
-            DATANASC,
-            NRCELULAR, 
-            SEXO, 
-            EMAIL, 
-            TEL_EMERGENCIA, 
-            CONT_EMERGENCIA, 
-            SENHA, 
-            ATIVO, 
-            DTCADASTRO, 
-            ESTADO, 
-            ID_CIDADE
-        ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-        )
-        """
-        
-        # Remover caracteres não numéricos do CPF e telefones
-        cpf_limpo = re.sub(r'\D', '', data.get('cpf'))
-        celular_limpo = re.sub(r'\D', '', data.get('celular'))
-        tel_emergencia_limpo = re.sub(r'\D', '', data.get('telefone_emergencia')) if data.get('telefone_emergencia') else None
-        
-        params = (
-            cpf_limpo,
-            data.get('primeiro_nome').upper(),
-            data.get('sobrenome').upper(),
-            data_nascimento_str,                # Para o campo DTNASCIMENTO (string DD/MM/YYYY)
-            data_nascimento_iso,                # Para o campo DATANASC (date YYYY-MM-DD)
-            celular_limpo,
-            data.get('sexo'),
-            data.get('email'),
-            tel_emergencia_limpo,
-            data.get('contato_emergencia').upper() if data.get('contato_emergencia') else None,
-            senha_hash,
-            'S',  # ATIVO
-            data_cadastro,
-            data.get('estado'),
-            data.get('cidade')
-        )
-        
-        # Executar a query
-        cur = mysql.connection.cursor()
-        cur.execute(query, params)
-        mysql.connection.commit()
-        cur.close()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Cadastro realizado com sucesso!'
-        })
-        
-    except Exception as e:
-        print(f"Erro ao salvar cadastro: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Erro ao realizar cadastro. Por favor, tente novamente.'
-        }), 500
-
-
-@app.route('/enviar-codigo-verificacao', methods=['POST'])
-def enviar_codigo_verificacao():
-    try:
-        data = request.get_json()
-        email = data.get('email')
-        
-        if not email:
-            return jsonify({'success': False, 'message': 'Email não fornecido'}), 400
-
-        # Gerar código de verificação
-        verification_code = str(random.randint(1000, 9999))
-        
-        # Armazenar na sessão
-        session['verification_code'] = verification_code
-        session['verification_email'] = email
-        
-        # Simplificar o remetente
-        #sender = 'ecmsistemasdeveloper@gmail.com'
-        sender = "ECM RUN <ecmsistemasdeveloper@gmail.com>"
-
-        # Criar mensagem com configuração mais simples
-        msg = Message(
-            'Código de Verificação - ECM Run',
-            sender=sender,
-            recipients=[email]
-        )
-
-        # Template HTML do email
-        msg.html = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
-            <p>Olá,</p>
-            <p>Seu código de verificação é:</p>
-            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{verification_code}</h1>
-            <p>Este código é válido por 10 minutos.</p>
-            <p>Se você não solicitou este código, por favor ignore este email.</p>
-            <br>
-            <p>Atenciosamente,<br>Equipe ECM Run</p>
-        </div>
-        """
-
-        # Adicionar logs para debug
-        print(f'Tentando enviar email para: {email}')
-        print(f'Código de verificação: {verification_code}')
-        
-        # Enviar email com tratamento de erro específico
-        try:
-            mail.send(msg)
-            print('Email enviado com sucesso')
-        except Exception as mail_error:
-            print(f'Erro ao enviar email: {str(mail_error)}')
-            return jsonify({
-                'success': False,
-                'message': f'Erro ao enviar email: {str(mail_error)}'
-            }), 500
-
-        return jsonify({
-            'success': True,
-            'message': 'Código de verificação enviado com sucesso'
-        })
-        
-    except Exception as e:
-        print(f"Erro geral na rota: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': f'Erro ao processar requisição: {str(e)}'
-        }), 500
-    
-
-@app.route('/verificar-codigo', methods=['POST'])
-def verificar_codigo():
-    try:
-        data = request.get_json()
-        codigo_informado = data.get('codigo')
-        senha = data.get('senha')
-        
-        codigo_correto = session.get('verification_code')
-        email = session.get('verification_email')
-        
-        if not codigo_correto or not email:
-            return jsonify({
-                'success': False,
-                'message': 'Sessão expirada. Por favor, solicite um novo código.'
-            }), 400
-        
-        if codigo_informado != codigo_correto:
-            return jsonify({
-                'success': False,
-                'message': 'Código inválido'
-            }), 400
-            
-        # Aqui você pode adicionar o código para salvar o usuário no banco de dados
-        # com a senha criptografada
-        
-        # Limpar dados da sessão
-        session.pop('verification_code', None)
-        session.pop('verification_email', None)
-        
-        return jsonify({
-            'success': True,
-            'message': 'Código verificado com sucesso'
-        })
-        
-    except Exception as e:
-        print(f"Erro ao verificar código: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Erro ao verificar código'
-        }), 500
 
 # Email sending function
 def send_verification_email(email, code):
@@ -1756,115 +1046,6 @@ def send_verification_email(email, code):
             'message': f'Erro ao processar requisição: {str(e)}'
         }), 500
 
-
-@app.route('/recuperar-senha', methods=['GET'])
-def recuperar_senha():
-    return render_template('recuperar_senha.html')
-
-@app.route('/verificar-usuario', methods=['POST'])
-def verificar_usuario():
-    cpf_email = request.json.get('cpf_email')
-
-    cur = mysql.connection.cursor()    
-    if '@' in cpf_email:
-        # Query for email
-        cur.execute("""
-            SELECT IDATLETA, EMAIL 
-            FROM ATLETA
-            WHERE EMAIL = %s OR CPF = %s
-            """, (cpf_email, cpf_email))
-    else:
-        # Remove non-numeric characters from CPF
-        cpf = ''.join(filter(str.isdigit, cpf_email))    
-        cur.execute("""
-            SELECT IDATLETA, EMAIL 
-            FROM ATLETA
-            WHERE EMAIL = %s OR CPF = %s
-            """, (cpf, cpf))
-
-    result = cur.fetchone()
-    print(f'SQL: {result}')
-        
-
-    if result:
-        # Generate verification code
-        verification_code = str(random.randint(1000, 9999))
-        
-        # Store the code and user ID in session
-        session['code'] = verification_code
-        session['user_id'] = result[0]
-        
-        print(f'CODIGO: {verification_code}')
-        print(f'IDATLETA: {result[0]}')
-        
-        # Send verification code via email
-        if send_verification_email(result[1], verification_code):
-            return jsonify({
-                'success': True,
-                'message': 'Código de verificação enviado para seu email.'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': 'Erro ao enviar email. Tente novamente.'
-            })
-    
-    return jsonify({
-        'success': False,
-        'message': 'Usuário não encontrado.'
-    })
-
-@app.route('/verificar-codigo2', methods=['POST'])
-def verificar_codigo2():
-    codigo = request.json.get('codigo')
-    stored_code = session.get('code')
-    print(f'CODIGO DIGITADO: {codigo}')
-    print(f'STORED CODE:  {stored_code}')
-    
-    if codigo == stored_code:
-        return jsonify({'success': True})
-    return jsonify({'success': False, 'message': 'Código inválido.'})
-
-
-@app.route('/alterar-senha', methods=['POST'])
-def alterar_senha():
-    nova_senha = request.json.get('senha')
-    user_id = session.get('user_id')
-    senha_hash = hashlib.sha256(nova_senha.encode()).hexdigest()
-    
-    if not user_id:
-        return jsonify({
-            'success': False,
-            'message': 'Sessão expirada. Tente novamente.'
-        })
-        
-    try:
-
-        cur = mysql.connection.cursor()    
-        cur.execute("""
-            UPDATE ATLETA
-            SET SENHA = %s 
-            WHERE IDATLETA = %s
-            """, (senha_hash, user_id))
-
-        mysql.connection.commit()
-        
-        # Clear session
-        session.pop('code', None)
-        session.pop('user_id', None)
-        
-        return jsonify({
-            'success': True,
-            'message': 'Senha alterada com sucesso!'
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': 'Erro ao alterar senha. Tente novamente.'
-        })
-    finally:
-        cur.close()
-
 @app.route('/estados')
 def estados():
     with open('static/json/estados.json', encoding='utf-8') as f:
@@ -1885,9 +1066,6 @@ def inscricao200k():
 def formulario200k():
     return render_template('formulario200k.html')
 
-@app.route('/login')
-def login():
-    return render_template('login.html')
 
 def validar_cpf(cpf):
     # Remove caracteres não numéricos
@@ -1924,23 +1102,6 @@ def validar_cpf_route():
     is_valid = validar_cpf(cpf)
 
     return jsonify({'valid': is_valid})
-
-@app.route('/verificar-cpf', methods=['GET'])
-def verificar_cpf_existente():
-    cpf = request.args.get('cpf', '')
-    # Remove caracteres não numéricos
-    cpf = ''.join(filter(str.isdigit, cpf))
-    
-
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute('SELECT IDATLETA FROM ecmrun.ATLETA WHERE CPF = %s', (cpf,))
-        result = cur.fetchone()
-        cur.close()
-        
-        return jsonify({'exists': bool(result)})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 
 def send_email(receipt_data):
@@ -2021,329 +1182,6 @@ def pesquisar_cep():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/autenticar-login', methods=['POST'])
-def autenticar_login():
-    try:
-        data = request.get_json()
-        cpf_email = data.get('cpf_email')
-        senha = data.get('senha')
-        
-        # Hash the password for comparison
-        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
-        
-        cur = mysql.connection.cursor()
-        
-        # Verifique se a entrada é e-mail ou CPF e consulte adequadamente
-        if '@' in cpf_email:
-            # Query for email
-            cur.execute("""
-                SELECT 
-                    COALESCE(A.NOME, '') AS NOME, 
-                    COALESCE(A.SOBRENOME, '') AS SOBRENOME, 
-                    COALESCE(A.EMAIL, '') AS EMAIL, 
-                    COALESCE(A.CPF, '') AS CPF, 
-                    COALESCE(A.DTNASCIMENTO, '') AS DTNASCIMENTO, 
-                    COALESCE(A.NRCELULAR, '') AS NRCELULAR, 
-                    COALESCE(A.SEXO, '') AS SEXO, 
-                    COALESCE(A.IDATLETA, '') AS IDATLETA, 
-                    COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
-                    COALESCE(E.IDEVENTO, '') AS IDEVENTO, 
-                    COALESCE(I.APOIO, '') AS APOIO, 
-                    COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
-                    COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
-                    COALESCE(I.CAMISETA, '') AS CAMISETA,
-                    COALESCE(I.VALOR, '') AS VALOR,
-                    COALESCE(I.TAXA, '') AS TAXA,
-                    COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
-                    COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
-                    COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
-                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
-                    COALESCE(E.DTINICIO, '') AS DTINICIO,
-                    COALESCE(E.DESCRICAO, '') AS EVENTO,
-                    COALESCE(CONCAT(E.DESCRICAO,' / ', M.DESCRICAO), '') AS EVENTO_MODAL,
-                    COALESCE(I.FLSTATUS, '') AS FLSTATUS
-                FROM ecmrun.ATLETA A
-                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1 AND I.FLSTATUS = 'CONFIRMADO'
-                LEFT JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
-                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM AND I.IDATLETA IS NOT NULL
-                WHERE A.EMAIL = %s AND A.SENHA = %s AND A.ATIVO = 'S'
-            """, (cpf_email, senha_hash))
-        else:
-            # Remove non-numeric characters from CPF
-            cpf = ''.join(filter(str.isdigit, cpf_email))
-            cur.execute("""
-                SELECT 
-                    COALESCE(A.NOME, '') AS NOME, 
-                    COALESCE(A.SOBRENOME, '') AS SOBRENOME, 
-                    COALESCE(A.EMAIL, '') AS EMAIL, 
-                    COALESCE(A.CPF, '') AS CPF, 
-                    COALESCE(A.DTNASCIMENTO, '') AS DTNASCIMENTO, 
-                    COALESCE(A.NRCELULAR, '') AS NRCELULAR, 
-                    COALESCE(A.SEXO, '') AS SEXO, 
-                    COALESCE(A.IDATLETA, '') AS IDATLETA, 
-                    COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
-                    COALESCE(E.IDEVENTO, '') AS IDEVENTO, 
-                    COALESCE(I.APOIO, '') AS APOIO, 
-                    COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
-                    COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
-                    COALESCE(I.CAMISETA, '') AS CAMISETA,
-                    COALESCE(I.VALOR, '') AS VALOR,
-                    COALESCE(I.TAXA, '') AS TAXA,
-                    COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
-                    COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
-                    COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
-                    COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
-                    COALESCE(E.DTINICIO, '') AS DTINICIO,
-                    COALESCE(E.DESCRICAO, '') AS EVENTO,
-                    COALESCE(CONCAT(E.DESCRICAO,' / ', M.DESCRICAO), '') AS EVENTO_MODAL,
-                    COALESCE(I.FLSTATUS, '') AS FLSTATUS
-                FROM ecmrun.ATLETA A
-                LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1 AND I.FLSTATUS = 'CONFIRMADO'
-                LEFT JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
-                LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM AND I.IDATLETA IS NOT NULL
-                WHERE A.CPF = %s AND A.SENHA = %s AND A.ATIVO = 'S'
-            """, (cpf, senha_hash))
-        
-        result = cur.fetchone()
-        cur.close()
-        
-        if result:
-            nome_completo = f"{result[0]} {result[1]}"
-            email = result[2]
-            vcpf = result[3]
-            dtnascimento = result[4]
-            celular = result[5]
-            sexo = result[6]
-            idatleta = result[7]
-            modalidade = result[8]
-            apoio = result[10]
-            equipe200 = result[11]
-            integrantes = result[12]
-            camiseta = result[13]
-            valor = result[14]
-            taxa = result[15]
-            valortotal = result[16]
-            dtpagamento = result[17]
-            formapgto = result[18]
-            idpagamento = result[19]
-            dtinicio = result[20]
-            evento = result[21]
-            evento_modal = result[22]
-            flstatus = result[23]
-            
-            # Converta as strings para objetos datetime
-            dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
-            dt_inicio = datetime.strptime(dtinicio, "%d/%m/%Y")
-
-            # Calcule a idade
-            idade = dt_inicio.year - dt_nascimento.year - ((dt_inicio.month, dt_inicio.day) < (dt_nascimento.month, dt_nascimento.day))
-            app.logger.info(f'Idade: { idade }')
-            app.logger.info(f'Data Evento: { dtinicio }')
-                    
-        
-            # Store in session
-            session['user_name'] = nome_completo
-            session['user_email'] = email
-            session['user_cpf'] = vcpf
-            session['user_dtnascimento'] = dtnascimento
-            session['user_dataevento'] = dtinicio
-            session['user_idade'] = str(idade)
-            session['user_celular'] = celular
-            session['user_sexo'] = sexo
-            session['user_idatleta'] = idatleta
-            session['insc_modalidade'] = modalidade
-            session['insc_apoio'] = apoio
-            session['insc_equipe200'] = equipe200
-            session['insc_integrantes'] = integrantes
-            session['insc_camiseta'] = camiseta
-            session['insc_valor'] = valor
-            session['insc_taxa'] = taxa
-            session['insc_valortotal'] = valortotal
-            session['insc_dtpagamento'] = dtpagamento
-            session['insc_formapgto'] = formapgto
-            session['insc_idpagamento'] = idpagamento
-            session['insc_evento'] = evento
-            session['insc_evento_modal'] = evento_modal
-            session['insc_flstatus'] = flstatus
-            
-            print(f'ID Pagamento: {idpagamento}')
-
-            return jsonify({
-                'success': True,
-                'nome': nome_completo,
-                'email': email,
-                'cpf': vcpf,
-                'dtnascimento': dtnascimento,
-                'idade': str(idade),
-                'celular': celular,
-                'sexo': sexo,
-                'idatleta': idatleta,
-                'modalidade': modalidade,
-                'apoio': apoio,
-                'equipe200': equipe200,
-                'integrantes': integrantes,
-                'camiseta': camiseta,
-                'valor': valor,
-                'taxa': taxa,
-                'valortotal': valortotal,
-                'dtpagamento': dtpagamento,
-                'formapgto': formapgto,
-                'idpagamento': idpagamento,
-                'dataevendo': dtinicio,
-                'evento': evento,
-                'evento_modal': evento_modal,
-                'flstatus': flstatus
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': 'Usuário ou senha inválidos'
-            }), 401
-            
-    except Exception as e:
-        print(f"Erro na autenticação: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Erro ao realizar autenticação'
-        }), 500
-
-
-@app.route('/check-user-session', methods=['POST'])
-def check_user_session():
-    try:
-        data = request.get_json()
-        user_email = data.get('email')
-        user_cpf = data.get('cpf')
-        
-        if not (user_email or user_cpf):
-            return jsonify({
-                'success': False,
-                'message': 'Dados de usuário não fornecidos'
-            }), 400
-        
-        cur = mysql.connection.cursor()
-        
-        # Consulta usando e-mail ou CPF, dependendo do que foi fornecido
-        if user_email:
-            query_param = user_email
-            where_clause = "A.EMAIL = %s"
-        else:
-            query_param = user_cpf
-            where_clause = "A.CPF = %s"
-        
-        # Mesma consulta da rota de autenticação, mas sem verificar a senha
-        cur.execute(f"""
-            SELECT 
-                COALESCE(A.NOME, '') AS NOME, 
-                COALESCE(A.SOBRENOME, '') AS SOBRENOME, 
-                COALESCE(A.EMAIL, '') AS EMAIL, 
-                COALESCE(A.CPF, '') AS CPF, 
-                COALESCE(A.DTNASCIMENTO, '') AS DTNASCIMENTO, 
-                COALESCE(A.NRCELULAR, '') AS NRCELULAR, 
-                COALESCE(A.SEXO, '') AS SEXO, 
-                COALESCE(A.IDATLETA, '') AS IDATLETA, 
-                COALESCE(M.DESCRICAO, '') AS MODALIDADE, 
-                COALESCE(E.IDEVENTO, '') AS IDEVENTO, 
-                COALESCE(I.APOIO, '') AS APOIO, 
-                COALESCE(I.NOME_EQUIPE, '') AS NOME_EQUIPE,
-                COALESCE(I.INTEGRANTES, '') AS INTEGRANTES,
-                COALESCE(I.CAMISETA, '') AS CAMISETA,
-                COALESCE(I.VALOR, '') AS VALOR,
-                COALESCE(I.TAXA, '') AS TAXA,
-                COALESCE(I.VALOR_PGTO, '') AS VALOR_PGTO,
-                COALESCE(I.DTPAGAMENTO, '') AS DTPAGAMENTO,
-                COALESCE(I.FORMAPGTO, '') AS FORMAPGTO,
-                COALESCE(I.IDPAGAMENTO, '') AS IDPAGAMENTO,
-                COALESCE(E.DTINICIO, '') AS DTINICIO,
-                COALESCE(E.DESCRICAO, '') AS EVENTO,
-                COALESCE(CONCAT(E.DESCRICAO,' / ', M.DESCRICAO), '') AS EVENTO_MODAL,
-                COALESCE(I.FLSTATUS, '') AS FLSTATUS
-            FROM ecmrun.ATLETA A
-            LEFT JOIN ecmrun.INSCRICAO I ON I.IDATLETA = A.IDATLETA AND I.IDEVENTO = 1 AND I.FLSTATUS = 'CONFIRMADO'
-            LEFT JOIN ecmrun.EVENTO E ON E.IDEVENTO = 1
-            LEFT JOIN ecmrun.EVENTO_MODALIDADE M ON M.IDITEM = I.IDITEM AND I.IDATLETA IS NOT NULL
-            WHERE {where_clause} AND A.ATIVO = 'S'
-        """, (query_param,))
-        
-        result = cur.fetchone()
-        cur.close()
-        
-        if result:
-            nome_completo = f"{result[0]} {result[1]}"
-            email = result[2]
-            vcpf = result[3]
-            dtnascimento = result[4]
-            celular = result[5]
-            sexo = result[6]
-            idatleta = result[7]
-            modalidade = result[8]
-            apoio = result[10]
-            equipe200 = result[11]
-            integrantes = result[12]
-            camiseta = result[13]
-            valor = result[14]
-            taxa = result[15]
-            valortotal = result[16]
-            dtpagamento = result[17]
-            formapgto = result[18]
-            idpagamento = result[19]
-            dtinicio = result[20]
-            evento = result[21]
-            evento_modal = result[22]
-            flstatus = result[23]
-            
-            # Converta as strings para objetos datetime
-            dt_nascimento = datetime.strptime(dtnascimento, "%d/%m/%Y")
-            dt_inicio = datetime.strptime(dtinicio, "%d/%m/%Y")
-
-            # Calcule a idade
-            idade = dt_inicio.year - dt_nascimento.year - ((dt_inicio.month, dt_inicio.day) < (dt_nascimento.month, dt_nascimento.day))
-
-            print(result)    
-
-            evento = result[21]
-            print(f"Valor de EVENTO antes de retornar: {evento}")
-
-            return jsonify({
-                'success': True,
-                'nome': nome_completo,
-                'email': email,
-                'cpf': vcpf,
-                'dtnascimento': dtnascimento,
-                'idade': str(idade),
-                'celular': celular,
-                'sexo': sexo,
-                'idatleta': idatleta,
-                'modalidade': modalidade,
-                'apoio': apoio,
-                'equipe200': equipe200,
-                'integrantes': integrantes,
-                'camiseta': camiseta,
-                'valor': valor,
-                'taxa': taxa,
-                'valortotal': valortotal,
-                'dtpagamento': dtpagamento,
-                'formapgto': formapgto,
-                'idpagamento': idpagamento,
-                'dataevento': dtinicio,
-                'evento': evento,
-                'evento_modal': evento_modal,
-                'flstatus': flstatus
-            })
-            
-        else:
-            # Usuário não encontrado ou inativo
-            return jsonify({
-                'success': False,
-                'message': 'Usuário não encontrado ou inativo'
-            }), 404
-            
-    except Exception as e:
-        print(f"Erro ao verificar sessão do usuário: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Erro ao verificar sessão do usuário'
-        }), 500
 
 
 @app.route('/pagamento')
@@ -2913,205 +1751,6 @@ def verificar_pagamento(payment_id):
         }), 500
 
 
-# @app.route('/verificar-pagamento/<payment_id>')
-# def verificar_pagamento(payment_id):
-#     try:
-#         print(f"=== VERIFICAÇÃO DE PAGAMENTO INICIADA ===")
-#         print(f"Payment ID recebido: {payment_id}")
-        
-#         # Buscar o status diretamente do Mercado Pago
-#         payment_response = sdk.payment().get(payment_id)
-#         payment = payment_response["response"]
-
-#         print(f"Status do pagamento no MP: {payment['status']}")
-#         print(f"Dados completos do pagamento: {payment}")
-        
-#         if payment["status"] == "approved":
-#             print("Pagamento aprovado, processando...")
-            
-#             data_e_hora_atual = datetime.now()
-#             fuso_horario = timezone('America/Manaus')
-#             data_pagamento = data_e_hora_atual.astimezone(fuso_horario)
-            
-#             print(f"Data do pagamento: {data_pagamento}")
-
-#             # Buscar o registro pelo ID do pagamento (incluindo CPF)
-#             cur = mysql.connection.cursor()
-#             cur.execute("""
-#                 SELECT IDEVENTO, IDINSCRICAO, STATUS, CPF, EMAIL, NOME, SOBRENOME, 
-#                        DTNASCIMENTO, DATANASC, CELULAR, SEXO, TEL_EMERGENCIA, 
-#                        CONT_EMERGENCIA, ESTADO, ID_CIDADE, IDPESSOA
-#                 FROM EVENTO_INSCRICAO 
-#                 WHERE IDPAGAMENTO = %s
-#             """, (payment_id,))
-#             existing_record = cur.fetchone()
-            
-#             print(f"Registro encontrado: {existing_record}")
-
-#             if existing_record:
-#                 idevento = existing_record[0]
-#                 idinscricao = existing_record[1]
-#                 status_atual = existing_record[2]
-#                 cpf = existing_record[3]
-#                 email = existing_record[4]
-#                 nome = existing_record[5]
-#                 sobrenome = existing_record[6]
-#                 dt_nascimento = existing_record[7]
-#                 data_nasc = existing_record[8]
-#                 celular = existing_record[9]
-#                 sexo = existing_record[10]
-#                 tel_emergencia = existing_record[11]
-#                 cont_emergencia = existing_record[12]
-#                 estado = existing_record[13]
-#                 id_cidade = existing_record[14]
-#                 idpessoa_atual = existing_record[15]
-                
-#                 print(f"ID Inscrição: {idinscricao}, Status atual: {status_atual}, CPF: {cpf}")
-                
-#                 # Verificar se já não foi processado (evitar reprocessamento)
-#                 if status_atual != 'A':  # Se não está aprovado ainda
-
-#                     # Verificar se existe registro na tabela PESSOA com o CPF
-#                     print(f"Verificando se existe pessoa com CPF: {cpf}")
-#                     cur.execute("SELECT IDPESSOA FROM PESSOA WHERE CPF = %s", (cpf,))
-#                     pessoa_existente = cur.fetchone()
-                    
-#                     idpessoa = None
-                    
-#                     if pessoa_existente:
-#                         # CASO 2: Existe registro - fazer UPDATE na tabela PESSOA
-#                         idpessoa = pessoa_existente[0]
-#                         print(f"Pessoa encontrada com ID: {idpessoa}. Atualizando dados...")
-                        
-#                         cur.execute("""
-#                             UPDATE PESSOA SET
-#                                 EMAIL = %s,
-#                                 NOME = %s,
-#                                 SOBRENOME = %s,
-#                                 DTNASCIMENTO = %s,
-#                                 DATANASC = %s,
-#                                 CELULAR = %s,
-#                                 SEXO = %s,
-#                                 TEL_EMERGENCIA = %s,
-#                                 CONT_EMERGENCIA = %s,
-#                                 ESTADO = %s,
-#                                 ID_CIDADE = %s
-#                             WHERE CPF = %s
-#                         """, (
-#                             email, nome, sobrenome, dt_nascimento, data_nasc,
-#                             celular, sexo, tel_emergencia, cont_emergencia,
-#                             estado, id_cidade, cpf
-#                         ))
-                        
-#                         print(f"Dados da pessoa {idpessoa} atualizados com sucesso")
-                        
-#                     else:
-#                         # CASO 1: Não existe registro - fazer INSERT na tabela PESSOA
-#                         print("Pessoa não encontrada. Criando novo registro...")
-                        
-#                         cur.execute("""
-#                             INSERT INTO PESSOA (
-#                                 EMAIL, CPF, NOME, SOBRENOME, DATANASC, DTNASCIMENTO,
-#                                 CELULAR, SEXO, TEL_EMERGENCIA, CONT_EMERGENCIA,
-#                                 ESTADO, ID_CIDADE, DTCADASTRO
-#                             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-#                         """, (
-#                             email, cpf, nome, sobrenome, data_nasc, dt_nascimento,
-#                             celular, sexo, tel_emergencia, cont_emergencia,
-#                             estado, id_cidade, data_e_hora_atual.astimezone(fuso_horario)
-#                         ))
-                        
-#                         # Buscar o ID da pessoa recém-criada
-#                         cur.execute("SELECT IDPESSOA FROM PESSOA WHERE CPF = %s", (cpf,))
-#                         novo_registro = cur.fetchone()
-                        
-#                         if novo_registro:
-#                             idpessoa = novo_registro[0]
-#                             print(f"Nova pessoa criada com ID: {idpessoa}")
-#                         else:
-#                             print("ERRO: Não foi possível recuperar o ID da pessoa criada")
-#                             raise Exception("Falha ao criar registro na tabela PESSOA")
-
-#                     # Gerar número de peito (pode implementar lógica específica)
-#                     cur.execute("""
-#                         SELECT COALESCE(MAX(NUPEITO), 0) + 1 as proximo_peito
-#                         FROM EVENTO_INSCRICAO 
-#                         WHERE STATUS = 'A' AND IDEVENTO = %s
-#                     """, (idevento,))
-                    
-#                     resultado = cur.fetchone()
-#                     numero_peito = resultado[0] if resultado and resultado[0] else 1
-
-#                     print("Atualizando status para aprovado e IDPESSOA...")
-                    
-#                     # Atualizar a inscrição com o pagamento aprovado e IDPESSOA
-#                     cur.execute("""
-#                         UPDATE EVENTO_INSCRICAO SET
-#                             DTPAGAMENTO = %s,
-#                             STATUS = %s,
-#                             NUPEITO = %s,
-#                             IDPESSOA = %s
-#                         WHERE IDPAGAMENTO = %s
-#                     """, (
-#                         data_pagamento,         
-#                         'A',  # APROVADO
-#                         numero_peito,
-#                         idpessoa,         
-#                         payment_id
-#                     ))
-                    
-#                     linhas_afetadas = cur.rowcount
-#                     mysql.connection.commit()
-                    
-#                     print(f"Update executado. Linhas afetadas: {linhas_afetadas}")
-#                     print(f"Pagamento {payment_id} atualizado com sucesso")
-#                     print(f"IDPESSOA {idpessoa} vinculado à inscrição")
-                    
-#                     # Verificar se a atualização foi bem-sucedida
-#                     cur.execute("SELECT STATUS, DTPAGAMENTO, IDPESSOA FROM EVENTO_INSCRICAO WHERE IDPAGAMENTO = %s", (payment_id,))
-#                     verificacao = cur.fetchone()
-#                     print(f"Verificação pós-update: {verificacao}")
-                    
-#                 else:
-#                     print(f"Pagamento {payment_id} já foi processado anteriormente")
-                    
-#                 cur.close()
-#             else:
-#                 print(f"ERRO: Registro não encontrado para payment_id: {payment_id}")
-                
-#                 # Buscar todos os registros para debug
-#                 cur.execute("SELECT IDINSCRICAO, IDPAGAMENTO, STATUS FROM EVENTO_INSCRICAO ORDER BY IDINSCRICAO DESC LIMIT 10")
-#                 todos_registros = cur.fetchall()
-#                 print(f"Últimos 10 registros na tabela: {todos_registros}")
-                
-#                 cur.close()
-#                 return jsonify({
-#                     'success': False,
-#                     'status': 'error',
-#                     'message': 'Registro não encontrado'
-#                 }), 404
-                
-#         print(f"=== VERIFICAÇÃO FINALIZADA ===")
-        
-#         return jsonify({
-#             'success': True,
-#             'status': payment["status"]
-#         })
-        
-#     except Exception as e:
-#         print(f"ERRO CRÍTICO ao verificar pagamento: {str(e)}")
-#         print(f"Tipo do erro: {type(e)}")
-#         import traceback
-#         print(f"Traceback completo: {traceback.format_exc()}")
-        
-#         return jsonify({
-#             'success': False, 
-#             'message': str(e),
-#             'status': 'error'
-#         }), 500
-
-
-
 @app.route('/atualiza-idpagamento/<cpf>', methods=['POST'])
 def atualiza_idpagamento(cpf):
     try:
@@ -3135,146 +1774,6 @@ def atualiza_idpagamento(cpf):
                 """, (idpagamento, existing_record[0]))
             mysql.connection.commit()
             cur.close()
-        
-        return jsonify({
-            'success': True,
-            'status': 'inserido',
-            'message': 'registrado'
-        })
-        
-    except Exception as e:
-        print(f"Erro ao lançar pré-inscrição: {str(e)}")
-        # Ensure JSON is returned even on error
-        return jsonify({
-            'success': False, 
-            'message': str(e),
-            'status': 'error'
-        }), 500
-
-
-@app.route('/inscricao-temp/<cpf>', methods=['POST'])
-def inscricao_temp(cpf):
-    try:
-        # Obter dados do request JSON em vez de session
-        data = request.json
-        # Usar dados do request JSON
-        valor = float(data.get('valor_atual', 0))
-        taxa = float(data.get('valor_taxa', 0))
-        valoratual = valor + taxa
-        valor_pgto = float(data.get('valor_total', 0))
-        desconto = valoratual - valor_pgto
-        
-        formaPagto = data.get('forma_pagto', 'PIX')
-        camiseta = data.get('camiseta')
-        equipe = data.get('equipe')
-        apoio = data.get('apoio')
-        equipe200 = data.get('equipe_nome')
-        integrantes = data.get('integrantes')
-        idpagamento = data.get('payment_id')
-        cat_iditem = data.get('cat_iditem')
-        
-        data_e_hora_atual = datetime.now()
-        fuso_horario = timezone('America/Manaus')
-        data_e_hora_manaus = data_e_hora_atual.astimezone(fuso_horario)
-        data_pagamento = data_e_hora_manaus.strftime('%d/%m/%Y %H:%M')
-
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT IDINSCRICAO FROM INSCRICAO WHERE FLSTATUS = 'PENDENTE' AND CPF = %s AND IDEVENTO = 1", (cpf,))
-        existing_record = cur.fetchone()
-        
-        if existing_record:
-            cur = mysql.connection.cursor()
-
-            cur.execute("""
-                UPDATE INSCRICAO 
-                SET IDITEM = %s, 
-                    CAMISETA = %s,
-                    APOIO = %s,
-                    NOME_EQUIPE = %s, 
-                    INTEGRANTES = %s,
-                    VALOR = %s,
-                    TAXA = %s,
-                    DESCONTO = %s,
-                    VALOR_PGTO = %s,
-                    DTPAGAMENTO = %s,
-                    FLSTATUS = %s,
-                    FORMAPGTO = %s,
-                    IDPAGAMENTO = %s,
-                    FLMAIL = %s,
-                    EQUIPE = %s,  
-                WHERE IDINSCRICAO = %s
-                """, (
-                    cat_iditem,                 # IDITEM
-                    camiseta,                   # CAMISETA
-                    apoio,                      # APOIO
-                    equipe200,                  # NOME_EQUIPE
-                    integrantes,                # INTEGRANTES
-                    valor,                      # VALOR
-                    taxa,                       # TAXA
-                    desconto,                   # DESCONTO
-                    valor_pgto,                 # VALOR_PGTO
-                    data_pagamento,             # DTPAGAMENTO
-                    'PENDENTE',                 # FLSTATUS
-                    formaPagto,                 # FORMAPGTO
-                    idpagamento,                # IDPAGAMENTO
-                    'N',                        # FLMAIL
-                    equipe,                     # EQUIPE
-                    existing_record[0]          # IDINSCRICAO
-
-            ))
-            mysql.connection.commit()
-            cur.close()
-        
-        else:
-
-            # Obter idatleta do banco baseado no CPF
-            cur = mysql.connection.cursor()
-            cur.execute("SELECT IDATLETA FROM ecmrun.ATLETA WHERE CPF = %s", (cpf,))
-            atleta_record = cur.fetchone()
-            
-            if atleta_record:
-                idatleta = atleta_record[0]
-            else:
-                idatleta = None
-        
-            # Insert payment record
-            query = """
-            INSERT INTO INSCRICAO (
-                IDATLETA, CPF, IDEVENTO, IDITEM, CAMISETA, APOIO, 
-                NOME_EQUIPE, INTEGRANTES, VALOR, TAXA, DESCONTO,
-                VALOR_PGTO, DTPAGAMENTO, FLSTATUS, FORMAPGTO, 
-                IDPAGAMENTO, FLMAIL, EQUIPE
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-            )
-            """
-            
-            params = (
-                idatleta,                   # IDATLETA
-                cpf,                        # CPF
-                1,                          # IDEVENTO (hardcoded as 1 for this event)
-                cat_iditem,                 # IDITEM
-                camiseta,                   # CAMISETA
-                apoio,                      # APOIO
-                equipe200,                  # NOME_EQUIPE
-                integrantes,                # INTEGRANTES
-                valor,                      # VALOR
-                taxa,                       # TAXA
-                desconto,                   # DESCONTO
-                valor_pgto,                 # VALOR_PGTO
-                data_pagamento,             # DTPAGAMENTO
-                'PENDENTE',                 # FLSTATUS
-                formaPagto,                 # FORMAPGTO
-                idpagamento,                # IDPAGAMENTO
-                'N',                        # FLMAIL
-                equipe                      # EQUIPE
-            )
-            
-            cur.execute(query, params)
-            mysql.connection.commit()
-            cur.close()
-        
-        print(f"Pré-inscrição inserida com sucesso para CPF {cpf} com payment_id {idpagamento}!")
         
         return jsonify({
             'success': True,
@@ -3472,162 +1971,6 @@ def pesquisa_cupom(categoria_id, cpf, cupom):
         }), 500
 
     
-@app.route('/gerar_cupom', methods=['POST'])
-def gerar_cupom():
-    # Check if user is authenticated (has passed the admin password check)
-    if not session.get('authenticated'):
-        return jsonify({'error': 'Não autenticado'}), 401
-    
-    try:
-        # Get form data
-        data = request.form
-        modalidade = data.get('modalidade')
-        cpf = data.get('cpf', '').replace('.', '').replace('-', '')  # Remove formatting
-        bonifica = 'S' if data.get('bonifica') == 'on' else 'N'
-        
-        # Se for bonificação, definir valores padrão para campos de pagamento
-        if bonifica == 'S':
-            idpagamento = ''
-            dtpagamento = ''
-            formapgto = ''
-            vlinscricao = '0'
-            vltaxa = '0'
-            vlpago = '0'
-        else:
-            idpagamento = data.get('idpagamento', '')
-            dtpagamento = data.get('dtpagamento', '')
-            formapgto = data.get('formapgto', '')
-            vlinscricao = data.get('vlinscricao', '0').replace('.', '').replace(',', '.')
-            vltaxa = data.get('vltaxa', '0').replace('.', '').replace(',', '.')
-            vlpago = data.get('vlpago', '0').replace('.', '').replace(',', '.')
-        
-        # Garantir que valores numéricos sejam válidos
-        try:
-            vlinscricao_float = float(vlinscricao) if vlinscricao else 0.0
-            vltaxa_float = float(vltaxa) if vltaxa else 0.0
-            vlpago_float = float(vlpago) if vlpago else 0.0
-        except ValueError as ve:
-            print(f"Erro de conversão de valor: {ve}")
-            return jsonify({'success': False, 'error': 'Valores monetários inválidos'}), 400
-        
-        # Generate random 5-character coupon code (uppercase letters and numbers)
-        #cupom = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-        numeros = random.choices(string.digits, k=2)
-        # Gerar 3 letras maiúsculas aleatórias
-        letras = random.choices(string.ascii_uppercase, k=3)
-        # Juntar todos os caracteres
-        todos_caracteres = numeros + letras
-        # Embaralhar os caracteres
-        random.shuffle(todos_caracteres)
-        # Converter lista de caracteres para string
-        cupom = ''.join(todos_caracteres)        
-
-
-
-        # Connect to database
-        cursor = mysql.connection.cursor()
-        
-        try:
-            # Insert into database
-            query = """
-            INSERT INTO CUPOM (CUPOM, CPF, IDPAGAMENTO, FORMAPAGTO, DTPAGAMENTO, VALOR, TAXA, VALOR_PGTO, IDMODALIDADE, UTILIZADO, BONIFICA)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(query, (
-                cupom, 
-                cpf, 
-                idpagamento, 
-                formapgto, 
-                dtpagamento, 
-                vlinscricao_float, 
-                vltaxa_float, 
-                vlpago_float, 
-                int(modalidade), 
-                'N',  # Not used initially
-                bonifica
-            ))
-            
-            # Commit to database
-            mysql.connection.commit()
-
-            # Verificar se existe um atleta cadastrado com esse CPF
-            cursor.execute("SELECT EMAIL FROM ATLETA WHERE CPF = %s", (cpf,))
-            resultado = cursor.fetchone()
-            
-            # Obter a descrição da modalidade
-            cursor.execute("SELECT DESCRICAO FROM EVENTO_MODALIDADE WHERE IDITEM = %s", (modalidade,))
-            modalidade_result = cursor.fetchone()
-            desc_modalidade = modalidade_result[0] if modalidade_result else "Não especificada"
-
-            # Se encontrou o atleta, enviar email
-            if resultado and resultado[0]:
-                email_atleta = resultado[0]
-                
-                # Enviar email
-                try:
-                    sender = "ECM RUN <ecmsistemasdeveloper@gmail.com>"
-                    msg = Message(
-                        'Cupom para o 4º Desafio 200k',
-                        sender=sender,
-                        recipients=[email_atleta]
-                    )
-                    
-                    # Template HTML do email
-                    if bonifica == 'N':
-                        msg.html = f"""
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
-                            <p>Olá,</p>
-                            <p>Foi gerado um cupom em seu CPF para o 4º Desafio 200k:</p>
-                            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{cupom}</h1>
-                            <p>Para validar sua inscrição, você deve preencher os requisitos abaixo:</p>
-                            <p>Cupom válido somente para seu CPF;</p>
-                            <p>Categoria: <b>{desc_modalidade}<b>;</p>
-                            <p>Forma de Pagamento: <b>{formapgto}</b></p>
-                            <br>
-                            <p>Atenciosamente,<br>Equipe ECM Run</p>
-                        </div>
-                        """
-                    else:
-                        msg.html = f"""
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                            <h2 style="color: #4376ac;">Verificação de Cadastro - ECM Run</h2>
-                            <p>Olá,</p>
-                            <p>Foi gerado um cupom em seu CPF para o 4º Desafio 200k:</p>
-                            <h1 style="color: #4376ac; font-size: 32px; letter-spacing: 5px;">{cupom}</h1>
-                            <p>Para validar sua inscrição, você deve preencher os requisitos abaixo:</p>
-                            <p>Cupom válido somente para seu CPF;</p>
-                            <p>Categoria: <b>{desc_modalidade}</b></p>
-                            <br>
-                            <p>Atenciosamente,<br>Equipe ECM Run</p>
-                        </div>
-                        """
-                    
-                    # Enviar email
-                    mail.send(msg)
-                    print(f"Email enviado com sucesso para {email_atleta}")
-                except Exception as mail_error:
-                    print(f"Erro ao enviar email: {mail_error}")
-                    # Não retornamos erro aqui, pois o cupom já foi gerado com sucesso
-                    # O email é apenas uma notificação adicional
-            
-            # Limpar a autenticação após uso bem-sucedido
-            session.pop('authenticated', None)
-            
-            return jsonify({'success': True, 'cupom': cupom})
-        
-        except Exception as e:
-            print(f"Database error: {e}")
-            mysql.connection.rollback()
-            return jsonify({'success': False, 'error': str(e)}), 500
-        
-        finally:
-            cursor.close()
-            
-    except Exception as e:
-        print(f"General error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
 
 @app.route('/verificar_senha', methods=['POST'])
 def verificar_senha():
@@ -3743,13 +2086,6 @@ def cadastrar_apoio():
         return jsonify({'message': f'Erro interno do servidor: {str(e)}'}), 500
 
 
-# # Rota para renderizar a página principal
-# @app.route('/listainscricao200k')
-# def lista_inscricao():
-#     print("DEBUG: Renderizando página listainscricao200k.html")
-#     return render_template('listainscricao200k.html')
-
-
 # Rota para verificar senha
 @app.route('/verificar_senha1', methods=['POST'])
 def verificar_senha1():
@@ -3776,38 +2112,7 @@ def verificar_senha1():
         print(f"DEBUG: Erro na verificação da senha: {str(e)}")
         return jsonify({'success': False, 'message': f'Erro: {str(e)}'})
 
-# Rota para buscar eventos
-@app.route('/api/eventos1')
-def get_eventos1():
-    print("DEBUG: Buscando eventos...")
-    
-    if not session.get('autenticado'):
-        print("DEBUG: Usuário não autenticado")
-        return jsonify({'error': 'Não autenticado'}), 401
-    
-    try:
-        cursor = mysql.connection.cursor()
-        print("DEBUG: Conexão com banco estabelecida")
-        
-        cursor.execute("SELECT IDEVENTO, DESCRICAO FROM EVENTO")
-        eventos = cursor.fetchall()
-        cursor.close()
-        
-        print(f"DEBUG: Encontrados {len(eventos)} eventos")
-        
-        eventos_list = []
-        for evento in eventos:
-            eventos_list.append({
-                'IDEVENTO': evento[0],
-                'DESCRICAO': evento[1]
-            })
-        
-        print(f"DEBUG: Retornando eventos: {eventos_list}")
-        return jsonify(eventos_list)
-        
-    except Exception as e:
-        print(f"DEBUG: Erro ao buscar eventos: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+
 
 # Rota para buscar modalidades por evento
 @app.route('/api/modalidades1/<int:evento_id>')
@@ -4001,37 +2306,6 @@ def get_inscricao_detalhes(inscricao_id):
         print(f"DEBUG: Erro ao buscar detalhes: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-
-@app.route('/api/atualizar-inscricao', methods=['POST'])
-def atualizar_inscricao():
-    if not session.get('autenticado'):
-        return jsonify({'error': 'Não autenticado'}), 401
-    
-    try:
-        data = request.json
-        inscricao_id = data['inscricaoId']
-        fpagto = data['formapagto']
-        valor = float(data['valor'])
-        taxa = float(data['taxa'])
-        desconto = float(data['desconto'])
-        valor_pago = valor + taxa - desconto
-        status = data['status']
-        npeito = data['npeito']
-        
-        cursor = mysql.connection.cursor()
-        query = """
-        UPDATE INSCRICAO 
-        SET FORMAPGTO = %s, VALOR = %s, TAXA = %s, DESCONTO = %s, VALOR_PGTO = %s, FLSTATUS = %s, NUPEITO = %s
-        WHERE IDINSCRICAO = %s
-        """
-        cursor.execute(query, (fpagto, valor, taxa, desconto, valor_pago, status, npeito, inscricao_id))
-        mysql.connection.commit()
-        cursor.close()
-        
-        return jsonify({'success': True, 'message': 'Inscrição atualizada com sucesso'})
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
 
 # Rota para logout
 @app.route('/logout_coordenador', methods=['POST'])
@@ -5018,371 +3292,6 @@ def listar_passagens_atletas():
             'error': f'Erro ao listar passagens: {str(e)}'
         }), 500
 
-
-# # Rota para exibir a página do dashboard
-# @app.route('/dashboard200k')
-# def dashboard200k():
-#     return render_template('dashboard200k.html')
-
-# # Rota para buscar dados das equipes
-# @app.route('/dashboard_api/equipes')
-# def dashboard_get_equipes():
-#     try:
-#         cursor = mysql.connection.cursor()
-        
-#         query = """
-#         SELECT CONCAT(e.NOME_EQUIPE,' (',em.DEREDUZ,')') as EQUIPE,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDEA = e.IDEA) AS KM25,
-#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-#              AND  pp.KM = 25 AND pp.IDEA = e.IDEA) AS ATLETA25,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDEA = e.IDEA) AS KM50,
-#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-#              AND  pp.KM = 50 AND pp.IDEA = e.IDEA) AS ATLETA50,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDEA = e.IDEA) AS KM75,
-#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-#              AND  pp.KM = 75 AND pp.IDEA = e.IDEA) AS ATLETA75,          
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDEA = e.IDEA) AS KM100,
-#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-#              AND  pp.KM = 100 AND pp.IDEA = e.IDEA) AS ATLETA100,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDEA = e.IDEA) AS KM125,
-#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-#              AND  pp.KM = 125 AND pp.IDEA = e.IDEA) AS ATLETA125,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDEA = e.IDEA) AS KM150,
-#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-#              AND  pp.KM = 150 AND pp.IDEA = e.IDEA) AS ATLETA150,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDEA = e.IDEA) AS KM175,
-#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-#              AND  pp.KM = 175 AND pp.IDEA = e.IDEA) AS ATLETA175,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDEA = e.IDEA) AS KM200,
-#           (SELECT a.NOME FROM ATLETA a, PROVA_PARCIAIS_200K pp WHERE a.IDATLETA = pp.IDATLETA 
-#              AND  pp.KM = 200 AND pp.IDEA = e.IDEA) AS ATLETA200,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
-#            WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
-#              AND IDEA = e.IDEA) AS ULTIMAPARCIAL,
-#           CONCAT(
-#             TIMESTAMPDIFF(HOUR, 
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
-#                  AND IDEA = e.IDEA)
-#             ),':',
-#             LPAD(TIMESTAMPDIFF(MINUTE, 
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
-#                  AND IDEA = e.IDEA)
-#             ) % 60, 2, '0'),':',
-#             LPAD(TIMESTAMPDIFF(SECOND, 
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDEA = e.IDEA),
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDEA = e.IDEA) 
-#                  AND IDEA = e.IDEA)
-#             ) % 60, 2, '0')
-#           ) AS TEMPO   
-#         FROM EQUIPE e, EVENTO_MODALIDADE em
-#         WHERE em.IDITEM = e.IDITEM
-#         ORDER BY em.IDITEM
-#         """
-        
-#         cursor.execute(query)
-#         equipes = cursor.fetchall()
-#         cursor.close()
-        
-#         equipes_list = []
-#         for equipe in equipes:
-#             equipes_list.append({
-#                 'EQUIPE': equipe[0],
-#                 'KM25': equipe[1].strftime('%d/%m/%y %H:%M') if equipe[1] else '',
-#                 'ATLETA25': equipe[2] if equipe[2] else '',
-#                 'KM50': equipe[3].strftime('%d/%m/%y %H:%M') if equipe[3] else '',
-#                 'ATLETA50': equipe[4] if equipe[4] else '',
-#                 'KM75': equipe[5].strftime('%d/%m/%y %H:%M') if equipe[5] else '',
-#                 'ATLETA75': equipe[6] if equipe[6] else '',
-#                 'KM100': equipe[7].strftime('%d/%m/%y %H:%M') if equipe[7] else '',
-#                 'ATLETA100': equipe[8] if equipe[8] else '',
-#                 'KM125': equipe[9].strftime('%d/%m/%y %H:%M') if equipe[9] else '',
-#                 'ATLETA125': equipe[10] if equipe[10] else '',
-#                 'KM150': equipe[11].strftime('%d/%m/%y %H:%M') if equipe[11] else '',
-#                 'ATLETA150': equipe[12] if equipe[12] else '',
-#                 'KM175': equipe[13].strftime('%d/%m/%y %H:%M') if equipe[13] else '',
-#                 'ATLETA175': equipe[14] if equipe[14] else '',
-#                 'KM200': equipe[15].strftime('%d/%m/%y %H:%M') if equipe[15] else '',
-#                 'ATLETA200': equipe[16] if equipe[16] else '',
-#                 'ULTIMAPARCIAL': equipe[17].strftime('%d/%m/%y %H:%M') if equipe[17] else '',
-#                 'TEMPO': equipe[18] if equipe[18] else ''
-#             })
-        
-#         return jsonify(equipes_list)
-        
-#     except Exception as e:
-#         print(f"DEBUG: Erro ao buscar equipes: {str(e)}")
-#         return jsonify({'error': str(e)}), 500
-
-
-# # Rota para buscar dados dos atletas solo
-# @app.route('/dashboard_api/atletas')
-# def dashboard_get_atletas():
-#     try:
-#         cursor = mysql.connection.cursor()
-        
-#         query = """
-#         SELECT CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 25 AND IDATLETA = a.IDATLETA) AS KM25,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 50 AND IDATLETA = a.IDATLETA) AS KM50,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 75 AND IDATLETA = a.IDATLETA) AS KM75,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 100 AND IDATLETA = a.IDATLETA) AS KM100,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 125 AND IDATLETA = a.IDATLETA) AS KM125,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 150 AND IDATLETA = a.IDATLETA) AS KM150,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 175 AND IDATLETA = a.IDATLETA) AS KM175,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA) AS KM200,
-#           (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K
-#            WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
-#              AND IDATLETA = a.IDATLETA) AS ULTIMAPARCIAL,
-#           CONCAT(
-#             TIMESTAMPDIFF(HOUR, 
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
-#                  AND IDATLETA = a.IDATLETA)
-#             ),':',
-#             LPAD(TIMESTAMPDIFF(MINUTE, 
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
-#                  AND IDATLETA = a.IDATLETA)
-#             ) % 60, 2, '0'),':',
-#             LPAD(TIMESTAMPDIFF(SECOND, 
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA),
-#               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K 
-#                WHERE KM = (SELECT MAX(KM) FROM PROVA_PARCIAIS_200K WHERE IDATLETA = a.IDATLETA) 
-#                  AND IDATLETA = a.IDATLETA)
-#             ) % 60, 2, '0')
-#           ) AS TEMPO   
-#         FROM ATLETA a, INSCRICAO i, EVENTO_MODALIDADE em
-#         WHERE em.IDITEM = i.IDITEM
-#         AND i.IDITEM = 1
-#         AND i.IDATLETA = a.IDATLETA
-#         ORDER BY a.NOME, a.SOBRENOME
-#         """
-        
-#         cursor.execute(query)
-#         atletas = cursor.fetchall()
-#         cursor.close()
-        
-#         atletas_list = []
-#         for atleta in atletas:
-#             atletas_list.append({
-#                 'NOME': atleta[0],
-#                 'KM25': atleta[1].strftime('%d/%m/%y %H:%M') if atleta[1] else '',
-#                 'KM50': atleta[2].strftime('%d/%m/%y %H:%M') if atleta[2] else '',
-#                 'KM75': atleta[3].strftime('%d/%m/%y %H:%M') if atleta[3] else '',
-#                 'KM100': atleta[4].strftime('%d/%m/%y %H:%M') if atleta[4] else '',
-#                 'KM125': atleta[5].strftime('%d/%m/%y %H:%M') if atleta[5] else '',
-#                 'KM150': atleta[6].strftime('%d/%m/%y %H:%M') if atleta[6] else '',
-#                 'KM175': atleta[7].strftime('%d/%m/%y %H:%M') if atleta[7] else '',
-#                 'KM200': atleta[8].strftime('%d/%m/%y %H:%M') if atleta[8] else '',
-#                 'ULTIMAPARCIAL': atleta[9].strftime('%d/%m/%y %H:%M') if atleta[9] else '',
-#                 'TEMPO': atleta[10] if atleta[10] else ''
-#             })
-        
-#         return jsonify(atletas_list)
-        
-#     except Exception as e:
-#         print(f"DEBUG: Erro ao buscar atletas: {str(e)}")
-#         return jsonify({'error': str(e)}), 500
-
-
-# @app.route('/lancamento200k')
-# def lancamento200k():
-#     """Renderiza a página de lançamento"""
-#     return render_template('lancamento200k.html')
-
-# @app.route('/api/lanca200k_parciais')
-# def lanca200k_parciais():
-#     """Busca as parciais disponíveis"""
-#     print("DEBUG: Buscando parciais...")
-    
-# #    if not session.get('autenticado'):
-# #        print("DEBUG: Usuário não autenticado")
-# #        return jsonify({'error': 'Não autenticado'}), 401
-    
-#     try:
-#         cursor = mysql.connection.cursor()
-
-#         print("DEBUG: Conexão com banco estabelecida")
-        
-#         cursor.execute("""
-#             SELECT KM, DEPARCIAL, IDPARCIAL FROM PARCIAIS_200K
-#             WHERE KM <> 0
-#             ORDER BY KM
-#         """)
-#         parciais = cursor.fetchall()
-#         cursor.close()
-        
-#         print(f"DEBUG: Encontradas {len(parciais)} parciais")
-        
-#         parciais_list = []
-#         for parcial in parciais:
-#             parciais_list.append({
-#                 'KM': parcial[0],
-#                 'DEPARCIAL': parcial[1],
-#                 'IDPARCIAL': parcial[2]
-#             })
-        
-#         print(f"DEBUG: Retornando parciais: {parciais_list}")
-#         return jsonify(parciais_list)
-        
-#     except Exception as e:
-#         print(f"DEBUG: Erro ao buscar parciais: {str(e)}")
-#         return jsonify({'error': str(e)}), 500
-
-# @app.route('/api/lanca200k_pesquisa_atleta', methods=['POST'])
-# def lanca200k_pesquisa_atleta():
-#     """Pesquisa atleta por número de peito"""
-#     print("DEBUG: Pesquisando atleta...")
-        
-#     try:
-#         data = request.get_json()
-#         km_parcial = data.get('km_parcial')
-#         nu_peito = data.get('nu_peito')
-        
-#         print(f"DEBUG: Pesquisando atleta - KM: {km_parcial}, Peito: {nu_peito}")
-        
-#         cursor = mysql.connection.cursor()
-        
-#         # Consulta corrigida - separando a lógica para atletas individuais e equipes
-#         cursor.execute("""
-#             SELECT 
-#               i.IDATLETA, 
-#               CONCAT(i.NUPEITO,' - ',a.NOME,' ',a.SOBRENOME) as NOME,
-#               COALESCE(ea.IDEA, 0) AS IDEA,
-#               COALESCE(ea.KM_INI, 0) AS KM_INI,
-#               COALESCE(ea.KM_FIM, 200) AS KM_FIM  
-#             FROM INSCRICAO i 
-#             INNER JOIN ATLETA a ON a.IDATLETA = i.IDATLETA
-#             LEFT JOIN EQUIPE_ATLETAS ea ON ea.IDATLETA = i.IDATLETA
-#             WHERE i.NUPEITO = %s
-#               AND (
-#                 -- Atleta individual (não pertence a equipe)
-#                 ea.IDEA IS NULL
-#                 OR
-#                 -- Atleta de equipe (deve estar no intervalo correto)
-#                 (%s > ea.KM_INI AND %s <= ea.KM_FIM)
-#               )
-#         """, (nu_peito, km_parcial, km_parcial))
-        
-#         atleta = cursor.fetchone()
-        
-#         if atleta:
-#             # Verificar se já existe lançamento para este atleta/equipe nesta parcial
-#             idatleta = atleta[0]
-#             idea = atleta[2]
-            
-#             # Mapear KM para IDPARCIAL
-#             km_to_idparcial = {
-#                 25: 2, 50: 3, 75: 4, 100: 5, 
-#                 125: 6, 150: 7, 175: 8, 200: 9
-#             }
-#             idparcial = km_to_idparcial.get(int(km_parcial), 0)
-            
-#             print(f"DEBUG: Verificando duplicatas - IDATLETA: {idatleta}, IDEA: {idea}, IDPARCIAL: {idparcial}")
-            
-#             # Verificar duplicatas
-#             if idea == 0:
-#                 # Atleta individual - verificar por IDATLETA
-#                 cursor.execute("""
-#                     SELECT COUNT(*) FROM PROVA_PARCIAIS_200K 
-#                     WHERE IDATLETA = %s AND IDPARCIAL = %s
-#                 """, (idatleta, idparcial))
-#             else:
-#                 # Equipe - verificar por IDEA
-#                 cursor.execute("""
-#                     SELECT COUNT(*) FROM PROVA_PARCIAIS_200K 
-#                     WHERE IDEA = %s AND IDPARCIAL = %s
-#                 """, (idea, idparcial))
-            
-#             count = cursor.fetchone()[0]
-#             cursor.close()
-            
-#             if count > 0:
-#                 if idea == 0:
-#                     message = f"Atleta já possui lançamento nesta parcial de {km_parcial}km"
-#                 else:
-#                     message = f"Equipe já possui lançamento nesta parcial de {km_parcial}km"
-                
-#                 print(f"DEBUG: Lançamento duplicado detectado: {message}")
-#                 return jsonify({
-#                     'success': False,
-#                     'message': message
-#                 })
-            
-#             print(f"DEBUG: Atleta encontrado: {atleta[1]}")
-#             print(f"DEBUG: Dados do atleta - IDEA: {idea}, KM_INI: {atleta[3]}, KM_FIM: {atleta[4]}")
-            
-#             return jsonify({
-#                 'success': True,
-#                 'atleta': {
-#                     'IDATLETA': atleta[0],
-#                     'NOME': atleta[1],
-#                     'IDEA': atleta[2],
-#                     'KM_INI': atleta[3],
-#                     'KM_FIM': atleta[4]
-#                 }
-#             })
-#         else:
-#             cursor.close()
-#             print("DEBUG: Nenhum atleta encontrado")
-#             return jsonify({
-#                 'success': False,
-#                 'message': 'Nº de Peito não existe ou Atleta não permitido para esta parcial'
-#             })
-        
-#     except Exception as e:
-#         print(f"DEBUG: Erro ao pesquisar atleta: {str(e)}")
-#         return jsonify({'error': str(e)}), 500
-
-
-# @app.route('/api/lanca200k_confirmar', methods=['POST'])
-# def lanca200k_confirmar():
-#     """Confirma o lançamento do atleta"""
-#     print("DEBUG: Confirmando lançamento...")
-        
-#     try:
-#         data = request.get_json()
-#         idea = data.get('idea')
-#         idatleta = data.get('idatleta')
-#         data_hora = data.get('data_hora')
-#         km = data.get('km')
-        
-#         # Mapear KM para IDPARCIAL
-#         km_to_idparcial = {
-#             25: 2, 50: 3, 75: 4, 100: 5, 
-#             125: 6, 150: 7, 175: 8, 200: 9
-#         }
-        
-#         idparcial = km_to_idparcial.get(int(km), 0)
-        
-#         print(f"DEBUG: Dados para insert - IDEA: {idea}, IDATLETA: {idatleta}, DATA_HORA: {data_hora}, KM: {km}, IDPARCIAL: {idparcial}")
-        
-#         cursor = mysql.connection.cursor()
-        
-#         cursor.execute("""
-#             INSERT INTO PROVA_PARCIAIS_200K (IDEA, IDATLETA, DATA_HORA, IDPARCIAL, KM)
-#             VALUES (%s, %s, %s, %s, %s)
-#         """, (idea, idatleta, data_hora, idparcial, km))
-        
-#         mysql.connection.commit()
-#         cursor.close()
-        
-#         print("DEBUG: Lançamento confirmado com sucesso")
-#         return jsonify({
-#             'success': True,
-#             'message': 'Atleta Lançado com sucesso!'
-#         })
-        
-#     except Exception as e:
-#         print(f"DEBUG: Erro ao confirmar lançamento: {str(e)}")
-#         return jsonify({'error': str(e)}), 500
 
 ###### CERTIFICADO #############
 @app.route('/certificado200k')
@@ -6511,270 +4420,28 @@ def atleta_detalhes(idatleta):
     """Redireciona para a rota existente de detalhes do atleta"""
     return redirect(f'/relatorio200k_detalhes_atleta/{idatleta}')
 
-##### AREAL SLOPE ###########
 
 @app.route('/arealslope')
 def arealslope():
-    """Página de inscrição do evento Areal Slope"""
-    try:
-        # Buscar dados do evento
-        cur = mysql.connection.cursor()
-        
-        # Query para dados básicos do evento
-        cur.execute("""
-            SELECT DESCRICAO, DTINICIO, HRINICIO, LOCAL, CIDADEUF 
-            FROM EVENTO WHERE IDEVENTO = 2
-        """)
-        evento_data = cur.fetchone()
-        
-        if not evento_data:
-            cur.close()
-            return "Evento não encontrado", 404
-        
-        # Query para lotes do evento
-        cur.execute("""
-            SELECT 
-              ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
-              ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
-              ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
-              ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
-              (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
-              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
-              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
-              -- Quantidade total de inscrições no evento
-              (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
-              -- Status do lote
-              CASE 
-                WHEN CURDATE() < ei.DTINICIO THEN
-                  CASE 
-                    -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
-                    WHEN EXISTS (
-                      SELECT 1 FROM EVENTO_ITENS lote_ant
-                      WHERE lote_ant.IDITEM = (
-                        SELECT IDITEM FROM EVENTO_ITENS WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
-                      )
-                      AND (
-                        SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
-                      ) >= lote_ant.NUATLETAS
-                    ) THEN 'ABERTO'
-                    ELSE 'NÃO INICIADO'
-                  END
-                WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
-                  CASE 
-                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
-                    ELSE 'ESGOTADO'
-                  END
-                WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
-                ELSE 'ENCERRADO'
-              END AS STATUS_LOTE
-            FROM EVENTO_ITENS ei
-            WHERE ei.IDEVENTO = 2
-            ORDER BY ei.LOTE
-        """)
-        
-        lotes_data = cur.fetchall()
-        cur.close()
-        
-        # Função para formatar valores em formato brasileiro
-        def formatar_valor_brasileiro(valor):
-            """Converte valor decimal para formato brasileiro (vírgula como separador decimal)"""
-            if valor is None:
-                return "0,00"
-            return f"{float(valor):.2f}".replace('.', ',')
-        
-        # Preparar dados para o template
-        evento = {
-            'titulo': evento_data[0],
-            'data': evento_data[1],
-            'hora': evento_data[2],
-            'local': evento_data[3],
-            'cidade_uf': evento_data[4]
-        }
-        
-        # Processar lotes
-        lotes = []
-        for lote in lotes_data:
-            # Converter data DTFIM para formato brasileiro
-            dtfim_formatada = ""
-            if lote[3]:  # DTFIM
-                if isinstance(lote[3], str):
-                    # Se já é string, assumir formato YYYY-MM-DD
-                    try:
-                        dt = datetime.strptime(lote[3], '%Y-%m-%d')
-                        dtfim_formatada = dt.strftime('%d/%m/%Y')
-                    except:
-                        dtfim_formatada = lote[3]
-                else:
-                    # Se é objeto date
-                    dtfim_formatada = lote[3].strftime('%d/%m/%Y')
-            
-            lote_info = {
-                'iditem': lote[0],
-                'descricao': lote[1],
-                'dtinicio': lote[2],
-                'dtfim': lote[3],
-                'dtfim_formatada': dtfim_formatada,
-                'nuatletas': lote[4],
-                'lote': lote[5],
-                'delote': lote[6],
-                'iditem_proximo_lote': lote[7],
-                'vlinscricao': lote[8],
-                'vltaxa': lote[9],
-                'vltotal': lote[10],
-                # Valores formatados em padrão brasileiro
-                'vlinscricao_formatada': formatar_valor_brasileiro(lote[8]),
-                'vltaxa_formatada': formatar_valor_brasileiro(lote[9]),
-                'vltotal_formatada': formatar_valor_brasileiro(lote[10]),
-                'vl_meia': lote[11],
-                'vl_taxa_meia': lote[12],
-                'vl_total_meia': lote[13],
-                # Valores de meia entrada formatados
-                'vl_meia_formatada': formatar_valor_brasileiro(lote[11]),
-                'vl_taxa_meia_formatada': formatar_valor_brasileiro(lote[12]),
-                'vl_total_meia_formatada': formatar_valor_brasileiro(lote[13]),
-                'qtd_inscricoes': lote[14],
-                'status_lote': lote[15]
-            }
-            lotes.append(lote_info)
-        
-        return render_template('arealslope.html', evento=evento, lotes=lotes)
-        
-    except Exception as e:
-        print(f"Erro ao carregar página arealslope: {str(e)}")
-        return f"Erro interno do servidor: {str(e)}", 500
+    """
+    Redirecionamento permanente da página antiga para a nova estrutura dinâmica
+    Rota antiga: /arealslope
+    Nova rota: /evento/arealslope
+    """
+    # Redirecionamento 301 (permanente) - melhor para SEO
+    return redirect(url_for('visualizar_evento', dslink='arealslope'), code=301)
 
 
-##### BACKYARD ###########
 
 @app.route('/macaxeirabackyard')
 def backyard():
-    """Página de inscrição do evento Areal Slope"""
-    try:
-        # Buscar dados do evento
-        cur = mysql.connection.cursor()
-        
-        # Query para dados básicos do evento
-        cur.execute("""
-            SELECT DESCRICAO, DTINICIO, HRINICIO, LOCAL, CIDADEUF 
-            FROM EVENTO WHERE IDEVENTO = 3
-        """)
-        evento_data = cur.fetchone()
-        
-        if not evento_data:
-            cur.close()
-            return "Evento não encontrado", 404
-        
-        # Query para lotes do evento
-        cur.execute("""
-            SELECT 
-              ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
-              ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
-              ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
-              ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
-              (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
-              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
-              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
-              -- Quantidade total de inscrições no evento
-              (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
-              -- Status do lote
-              CASE 
-                WHEN CURDATE() < ei.DTINICIO THEN
-                  CASE 
-                    -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
-                    WHEN EXISTS (
-                      SELECT 1 FROM EVENTO_ITENS lote_ant
-                      WHERE lote_ant.IDITEM = (
-                        SELECT IDITEM FROM EVENTO_ITENS WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
-                      )
-                      AND (
-                        SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
-                      ) >= lote_ant.NUATLETAS
-                    ) THEN 'ABERTO'
-                    ELSE 'NÃO INICIADO'
-                  END
-                WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
-                  CASE 
-                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
-                    ELSE 'ESGOTADO'
-                  END
-                WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
-                ELSE 'ENCERRADO'
-              END AS STATUS_LOTE
-            FROM EVENTO_ITENS ei
-            WHERE ei.IDEVENTO = 3
-            ORDER BY ei.LOTE
-        """)
-        
-        lotes_data = cur.fetchall()
-        cur.close()
-        
-        # Função para formatar valores em formato brasileiro
-        def formatar_valor_brasileiro(valor):
-            """Converte valor decimal para formato brasileiro (vírgula como separador decimal)"""
-            if valor is None:
-                return "0,00"
-            return f"{float(valor):.2f}".replace('.', ',')
-        
-        # Preparar dados para o template
-        evento = {
-            'titulo': evento_data[0],
-            'data': evento_data[1],
-            'hora': evento_data[2],
-            'local': evento_data[3],
-            'cidade_uf': evento_data[4]
-        }
-        
-        # Processar lotes
-        lotes = []
-        for lote in lotes_data:
-            # Converter data DTFIM para formato brasileiro
-            dtfim_formatada = ""
-            if lote[3]:  # DTFIM
-                if isinstance(lote[3], str):
-                    # Se já é string, assumir formato YYYY-MM-DD
-                    try:
-                        dt = datetime.strptime(lote[3], '%Y-%m-%d')
-                        dtfim_formatada = dt.strftime('%d/%m/%Y')
-                    except:
-                        dtfim_formatada = lote[3]
-                else:
-                    # Se é objeto date
-                    dtfim_formatada = lote[3].strftime('%d/%m/%Y')
-            
-            lote_info = {
-                'iditem': lote[0],
-                'descricao': lote[1],
-                'dtinicio': lote[2],
-                'dtfim': lote[3],
-                'dtfim_formatada': dtfim_formatada,
-                'nuatletas': lote[4],
-                'lote': lote[5],
-                'delote': lote[6],
-                'iditem_proximo_lote': lote[7],
-                'vlinscricao': lote[8],
-                'vltaxa': lote[9],
-                'vltotal': lote[10],
-                # Valores formatados em padrão brasileiro
-                'vlinscricao_formatada': formatar_valor_brasileiro(lote[8]),
-                'vltaxa_formatada': formatar_valor_brasileiro(lote[9]),
-                'vltotal_formatada': formatar_valor_brasileiro(lote[10]),
-                'vl_meia': lote[11],
-                'vl_taxa_meia': lote[12],
-                'vl_total_meia': lote[13],
-                # Valores de meia entrada formatados
-                'vl_meia_formatada': formatar_valor_brasileiro(lote[11]),
-                'vl_taxa_meia_formatada': formatar_valor_brasileiro(lote[12]),
-                'vl_total_meia_formatada': formatar_valor_brasileiro(lote[13]),
-                'qtd_inscricoes': lote[14],
-                'status_lote': lote[15]
-            }
-            lotes.append(lote_info)
-        
-        return render_template('backyard.html', evento=evento, lotes=lotes)
-        
-    except Exception as e:
-        print(f"Erro ao carregar página arealslope: {str(e)}")
-        return f"Erro interno do servidor: {str(e)}", 500
+    """
+    Redirecionamento permanente da página antiga para a nova estrutura dinâmica
+    Rota antiga: /arealslope
+    Nova rota: /evento/arealslope
+    """
+    # Redirecionamento 301 (permanente) - melhor para SEO
+    return redirect(url_for('visualizar_evento', dslink='macaxeirabackyard'), code=301)
 
 ############################
 
@@ -6838,6 +4505,8 @@ def get_lote_inscricao(iditem):
 
 #### INSCRIÇAO EVENTO ##########
 
+
+
 @app.route('/evento_salvar_inscricao', methods=['POST'])
 def evento_salvar_inscricao():
     try:
@@ -6865,21 +4534,28 @@ def evento_salvar_inscricao():
         
         cursor = mysql.connection.cursor()
         
-        # Verificar se existe inscrição pendente para reaproveitamento
+        # Verificar se existe inscrição pendente para exclusão
         cursor.execute("""
             SELECT IDINSCRICAO 
             FROM EVENTO_INSCRICAO 
             WHERE CPF = %s AND IDEVENTO = %s AND STATUS = 'P'
-        """, (dados['cpf'], dados.get('idevento', 1)))
+        """, (dados['cpf'], dados.get('idevento'),))
         
         inscricao_pendente = cursor.fetchone()
+        
+        # Se existe inscrição pendente, excluir antes de inserir nova
+        if inscricao_pendente:
+            cursor.execute("""
+                DELETE FROM EVENTO_INSCRICAO 
+                WHERE IDINSCRICAO = %s
+            """, (inscricao_pendente[0],))
         
         # Verificar se CPF já está aprovado neste evento
         cursor.execute("""
             SELECT IDINSCRICAO 
             FROM EVENTO_INSCRICAO 
             WHERE CPF = %s AND IDEVENTO = %s AND STATUS = 'A'
-        """, (dados['cpf'], dados.get('idevento', 1)))
+        """, (dados['cpf'], dados.get('idevento'),))
         
         if cursor.fetchone():
             cursor.close()
@@ -6897,95 +4573,52 @@ def evento_salvar_inscricao():
         fuso_horario = timezone('America/Manaus')
         data_inscricao = data_e_hora_atual.astimezone(fuso_horario)
         
-        if inscricao_pendente:
-            # UPDATE da inscrição existente
-            sql_update = """
-                UPDATE EVENTO_INSCRICAO SET 
-                    IDITEMEVENTO = %s, EMAIL = %s, NOME = %s, SOBRENOME = %s, 
-                    DTNASCIMENTO = %s, IDADE = %s, CELULAR = %s, SEXO = %s, 
-                    EQUIPE = %s, CAMISETA = %s, TEL_EMERGENCIA = %s, 
-                    CONT_EMERGENCIA = %s, ESTADO = %s, ID_CIDADE = %s, 
-                    DATANASC = %s, DTINSCRICAO = %s, VLINSCRICAO = %s, 
-                    VLTAXA = %s, VLTOTAL = %s, FORMAPGTO = %s, CUPOM = %s, 
-                    NOME_PEITO = %s
-                WHERE IDINSCRICAO = %s
-            """
-            
-            valores = (
-                dados['iditemevento'],
-                dados['email'],
-                dados['nome'],
-                dados['sobrenome'],
-                dados['dtnascimento'],
-                dados['idade'],
-                dados['celular'],
-                dados['sexo'],
-                dados.get('equipe'),
-                dados['camiseta'],
-                dados.get('tel_emergencia'),
-                dados.get('cont_emergencia'),
-                dados['estado'],
-                dados['id_cidade'],
-                data_nasc_mysql,
-                data_inscricao,
-                dados['vlinscricao'],
-                dados['vltaxa'],
-                dados['vltotal'],
-                dados['formapgto'],
-                dados.get('cupom'),
-                dados['nomepeito'],
-                inscricao_pendente[0]
+        # INSERT nova inscrição (sempre)
+        sql_insert = """
+            INSERT INTO EVENTO_INSCRICAO (
+                IDEVENTO, IDITEMEVENTO, IDLOTE, EMAIL, CPF, NOME, SOBRENOME, 
+                DTNASCIMENTO, IDADE, CELULAR, SEXO, EQUIPE, CAMISETA,
+                TEL_EMERGENCIA, CONT_EMERGENCIA, ESTADO, ID_CIDADE, 
+                DATANASC, DTINSCRICAO, VLINSCRICAO, VLTAXA, VLTOTAL,
+                FORMAPGTO, CUPOM, STATUS, FLEMAIL, NOME_PEITO
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
-            
-            cursor.execute(sql_update, valores)
-            inscricao_id = inscricao_pendente[0]
-            
-        else:
-            # INSERT nova inscrição
-            sql_insert = """
-                INSERT INTO EVENTO_INSCRICAO (
-                    IDEVENTO, IDITEMEVENTO, EMAIL, CPF, NOME, SOBRENOME, 
-                    DTNASCIMENTO, IDADE, CELULAR, SEXO, EQUIPE, CAMISETA,
-                    TEL_EMERGENCIA, CONT_EMERGENCIA, ESTADO, ID_CIDADE, 
-                    DATANASC, DTINSCRICAO, VLINSCRICAO, VLTAXA, VLTOTAL,
-                    FORMAPGTO, CUPOM, STATUS, FLEMAIL, NOME_PEITO
-                ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                )
-            """
-            
-            valores = (
-                dados.get('idevento', 1),
-                dados['iditemevento'],
-                dados['email'],
-                dados['cpf'],
-                dados['nome'],
-                dados['sobrenome'],
-                dados['dtnascimento'],
-                dados['idade'],
-                dados['celular'],
-                dados['sexo'],
-                dados.get('equipe'),
-                dados['camiseta'],
-                dados.get('tel_emergencia'),
-                dados.get('cont_emergencia'),
-                dados['estado'],
-                dados['id_cidade'],
-                data_nasc_mysql,
-                data_inscricao,
-                dados['vlinscricao'],
-                dados['vltaxa'],
-                dados['vltotal'],
-                dados['formapgto'],
-                dados.get('cupom'),
-                dados.get('status', 'P'),
-                'N',
-                dados['nomepeito']
-            )
-            
-            cursor.execute(sql_insert, valores)
-            inscricao_id = cursor.lastrowid
+        """
+        
+        valores = (
+            dados.get('idevento', 1),
+            dados['iditemevento'],
+            dados['idlote'],
+            dados['email'],
+            dados['cpf'],
+            dados['nome'],
+            dados['sobrenome'],
+            dados['dtnascimento'],
+            dados['idade'],
+            dados['celular'],
+            dados['sexo'],
+            dados.get('equipe'),
+            dados['camiseta'],
+            dados.get('tel_emergencia'),
+            dados.get('cont_emergencia'),
+            dados['estado'],
+            dados['id_cidade'],
+            data_nasc_mysql,
+            data_inscricao,
+            dados['vlinscricao'],
+            dados['vltaxa'],
+            dados['vltotal'],
+            dados['formapgto'],
+            dados.get('cupom'),
+            dados.get('status', 'P'),
+            'N',
+            dados['nomepeito']
+        )
+        
+        cursor.execute(sql_insert, valores)
+        inscricao_id = cursor.lastrowid
         
         mysql.connection.commit()
         cursor.close()
@@ -6994,7 +4627,7 @@ def evento_salvar_inscricao():
             'success': True,
             'inscricao_id': inscricao_id,
             'mensagem': 'Inscrição salva com sucesso',
-            'is_update': bool(inscricao_pendente)
+            'is_update': bool(inscricao_pendente)  # Mantido para compatibilidade
         })
         
     except Exception as e:
@@ -7003,179 +4636,7 @@ def evento_salvar_inscricao():
             'success': False,
             'mensagem': 'Erro interno do servidor'
         }), 500
-
-
-# @app.route('/evento_salvar_inscricao', methods=['POST'])
-# def evento_salvar_inscricao():
-#     try:
-#         dados = request.get_json()
-        
-#         # Validações básicas
-#         if not dados:
-#             return jsonify({
-#                 'success': False,
-#                 'mensagem': 'Dados não fornecidos'
-#             }), 400
-        
-#         # Campos obrigatórios
-#         campos_obrigatorios = [
-#             'email', 'cpf', 'nome', 'sobrenome', 'dtnascimento', 
-#             'idade', 'celular', 'sexo', 'camiseta', 'id_cidade', 'formapgto'
-#         ]
-        
-#         for campo in campos_obrigatorios:
-#             if not dados.get(campo):
-#                 return jsonify({
-#                     'success': False,
-#                     'mensagem': f'Campo {campo} é obrigatório'
-#                 }), 400
-        
-#         cursor = mysql.connection.cursor()
-        
-#         # Verificar se CPF já está inscrito neste evento
-#         cursor.execute("""
-#             SELECT IDINSCRICAO 
-#             FROM EVENTO_INSCRICAO 
-#             WHERE CPF = %s AND IDEVENTO = %s
-#         """, (dados['cpf'], dados.get('idevento', 1)))
-        
-#         if cursor.fetchone():
-#             cursor.close()
-#             return jsonify({
-#                 'success': False,
-#                 'mensagem': 'CPF já inscrito neste evento'
-#             }), 400
-        
-#         # Converter data de nascimento para formato MySQL
-#         data_nasc_str = dados['dtnascimento']  # dd/mm/yyyy
-#         dia, mes, ano = data_nasc_str.split('/')
-#         data_nasc_mysql = f"{ano}-{mes}-{dia}"  # yyyy-mm-dd
-                
-#         data_e_hora_atual = datetime.now()
-#         fuso_horario = timezone('America/Manaus')
-#         data_inscricao = data_e_hora_atual.astimezone(fuso_horario)
-        
-#         # Inserir inscrição
-#         sql_insert = """
-#             INSERT INTO EVENTO_INSCRICAO (
-#                 IDEVENTO, IDITEMEVENTO, EMAIL, CPF, NOME, SOBRENOME, 
-#                 DTNASCIMENTO, IDADE, CELULAR, SEXO, EQUIPE, CAMISETA,
-#                 TEL_EMERGENCIA, CONT_EMERGENCIA, ESTADO, ID_CIDADE, 
-#                 DATANASC, DTINSCRICAO, VLINSCRICAO, VLTAXA, VLTOTAL,
-#                 FORMAPGTO, CUPOM, STATUS, FLEMAIL, NOME_PEITO
-#             ) VALUES (
-#                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-#                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-#             )
-#         """
-        
-#         valores = (
-#             dados.get('idevento', 1),
-#             dados['iditemevento'],
-#             dados['email'],
-#             dados['cpf'],
-#             dados['nome'],
-#             dados['sobrenome'],
-#             dados['dtnascimento'],
-#             dados['idade'],
-#             dados['celular'],
-#             dados['sexo'],
-#             dados.get('equipe'),
-#             dados['camiseta'],
-#             dados.get('tel_emergencia'),
-#             dados.get('cont_emergencia'),
-#             dados['estado'],
-#             dados['id_cidade'],
-#             data_nasc_mysql,
-#             data_inscricao,
-#             dados['vlinscricao'],
-#             dados['vltaxa'],
-#             dados['vltotal'],
-#             dados['formapgto'],
-#             dados.get('cupom'),
-#             dados.get('status', 'P'),
-#             'N',
-#             dados['nomepeito']
-#         )
-        
-#         cursor.execute(sql_insert, valores)
-#         inscricao_id = cursor.lastrowid
-        
-#         mysql.connection.commit()
-#         cursor.close()
-        
-#         return jsonify({
-#             'success': True,
-#             'inscricao_id': inscricao_id,
-#             'mensagem': 'Inscrição salva com sucesso'
-#         })
-        
-#     except Exception as e:
-#         app.logger.error(f"Erro ao salvar inscrição: {e}")
-#         return jsonify({
-#             'success': False,
-#             'mensagem': 'Erro interno do servidor'
-#         }), 500
-
-@app.route('/gerar-token-inscricao/<int:idevento>')
-def gerar_token_inscricao(idevento):
-    """Gera token único para acesso à página de inscrição"""
-    token = secrets.token_urlsafe(32)
-    session['inscricao_token'] = token
     
-    # Armazenar a página de origem (referer)
-    pagina_origem = request.headers.get('Referer')
-    if pagina_origem:
-        session['pagina_origem'] = pagina_origem
-    
-    return redirect(url_for('inscricao_evento', idevento=idevento, token=token))
-
-@app.route('/inscricao-evento/<int:idevento>')
-def inscricao_evento(idevento):
-    """Rota para servir a página de inscrição"""
-    # Verificar se tem token válido na sessão
-    token_esperado = session.get('inscricao_token')
-    token_recebido = request.args.get('token')
-    
-    if not token_esperado or token_recebido != token_esperado:
-        # Redirecionar para a página de origem ou para arealslope como fallback
-        pagina_origem = session.get('pagina_origem')
-        if pagina_origem:
-            session.pop('pagina_origem', None)  # Limpar após uso
-            return redirect(pagina_origem)
-        else:
-            return redirect(url_for('arealslope'))  # Fallback
-    
-    # Limpar o token da sessão (uso único)
-    session.pop('inscricao_token', None)
-    
-    # Buscar dados do evento
-    cur = mysql.connection.cursor()
-    
-    # Query para dados básicos do evento
-    cur.execute("""
-        SELECT DESCRICAO, DTINICIO, HRINICIO, LOCAL, CIDADEUF 
-        FROM EVENTO WHERE IDEVENTO = %s
-    """, (idevento,))
-
-    evento_data = cur.fetchone()
-    
-    if not evento_data:
-        cur.close()
-        return "Evento não encontrado", 404
-
-    # Preparar dados para o template
-    evento = {
-        'idvento': idevento,
-        'titulo': evento_data[0],
-        'data': evento_data[1],
-        'hora': evento_data[2],
-        'local': evento_data[3],
-        'cidade_uf': evento_data[4]
-    }
-
-    return render_template('inscricao_evento.html', evento=evento)
-
 
 @app.route('/api/lote-inscricao/<int:iditem>')
 def api_lote_inscricao(iditem):
@@ -7260,35 +4721,6 @@ def verificar_cpf_inscrito(idevento):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-# @app.route('/verifica-cpf-inscrito/<int:idevento>', methods=['GET'])
-# def verificar_cpf_inscrito(idevento):
-#     cpf = request.args.get('cpf', '')
-#     # Remove caracteres não numéricos
-#     cpf = ''.join(filter(str.isdigit, cpf))
-    
-#     try:
-#         cur = mysql.connection.cursor()
-#         cur.execute("""
-#             DELETE FROM EVENTO_INSCRICAO WHERE STATUS = 'P' AND CPF = %s AND IDEVENTO = %s
-#         """, (cpf, idevento))
-
-#         mysql.connection.commit()
-#         cur.close()
-
-
-#         cur = mysql.connection.cursor()
-#         cur.execute("""
-#             SELECT 1 FROM EVENTO_INSCRICAO WHERE STATUS = 'A' AND CPF = %s AND IDEVENTO = %s
-#         """, (cpf, idevento))
-
-#         result = cur.fetchone()
-#         cur.close()
-        
-#         return jsonify({'exists': bool(result)})
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/buscar-dados-cpf', methods=['GET'])
@@ -7559,138 +4991,6 @@ def lista_eventos_direto():
         return redirect('/lista-eventos')
 
 
-##### TESTE ###########
-
-@app.route('/paginateste')
-def pagina_teste():
-    """Página de inscrição do evento teste"""
-    try:
-        # Buscar dados do evento
-        cur = mysql.connection.cursor()
-        
-        # Query para dados básicos do evento
-        cur.execute("""
-            SELECT DESCRICAO, DTINICIO, HRINICIO, LOCAL, CIDADEUF 
-            FROM EVENTO WHERE IDEVENTO = 4
-        """)
-        evento_data = cur.fetchone()
-        
-        if not evento_data:
-            cur.close()
-            return "Evento não encontrado", 404
-        
-        # Query para lotes do evento
-        cur.execute("""
-            SELECT 
-              ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
-              ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
-              ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
-              ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
-              (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
-              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
-              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
-              -- Quantidade total de inscrições no evento
-              (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
-              -- Status do lote
-              CASE 
-                WHEN CURDATE() < ei.DTINICIO THEN
-                  CASE 
-                    -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
-                    WHEN EXISTS (
-                      SELECT 1 FROM EVENTO_ITENS lote_ant
-                      WHERE lote_ant.IDITEM = (
-                        SELECT IDITEM FROM EVENTO_ITENS WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
-                      )
-                      AND (
-                        SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
-                      ) >= lote_ant.NUATLETAS
-                    ) THEN 'ABERTO'
-                    ELSE 'NÃO INICIADO'
-                  END
-                WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
-                  CASE 
-                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
-                    ELSE 'ESGOTADO'
-                  END
-                WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
-                ELSE 'ENCERRADO'
-              END AS STATUS_LOTE
-            FROM EVENTO_ITENS ei
-            WHERE ei.IDEVENTO = 4
-            ORDER BY ei.LOTE
-        """)
-        
-        lotes_data = cur.fetchall()
-        cur.close()
-        
-        # Função para formatar valores em formato brasileiro
-        def formatar_valor_brasileiro(valor):
-            """Converte valor decimal para formato brasileiro (vírgula como separador decimal)"""
-            if valor is None:
-                return "0,00"
-            return f"{float(valor):.2f}".replace('.', ',')
-        
-        # Preparar dados para o template
-        evento = {
-            'titulo': evento_data[0],
-            'data': evento_data[1],
-            'hora': evento_data[2],
-            'local': evento_data[3],
-            'cidade_uf': evento_data[4]
-        }
-        
-        # Processar lotes
-        lotes = []
-        for lote in lotes_data:
-            # Converter data DTFIM para formato brasileiro
-            dtfim_formatada = ""
-            if lote[3]:  # DTFIM
-                if isinstance(lote[3], str):
-                    # Se já é string, assumir formato YYYY-MM-DD
-                    try:
-                        dt = datetime.strptime(lote[3], '%Y-%m-%d')
-                        dtfim_formatada = dt.strftime('%d/%m/%Y')
-                    except:
-                        dtfim_formatada = lote[3]
-                else:
-                    # Se é objeto date
-                    dtfim_formatada = lote[3].strftime('%d/%m/%Y')
-            
-            lote_info = {
-                'iditem': lote[0],
-                'descricao': lote[1],
-                'dtinicio': lote[2],
-                'dtfim': lote[3],
-                'dtfim_formatada': dtfim_formatada,
-                'nuatletas': lote[4],
-                'lote': lote[5],
-                'delote': lote[6],
-                'iditem_proximo_lote': lote[7],
-                'vlinscricao': lote[8],
-                'vltaxa': lote[9],
-                'vltotal': lote[10],
-                # Valores formatados em padrão brasileiro
-                'vlinscricao_formatada': formatar_valor_brasileiro(lote[8]),
-                'vltaxa_formatada': formatar_valor_brasileiro(lote[9]),
-                'vltotal_formatada': formatar_valor_brasileiro(lote[10]),
-                'vl_meia': lote[11],
-                'vl_taxa_meia': lote[12],
-                'vl_total_meia': lote[13],
-                # Valores de meia entrada formatados
-                'vl_meia_formatada': formatar_valor_brasileiro(lote[11]),
-                'vl_taxa_meia_formatada': formatar_valor_brasileiro(lote[12]),
-                'vl_total_meia_formatada': formatar_valor_brasileiro(lote[13]),
-                'qtd_inscricoes': lote[14],
-                'status_lote': lote[15]
-            }
-            lotes.append(lote_info)
-        
-        return render_template('paginateste.html', evento=evento, lotes=lotes)
-        
-    except Exception as e:
-        print(f"Erro ao carregar página arealslope: {str(e)}")
-        return f"Erro interno do servidor: {str(e)}", 500
-
 
 #### nova pagina evento ###########################
 
@@ -7729,7 +5029,7 @@ def autenticar_admin():
     except Exception as e:
         print(f"Erro na autenticação: {str(e)}")
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
-    
+
 
 @app.route('/api/eventos', methods=['POST'])
 def criar_evento():
@@ -7831,106 +5131,6 @@ def criar_evento():
     except Exception as e:
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
 
-# VERSÃO SIMPLIFICADA - APENAS PARA TESTAR
-# Modifique apenas a rota obter_evento para incluir o campo BANNER
-
-@app.route('/api/eventos/<int:evento_id>', methods=['GET'])
-def obter_evento(evento_id):
-    """API para obter dados de um evento específico"""
-    try:
-        cursor = mysql.connection.cursor()
-        query = """
-            SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
-                   HRINICIO, DSLINK, DESCRICAO, REGULAMENTO, 
-                   INICIOINSCRICAO, FIMINSCRICAO, ENDERECO, CIDADEUF, 
-                   IDORGANIZADOR, OBS, ATIVO, BANNER
-            FROM EVENTO1 
-            WHERE IDEVENTO = %s
-        """
-        cursor.execute(query, (evento_id,))
-        evento = cursor.fetchone()
-        cursor.close()
-        
-        if not evento:
-            return jsonify({'error': 'Evento não encontrado'}), 404
-        
-        # Converter para dicionário
-        campos = ['idevento', 'titulo', 'subtitulo', 'datainicio', 'datafim',
-                 'hrinicio', 'dslink', 'descricao', 'regulamento',
-                 'inicioinscricao', 'fiminscricao', 'endereco', 'cidadeuf',
-                 'idorganizador', 'obs', 'ativo', 'banner']
-        
-        evento_dict = {}
-        for i, campo in enumerate(campos):
-            valor = evento[i]
-            # Converter datas para string
-            if campo in ['datainicio', 'datafim', 'inicioinscricao', 'fiminscricao'] and valor:
-                evento_dict[campo] = valor.strftime('%Y-%m-%d')
-            elif campo == 'banner' and valor:
-                # Converter BLOB para base64
-                evento_dict[campo] = base64.b64encode(valor).decode('utf-8')
-                print(f"Banner encontrado para evento {evento_id}, tamanho: {len(valor)} bytes")  # Debug
-            else:
-                evento_dict[campo] = valor
-        
-        print(f"Retornando evento {evento_id}, banner presente: {evento_dict.get('banner') is not None}")  # Debug
-        
-        return jsonify(evento_dict)
-        
-    except Exception as e:
-        print(f"Erro ao obter evento {evento_id}: {str(e)}")  # Debug
-        return jsonify({'error': str(e)}), 500
-		
-@app.route('/api/eventos', methods=['GET'])
-def listar_eventos():
-    """API para listar eventos de um organizador"""
-    try:
-        idorganizador = request.args.get('idorganizador')
-        ativo = request.args.get('ativo', 'S')  # Padrão é listar apenas eventos ativos
-        
-        if not idorganizador:
-            return jsonify({'error': 'ID do organizador é obrigatório'}), 400
-        
-        cursor = mysql.connection.cursor()
-        
-        # Query base
-        query = """
-            SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
-                   HRINICIO, DSLINK, ENDERECO, CIDADEUF, ATIVO
-            FROM EVENTO1 
-            WHERE IDORGANIZADOR = %s
-        """
-        params = [idorganizador]
-        
-        # Incluir eventos ativos e inativos para o painel administrativo
-        query += " ORDER BY DATAINICIO DESC"
-        
-        cursor.execute(query, params)
-        eventos = cursor.fetchall()
-        cursor.close()
-        
-        # Converter para lista de dicionários
-        eventos_list = []
-        for evento in eventos:
-            evento_dict = {
-                'idevento': evento[0],
-                'titulo': evento[1],
-                'subtitulo': evento[2],
-                'datainicio': evento[3].strftime('%d/%m/%Y') if evento[3] else None,
-                'datafim': evento[4].strftime('%d/%m/%Y') if evento[4] else None,
-                'hrinicio': str(evento[5]) if evento[5] else None,
-                'dslink': evento[6],
-                'endereco': evento[7],
-                'cidadeuf': evento[8],
-                'ativo': evento[9]
-            }
-            eventos_list.append(evento_dict)
-        
-        return jsonify(eventos_list)
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/eventos/<int:evento_id>', methods=['PUT'])
 def atualizar_evento(evento_id):
     """API para atualizar um evento existente"""
@@ -8029,7 +5229,6 @@ def atualizar_evento(evento_id):
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
 
 
-
 @app.route('/api/eventos/<int:evento_id>', methods=['DELETE'])
 def deletar_evento(evento_id):
     """API para deletar (desativar) um evento"""
@@ -8054,6 +5253,7 @@ def deletar_evento(evento_id):
         
     except Exception as e:
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
+
 
 @app.route('/api/eventos/verificar-link', methods=['POST'])
 def verificar_link():
@@ -8086,82 +5286,370 @@ def verificar_link():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/evento/<dslink>')
-def visualizar_evento(dslink):
-    """Página pública para visualizar um evento"""
+
+@app.route('/api/eventos/<int:evento_id>', methods=['GET'])
+def obter_evento(evento_id):
+    """API para obter dados de um evento específico"""
     try:
         cursor = mysql.connection.cursor()
         query = """
+            SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
+                   HRINICIO, DSLINK, DESCRICAO, REGULAMENTO, 
+                   INICIOINSCRICAO, FIMINSCRICAO, ENDERECO, CIDADEUF, 
+                   IDORGANIZADOR, OBS, ATIVO, BANNER
+            FROM EVENTO1 
+            WHERE IDEVENTO = %s
+        """
+        cursor.execute(query, (evento_id,))
+        evento = cursor.fetchone()
+        cursor.close()
+        
+        if not evento:
+            return jsonify({'error': 'Evento não encontrado'}), 404
+        
+        # Converter para dicionário
+        campos = ['idevento', 'titulo', 'subtitulo', 'datainicio', 'datafim',
+                 'hrinicio', 'dslink', 'descricao', 'regulamento',
+                 'inicioinscricao', 'fiminscricao', 'endereco', 'cidadeuf',
+                 'idorganizador', 'obs', 'ativo', 'banner']
+        
+        evento_dict = {}
+        for i, campo in enumerate(campos):
+            valor = evento[i]
+            # Converter datas para string
+            if campo in ['datainicio', 'datafim', 'inicioinscricao', 'fiminscricao'] and valor:
+                evento_dict[campo] = valor.strftime('%Y-%m-%d')
+            elif campo == 'banner' and valor:
+                # Converter BLOB para base64
+                evento_dict[campo] = base64.b64encode(valor).decode('utf-8')
+                print(f"Banner encontrado para evento {evento_id}, tamanho: {len(valor)} bytes")  # Debug
+            else:
+                evento_dict[campo] = valor
+        
+        print(f"Retornando evento {evento_id}, banner presente: {evento_dict.get('banner') is not None}")  # Debug
+        
+        return jsonify(evento_dict)
+        
+    except Exception as e:
+        print(f"Erro ao obter evento {evento_id}: {str(e)}")  # Debug
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/eventos', methods=['GET'])
+def listar_eventos():
+    """API para listar eventos de um organizador"""
+    try:
+        idorganizador = request.args.get('idorganizador')
+        ativo = request.args.get('ativo', 'S')  # Padrão é listar apenas eventos ativos
+        
+        if not idorganizador:
+            return jsonify({'error': 'ID do organizador é obrigatório'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Query base
+        query = """
+            SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
+                   HRINICIO, DSLINK, ENDERECO, CIDADEUF, ATIVO
+            FROM EVENTO1 
+            WHERE IDORGANIZADOR = %s
+        """
+        params = [idorganizador]
+        
+        # Incluir eventos ativos e inativos para o painel administrativo
+        query += " ORDER BY DATAINICIO DESC"
+        
+        cursor.execute(query, params)
+        eventos = cursor.fetchall()
+        cursor.close()
+        
+        # Converter para lista de dicionários
+        eventos_list = []
+        for evento in eventos:
+            evento_dict = {
+                'idevento': evento[0],
+                'titulo': evento[1],
+                'subtitulo': evento[2],
+                'datainicio': evento[3].strftime('%d/%m/%Y') if evento[3] else None,
+                'datafim': evento[4].strftime('%d/%m/%Y') if evento[4] else None,
+                'hrinicio': str(evento[5]) if evento[5] else None,
+                'dslink': evento[6],
+                'endereco': evento[7],
+                'cidadeuf': evento[8],
+                'ativo': evento[9]
+            }
+            eventos_list.append(evento_dict)
+        
+        return jsonify(eventos_list)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/evento/<dslink>')
+def visualizar_evento(dslink):
+    """Página pública para visualizar um evento"""
+    cur = None
+    try:
+        cur = mysql.connection.cursor()
+
+        # Query para buscar evento
+        cur.execute("""
             SELECT IDEVENTO, TITULO, SUBTITULO, DATAINICIO, DATAFIM, 
                    HRINICIO, DESCRICAO, REGULAMENTO, ENDERECO, CIDADEUF,
                    INICIOINSCRICAO, FIMINSCRICAO, ATIVO, BANNER
             FROM EVENTO1 
             WHERE DSLINK = %s AND ATIVO = 'S'
-        """
-        cursor.execute(query, (dslink,))
-        evento = cursor.fetchone()
+        """, (dslink,))
+	    
+        evento_data = cur.fetchone()
         
-        if not evento:
-            cursor.close()
-            return render_template('404.html', message='Evento não encontrado'), 404
+        if not evento_data:
+            cur.close()
+            return "Evento não encontrado", 404
         
-        evento_id = evento[0]
+        # Função para formatar data com verificação de tipo
+        def formatar_data(data_valor):
+            if not data_valor:
+                return None
+            if isinstance(data_valor, str):
+                return data_valor
+            if hasattr(data_valor, 'strftime'):
+                return data_valor.strftime('%d/%m/%Y')
+            return str(data_valor)
         
-        # Carregar itens do evento
-        query_itens = """
+        def formatar_hora(hora_valor):
+            if not hora_valor:
+                return None
+            if isinstance(hora_valor, str):
+                return hora_valor
+            if hasattr(hora_valor, 'strftime'):
+                return hora_valor.strftime('%H:%M')
+            return str(hora_valor)
+        
+        # Preparar dados para o template
+        evento = list(evento_data)
+        evento_id = evento_data[0]
+
+        # Formatar datas
+        try:
+            evento[3] = formatar_data(evento[3])  # DATAINICIO
+            evento[4] = formatar_data(evento[4])  # DATAFIM  
+            evento[5] = formatar_hora(evento[5])  # HRINICIO
+            evento[10] = formatar_data(evento[10])  # INICIOINSCRICAO
+            evento[11] = formatar_data(evento[11])  # FIMINSCRICAO
+        except Exception as e:
+            print(f"Erro formatando datas: {e}")
+        
+        # Criar objeto compatível com o template - CORRIGIDO OS ÍNDICES
+        class EventoCompat:
+            def __init__(self, data_list):
+                self.data_list = data_list
+                self.titulo = data_list[1]          # TITULO (índice 1)
+                self.descricao = data_list[6] or ""  # DESCRICAO (índice 6)
+                self.regulamento = data_list[7] or "" # REGULAMENTO (índice 7)
+                self.local = data_list[8] or ""      # ENDERECO (índice 8)
+                self.cidade_uf = data_list[9] or ""  # CIDADEUF (índice 9)
+                self.data = data_list[3]             # DATAINICIO (índice 3)
+                self.hora = data_list[5]             # HRINICIO (índice 5)
+            
+            def __getitem__(self, index):
+                return self.data_list[index]
+        
+        evento = EventoCompat(evento)
+        
+        # Query corrigida para nova estrutura - JOIN entre EVENTO_ITEM e EVENTO_ITEM_LOTES
+        cur.execute("""
             SELECT 
-              ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
-              ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
-              ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
-              ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
-              (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
-              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
-              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
-              (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
-              CASE 
-                WHEN CURDATE() < ei.DTINICIO THEN
-                  CASE 
-                    WHEN EXISTS (
-                      SELECT 1 FROM EVENTO_ITEM lote_ant
-                      WHERE lote_ant.IDITEM = (
-                        SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
-                      )
-                      AND (
-                        SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
-                      ) >= lote_ant.NUATLETAS
-                    ) THEN 'ABERTO'
-                    ELSE 'NÃO INICIADO'
-                  END
-                WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
-                  CASE 
-                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
-                    ELSE 'ESGOTADO'
-                  END
-                WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
-                ELSE 'ENCERRADO'
-              END AS STATUS_LOTE
-            FROM EVENTO_ITEM ei
+                eil.IDLOTE,
+                ei.IDITEM, 
+                ei.DESCRICAO, 
+                eil.DTINICIO, 
+                eil.DTFIM,
+                eil.NUATLETAS, 
+                eil.LOTE, 
+                eil.DELOTE, 
+                eil.IDITEM_PROXIMO_LOTE, 
+                eil.VLINSCRICAO, 
+                ROUND((eil.VLINSCRICAO * eil.PCTAXA / 100), 2) AS VLTAXA,
+                ROUND(eil.VLINSCRICAO + (eil.VLINSCRICAO * eil.PCTAXA / 100), 2) AS VLTOTAL,
+                (SELECT ROUND((ultimo.VLINSCRICAO / 2), 2) 
+                FROM EVENTO_ITEM_LOTES ultimo 
+                WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
+                (SELECT ROUND(((ultimo.VLINSCRICAO / 2) * ultimo.PCTAXA / 100), 2) 
+                FROM EVENTO_ITEM_LOTES ultimo 
+                WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
+                (SELECT ROUND((ultimo.VLINSCRICAO / 2) + ((ultimo.VLINSCRICAO / 2) * ultimo.PCTAXA / 100), 2) 
+                FROM EVENTO_ITEM_LOTES ultimo 
+                WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
+                (SELECT COUNT(IDINSCRICAO) 
+                FROM EVENTO_INSCRICAO 
+                WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
+                CASE 
+                    WHEN CURDATE() < eil.DTINICIO THEN
+                        CASE 
+                            WHEN EXISTS (
+                                SELECT 1 
+                                FROM EVENTO_ITEM_LOTES lote_ant
+                                WHERE lote_ant.IDLOTE = (
+                                    SELECT IDLOTE FROM EVENTO_ITEM_LOTES WHERE IDITEM_PROXIMO_LOTE = eil.IDLOTE LIMIT 1
+                                )
+                                AND (
+                                    SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
+                                ) >= lote_ant.NUATLETAS
+                            ) THEN 'ABERTO'
+                            ELSE 'NÃO INICIADO'
+                        END
+                    WHEN CURDATE() BETWEEN eil.DTINICIO AND eil.DTFIM THEN
+                        CASE 
+                            WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < eil.NUATLETAS THEN 'ABERTO'
+                            ELSE 'ESGOTADO'
+                        END
+                    WHEN CURDATE() > eil.DTFIM THEN 'ENCERRADO'
+                    ELSE 'ENCERRADO'
+                END AS STATUS_LOTE
+            FROM EVENTO_ITEM_LOTES eil
+            JOIN EVENTO_ITEM ei ON eil.IDITEM = ei.IDITEM
             WHERE ei.IDEVENTO = %s
-            ORDER BY ei.LOTE
-        """
+            ORDER BY 
+                CASE 
+                    WHEN (
+                        CASE 
+                            WHEN CURDATE() < eil.DTINICIO THEN
+                                CASE 
+                                    WHEN EXISTS (
+                                        SELECT 1 
+                                        FROM EVENTO_ITEM_LOTES lote_ant
+                                        WHERE lote_ant.IDLOTE = (
+                                            SELECT IDLOTE FROM EVENTO_ITEM_LOTES WHERE IDITEM_PROXIMO_LOTE = eil.IDLOTE LIMIT 1
+                                        )
+                                        AND (
+                                            SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
+                                        ) >= lote_ant.NUATLETAS
+                                    ) THEN 'ABERTO'
+                                    ELSE 'NÃO INICIADO'
+                                END
+                            WHEN CURDATE() BETWEEN eil.DTINICIO AND eil.DTFIM THEN
+                                CASE 
+                                    WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < eil.NUATLETAS THEN 'ABERTO'
+                                    ELSE 'ESGOTADO'
+                                END
+                            WHEN CURDATE() > eil.DTFIM THEN 'ENCERRADO'
+                            ELSE 'ENCERRADO'
+                        END
+                    ) = 'ABERTO' THEN 1
+                    ELSE 2
+                END,
+                eil.LOTE, 
+                ei.KM
+        """, (evento_id,))
         
-        cursor.execute(query_itens, (evento_id,))
-        itens = cursor.fetchall()
-        cursor.close()
+        lotes_data = cur.fetchall()
+
+        # Função para formatar valores
+        def formatar_valor_brasileiro(valor):
+            if valor is None:
+                return "0,00"
+            return f"{float(valor):.2f}".replace('.', ',')
+
+        # Processar lotes
+        lotes = []
+        for lote in lotes_data:
+            # Formatar data DTFIM
+            dtfim_formatada = ""
+            if lote[4]:  # DTFIM
+                if isinstance(lote[4], str):
+                    try:
+                        from datetime import datetime
+                        dt = datetime.strptime(lote[4], '%Y-%m-%d')
+                        dtfim_formatada = dt.strftime('%d/%m/%Y')
+                    except:
+                        dtfim_formatada = lote[4]
+                else:
+                    dtfim_formatada = lote[4].strftime('%d/%m/%Y')
+            
+            lote_info = {
+                'idlote': lote[0],  # IDLOTE - chave primária da tabela EVENTO_ITEM_LOTES
+                'iditem': lote[1],  # IDITEM - referência para EVENTO_ITEM
+                'descricao': lote[2],
+                'dtinicio': lote[3],
+                'dtfim': lote[4],
+                'dtfim_formatada': dtfim_formatada,
+                'nuatletas': lote[5],
+                'lote': lote[6],
+                'delote': lote[7],
+                'iditem_proximo_lote': lote[8],
+                'vlinscricao': lote[9],
+                'vltaxa': lote[10],
+                'vltotal': lote[11],
+                # Valores formatados
+                'vlinscricao_formatada': formatar_valor_brasileiro(lote[9]),
+                'vltaxa_formatada': formatar_valor_brasileiro(lote[10]),
+                'vltotal_formatada': formatar_valor_brasileiro(lote[11]),
+                'vl_meia': lote[12],
+                'vl_taxa_meia': lote[13],
+                'vl_total_meia': lote[14],
+                'vl_meia_formatada': formatar_valor_brasileiro(lote[12]),
+                'vl_taxa_meia_formatada': formatar_valor_brasileiro(lote[13]),
+                'vl_total_meia_formatada': formatar_valor_brasileiro(lote[14]),
+                'qtd_inscricoes': lote[15],
+                'status_lote': lote[16]
+            }
+            lotes.append(lote_info)
+
+        # Query para buscar imagens do evento
+        cur.execute("""
+            SELECT ID, IDEVENTO, TITULO_IMG, IMG
+            FROM EVENTO_IMG
+            WHERE IDEVENTO = %s
+            ORDER BY ID
+        """, (evento_id,))
         
-        # Processar banner se existir
+        imagens_data = cur.fetchall()
+        
+        # Processar imagens
+        imagens_evento = []
+        for imagem in imagens_data:
+            try:
+                if imagem[3] and len(imagem[3]) > 0:  # IMG não é vazio
+                    import base64
+                    img_base64 = base64.b64encode(imagem[3]).decode('utf-8')
+                    
+                    imagem_info = {
+                        'id': imagem[0],
+                        'idevento': imagem[1],
+                        'titulo_img': imagem[2] or 'Imagem do Evento',
+                        'img_base64': img_base64
+                    }
+                    imagens_evento.append(imagem_info)
+            except Exception as e:
+                print(f"Erro processando imagem ID {imagem[0]}: {e}")
+                continue
+
+        # Processar banner - CORRIGIDO O ÍNDICE DO BANNER
         banner_base64 = None
-        if evento[13]:  # BANNER
-            banner_base64 = base64.b64encode(evento[13]).decode('utf-8')
+        try:
+            if evento_data[13] and len(evento_data[13]) > 0:  # BANNER é o índice 13
+                import base64
+                banner_base64 = base64.b64encode(evento_data[13]).decode('utf-8')
+        except Exception as e:
+            print(f"Erro processando banner: {e}")
+            banner_base64 = None
         
-        # Você pode criar um template específico para exibir o evento
         return render_template('evento_publico.html', 
                              evento=evento, 
-                             itens=itens, 
-                             banner=banner_base64)
-        
+                             lotes=lotes, 
+                             banner=banner_base64,
+                             imagens_evento=imagens_evento) 
+    
     except Exception as e:
-        return render_template('500.html', error=str(e)), 500
+        print(f"Erro na função visualizar_evento: {e}")
+        if cur:
+            cur.close()
+        return "Erro interno do servidor", 500
+    
+    finally:
+        if cur:
+            cur.close()
 
 
 @app.route('/api/eventos/<int:evento_id>/lotes', methods=['GET'])
@@ -8176,14 +5664,17 @@ def get_lotes(evento_id):
             cursor.close()
             return jsonify({'error': 'Evento não encontrado'}), 404
         
-        # Query mais simples para testar
+        # Query com JOIN para buscar dados das duas tabelas
         query = """
-            SELECT IDITEM, IDEVENTO, DESCRICAO, KM, VLINSCRICAO, PCTAXA,
-                   DTINICIO, DTFIM, NUATLETAS, LOTE, DELOTE,
-                   IDITEM_ULTIMO_LOTE, IDITEM_PROXIMO_LOTE
-            FROM EVENTO_ITEM 
-            WHERE IDEVENTO = %s
-            ORDER BY DESCRICAO, LOTE
+            SELECT 
+                ei.IDITEM, ei.IDEVENTO, ei.DESCRICAO, ei.KM,
+                eil.IDLOTE, eil.VLINSCRICAO, eil.PCTAXA,
+                eil.DTINICIO, eil.DTFIM, eil.NUATLETAS, eil.LOTE, eil.DELOTE,  # ← AGORA eil.NUATLETAS
+                eil.IDITEM_ULTIMO_LOTE, eil.IDITEM_PROXIMO_LOTE
+            FROM EVENTO_ITEM ei
+            LEFT JOIN EVENTO_ITEM_LOTES eil ON ei.IDITEM = eil.IDITEM
+            WHERE ei.IDEVENTO = %s
+            ORDER BY eil.LOTE, ei.KM
         """
         
         cursor.execute(query, (evento_id,))
@@ -8221,15 +5712,16 @@ def get_lotes(evento_id):
         return jsonify(lotes), 200
         
     except Exception as e:
-        print(f"Erro ao buscar lotes: {str(e)}")  # Log do erro no servidor
+        print(f"Erro ao buscar lotes: {str(e)}")
         import traceback
-        traceback.print_exc()  # Print do stack trace completo
+        traceback.print_exc()
         
         if 'cursor' in locals():
             cursor.close()
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
-    
 
+
+##### ALTERADO POR MIM.... TESTAR E VERIFICAR
 @app.route('/api/eventos/<int:evento_id>/lotes', methods=['POST'])
 def create_lotes(evento_id):
     """Criar lotes para um evento"""
@@ -8242,30 +5734,60 @@ def create_lotes(evento_id):
         
         cursor = mysql.connection.cursor()
         
-        # Primeiro, organizar lotes por descrição para calcular relacionamentos
+        # Organizar lotes por descrição para inserir items únicos primeiro
         lotes_por_descricao = {}
         for lote in lotes_data:
             descricao = lote['descricao']
-            if descricao not in lotes_por_descricao:
-                lotes_por_descricao[descricao] = []
-            lotes_por_descricao[descricao].append(lote)
+            km = lote['km']
+            nuatletas = lote['nuatletas']
+            chave = f"{descricao}_{km}"
+            
+            if chave not in lotes_por_descricao:
+                lotes_por_descricao[chave] = {
+                    'item_info': {
+                        'descricao': descricao,
+                        'km': km,
+                        'nuatletas': nuatletas
+                    },
+                    'lotes': []
+                }
+            lotes_por_descricao[chave]['lotes'].append(lote)
         
         # Ordenar lotes dentro de cada descrição
-        for descricao in lotes_por_descricao:
-            lotes_por_descricao[descricao].sort(key=lambda x: x['lote'])
+        for chave in lotes_por_descricao:
+            lotes_por_descricao[chave]['lotes'].sort(key=lambda x: x['lote'])
         
-        # Obter próximo IDITEM
-        cursor.execute("SELECT COALESCE(MAX(IDITEM), 0) + 1 FROM EVENTO_ITEM")
-        next_id = cursor.fetchone()[0]
+        # Primeiro, inserir os items únicos na tabela EVENTO_ITEM
+        items_criados = {}
         
-        # Inserir lotes e calcular relacionamentos
-        for descricao, lotes_desc in lotes_por_descricao.items():
-            # Calcular IDITEM_ULTIMO_LOTE (será o IDITEM do último lote desta descrição)
-            ultimo_lote_id = next_id + len(lotes_desc) - 1
+        for chave, dados in lotes_por_descricao.items():
+            item_info = dados['item_info']
             
+            # Inserir item na tabela EVENTO_ITEM
+            query_item = """
+                INSERT INTO EVENTO_ITEM (IDEVENTO, DESCRICAO, KM)
+                VALUES (%s, %s, %s)
+            """
+
+            cursor.execute(query_item, (
+                evento_id,
+                item_info['descricao'],
+                item_info['km']
+            ))
+
+            # Obter o ID do item inserido
+            iditem = cursor.lastrowid
+            items_criados[chave] = iditem
+        
+        # Agora inserir os lotes na tabela EVENTO_ITEM_LOTES
+        for chave, dados in lotes_por_descricao.items():
+            iditem = items_criados[chave]
+            lotes_desc = dados['lotes']
+            
+            # Calcular relacionamentos entre lotes
             for i, lote in enumerate(lotes_desc):
-                iditem_atual = next_id + i
-                proximo_lote_id = next_id + i + 1 if i < len(lotes_desc) - 1 else 0
+                # Para IDITEM_ULTIMO_LOTE, vamos calcular depois que todos os lotes forem inseridos
+                # Para IDITEM_PROXIMO_LOTE, será o próximo lote ou 0 se for o último
                 
                 # Calcular PCTAXA baseado no valor
                 valor = float(lote['vlinscricao'])
@@ -8282,19 +5804,17 @@ def create_lotes(evento_id):
                 dtinicio = lote['dtinicio'] if lote['dtinicio'] and lote['dtinicio'].strip() else None
                 dtfim = lote['dtfim'] if lote['dtfim'] and lote['dtfim'].strip() else None
                 
-                query = """
-                    INSERT INTO EVENTO_ITEM 
-                    (IDITEM, IDEVENTO, DESCRICAO, KM, VLINSCRICAO, PCTAXA, 
+                query_lote = """
+                    INSERT INTO EVENTO_ITEM_LOTES 
+                    (IDITEM, IDEVENTO, VLINSCRICAO, PCTAXA, 
                      DTINICIO, DTFIM, NUATLETAS, LOTE, DELOTE, 
                      IDITEM_ULTIMO_LOTE, IDITEM_PROXIMO_LOTE)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 
-                cursor.execute(query, (
-                    iditem_atual,
+                cursor.execute(query_lote, (
+                    iditem,
                     evento_id,
-                    lote['descricao'],
-                    lote['km'],
                     lote['vlinscricao'],
                     pctaxa,
                     dtinicio,
@@ -8302,11 +5822,34 @@ def create_lotes(evento_id):
                     lote['nuatletas'] if lote['nuatletas'] else None,
                     lote['lote'],
                     lote['delote'],
-                    ultimo_lote_id,
-                    proximo_lote_id
+                    0,  # Será atualizado abaixo
+                    0   # Será atualizado abaixo
                 ))
+        
+        # Agora atualizar os relacionamentos IDITEM_ULTIMO_LOTE e IDITEM_PROXIMO_LOTE
+        for chave, dados in lotes_por_descricao.items():
+            iditem = items_criados[chave]
             
-            next_id += len(lotes_desc)
+            # Buscar todos os lotes inseridos para este item, ordenados por LOTE
+            cursor.execute("""
+                SELECT IDLOTE, LOTE FROM EVENTO_ITEM_LOTES 
+                WHERE IDITEM = %s 
+                ORDER BY LOTE
+            """, (iditem,))
+            
+            lotes_inseridos = cursor.fetchall()
+            
+            if lotes_inseridos:
+                ultimo_lote_id = lotes_inseridos[-1][0]  # IDLOTE do último lote
+                
+                for i, (idlote_atual, lote_num) in enumerate(lotes_inseridos):
+                    proximo_lote_id = lotes_inseridos[i + 1][0] if i < len(lotes_inseridos) - 1 else 0
+                    
+                    cursor.execute("""
+                        UPDATE EVENTO_ITEM_LOTES 
+                        SET IDITEM_ULTIMO_LOTE = %s, IDITEM_PROXIMO_LOTE = %s 
+                        WHERE IDLOTE = %s
+                    """, (ultimo_lote_id, proximo_lote_id, idlote_atual))
         
         mysql.connection.commit()
         cursor.close()
@@ -8316,46 +5859,105 @@ def create_lotes(evento_id):
     except Exception as e:
         mysql.connection.rollback()
         return jsonify({'error': str(e)}), 500
-    
 
-@app.route('/api/lotes/<int:iditem>', methods=['DELETE'])
-def delete_lote(iditem):
+@app.route('/api/eventos/<int:evento_id>/items', methods=['POST'])
+def create_item_for_evento(evento_id):
+    """Criar um novo item para um evento específico"""
+    try:
+        data = request.json
+        
+        # Validações
+        if not data.get('descricao') or not data.get('km'):
+            return jsonify({'error': 'Campos obrigatórios: descricao, km'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Verificar se o evento existe
+        cursor.execute("SELECT IDEVENTO FROM EVENTO WHERE IDEVENTO = %s", (evento_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Evento não encontrado'}), 404
+        
+        # Inserir o novo item
+        query = """
+            INSERT INTO EVENTO_ITEM (IDEVENTO, DESCRICAO, KM)
+            VALUES (%s, %s, %s)
+        """
+        
+        cursor.execute(query, (
+            evento_id,
+            data['descricao'],
+            float(data['km'])
+        ))
+        
+        mysql.connection.commit()
+        item_id = cursor.lastrowid
+        cursor.close()
+        
+        return jsonify({'message': 'Item criado com sucesso', 'iditem': item_id}), 201
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        if 'cursor' in locals():
+            cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/lotes/<int:idlote>', methods=['DELETE'])
+def delete_lote(idlote):
     """Excluir um lote específico"""
     try:
         cursor = mysql.connection.cursor()
         
         # Buscar dados do lote antes de excluir
-        cursor.execute("SELECT IDEVENTO, KM, LOTE FROM EVENTO_ITEM WHERE IDITEM = %s", (iditem,))
+        cursor.execute("""
+            SELECT eil.IDEVENTO, eil.IDITEM, ei.KM, eil.LOTE 
+            FROM EVENTO_ITEM_LOTES eil
+            JOIN EVENTO_ITEM ei ON eil.IDITEM = ei.IDITEM
+            WHERE eil.IDLOTE = %s
+        """, (idlote,))
+        
         lote_info = cursor.fetchone()
         
         if not lote_info:
             return jsonify({'error': 'Lote não encontrado'}), 404
         
-        evento_id, km, lote_num = lote_info
+        evento_id, iditem, km, lote_num = lote_info
         
         # Excluir o lote
-        cursor.execute("DELETE FROM EVENTO_ITEM WHERE IDITEM = %s", (iditem,))
+        cursor.execute("DELETE FROM EVENTO_ITEM_LOTES WHERE IDLOTE = %s", (idlote,))
         
-        # Reajustar os relacionamentos dos lotes restantes do mesmo KM
+        # Verificar se ainda existem lotes para este item
         cursor.execute("""
-            SELECT IDITEM, LOTE FROM EVENTO_ITEM 
-            WHERE IDEVENTO = %s AND KM = %s 
-            ORDER BY LOTE
-        """, (evento_id, km))
+            SELECT COUNT(*) FROM EVENTO_ITEM_LOTES WHERE IDITEM = %s
+        """, (iditem,))
         
-        lotes_restantes = cursor.fetchall()
+        total_lotes = cursor.fetchone()[0]
         
-        if lotes_restantes:
-            ultimo_lote_id = lotes_restantes[-1][0]  # IDITEM do último lote
+        if total_lotes == 0:
+            # Se não há mais lotes, excluir o item também
+            cursor.execute("DELETE FROM EVENTO_ITEM WHERE IDITEM = %s", (iditem,))
+        else:
+            # Reajustar os relacionamentos dos lotes restantes
+            cursor.execute("""
+                SELECT IDLOTE, LOTE FROM EVENTO_ITEM_LOTES 
+                WHERE IDITEM = %s 
+                ORDER BY LOTE
+            """, (iditem,))
             
-            for i, (lote_id, lote_ordem) in enumerate(lotes_restantes):
-                proximo_lote_id = lotes_restantes[i + 1][0] if i < len(lotes_restantes) - 1 else 0
+            lotes_restantes = cursor.fetchall()
+            
+            if lotes_restantes:
+                ultimo_lote_id = lotes_restantes[-1][0]  # IDLOTE do último lote
                 
-                cursor.execute("""
-                    UPDATE EVENTO_ITEM 
-                    SET IDITEM_ULTIMO_LOTE = %s, IDITEM_PROXIMO_LOTE = %s 
-                    WHERE IDITEM = %s
-                """, (ultimo_lote_id, proximo_lote_id, lote_id))
+                for i, (lote_id, lote_ordem) in enumerate(lotes_restantes):
+                    proximo_lote_id = lotes_restantes[i + 1][0] if i < len(lotes_restantes) - 1 else 0
+                    
+                    cursor.execute("""
+                        UPDATE EVENTO_ITEM_LOTES 
+                        SET IDITEM_ULTIMO_LOTE = %s, IDITEM_PROXIMO_LOTE = %s 
+                        WHERE IDLOTE = %s
+                    """, (ultimo_lote_id, proximo_lote_id, lote_id))
         
         mysql.connection.commit()
         cursor.close()
@@ -8366,12 +5968,40 @@ def delete_lote(iditem):
         mysql.connection.rollback()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/lotes/<int:iditem>', methods=['PUT'])
-def update_lote(iditem):
+
+@app.route('/api/lotes/<int:idlote>', methods=['PUT'])
+def update_lote(idlote):
     """Atualizar um lote específico"""
     try:
         data = request.json
         cursor = mysql.connection.cursor()
+        
+        # Buscar o IDITEM do lote
+        cursor.execute("SELECT IDITEM FROM EVENTO_ITEM_LOTES WHERE IDLOTE = %s", (idlote,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'error': 'Lote não encontrado'}), 404
+        
+        iditem = result[0]
+        
+        # Atualizar dados do item se fornecidos
+        if 'descricao' in data or 'km' in data:
+            update_item_query = "UPDATE EVENTO_ITEM SET "
+            item_params = []
+            
+            if 'descricao' in data:
+                update_item_query += "DESCRICAO = %s, "
+                item_params.append(data['descricao'])
+            
+            if 'km' in data:
+                update_item_query += "KM = %s, "
+                item_params.append(data['km'])
+            
+            update_item_query = update_item_query.rstrip(', ') + " WHERE IDITEM = %s"
+            item_params.append(iditem)
+            
+            cursor.execute(update_item_query, item_params)
         
         # Calcular PCTAXA baseado no novo valor
         valor = float(data.get('vlinscricao', 0))
@@ -8384,17 +6014,16 @@ def update_lote(iditem):
         else:
             pctaxa = 7
         
+        # Atualizar dados do lote
         query = """
-            UPDATE EVENTO_ITEM 
-            SET DESCRICAO = %s, KM = %s, VLINSCRICAO = %s, PCTAXA = %s,
+            UPDATE EVENTO_ITEM_LOTES 
+            SET VLINSCRICAO = %s, PCTAXA = %s,
                 DTINICIO = %s, DTFIM = %s, NUATLETAS = %s, 
                 LOTE = %s, DELOTE = %s
-            WHERE IDITEM = %s
+            WHERE IDLOTE = %s
         """
         
         cursor.execute(query, (
-            data.get('descricao'),
-            data.get('km'),
             data.get('vlinscricao'),
             pctaxa,
             data.get('dtinicio') if data.get('dtinicio') else None,
@@ -8402,7 +6031,7 @@ def update_lote(iditem):
             data.get('nuatletas') if data.get('nuatletas') else None,
             data.get('lote'),
             data.get('delote'),
-            iditem
+            idlote
         ))
         
         mysql.connection.commit()
@@ -8415,6 +6044,846 @@ def update_lote(iditem):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/lote-inscricao2/<int:idlote>')
+def get_lote_inscricao2(idlote):
+    """API para obter dados de um lote específico para inscrição"""
+    
+    print(" ::::: DEBUG  def get_lote_inscricao2 ::::::")
+    try:
+        cur = mysql.connection.cursor()
+        
+        cur.execute("""
+            SELECT 
+              eil.IDLOTE,
+              ei.IDITEM, 
+              ei.DESCRICAO, 
+              eil.VLINSCRICAO, 
+              ROUND((eil.VLINSCRICAO * eil.PCTAXA / 100), 2) AS VLTAXA,
+              ROUND(eil.VLINSCRICAO + (eil.VLINSCRICAO * eil.PCTAXA / 100), 2) AS VLTOTAL,
+              (SELECT ROUND((VLINSCRICAO / 2), 2) 
+               FROM EVENTO_ITEM_LOTES 
+               WHERE IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
+              (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) 
+               FROM EVENTO_ITEM_LOTES 
+               WHERE IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
+              (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) 
+               FROM EVENTO_ITEM_LOTES 
+               WHERE IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
+              e.TITULO, e.IDEVENTO
+            FROM EVENTO_ITEM_LOTES eil
+            JOIN EVENTO_ITEM ei ON eil.IDITEM = ei.IDITEM
+            JOIN EVENTO1 e ON ei.IDEVENTO = e.IDEVENTO
+            WHERE eil.IDLOTE = %s
+        """, (idlote,))
+        
+        lote_data = cur.fetchone()
+        cur.close()
+        
+        if not lote_data:
+            return jsonify({'error': 'Lote não encontrado'}), 404
+        
+        # Função para formatar valores em formato brasileiro
+        def formatar_valor_brasileiro_api(valor):
+            """Converte valor decimal para formato brasileiro (vírgula como separador decimal)"""
+            if valor is None:
+                return "0,00"
+            return f"{float(valor):.2f}".replace('.', ',')
+        
+        return jsonify({
+            'idevento': lote_data[10],
+            'idlote': lote_data[0],    # Novo campo IDLOTE
+            'iditem': lote_data[1],    # IDITEM da tabela EVENTO_ITEM
+            'titulo': lote_data[9],
+            'descricao': lote_data[2],
+            'vlinscricao': float(lote_data[3]) if lote_data[3] else 0,
+            'vltaxa': float(lote_data[4]) if lote_data[4] else 0,
+            'vltotal': float(lote_data[5]) if lote_data[5] else 0,
+            'vlinscricao_meia': float(lote_data[6]) if lote_data[6] else 0,
+            'vltaxa_meia': float(lote_data[7]) if lote_data[7] else 0,
+            'vltotal_meia': float(lote_data[8]) if lote_data[8] else 0,
+            # Valores formatados em padrão brasileiro para exibição
+            'vlinscricao_formatada': formatar_valor_brasileiro_api(lote_data[3]),
+            'vltaxa_formatada': formatar_valor_brasileiro_api(lote_data[4]),
+            'vltotal_formatada': formatar_valor_brasileiro_api(lote_data[5]),
+            'vlinscricao_meia_formatada': formatar_valor_brasileiro_api(lote_data[6]),
+            'vltaxa_meia_formatada': formatar_valor_brasileiro_api(lote_data[7]),
+            'vltotal_meia_formatada': formatar_valor_brasileiro_api(lote_data[8])
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao buscar dados do lote: {str(e)}'}), 500
+
+
+###############################################################
+###############################################################
+###############################################################
+# ROTA ADICIONAL: Buscar apenas items de um evento (sem lotes)
+@app.route('/api/eventos/<int:evento_id>/items', methods=['GET'])
+def get_items(evento_id):
+    """Buscar apenas os items de um evento (sem lotes)"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        cursor.execute("SELECT COUNT(*) FROM EVENTO WHERE IDEVENTO = %s", (evento_id,))
+        if cursor.fetchone()[0] == 0:
+            cursor.close()
+            return jsonify({'error': 'Evento não encontrado'}), 404
+        
+        query = """
+            SELECT IDITEM, IDEVENTO, DESCRICAO, KM
+            FROM EVENTO_ITEM 
+            WHERE IDEVENTO = %s
+            ORDER BY KM
+        """
+        
+        cursor.execute(query, (evento_id,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        items = []
+        
+        for row in cursor.fetchall():
+            item_dict = dict(zip(columns, row))
+            
+            # Converter Decimal para float para JSON
+            if item_dict.get('KM'):
+                item_dict['KM'] = float(item_dict['KM'])
+            
+            items.append(item_dict)
+        
+        cursor.close()
+        return jsonify(items), 200
+        
+    except Exception as e:
+        print(f"Erro ao buscar items: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        if 'cursor' in locals():
+            cursor.close()
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+
+# Rota para criar um novo item
+@app.route('/api/items', methods=['POST'])
+def create_item():
+    """Criar um novo item para um evento"""
+    try:
+        data = request.json
+        
+        # Validações
+        if not data.get('idevento') or not data.get('descricao') or not data.get('km'):
+            return jsonify({'error': 'Campos obrigatórios: idevento, descricao, km'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Verificar se o evento existe
+        cursor.execute("SELECT IDEVENTO FROM EVENTO WHERE IDEVENTO = %s", (data['idevento'],))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Evento não encontrado'}), 404
+        
+        # Inserir o novo item
+        query = """
+            INSERT INTO EVENTO_ITEM (IDEVENTO, DESCRICAO, KM)
+            VALUES (%s, %s, %s)
+        """
+        
+        cursor.execute(query, (
+            data['idevento'],
+            data['descricao'],
+            float(data['km'])
+        ))
+        
+        mysql.connection.commit()
+        item_id = cursor.lastrowid
+        cursor.close()
+        
+        return jsonify({'message': 'Item criado com sucesso', 'iditem': item_id}), 201
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+#############################################################
+#############################################################
+#############################################################
+
+
+# ROTA ADICIONAL: Buscar lotes de um item específico
+@app.route('/api/items/<int:iditem>/lotes', methods=['GET'])
+def get_lotes_by_item(iditem):
+    """Buscar lotes de um item específico"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        query = """
+            SELECT 
+                eil.IDLOTE, eil.IDITEM, eil.IDEVENTO, eil.VLINSCRICAO, eil.PCTAXA,
+                eil.DTINICIO, eil.DTFIM, eil.NUATLETAS, eil.LOTE, eil.DELOTE,  # ← AGORA eil.NUATLETAS
+                eil.IDITEM_ULTIMO_LOTE, eil.IDITEM_PROXIMO_LOTE,
+                ei.DESCRICAO, ei.KM
+            FROM EVENTO_ITEM_LOTES eil
+            JOIN EVENTO_ITEM ei ON eil.IDITEM = ei.IDITEM
+            WHERE eil.IDITEM = %s
+            ORDER BY eil.LOTE
+        """
+
+        cursor.execute(query, (iditem,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        lotes = []
+        
+        for row in cursor.fetchall():
+            lote_dict = dict(zip(columns, row))
+            
+            # Converter Decimal para float para JSON
+            if lote_dict.get('KM'):
+                lote_dict['KM'] = float(lote_dict['KM'])
+            if lote_dict.get('VLINSCRICAO'):
+                lote_dict['VLINSCRICAO'] = float(lote_dict['VLINSCRICAO'])
+            if lote_dict.get('PCTAXA'):
+                lote_dict['PCTAXA'] = float(lote_dict['PCTAXA'])
+            
+            # Tratar datas
+            if lote_dict.get('DTINICIO'):
+                if hasattr(lote_dict['DTINICIO'], 'strftime'):
+                    lote_dict['DTINICIO'] = lote_dict['DTINICIO'].strftime('%Y-%m-%d')
+                else:
+                    lote_dict['DTINICIO'] = str(lote_dict['DTINICIO']) if lote_dict['DTINICIO'] else None
+            
+            if lote_dict.get('DTFIM'):
+                if hasattr(lote_dict['DTFIM'], 'strftime'):
+                    lote_dict['DTFIM'] = lote_dict['DTFIM'].strftime('%Y-%m-%d')
+                else:
+                    lote_dict['DTFIM'] = str(lote_dict['DTFIM']) if lote_dict['DTFIM'] else None
+            
+            lotes.append(lote_dict)
+        
+        cursor.close()
+        return jsonify(lotes), 200
+        
+    except Exception as e:
+        print(f"Erro ao buscar lotes do item: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        if 'cursor' in locals():
+            cursor.close()
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+
+# Rota para atualizar um item
+@app.route('/api/items/<int:iditem>', methods=['PUT'])
+def update_item(iditem):
+    """Atualizar um item existente"""
+    try:
+        data = request.json
+        
+        # Validações
+        if not data.get('descricao') or not data.get('km'):
+            return jsonify({'error': 'Campos obrigatórios: descricao, km'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Verificar se o item existe
+        cursor.execute("SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM = %s", (iditem,))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Item não encontrado'}), 404
+        
+        # Atualizar o item
+        query = """
+            UPDATE EVENTO_ITEM 
+            SET DESCRICAO = %s, KM = %s
+            WHERE IDITEM = %s
+        """
+
+        cursor.execute(query, (
+            data['descricao'],
+            float(data['km']),
+            iditem
+        ))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'message': 'Item atualizado com sucesso'}), 200
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Rota para excluir um item
+@app.route('/api/items/<int:iditem>', methods=['DELETE'])
+def delete_item(iditem):
+    """Excluir um item e todos os seus lotes"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Verificar se o item existe
+        cursor.execute("SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM = %s", (iditem,))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Item não encontrado'}), 404
+        
+        # Excluir primeiro os lotes (devido à foreign key)
+        cursor.execute("DELETE FROM EVENTO_ITEM_LOTES WHERE IDITEM = %s", (iditem,))
+        
+        # Depois excluir o item
+        cursor.execute("DELETE FROM EVENTO_ITEM WHERE IDITEM = %s", (iditem,))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'message': 'Item excluído com sucesso'}), 200
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Rota para criar um lote
+@app.route('/api/lotes', methods=['POST'])
+def create_lote():
+    """Criar um novo lote para um item"""
+    try:
+        data = request.json
+        
+        # Validações
+        required_fields = ['iditem', 'idevento', 'vlinscricao', 'lote']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'Campo obrigatório: {field}'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Verificar se o item existe
+        cursor.execute("SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM = %s", (data['iditem'],))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Item não encontrado'}), 404
+        
+        # Tratar datas vazias
+        dtinicio = data.get('dtinicio') if data.get('dtinicio') and str(data.get('dtinicio')).strip() else None
+        dtfim = data.get('dtfim') if data.get('dtfim') and str(data.get('dtfim')).strip() else None
+        
+        # Inserir o lote
+        query = """
+            INSERT INTO EVENTO_ITEM_LOTES 
+            (IDITEM, IDEVENTO, VLINSCRICAO, PCTAXA, DTINICIO, DTFIM, 
+            NUATLETAS, LOTE, DELOTE, IDITEM_ULTIMO_LOTE, IDITEM_PROXIMO_LOTE)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        cursor.execute(query, (
+            data['iditem'],
+            data['idevento'],
+            float(data['vlinscricao']),
+            float(data['pctaxa']),
+            dtinicio,
+            dtfim,
+            int(data['nuatletas']) if data.get('nuatletas') else None,  # ← ADICIONAR ESTA LINHA
+            int(data['lote']),
+            data.get('delote', ''),
+            0,
+            0
+        ))
+
+        lote_id = cursor.lastrowid
+        
+        # Atualizar relacionamentos entre lotes do mesmo item
+        update_lote_relationships(cursor, data['iditem'])
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({'message': 'Lote criado com sucesso', 'idlote': lote_id}), 201
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+# Função auxiliar para atualizar relacionamentos entre lotes
+def update_lote_relationships(cursor, iditem):
+    """Atualizar os relacionamentos IDITEM_ULTIMO_LOTE e IDITEM_PROXIMO_LOTE"""
+    try:
+        # Buscar todos os lotes do item ordenados por LOTE
+        cursor.execute("""
+            SELECT IDLOTE FROM EVENTO_ITEM_LOTES 
+            WHERE IDITEM = %s 
+            ORDER BY LOTE
+        """, (iditem,))
+        
+        lotes = cursor.fetchall()
+        
+        if lotes:
+            ultimo_lote_id = lotes[-1][0]  # IDLOTE do último lote
+            
+            for i, (idlote_atual,) in enumerate(lotes):
+                proximo_lote_id = lotes[i + 1][0] if i < len(lotes) - 1 else 0
+                
+                cursor.execute("""
+                    UPDATE EVENTO_ITEM_LOTES 
+                    SET IDITEM_ULTIMO_LOTE = %s, IDITEM_PROXIMO_LOTE = %s 
+                    WHERE IDLOTE = %s
+                """, (ultimo_lote_id, proximo_lote_id, idlote_atual))
+                
+    except Exception as e:
+        raise e
+
+
+# Rota para buscar itens de um evento específico
+@app.route('/api/eventos/<int:evento_id>/items', methods=['GET'])
+def get_items_by_evento(evento_id):
+    """Buscar todos os itens de um evento específico"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        query = """
+            SELECT IDITEM, IDEVENTO, DESCRICAO, KM
+            FROM EVENTO_ITEM 
+            WHERE IDEVENTO = %s
+            ORDER BY DESCRICAO, KM
+        """
+        
+        cursor.execute(query, (evento_id,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        items = []
+        
+        for row in cursor.fetchall():
+            item_dict = dict(zip(columns, row))
+            
+            # Converter Decimal para float para JSON
+            if item_dict.get('KM'):
+                item_dict['KM'] = float(item_dict['KM'])
+            
+            items.append(item_dict)
+        
+        cursor.close()
+        return jsonify(items), 200
+        
+    except Exception as e:
+        print(f"Erro ao buscar itens do evento: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        if 'cursor' in locals():
+            cursor.close()
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+
+###############################
+
+# Função corrigida para usar IDLOTE em vez de IDITEM
+@app.route('/api/lote-inscricao-itens/<int:idlote>')
+def get_lote_inscricao_itens(idlote):
+    """API para obter dados de um lote específico para inscrição"""
+
+    print(" ::::: DEBUG  def get_lote_inscricao ::::::")
+    try:
+        cur = mysql.connection.cursor()
+        
+        cur.execute("""
+            SELECT 
+              eil.IDLOTE,
+              ei.IDITEM, 
+              ei.DESCRICAO, 
+              eil.VLINSCRICAO, 
+              ROUND((eil.VLINSCRICAO * eil.PCTAXA / 100), 2) AS VLTAXA,
+              ROUND(eil.VLINSCRICAO + (eil.VLINSCRICAO * eil.PCTAXA / 100), 2) AS VLTOTAL,
+              (SELECT ROUND((ultimo.VLINSCRICAO / 2), 2) 
+               FROM EVENTO_ITEM_LOTES ultimo 
+               WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
+              (SELECT ROUND(((ultimo.VLINSCRICAO / 2) * ultimo.PCTAXA / 100), 2) 
+               FROM EVENTO_ITEM_LOTES ultimo 
+               WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
+              (SELECT ROUND((ultimo.VLINSCRICAO / 2) + ((ultimo.VLINSCRICAO / 2) * ultimo.PCTAXA / 100), 2) 
+               FROM EVENTO_ITEM_LOTES ultimo 
+               WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
+              e.TITULO, e.IDEVENTO
+            FROM EVENTO_ITEM_LOTES eil
+            JOIN EVENTO_ITEM ei ON eil.IDITEM = ei.IDITEM
+            JOIN EVENTO1 e ON ei.IDEVENTO = e.IDEVENTO
+            WHERE eil.IDLOTE = %s
+        """, (idlote,))
+        
+        lote_data = cur.fetchone()
+        cur.close()
+        
+        if not lote_data:
+            return jsonify({'error': 'Lote não encontrado'}), 404
+        
+        # Função para formatar valores em formato brasileiro (para uso na API também)
+        def formatar_valor_brasileiro_api(valor):
+            """Converte valor decimal para formato brasileiro (vírgula como separador decimal)"""
+            if valor is None:
+                return "0,00"
+            return f"{float(valor):.2f}".replace('.', ',')
+        
+        return jsonify({
+            'idevento': lote_data[10],  # IDEVENTO
+            'idlote': lote_data[0],     # IDLOTE - novo campo
+            'iditem': lote_data[1],     # IDITEM da tabela EVENTO_ITEM
+            'titulo': lote_data[9],     # TITULO do evento
+            'descricao': lote_data[2],  # DESCRICAO do item
+            'vlinscricao': float(lote_data[3]) if lote_data[3] else 0,
+            'vltaxa': float(lote_data[4]) if lote_data[4] else 0,
+            'vltotal': float(lote_data[5]) if lote_data[5] else 0,
+            'vlinscricao_meia': float(lote_data[6]) if lote_data[6] else 0,
+            'vltaxa_meia': float(lote_data[7]) if lote_data[7] else 0,
+            'vltotal_meia': float(lote_data[8]) if lote_data[8] else 0,
+            # Valores formatados em padrão brasileiro para exibição
+            'vlinscricao_formatada': formatar_valor_brasileiro_api(lote_data[3]),
+            'vltaxa_formatada': formatar_valor_brasileiro_api(lote_data[4]),
+            'vltotal_formatada': formatar_valor_brasileiro_api(lote_data[5]),
+            'vlinscricao_meia_formatada': formatar_valor_brasileiro_api(lote_data[6]),
+            'vltaxa_meia_formatada': formatar_valor_brasileiro_api(lote_data[7]),
+            'vltotal_meia_formatada': formatar_valor_brasileiro_api(lote_data[8])
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao buscar dados do lote: {str(e)}'}), 500
+
+
+# Se você ainda tem código JavaScript que chama a rota antiga com IDITEM, 
+# mantenha também esta rota de compatibilidade:
+@app.route('/api/lote-inscricao-item/<int:iditem>/<int:idlote>')
+def get_lote_inscricao_por_item_e_lote(iditem, idlote):
+    """API atualizada - busca lote específico pelo IDITEM e IDLOTE"""
+    
+    print(f" ::::: DEBUG get_lote_inscricao_por_item_e_lote - IDITEM: {iditem}, IDLOTE: {idlote} ::::::")
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Busca o lote específico usando IDLOTE e IDITEM
+        cur.execute("""
+            SELECT 
+              eil.IDLOTE,
+              ei.IDITEM, 
+              ei.DESCRICAO, 
+              eil.VLINSCRICAO, 
+              ROUND((eil.VLINSCRICAO * eil.PCTAXA / 100), 2) AS VLTAXA,
+              ROUND(eil.VLINSCRICAO + (eil.VLINSCRICAO * eil.PCTAXA / 100), 2) AS VLTOTAL,
+              (SELECT ROUND((ultimo.VLINSCRICAO / 2), 2) 
+               FROM EVENTO_ITEM_LOTES ultimo 
+               WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
+              (SELECT ROUND(((ultimo.VLINSCRICAO / 2) * ultimo.PCTAXA / 100), 2) 
+               FROM EVENTO_ITEM_LOTES ultimo 
+               WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
+              (SELECT ROUND((ultimo.VLINSCRICAO / 2) + ((ultimo.VLINSCRICAO / 2) * ultimo.PCTAXA / 100), 2) 
+               FROM EVENTO_ITEM_LOTES ultimo 
+               WHERE ultimo.IDLOTE = eil.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
+              e.TITULO, e.IDEVENTO
+            FROM EVENTO_ITEM_LOTES eil
+            JOIN EVENTO_ITEM ei ON eil.IDITEM = ei.IDITEM
+            JOIN EVENTO1 e ON ei.IDEVENTO = e.IDEVENTO
+            WHERE eil.IDLOTE = %s
+            AND ei.IDITEM = %s
+        """, (idlote, iditem))
+        
+        lote_data = cur.fetchone()
+        cur.close()
+        
+        if not lote_data:
+            return jsonify({'error': 'Lote não encontrado para este item e lote'}), 404
+        
+        def formatar_valor_brasileiro_api(valor):
+            if valor is None:
+                return "0,00"
+            return f"{float(valor):.2f}".replace('.', ',')
+        
+        return jsonify({
+            'idevento': lote_data[10],
+            'idlote': lote_data[0],
+            'iditem': lote_data[1],
+            'titulo': lote_data[9],
+            'descricao': lote_data[2],
+            'vlinscricao': float(lote_data[3]) if lote_data[3] else 0,
+            'vltaxa': float(lote_data[4]) if lote_data[4] else 0,
+            'vltotal': float(lote_data[5]) if lote_data[5] else 0,
+            'vlinscricao_meia': float(lote_data[6]) if lote_data[6] else 0,
+            'vltaxa_meia': float(lote_data[7]) if lote_data[7] else 0,
+            'vltotal_meia': float(lote_data[8]) if lote_data[8] else 0,
+            'vlinscricao_formatada': formatar_valor_brasileiro_api(lote_data[3]),
+            'vltaxa_formatada': formatar_valor_brasileiro_api(lote_data[4]),
+            'vltotal_formatada': formatar_valor_brasileiro_api(lote_data[5]),
+            'vlinscricao_meia_formatada': formatar_valor_brasileiro_api(lote_data[6]),
+            'vltaxa_meia_formatada': formatar_valor_brasileiro_api(lote_data[7]),
+            'vltotal_meia_formatada': formatar_valor_brasileiro_api(lote_data[8])
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao buscar dados do lote: {str(e)}'}), 500
+
+
+@app.route('/evento-inscricao/<int:idevento>')
+def evento_inscricao(idevento):
+    """Rota para servir a página de inscrição"""
+    
+    # TEMPORÁRIO: Comentar validação de token para teste
+    # Depois você pode reativar quando o fluxo estiver funcionando
+    """
+    # Verificar se tem token válido na sessão
+    token_esperado = session.get('inscricao_token')
+    token_recebido = request.args.get('token')
+    
+    if not token_esperado or token_recebido != token_esperado:
+        # Buscar dados do evento para redirect
+        cur = mysql.connection.cursor()
+        cur.execute('''
+            SELECT CONCAT('evento','/',DSLINK) AS DSLINK FROM EVENTO1 WHERE IDEVENTO = %s
+        ''', (idevento,))
+        
+        evento_redirect = cur.fetchone()
+        cur.close()
+        
+        if evento_redirect and evento_redirect[0]:
+            # Redirecionar para a página pública do evento usando DSLINK
+            return redirect(f'/{evento_redirect[0]}')
+        else:
+            # Fallback para página principal se não encontrar o evento ou DSLINK
+            return redirect('/')
+    
+    # Limpar o token da sessão (uso único)
+    session.pop('inscricao_token', None)
+    """
+    
+    # Buscar dados do evento
+    cur = mysql.connection.cursor()
+    
+    try:
+        # Query para dados básicos do evento
+        cur.execute("""
+            SELECT TITULO, DATAINICIO, HRINICIO, ENDERECO, CIDADEUF, CONCAT('evento','/',DSLINK) AS DSLINK 
+            FROM EVENTO1 WHERE IDEVENTO = %s
+        """, (idevento,))
+
+        evento_data = cur.fetchone()
+        
+        if not evento_data:
+            return "Evento não encontrado", 404
+
+        # Preparar dados para o template
+        evento = {
+            'idevento': idevento,
+            'titulo': evento_data[0],
+            'data': evento_data[1],
+            'hora': evento_data[2],
+            'local': evento_data[3],
+            'cidade_uf': evento_data[4],
+            'dslink': evento_data[5]
+        }
+
+        # Criar response com CSP headers corretos
+        response = make_response(render_template('evento_inscricao.html', evento=evento))
+        
+        # Adicionar cdnjs.cloudflare.com ao CSP para permitir jQuery
+        csp = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+            "https://secure.mlstatic.com https://sdk.mercadopago.com https://*.mercadopago.com "
+            "https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https:; "
+            "font-src 'self' https://cdnjs.cloudflare.com;"
+        )
+        
+        response.headers['Content-Security-Policy'] = csp
+        
+        return response
+        
+    except Exception as e:
+        print(f"Erro ao carregar evento {idevento}: {str(e)}")
+        return "Erro interno do servidor", 500
+    finally:
+        cur.close()
+
+
+# ALTERNATIVA: Rota para gerar token de inscrição (se quiser manter o sistema de token)
+@app.route('/gerar-token-inscricao/<int:idevento>')
+def gerar_token_inscricao(idevento):
+    """Gera token para acesso à página de inscrição"""
+    import secrets
+    
+    # Gerar token único
+    token = secrets.token_urlsafe(32)
+    
+    # Salvar na sessão
+    session['inscricao_token'] = token
+    session['idevento_token'] = idevento
+    
+    # Redirecionar para página de inscrição com token
+    return redirect(f'/evento-inscricao/{idevento}?token={token}')
+
+#################################################
+# Rotas para gerenciamento de imagens do evento #
+#################################################
+
+# GET - Listar imagens do evento
+@app.route('/api/eventos/<int:evento_id>/imagens', methods=['GET'])
+def listar_imagens_evento(evento_id):
+    """API para listar todas as imagens de um evento específico"""
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+            SELECT ID, IDEVENTO, TITULO_IMG, IMG
+            FROM EVENTO_IMG 
+            WHERE IDEVENTO = %s
+            ORDER BY ID ASC
+        """
+        cursor.execute(query, (evento_id,))
+        imagens = cursor.fetchall()
+        cursor.close()
+        
+        # Converter para lista de dicionários
+        imagens_list = []
+        for imagem in imagens:
+            imagem_dict = {
+                'ID': imagem[0],
+                'IDEVENTO': imagem[1],
+                'TITULO_IMG': imagem[2],
+                'IMG': base64.b64encode(imagem[3]).decode('utf-8') if imagem[3] else None
+            }
+            imagens_list.append(imagem_dict)
+        
+        print(f"Carregadas {len(imagens_list)} imagens para evento {evento_id}")  # Debug
+        return jsonify(imagens_list)
+        
+    except Exception as e:
+        print(f"Erro ao listar imagens do evento {evento_id}: {str(e)}")  # Debug
+        return jsonify({'error': str(e)}), 500
+
+# POST - Criar nova imagem
+@app.route('/api/evento-imagens', methods=['POST'])  
+def criar_imagem():
+    """API para criar uma nova imagem do evento"""
+    try:
+        data = request.get_json()
+        
+        # Validações
+        if not data.get('idevento'):
+            return jsonify({'error': 'ID do evento é obrigatório'}), 400
+            
+        if not data.get('titulo_img'):
+            return jsonify({'error': 'Título da imagem é obrigatório'}), 400
+            
+        if not data.get('img'):
+            return jsonify({'error': 'Imagem é obrigatória'}), 400
+        
+        # Processar imagem base64
+        img_data = data.get('img')
+        if img_data.startswith('data:image'):
+            # Remover o prefixo data:image/...;base64,
+            img_data = img_data.split(',')[1]
+        
+        try:
+            img_binary = base64.b64decode(img_data)
+        except Exception as e:
+            return jsonify({'error': 'Formato de imagem inválido'}), 400
+        
+        cursor = mysql.connection.cursor()
+        query = """
+            INSERT INTO EVENTO_IMG (IDEVENTO, TITULO_IMG, IMG) 
+            VALUES (%s, %s, %s)
+        """
+        cursor.execute(query, (
+            data['idevento'],
+            data['titulo_img'],
+            img_binary
+        ))
+        mysql.connection.commit()
+        
+        imagem_id = cursor.lastrowid
+        cursor.close()
+        
+        print(f"Imagem criada com ID {imagem_id} para evento {data['idevento']}")  # Debug
+        return jsonify({'message': 'Imagem criada com sucesso', 'id': imagem_id}), 201
+        
+    except Exception as e:
+        print(f"Erro ao criar imagem: {str(e)}")  # Debug
+        return jsonify({'error': str(e)}), 500
+
+# PUT - Atualizar imagem existente
+@app.route('/api/evento-imagens/<int:imagem_id>', methods=['PUT'])
+def atualizar_imagem(imagem_id):
+    """API para atualizar uma imagem existente"""
+    try:
+        data = request.get_json()
+        
+        # Verificar se a imagem existe
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT ID FROM EVENTO_IMG WHERE ID = %s", (imagem_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Imagem não encontrada'}), 404
+        
+        # Preparar query de atualização dinamicamente
+        campos_atualizacao = []
+        valores = []
+        
+        if data.get('titulo_img'):
+            campos_atualizacao.append("TITULO_IMG = %s")
+            valores.append(data['titulo_img'])
+        
+        if data.get('img'):
+            # Processar nova imagem
+            img_data = data.get('img')
+            if img_data.startswith('data:image'):
+                img_data = img_data.split(',')[1]
+            
+            try:
+                img_binary = base64.b64decode(img_data)
+                campos_atualizacao.append("IMG = %s")
+                valores.append(img_binary)
+            except Exception as e:
+                cursor.close()
+                return jsonify({'error': 'Formato de imagem inválido'}), 400
+        
+        if not campos_atualizacao:
+            cursor.close()
+            return jsonify({'error': 'Nenhum campo para atualizar'}), 400
+        
+        # Executar atualização
+        valores.append(imagem_id)
+        query = f"UPDATE EVENTO_IMG SET {', '.join(campos_atualizacao)} WHERE ID = %s"
+        cursor.execute(query, valores)
+        mysql.connection.commit()
+        cursor.close()
+        
+        print(f"Imagem {imagem_id} atualizada com sucesso")  # Debug
+        return jsonify({'message': 'Imagem atualizada com sucesso'}), 200
+        
+    except Exception as e:
+        print(f"Erro ao atualizar imagem {imagem_id}: {str(e)}")  # Debug
+        return jsonify({'error': str(e)}), 500
+
+# DELETE - Excluir imagem
+@app.route('/api/evento-imagens/<int:imagem_id>', methods=['DELETE'])
+def excluir_imagem(imagem_id):
+    """API para excluir uma imagem do evento"""
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Verificar se a imagem existe
+        cursor.execute("SELECT ID FROM EVENTO_IMG WHERE ID = %s", (imagem_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Imagem não encontrada'}), 404
+        
+        # Excluir a imagem
+        cursor.execute("DELETE FROM EVENTO_IMG WHERE ID = %s", (imagem_id,))
+        mysql.connection.commit()
+        cursor.close()
+        
+        print(f"Imagem {imagem_id} excluída com sucesso")  # Debug
+        return jsonify({'message': 'Imagem excluída com sucesso'}), 200
+        
+    except Exception as e:
+        print(f"Erro ao excluir imagem {imagem_id}: {str(e)}")  # Debug
+        return jsonify({'error': str(e)}), 500
 
 
 ###############################
@@ -8423,67 +6892,4 @@ def update_lote(iditem):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
-            # SELECT 
-            #   ei.IDITEM, ei.DESCRICAO, ei.DTINICIO, ei.DTFIM,
-            #   ei.NUATLETAS, ei.LOTE, ei.DELOTE, ei.IDITEM_PROXIMO_LOTE, ei.VLINSCRICAO, 
-            #   ROUND((ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTAXA,
-            #   ROUND(ei.VLINSCRICAO + (ei.VLINSCRICAO * ei.PCTAXA / 100), 2) AS VLTOTAL,
-            #   (SELECT ROUND((VLINSCRICAO / 2), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_MEIA,
-            #   (SELECT ROUND(((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TAXA_MEIA,
-            #   (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITEM WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
-            #   -- Quantidade total de inscrições no evento
-            #   (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
-            #   -- Status do lote
-            #   CASE 
-            #     WHEN CURDATE() < ei.DTINICIO THEN
-            #       CASE 
-            #         -- Verifica se lote anterior já atingiu seu limite (para liberar este lote)
-            #         WHEN EXISTS (
-            #           SELECT 1 FROM EVENTO_ITEM lote_ant
-            #           WHERE lote_ant.IDITEM = (
-            #             SELECT IDITEM FROM EVENTO_ITEM WHERE IDITEM_PROXIMO_LOTE = ei.IDITEM LIMIT 1
-            #           )
-            #           AND (
-            #             SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO
-            #           ) >= lote_ant.NUATLETAS
-            #         ) THEN 'ABERTO'
-            #         ELSE 'NÃO INICIADO'
-            #       END
-            #     WHEN CURDATE() BETWEEN ei.DTINICIO AND ei.DTFIM THEN
-            #       CASE 
-            #         WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < ei.NUATLETAS THEN 'ABERTO'
-            #         ELSE 'ESGOTADO'
-            #       END
-            #     WHEN CURDATE() > ei.DTFIM THEN 'ENCERRADO'
-            #     ELSE 'ENCERRADO'
-            #   END AS STATUS_LOTE
-            # FROM EVENTO_ITEM ei
-            # WHERE ei.IDEVENTO = %s
-            # ORDER BY ei.LOTE
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
