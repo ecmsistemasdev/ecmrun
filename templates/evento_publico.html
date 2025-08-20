@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://ecmrun.com.br/static/img/logo_arealslope.jpeg">
+    <link rel="stylesheet" type="text/css" href="/static/css/evento_publico.css"/>
+    <title>{{ evento.titulo }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+        <div class="login-controls">
+            <span id="userNameDisplay" class="user-name"></span>
+            <a href="/lista-eventos" id="inscricoesLink" class="inscricoes-link">Minhas Inscrições</a>
+        </div>
+    </div>
+
+    <!-- Header com banner do evento -->
+    <div class="event-header">
+        <div class="event-info">
+            <h1 class="event-title">{{ evento.titulo }}</h1>
+            <div class="event-details">
+                <div class="event-datetime">
+                    <span class="icon">📅</span>
+                    <span>Data: {{ evento.data }} - {{ evento.hora }}</span>
+                </div>
+                <div class="event-location">
+                    <span class="icon">📍</span>
+                    <span>{{ evento.local }}, {{ evento.cidade_uf }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="event-banner">
+            {% if banner %}
+                <img src="data:image/jpeg;base64,{{ banner }}" alt="Banner do Evento" class="banner-image">
+            {% else %}
+                <img src="/static/img/banner_eventos.jpeg" alt="Banner do Evento" class="banner-image">
+            {% endif %}
+        </div>
+
+    </div>
+
+    <div class="container">
+        <!-- Formulário de Inscrição (primeiro no mobile) -->
+        <div class="inscription-form-container">
+            <form class="registration-form">
+                <div class="form-title">Inscrição</div>
+
+                <div class="lotes-container">
+                    {% for lote in lotes %}
+                    <div class="lote-item" data-idlote="{{ lote.idlote }}" data-iditem="{{ lote.iditem }}">
+                        <h4 class="lote-title">{{ lote.descricao }}{% if lote.delote %} - {{ lote.delote }}{% endif %}</h4>
+
+                        {% if lote.status_lote == 'NÃO INICIADO' %}
+                            <div class="lote-status status-nao-iniciado">
+                                NÃO INICIADO
+                            </div>
+                        {% elif lote.status_lote == 'ABERTO' %}
+                            <div class="lote-pricing">
+                                <div class="price-breakdown">
+                                    <span class="price-value">R$ {{ lote.vlinscricao_formatada|default('0,00') }}</span>
+                                    {% if lote.vltaxa_formatada %}
+                                    <span class="price-tax">(+ R$ {{ lote.vltaxa_formatada }} taxa)</span>
+                                    {% endif %}
+                                </div>
+                                <div class="price-total-container">
+                                    <div class="price-total">
+                                        Total: R$ {{ lote.vltotal_formatada|default('0,00') }}
+                                    </div>
+                                    <button type="button" class="inscricao-btn" data-idlote="{{ lote.idlote }}" data-iditem="{{ lote.iditem }}">
+                                        Inscreva-se
+                                    </button>
+                                </div>
+                                {% if lote.dtfim_formatada %}
+                                <div class="lote-deadline">
+                                    Inscrições até {{ lote.dtfim_formatada }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% elif lote.status_lote == 'ESGOTADO' %}
+                            <div class="lote-status status-esgotado">
+                                ESGOTADO
+                            </div>
+                        {% elif lote.status_lote == 'ENCERRADO' %}
+                            <div class="lote-status status-encerrado">
+                                ENCERRADO
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        <div class="main-content">
+            <form>
+                <div class="info">
+                    <h3 class="info-title">Descrição do evento</h3>
+                    <br>
+                    {{ evento.descricao|safe }}
+                </div>
+            </form>
+
+            <form id="termoForm">
+                <div class="form-title">Regulamento</div>
+                <div class="termo">
+                    <br>
+                    {{ evento.regulamento|safe }}
+                </div>
+            </form>
+
+            {% if imagens_evento %}
+            <form id="imagensForm">
+                <div class="form-title">Imagens do Evento</div>
+                <div class="imagens-container">
+                    {% for imagem in imagens_evento %}
+                    <div class="imagem-item">
+                        <h4 class="imagem-titulo">{{ imagem.titulo_img }}</h4>
+                        <img src="data:image/jpeg;base64,{{ imagem.img_base64 }}" alt="{{ imagem.titulo_img }}" class="evento-imagem">
+                    </div>
+                    {% endfor %}
+                </div>
+            </form>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p class="bible-verse">"Tudo posso naquele que me fortalece." - Filipenses 4:13</p>
+        <img src="/static/img/ecmdev02.png" alt="Logo ECM Run" class="footer-logo">
+        <p class="footer-text">ECM RUN Esports - todos os direitos reservados</p>
+        <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM carregado!');
+            
+            // Verificar se os botões existem
+            const inscricaoBtns = document.querySelectorAll('.inscricao-btn');
+            console.log('Botões encontrados:', inscricaoBtns.length);
+            
+            if (inscricaoBtns.length === 0) {
+                console.error('ERRO: Nenhum botão .inscricao-btn encontrado!');
+                // Vamos listar todos os botões para ver o que existe
+                const todosBotoes = document.querySelectorAll('button');
+                console.log('Todos os botões na página:', todosBotoes);
+                todosBotoes.forEach((btn, index) => {
+                    console.log(`Botão ${index}:`, btn.className, btn.textContent);
+                });
+                return;
+            }
+
+            // Event listeners para botões de inscrição
+            inscricaoBtns.forEach((btn, index) => {
+                console.log(`Configurando event listener para botão ${index}:`, btn);
+                
+                btn.addEventListener('click', function(e) {
+                    console.log('BOTÃO CLICADO!', this);
+                    
+                    // Prevenir comportamento padrão se for dentro de um form
+                    e.preventDefault();
+                    
+                    const iditem = this.getAttribute('data-iditem');
+                    const idlote = this.getAttribute('data-idlote');
+                    
+                    console.log('*** IDITEM: ', iditem);
+                    console.log('*** IDLOTE: ', idlote);
+
+                    // Validar se iditem e idlote existem
+                    if (!iditem || iditem === 'null') {
+                        alert('Erro: ID do item não encontrado');
+                        console.error('ID do item não encontrado');
+                        return;
+                    }
+                    
+                    if (!idlote || idlote === 'null') {
+                        alert('Erro: ID do lote não encontrado');
+                        console.error('ID do lote não encontrado');
+                        return;
+                    }
+
+                    console.log('Fazendo requisição para:', `/api/lote-inscricao-item/${iditem}/${idlote}`);
+
+                    // ALTERAÇÃO: incluir idlote na URL da API
+                    fetch(`/api/lote-inscricao-item/${iditem}/${idlote}`)
+                        .then(response => {
+                            console.log('Resposta recebida:', response);
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Dados recebidos da API:', data);
+                            
+                            if (data.error) {
+                                alert('Erro ao carregar dados do lote: ' + data.error);
+                                return;
+                            }
+
+                            // Verificar se o navegador suporta localStorage
+                            if (typeof(Storage) !== "undefined") {
+                                try {
+                                    localStorage.setItem('idevento', data.idevento);
+                                    localStorage.setItem('lote_iditem', data.iditem);
+                                    localStorage.setItem('lote_idlote', data.idlote);
+                                    localStorage.setItem('titulo_evento', data.titulo);
+                                    localStorage.setItem('lote_descricao', data.descricao);
+                                    localStorage.setItem('lote_vlinscricao', data.vlinscricao);
+                                    localStorage.setItem('lote_vltaxa', data.vltaxa);
+                                    localStorage.setItem('lote_vltotal', data.vltotal);
+                                    localStorage.setItem('lote_vlinscricao_meia', data.vlinscricao_meia);
+                                    localStorage.setItem('lote_vltaxa_meia', data.vltaxa_meia);
+                                    localStorage.setItem('lote_vltotal_meia', data.vltotal_meia);
+                                    
+                                    console.log('Dados salvos no localStorage');
+                                } catch (e) {
+                                    console.log('localStorage não disponível, usando dados em memória');
+                                }
+
+                                // REDIRECIONAR PARA PÁGINA DE INSCRIÇÃO
+                                console.log('Redirecionando para página de inscrição...');
+                                window.location.href = '/evento-inscricao/' + data.idevento;
+                            } else {
+                                alert('Seu navegador não suporta armazenamento local');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro na requisição:', error);
+                            alert('Erro ao processar solicitação: ' + error.message);
+                        });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
