@@ -369,14 +369,14 @@ document.getElementById('eventoForm').addEventListener('submit', async function(
 });
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', function() {
-    // Definir data mínima como hoje
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('datainicio').setAttribute('min', today);
-    document.getElementById('datafim').setAttribute('min', today);
-    document.getElementById('inicioinscricao').setAttribute('min', today);
-    document.getElementById('fiminscricao').setAttribute('min', today);
-});
+// document.addEventListener('DOMContentLoaded', function() {
+//     // Definir data mínima como hoje
+//     const today = new Date().toISOString().split('T')[0];
+//     document.getElementById('datainicio').setAttribute('min', today);
+//     document.getElementById('datafim').setAttribute('min', today);
+//     document.getElementById('inicioinscricao').setAttribute('min', today);
+//     document.getElementById('fiminscricao').setAttribute('min', today);
+// });
 
 async function openLotesModal() {
     if (editingEventId) {
@@ -1777,3 +1777,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 1000);
 });
+
