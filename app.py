@@ -6184,7 +6184,7 @@ def get_items(evento_id):
     try:
         cursor = mysql.connection.cursor()
         
-        cursor.execute("SELECT COUNT(*) FROM EVENTO WHERE IDEVENTO = %s", (evento_id,))
+        cursor.execute("SELECT COUNT(*) FROM EVENTO1 WHERE IDEVENTO = %s", (evento_id,))
         if cursor.fetchone()[0] == 0:
             cursor.close()
             return jsonify({'error': 'Evento não encontrado'}), 404
@@ -6952,4 +6952,5 @@ def excluir_imagem(imagem_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
