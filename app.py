@@ -636,31 +636,21 @@ def comprovante(payment_id):
         cur = mysql.connection.cursor()
         
         cur.execute('''
-            SELECT ei.DTPAGAMENTO,
-                   e.TITULO, 
-                   e.ENDERECO, 
-                   e.DATAINICIO,
-                   e.DATAFIM,
-                   e.HRINICIO,
-                   CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
-                   CASE WHEN i.KM=0
-                       THEN i.MODALIDADE
-                       ELSE CONCAT(i.KM,' KM') 
-                   END AS KM_DESCRICAO, 
-                   ei.VLINSCRICAO, 
-                   ei.VLTOTAL, 
-                   ei.FORMAPGTO, 
-                   ei.IDPAGAMENTO, 
-                   ei.FLEMAIL, 
-                   ei.IDINSCRICAO, 
-                   e.OBS, 
-                   ei.CPF, 
-                   ei.DTNASCIMENTO 
-            FROM EVENTO_INSCRICAO ei, EVENTO1 e, EVENTO_ITEM i
-            WHERE i.IDITEM = ei.IDITEMEVENTO
-              AND e.IDEVENTO = ei.IDEVENTO
-              AND ei.STATUS = 'A' 
-              AND ei.IDPAGAMENTO = %s 
+            SELECT ei.DTPAGAMENTO, e.TITULO, e.ENDERECO, 
+                e.DATAINICIO, e.DATAFIM, e.HRINICIO,
+                CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
+                CASE WHEN i.KM = 0
+                    THEN i.MODALIDADE
+                    ELSE CONCAT(i.KM, ' KM') 
+                END AS KM_DESCRICAO, 
+                ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, 
+                ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, 
+                e.OBS, ei.CPF, ei.DTNASCIMENTO 
+            FROM EVENTO_INSCRICAO ei
+            INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
+            INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
+            WHERE ei.STATUS = 'A' 
+            AND ei.IDPAGAMENTO = %s 
         ''', (payment_id,))
         
         receipt_data = cur.fetchone()
@@ -750,31 +740,21 @@ def vercomprovante(payment_id):
         cur = mysql.connection.cursor()
         
         cur.execute('''
-            SELECT ei.DTPAGAMENTO,
-                   e.TITULO, 
-                   e.ENDERECO, 
-                   e.DATAINICIO,
-                   e.DATAFIM,
-                   e.HRINICIO,
-                   CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
-                   CASE WHEN i.KM=0
-                       THEN i.MODALIDADE
-                       ELSE CONCAT(i.KM,' KM') 
-                   END AS KM_DESCRICAO, 
-                   ei.VLINSCRICAO, 
-                   ei.VLTOTAL, 
-                   ei.FORMAPGTO, 
-                   ei.IDPAGAMENTO, 
-                   ei.FLEMAIL, 
-                   ei.IDINSCRICAO, 
-                   e.OBS, 
-                   ei.CPF, 
-                   ei.DTNASCIMENTO 
-            FROM EVENTO_INSCRICAO ei, EVENTO1 e, EVENTO_ITEM i
-            WHERE i.IDITEM = ei.IDITEMEVENTO
-              AND e.IDEVENTO = ei.IDEVENTO
-              AND ei.STATUS = 'A' 
-              AND ei.IDPAGAMENTO = %s 
+            SELECT ei.DTPAGAMENTO, e.TITULO, e.ENDERECO, 
+                e.DATAINICIO, e.DATAFIM, e.HRINICIO,
+                CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
+                CASE WHEN i.KM = 0
+                    THEN i.MODALIDADE
+                    ELSE CONCAT(i.KM, ' KM') 
+                END AS KM_DESCRICAO, 
+                ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, 
+                ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, 
+                e.OBS, ei.CPF, ei.DTNASCIMENTO 
+            FROM EVENTO_INSCRICAO ei
+            INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
+            INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
+            WHERE ei.STATUS = 'A' 
+            AND ei.IDPAGAMENTO = %s 
         ''', (payment_id,))
         
         receipt_data = cur.fetchone()
@@ -844,31 +824,21 @@ def comprovanteemail(payment_id):
         cur = mysql.connection.cursor()
         # Execute a SQL com o payment_id
         cur.execute('''
-            SELECT ei.DTPAGAMENTO,
-                   e.TITULO, 
-                   e.ENDERECO, 
-                   e.DATAINICIO,
-                   e.DATAFIM,
-                   e.HRINICIO,
-                   CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
-                   CASE WHEN i.KM=0
-                       THEN i.MODALIDADE
-                       ELSE CONCAT(i.KM,' KM') 
-                   END AS KM_DESCRICAO, 
-                   ei.VLINSCRICAO, 
-                   ei.VLTOTAL, 
-                   ei.FORMAPGTO, 
-                   ei.IDPAGAMENTO, 
-                   ei.FLEMAIL, 
-                   ei.IDINSCRICAO, 
-                   e.OBS, 
-                   ei.CPF, 
-                   ei.DTNASCIMENTO 
-            FROM EVENTO_INSCRICAO ei, EVENTO1 e, EVENTO_ITEM i
-            WHERE i.IDITEM = ei.IDITEMEVENTO
-              AND e.IDEVENTO = ei.IDEVENTO
-              AND ei.STATUS = 'A' 
-              AND ei.IDPAGAMENTO = %s 
+            SELECT ei.DTPAGAMENTO, e.TITULO, e.ENDERECO, 
+                e.DATAINICIO, e.DATAFIM, e.HRINICIO,
+                CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
+                CASE WHEN i.KM = 0
+                    THEN i.MODALIDADE
+                    ELSE CONCAT(i.KM, ' KM') 
+                END AS KM_DESCRICAO, 
+                ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, 
+                ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, 
+                e.OBS, ei.CPF, ei.DTNASCIMENTO 
+            FROM EVENTO_INSCRICAO ei
+            INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
+            INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
+            WHERE ei.STATUS = 'A' 
+            AND ei.IDPAGAMENTO = %s  
         ''', (payment_id,))
         
         receipt_data = cur.fetchone()
