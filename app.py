@@ -5545,7 +5545,7 @@ def visualizar_evento(dslink):
                 FROM EVENTO_INSCRICAO 
                 WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
                 CASE 
-                    WHEN CURDATE() < eil.DTINICIO THEN
+                    WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) < eil.DTINICIO THEN
                         CASE 
                             WHEN EXISTS (
                                 SELECT 1 
@@ -5559,12 +5559,12 @@ def visualizar_evento(dslink):
                             ) THEN 'ABERTO'
                             ELSE 'NÃO INICIADO'
                         END
-                    WHEN CURDATE() BETWEEN eil.DTINICIO AND eil.DTFIM THEN
+                    WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) BETWEEN eil.DTINICIO AND eil.DTFIM THEN
                         CASE 
                             WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < eil.NUATLETAS THEN 'ABERTO'
                             ELSE 'ESGOTADO'
                         END
-                    WHEN CURDATE() > eil.DTFIM THEN 'ENCERRADO'
+                    WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) > eil.DTFIM THEN 'ENCERRADO'
                     ELSE 'ENCERRADO'
                 END AS STATUS_LOTE
             FROM EVENTO_ITEM_LOTES eil
@@ -5574,7 +5574,7 @@ def visualizar_evento(dslink):
                 CASE 
                     WHEN (
                         CASE 
-                            WHEN CURDATE() < eil.DTINICIO THEN
+                            WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) < eil.DTINICIO THEN
                                 CASE 
                                     WHEN EXISTS (
                                         SELECT 1 
@@ -5588,19 +5588,19 @@ def visualizar_evento(dslink):
                                     ) THEN 'ABERTO'
                                     ELSE 'NÃO INICIADO'
                                 END
-                            WHEN CURDATE() BETWEEN eil.DTINICIO AND eil.DTFIM THEN
+                            WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) BETWEEN eil.DTINICIO AND eil.DTFIM THEN
                                 CASE 
                                     WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < eil.NUATLETAS THEN 'ABERTO'
                                     ELSE 'ESGOTADO'
                                 END
-                            WHEN CURDATE() > eil.DTFIM THEN 'ENCERRADO'
+                            WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) > eil.DTFIM THEN 'ENCERRADO'
                             ELSE 'ENCERRADO'
                         END
                     ) = 'ABERTO' THEN 1
                     ELSE 2
                 END,
                 eil.LOTE, 
-                ei.KM
+                ei.KM;
         """, (evento_id,))
         
         lotes_data = cur.fetchall()
