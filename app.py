@@ -115,7 +115,7 @@ def add_csp_header(f):
 
 ###########################
 
-
+# ANTIGA - VERIFICAR SE APAGA
 @app.route('/obter_eventos_ativos', methods=['GET'])
 def obter_eventos_ativos():
     """Rota para obter eventos ativos para exibição na página principal"""
@@ -129,7 +129,7 @@ def obter_eventos_ativos():
                 CONCAT(SUBSTR(INICIO_INSCRICAO,1,10),' A ',
                        SUBSTR(FIM_INSCRICAO,1,10)) AS PERIODO_INSCRICAO,
                 ROTA
-            FROM EVENTO
+            FROM EVENTO_1
             WHERE ATIVO = 'S' AND IDORGANIZADOR = 2
             ORDER BY DTINICIO
         """)
@@ -907,7 +907,7 @@ def get_evento_data():
                 E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
                 M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
                 M.VLINSCRICAO, M.VLMEIA, M.VLTAXA
-            FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+            FROM EVENTO_1 E, EVENTO_MODALIDADE M
             WHERE M.IDEVENTO = E.IDEVENTO
                 AND E.IDEVENTO = 1
         ''')
@@ -961,7 +961,7 @@ def cupom200k():
                 E.LOCAL, E.CIDADEUF, E.INICIO_INSCRICAO, E.FIM_INSCRICAO,
                 M.IDITEM, M.DESCRICAO AS MODALIDADE, M.DISTANCIA, M.KM,
                 M.VLINSCRICAO, M.VLMEIA, M.VLTAXA, E.INICIO_INSCRICAO_EXT, E.FIM_INSCRICAO_EXT
-            FROM ecmrun.EVENTO E, ecmrun.EVENTO_MODALIDADE M
+            FROM EVENTO_1 E, EVENTO_MODALIDADE M
             WHERE M.IDEVENTO = E.IDEVENTO
                 AND E.IDEVENTO = 1
         ''')
@@ -1275,11 +1275,237 @@ def voltar_para_evento():
         # Se não tem página de origem definida, redireciona para uma página padrão
         return redirect('/')  # ou qualquer página padrão que você queira
 
+# @app.route('/gerar-pix', methods=['POST'])
+# def gerar_pix():
+#     try:
+#         data = request.get_json()
+#         # Add more robust validation and logging
+#         print(f"Raw data received: {data}")
+        
+#         # More robust parsing with better error handling
+#         try:
+#             valor_total = round(float(data.get('valor_total', 0)), 2)
+#             valor_atual = round(float(data.get('valor_atual', 0)), 2)
+#             valor_taxa = round(float(data.get('valor_taxa', 0)), 2)
+#         except (ValueError, TypeError) as e:
+#             print(f"Error parsing values: {str(e)}")
+#             print(f"valor_total: {data.get('valor_total')}, type: {type(data.get('valor_total'))}")
+#             print(f"valor_atual: {data.get('valor_atual')}, type: {type(data.get('valor_atual'))}")
+#             print(f"valor_taxa: {data.get('valor_taxa')}, type: {type(data.get('valor_taxa'))}")
+            
+#             # Try to convert from string with comma to float
+#             try:
+#                 valor_total = round(float(str(data.get('valor_total', '0')).replace(',', '.')), 2)
+#                 valor_atual = round(float(str(data.get('valor_atual', '0')).replace(',', '.')), 2)
+#                 valor_taxa = round(float(str(data.get('valor_taxa', '0')).replace(',', '.')), 2)
+#                 print(f"After conversion: valor_total={valor_total}, valor_atual={valor_atual}, valor_taxa={valor_taxa}")
+#             except Exception as conversion_error:
+#                 print(f"Conversion attempt failed: {str(conversion_error)}")
+#                 return jsonify({
+#                     'success': False,
+#                     'message': 'Erro ao processar valores. Verifique se os valores são numéricos válidos.'
+#                 }), 400
+        
+#         # Store in session
+#         session['valorTotal'] = valor_total
+#         session['valorAtual'] = valor_atual
+#         session['valorTaxa'] = valor_taxa
+#         session['formaPagto'] = 'PIX'
+        
+#         # Validate minimum transaction amount
+#         if valor_total < 1:
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Valor mínimo da transação deve ser maior que R$ 1,00'
+#             }), 400
+        
+#         print("=== DEBUG: Iniciando geração do PIX ===")
+#         print(f"Valor total processado: {valor_total}")
+#         print(f"Valor atual: {valor_atual}")
+#         print(f"Valor taxa: {valor_taxa}")
+        
+#         # Get payer info and validate it's present
+#         email = session.get('user_email')
+#         nome_completo = session.get('user_name', '')
+        
+#         # Fallback to data from request if session is empty
+#         if not email:
+#             email = data.get('email')
+#             print(f"Email not found in session, using from request: {email}")
+        
+#         if not nome_completo:
+#             nome_completo = data.get('nome', '')
+#             print(f"Nome not found in session, using from request: {nome_completo}")
+            
+#         nome_parts = nome_completo.split() if nome_completo else ['', '']
+        
+#         cpf = session.get('user_cpf')
+#         if not cpf:
+#             cpf = data.get('cpf')
+#             print(f"CPF not found in session, using from request: {cpf}")
+            
+#         # Validate required fields
+#         if not email:
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Email do pagador é obrigatório'
+#             }), 400
+            
+#         if not cpf:
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'CPF do pagador é obrigatório'
+#             }), 400
+            
+#         # Clean CPF format
+#         cpf_cleaned = re.sub(r'\D', '', cpf) if cpf else ""
+#         session['CPF'] = cpf_cleaned
+
+#         print(f"Dados do pagador finais:")
+#         print(f"- Email: {email}")
+#         print(f"- Nome: {nome_completo}")
+#         print(f"- CPF: {cpf_cleaned}")
+
+#         # Try to call email function safely
+#         try:
+#             fn_email(email)
+#         except Exception as email_error:
+#             print(f"Warning: Error in fn_email: {str(email_error)}")
+#             # Continue processing even if email function fails
+
+#         # Generate unique reference
+#         external_reference = str(uuid.uuid4())
+
+#         preference_data = {
+#             "items": [{
+#                 "id": "Pagamnento de Inscrição",
+#                 "title": "ECM RUN - Inscrição",
+#                 "description": "Inscrição Corrida",
+#                 "category_id": "sports_tickets",
+#                 "quantity": 1,
+#                 "unit_price": valor_total
+#             }],
+#             "statement_descriptor": "ECMRUM_INSCRICAO"
+#         }
+        
+#         preference_result = sdk.preference().create(preference_data)
+
+#         # Create payment data
+#         payment_data = {
+#             "transaction_amount": float(valor_total),  # Ensure it's a float
+#             "description": "ECM RUN - Inscrição",
+#             "payment_method_id": "pix",
+#             "payer": {
+#                 "email": email,
+#                 "first_name": nome_parts[0] if nome_parts else "",
+#                 "last_name": " ".join(nome_parts[1:]) if len(nome_parts) > 1 else "",
+#                 "identification": {
+#                     "type": "CPF",
+#                     "number": cpf_cleaned
+#                 }   
+#             },
+#             "notification_url": "https://ecmrun.com.br/webhook",
+#             "external_reference": external_reference
+#         }
+        
+#         print("Dados do pagamento preparados:")
+#         print(json.dumps(payment_data, indent=2))
+
+#         # Create payment in Mercado Pago
+#         print("Enviando requisição para o Mercado Pago...")
+        
+#         try:
+#             payment_response = sdk.payment().create(payment_data)
+#         except Exception as mp_error:
+#             print(f"Erro na comunicação com Mercado Pago: {str(mp_error)}")
+#             return jsonify({
+#                 'success': False,
+#                 'message': f'Erro na comunicação com o gateway de pagamento: {str(mp_error)}'
+#             }), 500
+        
+#         print("Resposta do Mercado Pago recebida")
+        
+#         # Validate response structure
+#         if not payment_response:
+#             print("Erro: Resposta vazia do Mercado Pago")
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Resposta vazia do gateway de pagamento'
+#             }), 500
+            
+#         if "response" not in payment_response:
+#             print(f"Erro: Formato de resposta inesperado: {payment_response}")
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Formato de resposta inesperado do gateway de pagamento'
+#             }), 500
+
+#         payment = payment_response["response"]
+        
+#         # Check for error in response
+#         if "error" in payment:
+#             print(f"Erro retornado pelo Mercado Pago: {payment}")
+#             return jsonify({
+#                 'success': False,
+#                 'message': f'Erro do gateway de pagamento: {payment.get("message", "Erro desconhecido")}'
+#             }), 400
+        
+#         # Check for QR code data
+#         if "point_of_interaction" not in payment:
+#             print("Erro: point_of_interaction não encontrado na resposta")
+#             print(f"Resposta completa: {json.dumps(payment, indent=2)}")
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Dados do PIX não disponíveis'
+#             }), 500
+            
+#         if "transaction_data" not in payment["point_of_interaction"]:
+#             print("Erro: transaction_data não encontrado em point_of_interaction")
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Dados do QR code não disponíveis'
+#             }), 500
+
+#         # Extract QR code data
+#         qr_code = payment['point_of_interaction']['transaction_data'].get('qr_code', '')
+#         qr_code_base64 = payment['point_of_interaction']['transaction_data'].get('qr_code_base64', '')
+#         payment_id = payment.get('id', '')
+        
+#         if not qr_code or not qr_code_base64 or not payment_id:
+#             print("Erro: Dados do PIX incompletos")
+#             return jsonify({
+#                 'success': False,
+#                 'message': 'Dados do PIX incompletos'
+#             }), 500
+
+#         # Success response
+#         return jsonify({
+#             'success': True,
+#             'qr_code': qr_code,
+#             'qr_code_base64': qr_code_base64,
+#             'payment_id': payment_id
+#         })
+
+#     except Exception as e:
+#         print(f"=== ERRO CRÍTICO: ===")
+#         print(f"Tipo do erro: {type(e)}")
+#         print(f"Mensagem de erro: {str(e)}")
+#         print(f"Stack trace:")
+#         import traceback
+#         traceback.print_exc()
+        
+#         return jsonify({
+#             'success': False,
+#             'message': f'Erro ao gerar PIX: {str(e)}'
+#         }), 500
+
+
+####### GERAR PIX COM WEBHOOK SUPORTE #############################
+
 @app.route('/gerar-pix', methods=['POST'])
 def gerar_pix():
     try:
         data = request.get_json()
-        # Add more robust validation and logging
         print(f"Raw data received: {data}")
         
         # More robust parsing with better error handling
@@ -1344,6 +1570,20 @@ def gerar_pix():
             cpf = data.get('cpf')
             print(f"CPF not found in session, using from request: {cpf}")
             
+        # NOVO: Obter ID do evento
+        id_evento = data.get('id_evento')
+        if not id_evento:
+            id_evento = session.get('id_evento')
+        
+        print(f"ID do evento: {id_evento}")
+
+        # NOVO: Obter ID do evento
+        evento_titulo = data.get('titulo')
+        if not evento_titulo:
+            evento_titulo = session.get('titulo')
+
+        print(f"TITULO: {evento_titulo}")
+            
         # Validate required fields
         if not email:
             return jsonify({
@@ -1357,6 +1597,12 @@ def gerar_pix():
                 'message': 'CPF do pagador é obrigatório'
             }), 400
             
+        if not id_evento:
+            return jsonify({
+                'success': False,
+                'message': 'ID do evento é obrigatório'
+            }), 400
+            
         # Clean CPF format
         cpf_cleaned = re.sub(r'\D', '', cpf) if cpf else ""
         session['CPF'] = cpf_cleaned
@@ -1365,6 +1611,7 @@ def gerar_pix():
         print(f"- Email: {email}")
         print(f"- Nome: {nome_completo}")
         print(f"- CPF: {cpf_cleaned}")
+        print(f"- ID Evento: {id_evento}")
 
         # Try to call email function safely
         try:
@@ -1373,27 +1620,44 @@ def gerar_pix():
             print(f"Warning: Error in fn_email: {str(email_error)}")
             # Continue processing even if email function fails
 
-        # Generate unique reference
-        external_reference = str(uuid.uuid4())
+        # CORREÇÃO IMPORTANTE: Generate external_reference with event and CPF info
+        import time
+        external_reference = f"evento_{id_evento}_cpf_{cpf_cleaned}_timestamp_{int(time.time())}"
+        print(f"External reference criado: {external_reference}")
 
+        # CORREÇÃO: Melhorar preference_data
         preference_data = {
             "items": [{
-                "id": "Pagamnento de Inscrição",
+                "id": f"ECM_RUN_EVENTO_{id_evento}",
                 "title": "ECM RUN - Inscrição",
-                "description": "Inscrição Corrida",
+                "description": f"Inscrição para evento {id_evento}",
                 "category_id": "sports_tickets",
                 "quantity": 1,
                 "unit_price": valor_total
             }],
-            "statement_descriptor": "ECMRUM_INSCRICAO"
+            "statement_descriptor": "ECMRUM_INSCRICAO",
+            "external_reference": external_reference,
+            "notification_url": "https://ecmrun.com.br/webhook",
+            # NOVO: Adicionar back_urls para melhor controle
+            "back_urls": {
+                "success": f"https://ecmrun.com.br/comprovante/",
+                "failure": f"https://ecmrun.com.br/pagamento-falhou",
+                "pending": f"https://ecmrun.com.br/pagamento-pendente"
+            },
+            "auto_return": "approved"
         }
         
-        preference_result = sdk.preference().create(preference_data)
+        try:
+            preference_result = sdk.preference().create(preference_data)
+            print(f"Preference criada: {preference_result}")
+        except Exception as pref_error:
+            print(f"Erro ao criar preference: {str(pref_error)}")
+            # Continue mesmo se a preference falhar
 
-        # Create payment data
+        # CORREÇÃO: Melhorar payment_data com mais informações
         payment_data = {
-            "transaction_amount": float(valor_total),  # Ensure it's a float
-            "description": "ECM RUN - Inscrição",
+            "transaction_amount": float(valor_total),
+            "description": f"ECM RUN - Inscrição Evento {id_evento}",
             "payment_method_id": "pix",
             "payer": {
                 "email": email,
@@ -1405,9 +1669,27 @@ def gerar_pix():
                 }   
             },
             "notification_url": "https://ecmrun.com.br/webhook",
-            "external_reference": external_reference
+            "external_reference": external_reference,
+            # NOVO: Adicionar informações adicionais
+            "additional_info": {
+                "items": [{
+                    "id": f"ECM_RUN_EVENTO_{id_evento}",
+                    "title": "Inscrição de Evento",
+                    "description": f"Inscrição para evento {id_evento}",
+                    "category_id": "SPORTS_EVENT",
+                    "quantity": 1,
+                    "unit_price": valor_atual
+                }],
+                "payer": {
+                    "first_name": nome_parts[0] if nome_parts else "",
+                    "last_name": " ".join(nome_parts[1:]) if len(nome_parts) > 1 else "",
+                    "registration_date": datetime.now().isoformat()
+                },
+                "ip_address": request.remote_addr if hasattr(request, 'remote_addr') else "127.0.0.1"
+            }
         }
-        
+
+
         print("Dados do pagamento preparados:")
         print(json.dumps(payment_data, indent=2))
 
@@ -1478,12 +1760,29 @@ def gerar_pix():
                 'message': 'Dados do PIX incompletos'
             }), 500
 
+        # # NOVO: Registrar o pagamento criado no banco (opcional, para controle)
+        # try:
+        #     registrar_pagamento_pendente(
+        #         cpf=cpf_cleaned,
+        #         id_evento=id_evento,
+        #         payment_id=payment_id,
+        #         valor_total=valor_total,
+        #         external_reference=external_reference
+        #     )
+        # except Exception as db_error:
+        #     print(f"Warning: Erro ao registrar pagamento no banco: {str(db_error)}")
+        #     # Continue mesmo se o registro falhar
+
+        print(f"PIX gerado com sucesso - Payment ID: {payment_id}")
+        print(f"External Reference: {external_reference}")
+
         # Success response
         return jsonify({
             'success': True,
             'qr_code': qr_code,
             'qr_code_base64': qr_code_base64,
-            'payment_id': payment_id
+            'payment_id': payment_id,
+            'external_reference': external_reference  # Útil para debug
         })
 
     except Exception as e:
@@ -1498,6 +1797,8 @@ def gerar_pix():
             'success': False,
             'message': f'Erro ao gerar PIX: {str(e)}'
         }), 500
+
+#######################
 
 
 @app.route('/recuperar-qrcode/<payment_id>')
@@ -1891,108 +2192,716 @@ def inscricao_cartao(cpf):
         }), 500
 
 
+# @app.route('/webhook', methods=['POST'])
+# def webhook():
+#     data = request.json
+#     app.logger.info(f"Webhook received: {data}")
+    
+#     if data['type'] == 'payment':
+#         payment_info = sdk.payment().get(data['data']['id'])
+#         app.logger.info(f"Payment info: {payment_info}")
+    
+#     return jsonify({'status': 'ok'}), 200
 
+
+
+# WEBHOOK COMPLETO - Processa pagamento e envia emails automaticamente
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.json
-    app.logger.info(f"Webhook received: {data}")
-    
-    if data['type'] == 'payment':
-        payment_info = sdk.payment().get(data['data']['id'])
-        app.logger.info(f"Payment info: {payment_info}")
-    
-    return jsonify({'status': 'ok'}), 200
-
-
-@app.route('/criar_preferencia', methods=['POST'])
-def criar_preferencia():
-
-    app.logger.info("Recebendo requisição para criar preferência")
-    app.logger.debug(f"Dados recebidos: {request.get_json()}")
-    app.logger.debug(f"MP_ACCESS_TOKEN configurado: {'MP_ACCESS_TOKEN' in os.environ}")
-
     try:
-        data = request.get_json()
+        # Log da requisição recebida
+        data = request.json
+        app.logger.info(f"Webhook received: {data}")
         
-        # Log dos dados recebidos
-        print("Dados recebidos:", data)
-        
-        # Get values from localStorage (sent in request)
-        valor_total = float(data.get('valortotal', 0))
-        valor_taxa = float(data.get('valortaxa', 0))
-        nome_completo = data.get('user_name', '')
-        
-        # Split full name into first and last name
-        nome_parts = nome_completo.split(' ', 1)
-        first_name = nome_parts[0]
-        last_name = nome_parts[1] if len(nome_parts) > 1 else ''
-        
-        preco_final = valor_total
-        
-        print("Preço final calculado:", preco_final)
-        
-        # Configurar URLs de retorno
-        base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
-
-        back_urls = {
-            "success": f"{base_url}/aprovado",
-            "failure": f"{base_url}/negado",
-            "pending": f"{base_url}/negado"
-        }
-
-        preference_data = {
-            "items": [
-                {
-                    "id": "ECM RUN TICHETS",
-                    "title": "Inscrição de Corrida",
-                    "quantity": 1,
-                    "unit_price": float(preco_final),
-                    "description": "Inscrição de Evento",
-                    "category_id": "sports_tickets"
-                }
-            ],
-            "payer": {
-                "first_name": first_name,
-                "last_name": last_name,
-                "email": data.get('user_email')
-            },
-            "payment_methods": {
-                "excluded_payment_methods": [
-                    {"id": "bolbradesco"},
-                    {"id": "pix"}
-                ],
-                "excluded_payment_types": [
-                    {"id": "ticket"},
-                    {"id": "bank_transfer"}
-                ],
-                "installments": 12
-            },
-            "back_urls": back_urls,
-            "auto_return": "approved",
-            "statement_descriptor": "ECM RUN",
-            "external_reference": data.get('user_idatleta'),
-            "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
-        }
-        
-        # Log da preference antes de criar
-        print("Preference data:", preference_data)
-        
-        preference_response = sdk.preference().create(preference_data)
-        print("Resposta do MP:", preference_response)
-        
-        if "response" not in preference_response:
-            raise Exception("Erro na resposta do Mercado Pago: " + str(preference_response))
+        # Verificar se é uma notificação de pagamento
+        if data and data.get('type') == 'payment':
+            payment_id = data['data']['id']
             
-        preference = preference_response["response"]
+            app.logger.info(f"Processando webhook para payment_id: {payment_id}")
+            
+            # Verificar se já processamos este pagamento
+            if pagamento_ja_processado_webhook(payment_id):
+                app.logger.info(f"Pagamento já processado via webhook: {payment_id}")
+                return jsonify({'status': 'already_processed'}), 200
+            
+            # Buscar informações completas do pagamento no Mercado Pago
+            payment_response = sdk.payment().get(payment_id)
+            payment_info = payment_response["response"]
+            
+            app.logger.info(f"Status do pagamento no MP: {payment_info['status']}")
+            
+            # Processar apenas pagamentos aprovados
+            if payment_info['status'] == 'approved':
+                
+                # ETAPA 1: PROCESSAR O PAGAMENTO (código da rota verificar-pagamento)
+                sucesso_processamento = processar_pagamento_aprovado_webhook(payment_id, payment_info)
+                
+                if sucesso_processamento:
+                    # ETAPA 2: ENVIAR EMAILS (código da rota comprovante)
+                    try:
+                        enviar_emails_comprovante_webhook(payment_id)
+                        app.logger.info(f"Pagamento processado e emails enviados com sucesso: {payment_id}")
+                    except Exception as email_error:
+                        app.logger.error(f"Erro ao enviar emails para payment_id {payment_id}: {str(email_error)}")
+                        # Pagamento foi processado, mas email falhou - não é erro crítico
+                else:
+                    app.logger.error(f"Erro ao processar pagamento via webhook: {payment_id}")
+            
+            elif payment_info['status'] in ['cancelled', 'rejected']:
+                app.logger.info(f"Pagamento {payment_info['status']}: {payment_id}")
+                # Opcional: marcar como cancelado no banco
         
-        return jsonify({
-            "id": preference["id"],
-            "init_point": preference["init_point"]
-        })
-    
+        # Sempre retornar 200 OK para o Mercado Pago
+        return jsonify({'status': 'ok'}), 200
+        
     except Exception as e:
-        print("Erro detalhado:", str(e))
-        return jsonify({"error": str(e)}), 400
+        app.logger.error(f"Erro crítico no webhook: {str(e)}")
+        import traceback
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
+        # Mesmo com erro, retorna 200 para não gerar reenvios desnecessários
+        return jsonify({'status': 'error', 'message': str(e)}), 200
+
+
+def pagamento_ja_processado_webhook(payment_id):
+    """
+    Verifica se o pagamento já foi processado para evitar duplicações
+    """
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT STATUS FROM EVENTO_INSCRICAO 
+            WHERE IDPAGAMENTO = %s AND STATUS = 'A'
+        """, (payment_id,))
+        
+        resultado = cur.fetchone()
+        cur.close()
+        
+        return resultado is not None
+        
+    except Exception as e:
+        app.logger.error(f"Erro ao verificar pagamento processado: {str(e)}")
+        return False
+
+
+def processar_pagamento_aprovado_webhook(payment_id, payment_info):
+    """
+    Processa o pagamento aprovado - CÓDIGO DA ROTA verificar-pagamento
+    Retorna True se processado com sucesso, False caso contrário
+    """
+    try:
+        app.logger.info(f"=== PROCESSAMENTO VIA WEBHOOK INICIADO ===")
+        app.logger.info(f"Payment ID: {payment_id}")
+        
+        # CALCULAR VALORES E TAXAS (mesmo código da rota original)
+        valor_taxa_mp = 0.0
+        valor_liquido = 0.0
+        valor_total_transacao = float(payment_info.get("transaction_amount", 0))
+        
+        if payment_info.get("fee_details"):
+            for fee in payment_info["fee_details"]:
+                valor_taxa_mp += float(fee.get("amount", 0))
+            valor_liquido = valor_total_transacao - valor_taxa_mp
+        else:
+            valor_liquido = valor_total_transacao
+        
+        app.logger.info(f"Valores calculados - Total: R$ {valor_total_transacao:.2f}, Taxa MP: R$ {valor_taxa_mp:.2f}, Líquido: R$ {valor_liquido:.2f}")
+        
+        # BUSCAR REGISTRO NO BANCO
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT IDEVENTO, IDINSCRICAO, STATUS, CPF, EMAIL, NOME, SOBRENOME, 
+                   DTNASCIMENTO, DATANASC, CELULAR, SEXO, TEL_EMERGENCIA, 
+                   CONT_EMERGENCIA, ESTADO, ID_CIDADE, IDPESSOA, VLINSCRICAO
+            FROM EVENTO_INSCRICAO 
+            WHERE IDPAGAMENTO = %s
+        """, (payment_id,))
+        
+        existing_record = cur.fetchone()
+        
+        if not existing_record:
+            app.logger.error(f"Registro não encontrado para payment_id: {payment_id}")
+            cur.close()
+            return False
+        
+        # EXTRAIR DADOS DO REGISTRO
+        (idevento, idinscricao, status_atual, cpf, email, nome, sobrenome, 
+         dt_nascimento, data_nasc, celular, sexo, tel_emergencia, 
+         cont_emergencia, estado, id_cidade, idpessoa_atual, vl_inscricao) = existing_record
+        
+        vl_inscricao_float = float(vl_inscricao) if vl_inscricao is not None else 0.0
+        
+        app.logger.info(f"Processando inscrição {idinscricao} - CPF: {cpf} - Status atual: {status_atual}")
+        
+        # SÓ PROCESSAR SE NÃO ESTIVER APROVADO
+        if status_atual != 'A':
+            
+            # DATA E HORA ATUAL
+            data_e_hora_atual = datetime.now()
+            fuso_horario = timezone('America/Manaus')
+            data_pagamento = data_e_hora_atual.astimezone(fuso_horario)
+            
+            # VERIFICAR/CRIAR PESSOA
+            idpessoa = processar_pessoa_webhook(cur, cpf, email, nome, sobrenome, 
+                                              dt_nascimento, data_nasc, celular, sexo, 
+                                              tel_emergencia, cont_emergencia, estado, 
+                                              id_cidade, data_e_hora_atual, fuso_horario)
+            
+            if not idpessoa:
+                app.logger.error(f"Erro ao processar pessoa para CPF: {cpf}")
+                cur.close()
+                return False
+            
+            # GERAR NÚMERO DO PEITO
+            cur.execute("""
+                SELECT COALESCE(MAX(NUPEITO), 0) + 1 as proximo_peito
+                FROM EVENTO_INSCRICAO 
+                WHERE STATUS = 'A' AND IDEVENTO = %s
+            """, (idevento,))
+            
+            resultado = cur.fetchone()
+            numero_peito = resultado[0] if resultado and resultado[0] else 1
+            
+            # CALCULAR CRÉDITO DA PLATAFORMA
+            vl_credito = valor_liquido - vl_inscricao_float
+            
+            app.logger.info(f"Atualizando inscrição - Número peito: {numero_peito}, VL Crédito: R$ {vl_credito:.2f}")
+            
+            # ATUALIZAR INSCRIÇÃO PARA APROVADA
+            cur.execute("""
+                UPDATE EVENTO_INSCRICAO SET
+                    DTPAGAMENTO = %s,
+                    STATUS = %s,
+                    NUPEITO = %s,
+                    IDPESSOA = %s,
+                    VLPAGO = %s,
+                    VLTAXAMP = %s,
+                    VLLIQUIDO = %s,
+                    VLCREDITO = %s
+                WHERE IDPAGAMENTO = %s
+            """, (
+                data_pagamento,         
+                'A',  # APROVADO
+                numero_peito,
+                idpessoa,
+                valor_total_transacao,
+                valor_taxa_mp,
+                valor_liquido,
+                vl_credito,
+                payment_id
+            ))
+            
+            linhas_afetadas = cur.rowcount
+            mysql.connection.commit()
+            
+            app.logger.info(f"Inscrição atualizada via webhook - Linhas afetadas: {linhas_afetadas}")
+            
+            if linhas_afetadas > 0:
+                cur.close()
+                return True
+            else:
+                app.logger.error(f"Nenhuma linha foi atualizada para payment_id: {payment_id}")
+                cur.close()
+                return False
+        
+        else:
+            app.logger.info(f"Pagamento {payment_id} já estava aprovado")
+            cur.close()
+            return True  # Já processado, mas não é erro
+            
+    except Exception as e:
+        app.logger.error(f"Erro ao processar pagamento via webhook: {str(e)}")
+        import traceback
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
+        if 'cur' in locals():
+            cur.close()
+        return False
+
+
+def processar_pessoa_webhook(cur, cpf, email, nome, sobrenome, dt_nascimento, 
+                           data_nasc, celular, sexo, tel_emergencia, cont_emergencia, 
+                           estado, id_cidade, data_e_hora_atual, fuso_horario):
+    """
+    Processa a criação/atualização da pessoa - MESMO CÓDIGO DA ROTA ORIGINAL
+    """
+    try:
+        # Verificar se existe registro na tabela PESSOA com o CPF
+        cur.execute("SELECT IDPESSOA FROM PESSOA WHERE CPF = %s", (cpf,))
+        pessoa_existente = cur.fetchone()
+        
+        if pessoa_existente:
+            # PESSOA EXISTE - ATUALIZAR
+            idpessoa = pessoa_existente[0]
+            app.logger.info(f"Pessoa encontrada com ID: {idpessoa}. Atualizando dados via webhook...")
+            
+            cur.execute("""
+                UPDATE PESSOA SET
+                    EMAIL = %s,
+                    NOME = %s,
+                    SOBRENOME = %s,
+                    DTNASCIMENTO = %s,
+                    DATANASC = %s,
+                    CELULAR = %s,
+                    SEXO = %s,
+                    TEL_EMERGENCIA = %s,
+                    CONT_EMERGENCIA = %s,
+                    ESTADO = %s,
+                    ID_CIDADE = %s
+                WHERE CPF = %s
+            """, (
+                email, nome, sobrenome, dt_nascimento, data_nasc,
+                celular, sexo, tel_emergencia, cont_emergencia,
+                estado, id_cidade, cpf
+            ))
+            
+        else:
+            # PESSOA NÃO EXISTE - CRIAR
+            app.logger.info("Pessoa não encontrada. Criando novo registro via webhook...")
+            
+            cur.execute("""
+                INSERT INTO PESSOA (
+                    EMAIL, CPF, NOME, SOBRENOME, DATANASC, DTNASCIMENTO,
+                    CELULAR, SEXO, TEL_EMERGENCIA, CONT_EMERGENCIA,
+                    ESTADO, ID_CIDADE, DTCADASTRO
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                email, cpf, nome, sobrenome, data_nasc, dt_nascimento,
+                celular, sexo, tel_emergencia, cont_emergencia,
+                estado, id_cidade, data_e_hora_atual.astimezone(fuso_horario)
+            ))
+            
+            # Buscar o ID da pessoa recém-criada
+            cur.execute("SELECT IDPESSOA FROM PESSOA WHERE CPF = %s", (cpf,))
+            novo_registro = cur.fetchone()
+            
+            if novo_registro:
+                idpessoa = novo_registro[0]
+                app.logger.info(f"Nova pessoa criada via webhook com ID: {idpessoa}")
+            else:
+                app.logger.error("ERRO: Não foi possível recuperar o ID da pessoa criada via webhook")
+                return None
+        
+        return idpessoa
+        
+    except Exception as e:
+        app.logger.error(f"Erro ao processar pessoa via webhook: {str(e)}")
+        return None
+
+
+def enviar_emails_comprovante_webhook(payment_id):
+    """
+    Envia os emails de comprovante - CÓDIGO ADAPTADO DA ROTA comprovante
+    """
+    try:
+        app.logger.info(f"Enviando emails para payment_id: {payment_id}")
+        
+        # BUSCAR DADOS DO COMPROVANTE (mesmo SQL da rota original)
+        cur = mysql.connection.cursor()
+        
+        cur.execute('''
+            SELECT ei.DTPAGAMENTO, e.TITULO, e.ENDERECO, 
+                e.DATAINICIO, e.DATAFIM, e.HRINICIO,
+                CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO, 
+                CASE WHEN i.KM = 0
+                    THEN i.MODALIDADE
+                    ELSE CONCAT(i.KM, ' KM') 
+                END AS KM_DESCRICAO, 
+                ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, 
+                ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, 
+                e.OBS, ei.CPF, ei.DTNASCIMENTO 
+            FROM EVENTO_INSCRICAO ei
+            INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
+            INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
+            WHERE ei.STATUS = 'A' 
+            AND ei.IDPAGAMENTO = %s 
+        ''', (payment_id,))
+        
+        receipt_data = cur.fetchone()
+        
+        if not receipt_data:
+            app.logger.error(f"Dados do comprovante não encontrados para payment_id: {payment_id}")
+            cur.close()
+            return False
+        
+        # PROCESSAR DADOS DO COMPROVANTE (mesmo código da rota original)
+        data_pagamento = receipt_data[0]
+        data_inicio = receipt_data[3]
+        data_fim = receipt_data[4]
+        hr_inicio = receipt_data[5]
+        
+        # Formatar data de pagamento
+        if isinstance(data_pagamento, datetime):
+            data_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M:%S')
+        else:
+            data_formatada = str(data_pagamento)
+        
+        # Formatar data do evento
+        if isinstance(data_inicio, datetime) and isinstance(data_fim, datetime):
+            if data_inicio.date() == data_fim.date():
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio}"
+            else:
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio} - {data_fim.strftime('%d/%m/%Y')}"
+        else:
+            data_evento = f"{data_inicio} {hr_inicio}"
+
+        # Estruturar os dados do comprovante
+        receipt_data_dict = { 
+            'data': data_formatada,
+            'evento': receipt_data[1],
+            'endereco': receipt_data[2],
+            'dataevento': data_evento,
+            'participante': receipt_data[6],
+            'km': receipt_data[7],
+            'valor': f'R$ {receipt_data[8]:,.2f}',
+            'valortotal': f'R$ {receipt_data[9]:,.2f}',
+            'formapgto': receipt_data[10],
+            'inscricao': str(receipt_data[11]),
+            'obs': receipt_data[14] if receipt_data[14] is not None else ''
+        }
+        
+        flemail = receipt_data[12]
+        id_inscricao = receipt_data[13]
+        
+        app.logger.info(f"Dados do comprovante processados - FLEMAIL: {flemail}, ID_INSCRICAO: {id_inscricao}")
+        
+        # ENVIAR EMAILS APENAS SE NÃO FOI ENVIADO ANTES
+        if flemail == 'N':
+            app.logger.info(f"Enviando emails para inscrição {id_inscricao}...")
+            
+            # Enviar email para o participante
+            try:
+                send_email(receipt_data_dict)
+                app.logger.info("Email enviado para o participante com sucesso")
+            except Exception as email_error:
+                app.logger.error(f"Erro ao enviar email para participante: {str(email_error)}")
+                # Continua mesmo se falhar
+            
+            # Enviar notificação para o organizador
+            try:
+                send_organizer_notification(receipt_data_dict)
+                app.logger.info("Email enviado para o organizador com sucesso")
+            except Exception as org_error:
+                app.logger.error(f"Erro ao enviar email para organizador: {str(org_error)}")
+                # Continua mesmo se falhar
+
+            # MARCAR EMAIL COMO ENVIADO
+            cur.execute('''
+                UPDATE EVENTO_INSCRICAO SET FLEMAIL = 'S'
+                WHERE IDINSCRICAO = %s
+            ''', (id_inscricao,))
+
+            mysql.connection.commit()
+            app.logger.info(f"Flag FLEMAIL atualizada para 'S' na inscrição {id_inscricao}")
+        
+        else:
+            app.logger.info(f"Emails já foram enviados anteriormente para inscrição {id_inscricao}")
+        
+        cur.close()
+        return True
+        
+    except Exception as e:
+        app.logger.error(f"Erro ao enviar emails via webhook: {str(e)}")
+        import traceback
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
+        return False
+
+
+# ROTA PARA MONITORAR WEBHOOKS (opcional - para debugging)
+@app.route('/webhook-logs')
+def webhook_logs():
+    """
+    Página para visualizar os últimos pagamentos processados via webhook
+    """
+    try:
+        cur = mysql.connection.cursor()
+        
+        # Buscar últimos pagamentos aprovados
+        cur.execute("""
+            SELECT 
+                ei.IDPAGAMENTO,
+                ei.CPF,
+                CONCAT(ei.NOME, ' ', ei.SOBRENOME) as NOME_COMPLETO,
+                e.TITULO as EVENTO,
+                ei.DTPAGAMENTO,
+                ei.VLTOTAL,
+                ei.FLEMAIL,
+                ei.STATUS
+            FROM EVENTO_INSCRICAO ei
+            INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
+            WHERE ei.STATUS = 'A' 
+            AND ei.DTPAGAMENTO IS NOT NULL
+            ORDER BY ei.DTPAGAMENTO DESC 
+            LIMIT 50
+        """)
+        
+        payments = cur.fetchall()
+        cur.close()
+        
+        return render_template('webhook_logs.html', payments=payments)
+        
+    except Exception as e:
+        app.logger.error(f"Erro ao buscar logs: {str(e)}")
+        return f"Erro ao carregar logs: {str(e)}", 500
+
+
+# ROTA PARA TESTAR O WEBHOOK MANUALMENTE (só para desenvolvimento)
+@app.route('/test-webhook', methods=['POST'])
+def test_webhook():
+    """
+    Rota para testar o processamento do webhook em desenvolvimento
+    Uso: POST /test-webhook com {"payment_id": "123456789"}
+    """
+    if app.debug:  # Só funciona em modo debug
+        try:
+            data = request.get_json()
+            payment_id = data.get('payment_id')
+            
+            if not payment_id:
+                return jsonify({'error': 'payment_id é obrigatório'}), 400
+            
+            # Simular dados do webhook
+            test_data = {
+                "type": "payment",
+                "data": {
+                    "id": payment_id
+                }
+            }
+            
+            app.logger.info(f"Testando webhook para payment_id: {payment_id}")
+            
+            # Processar usando a mesma lógica do webhook real
+            payment_response = sdk.payment().get(payment_id)
+            payment_info = payment_response["response"]
+            
+            if payment_info['status'] == 'approved':
+                sucesso = processar_pagamento_aprovado_webhook(payment_id, payment_info)
+                
+                if sucesso:
+                    enviar_emails_comprovante_webhook(payment_id)
+                    return jsonify({
+                        'success': True, 
+                        'message': 'Pagamento processado e emails enviados com sucesso'
+                    })
+                else:
+                    return jsonify({
+                        'success': False, 
+                        'message': 'Erro ao processar pagamento'
+                    }), 500
+            else:
+                return jsonify({
+                    'success': False, 
+                    'message': f'Pagamento não está aprovado. Status: {payment_info["status"]}'
+                }), 400
+                
+        except Exception as e:
+            app.logger.error(f"Erro no teste do webhook: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+    else:
+        return jsonify({'error': 'Disponível apenas em modo debug'}), 403
+
+
+# FUNÇÃO PARA VERIFICAR STATUS DO WEBHOOK (útil para monitoramento)
+@app.route('/webhook-status/<payment_id>')
+def webhook_status(payment_id):
+    """
+    Verifica se um pagamento foi processado via webhook
+    """
+    try:
+        cur = mysql.connection.cursor()
+        
+        cur.execute("""
+            SELECT 
+                STATUS,
+                DTPAGAMENTO,
+                FLEMAIL,
+                VLTOTAL,
+                CONCAT(NOME, ' ', SOBRENOME) as NOME
+            FROM EVENTO_INSCRICAO 
+            WHERE IDPAGAMENTO = %s
+        """, (payment_id,))
+        
+        resultado = cur.fetchone()
+        cur.close()
+        
+        if resultado:
+            status, dt_pagamento, flemail, vl_total, nome = resultado
+            
+            return jsonify({
+                'found': True,
+                'payment_id': payment_id,
+                'status': status,
+                'dt_pagamento': dt_pagamento.isoformat() if dt_pagamento else None,
+                'email_enviado': flemail == 'S',
+                'valor_total': float(vl_total) if vl_total else 0,
+                'nome': nome,
+                'processado_webhook': status == 'A' and dt_pagamento is not None
+            })
+        else:
+            return jsonify({
+                'found': False,
+                'payment_id': payment_id,
+                'message': 'Pagamento não encontrado'
+            })
+            
+    except Exception as e:
+        app.logger.error(f"Erro ao verificar status do webhook: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+# FUNÇÃO PARA REPROCESSAR UM PAGAMENTO (caso algo dê errado)
+@app.route('/reprocessar-pagamento/<payment_id>', methods=['POST'])
+def reprocessar_pagamento(payment_id):
+    """
+    Reprocessa um pagamento específico (útil se o webhook falhar)
+    """
+    try:
+        app.logger.info(f"Reprocessamento manual solicitado para payment_id: {payment_id}")
+        
+        # Buscar informações do pagamento no Mercado Pago
+        payment_response = sdk.payment().get(payment_id)
+        payment_info = payment_response["response"]
+        
+        if payment_info['status'] != 'approved':
+            return jsonify({
+                'success': False,
+                'message': f'Pagamento não está aprovado. Status atual: {payment_info["status"]}'
+            }), 400
+        
+        # Verificar se já foi processado
+        if pagamento_ja_processado_webhook(payment_id):
+            # Se já foi processado, só reenvia os emails se necessário
+            try:
+                enviar_emails_comprovante_webhook(payment_id)
+                return jsonify({
+                    'success': True,
+                    'message': 'Pagamento já estava processado. Emails reenviados com sucesso.'
+                })
+            except Exception as email_error:
+                return jsonify({
+                    'success': False,
+                    'message': f'Pagamento já processado, mas erro ao reenviar emails: {str(email_error)}'
+                }), 500
+        
+        # Processar pagamento
+        sucesso_processamento = processar_pagamento_aprovado_webhook(payment_id, payment_info)
+        
+        if sucesso_processamento:
+            # Enviar emails
+            try:
+                enviar_emails_comprovante_webhook(payment_id)
+                return jsonify({
+                    'success': True,
+                    'message': 'Pagamento reprocessado e emails enviados com sucesso'
+                })
+            except Exception as email_error:
+                return jsonify({
+                    'success': True,
+                    'message': f'Pagamento processado com sucesso, mas erro ao enviar emails: {str(email_error)}'
+                })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Erro ao reprocessar pagamento'
+            }), 500
+            
+    except Exception as e:
+        app.logger.error(f"Erro no reprocessamento: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': f'Erro no reprocessamento: {str(e)}'
+        }), 500
+
+
+######### fim da implementação do webhook #####################################
+
+# @app.route('/criar_preferencia', methods=['POST'])
+# def criar_preferencia():
+
+#     app.logger.info("Recebendo requisição para criar preferência")
+#     app.logger.debug(f"Dados recebidos: {request.get_json()}")
+#     app.logger.debug(f"MP_ACCESS_TOKEN configurado: {'MP_ACCESS_TOKEN' in os.environ}")
+
+#     try:
+#         data = request.get_json()
+        
+#         # Log dos dados recebidos
+#         print("Dados recebidos:", data)
+        
+#         # Get values from localStorage (sent in request)
+#         valor_total = float(data.get('valortotal', 0))
+#         valor_taxa = float(data.get('valortaxa', 0))
+#         nome_completo = data.get('user_name', '')
+        
+#         # Split full name into first and last name
+#         nome_parts = nome_completo.split(' ', 1)
+#         first_name = nome_parts[0]
+#         last_name = nome_parts[1] if len(nome_parts) > 1 else ''
+        
+#         preco_final = valor_total
+        
+#         print("Preço final calculado:", preco_final)
+        
+#         # Configurar URLs de retorno
+#         base_url = request.url_root.rstrip('/')  # Remove trailing slash if present
+
+#         back_urls = {
+#             "success": f"{base_url}/aprovado",
+#             "failure": f"{base_url}/negado",
+#             "pending": f"{base_url}/negado"
+#         }
+
+#         preference_data = {
+#             "items": [
+#                 {
+#                     "id": "ECM RUN TICHETS",
+#                     "title": "Inscrição de Corrida",
+#                     "quantity": 1,
+#                     "unit_price": float(preco_final),
+#                     "description": "Inscrição de Evento",
+#                     "category_id": "sports_tickets"
+#                 }
+#             ],
+#             "payer": {
+#                 "first_name": first_name,
+#                 "last_name": last_name,
+#                 "email": data.get('user_email')
+#             },
+#             "payment_methods": {
+#                 "excluded_payment_methods": [
+#                     {"id": "bolbradesco"},
+#                     {"id": "pix"}
+#                 ],
+#                 "excluded_payment_types": [
+#                     {"id": "ticket"},
+#                     {"id": "bank_transfer"}
+#                 ],
+#                 "installments": 12
+#             },
+#             "back_urls": back_urls,
+#             "auto_return": "approved",
+#             "statement_descriptor": "ECM RUN",
+#             "external_reference": data.get('user_idatleta'),
+#             "notification_url": f"{back_urls['success'].rsplit('/', 1)[0]}/webhook"
+#         }
+        
+#         # Log da preference antes de criar
+#         print("Preference data:", preference_data)
+        
+#         preference_response = sdk.preference().create(preference_data)
+#         print("Resposta do MP:", preference_response)
+        
+#         if "response" not in preference_response:
+#             raise Exception("Erro na resposta do Mercado Pago: " + str(preference_response))
+            
+#         preference = preference_response["response"]
+        
+#         return jsonify({
+#             "id": preference["id"],
+#             "init_point": preference["init_point"]
+#         })
+    
+#     except Exception as e:
+#         print("Erro detalhado:", str(e))
+#         return jsonify({"error": str(e)}), 400
 
 
 @app.route('/pesquisa-cupom/<int:categoria_id>/<cpf>/<cupom>')
@@ -3238,7 +4147,7 @@ def obter_data_evento():
         cur = mysql.connection.cursor()
         cur.execute("""
             SELECT DATAHORAEVENTO 
-            FROM EVENTO 
+            FROM EVENTO1 
             WHERE IDEVENTO = 1
         """)
         row = cur.fetchone()
@@ -3407,7 +4316,7 @@ def certificado200k_buscar_atleta():
               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 0 AND IDATLETA = a.IDATLETA), 
               (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = 200 AND IDATLETA = a.IDATLETA))) 
               AS TEMPO_TOTAL,
-              (SELECT DETALHE FROM EVENTO WHERE IDEVENTO = 1) AS DATAFIM
+              (SELECT DETALHE FROM EVENTO_1 WHERE IDEVENTO = 1) AS DATAFIM
             FROM ATLETA a
             WHERE a.IDATLETA = %s
         """, (idatleta,))
@@ -3436,7 +4345,7 @@ def certificado200k_buscar_atleta():
                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_INI AND IDEA = ea.IDEA), 
                   (SELECT DATA_HORA FROM PROVA_PARCIAIS_200K WHERE KM = ea.KM_FIM AND IDEA = ea.IDEA))) 
                   AS TEMPO_TOTAL,
-                ea.KM_INI, ea.KM_FIM, (SELECT DETALHE FROM EVENTO WHERE IDEVENTO = 1) AS DATAFIM
+                ea.KM_INI, ea.KM_FIM, (SELECT DETALHE FROM EVENTO_1 WHERE IDEVENTO = 1) AS DATAFIM
                 FROM ATLETA a, EQUIPE_ATLETAS ea
                 WHERE ea.IDATLETA = a.IDATLETA 
                 AND a.IDATLETA = %s
@@ -4523,7 +5432,7 @@ def get_lote_inscricao(iditem):
               (SELECT ROUND((VLINSCRICAO / 2) + ((VLINSCRICAO / 2) * PCTAXA / 100), 2) FROM EVENTO_ITENS WHERE IDITEM = ei.IDITEM_ULTIMO_LOTE) AS VL_TOTAL_MEIA,
               e.DESCRICAO AS TITULO, e.IDEVENTO
             FROM EVENTO_ITENS ei
-            JOIN EVENTO e ON ei.IDEVENTO = e.IDEVENTO
+            JOIN EVENTO_1 e ON ei.IDEVENTO = e.IDEVENTO
             WHERE ei.IDITEM = %s
         """, (iditem,))
         
@@ -4717,7 +5626,7 @@ def api_lote_inscricao(iditem):
                 ei.DELOTE,
                 e.DESCRICAO AS TITULO
             FROM EVENTO_ITENS ei
-            JOIN EVENTO e ON ei.IDEVENTO = e.IDEVENTO
+            JOIN EVENTO_1 e ON ei.IDEVENTO = e.IDEVENTO
             WHERE ei.IDITEM = %s
         """, (iditem,))
 
@@ -4903,7 +5812,7 @@ def get_minhas_inscricoes():
                 e.OBS
             FROM EVENTO_INSCRICAO ei
             INNER JOIN EVENTO_ITENS i ON i.IDITEM = ei.IDITEMEVENTO
-            INNER JOIN EVENTO e ON e.IDEVENTO = ei.IDEVENTO
+            INNER JOIN EVENTO_1 e ON e.IDEVENTO = ei.IDEVENTO
             WHERE ei.STATUS = 'A'
               AND ei.DTNASCIMENTO = %s
               AND ei.CPF = %s
@@ -4998,7 +5907,7 @@ def lista_eventos_direto():
                 e.OBS
             FROM EVENTO_INSCRICAO ei
             INNER JOIN EVENTO_ITENS i ON i.IDITEM = ei.IDITEMEVENTO
-            INNER JOIN EVENTO e ON e.IDEVENTO = ei.IDEVENTO
+            INNER JOIN EVENTO_1 e ON e.IDEVENTO = ei.IDEVENTO
             WHERE ei.STATUS = 'A'
               AND ei.DTNASCIMENTO = %s
               AND ei.CPF = %s
@@ -5719,7 +6628,7 @@ def get_lotes(evento_id):
         cursor = mysql.connection.cursor()
         
         # Primeiro, vamos testar se o evento existe
-        cursor.execute("SELECT COUNT(*) FROM EVENTO WHERE IDEVENTO = %s", (evento_id,))
+        cursor.execute("SELECT COUNT(*) FROM EVENTO1 WHERE IDEVENTO = %s", (evento_id,))
         if cursor.fetchone()[0] == 0:
             cursor.close()
             return jsonify({'error': 'Evento não encontrado'}), 404
@@ -5933,7 +6842,7 @@ def create_item_for_evento(evento_id):
         cursor = mysql.connection.cursor()
         
         # Verificar se o evento existe
-        cursor.execute("SELECT IDEVENTO FROM EVENTO WHERE IDEVENTO = %s", (evento_id,))
+        cursor.execute("SELECT IDEVENTO FROM EVENTO1 WHERE IDEVENTO = %s", (evento_id,))
         if not cursor.fetchone():
             cursor.close()
             return jsonify({'error': 'Evento não encontrado'}), 404
@@ -6237,7 +7146,7 @@ def create_item():
         cursor = mysql.connection.cursor()
         
         # Verificar se o evento existe
-        cursor.execute("SELECT IDEVENTO FROM EVENTO WHERE IDEVENTO = %s", (data['idevento'],))
+        cursor.execute("SELECT IDEVENTO FROM EVENTO1 WHERE IDEVENTO = %s", (data['idevento'],))
         if not cursor.fetchone():
             cursor.close()
             return jsonify({'error': 'Evento não encontrado'}), 404
@@ -6952,5 +7861,4 @@ def excluir_imagem(imagem_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
 
