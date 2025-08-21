@@ -2219,25 +2219,24 @@ def webhook():
             
             app.logger.info(f"Processando webhook para payment_id: {payment_id}")
             
-            # Verificar se já processamos este pagamento
-            if pagamento_ja_processado_webhook(payment_id):
-                app.logger.info(f"Pagamento já processado via webhook: {payment_id}")
-                return jsonify({'status': 'already_processed'}), 200
-            
             # Buscar informações completas do pagamento no Mercado Pago
             payment_response = sdk.payment().get(payment_id)
             payment_info = payment_response["response"]
             
             app.logger.info(f"Status do pagamento no MP: {payment_info['status']}")
             
-            # Processar apenas pagamentos aprovados
+            # PROCESSAR PAGAMENTO APROVADO
             if payment_info['status'] == 'approved':
+                # Verificar se já processamos este pagamento
+                if pagamento_ja_processado_webhook(payment_id):
+                    app.logger.info(f"Pagamento já processado via webhook: {payment_id}")
+                    return jsonify({'status': 'already_processed'}), 200
                 
-                # ETAPA 1: PROCESSAR O PAGAMENTO (código da rota verificar-pagamento)
+                # ETAPA 1: PROCESSAR O PAGAMENTO APROVADO
                 sucesso_processamento = processar_pagamento_aprovado_webhook(payment_id, payment_info)
                 
                 if sucesso_processamento:
-                    # ETAPA 2: ENVIAR EMAILS (código da rota comprovante)
+                    # ETAPA 2: ENVIAR EMAILS
                     try:
                         enviar_emails_comprovante_webhook(payment_id)
                         app.logger.info(f"Pagamento processado e emails enviados com sucesso: {payment_id}")
@@ -2247,9 +2246,19 @@ def webhook():
                 else:
                     app.logger.error(f"Erro ao processar pagamento via webhook: {payment_id}")
             
-            elif payment_info['status'] in ['cancelled', 'rejected']:
-                app.logger.info(f"Pagamento {payment_info['status']}: {payment_id}")
-                # Opcional: marcar como cancelado no banco
+            # PROCESSAR PAGAMENTO CANCELADO
+            elif payment_info['status'] == 'cancelled':
+                app.logger.info(f"Processando pagamento cancelado: {payment_id}")
+                processar_pagamento_cancelado_recusado(payment_id, 'C', 'cancelado')
+            
+            # PROCESSAR PAGAMENTO RECUSADO/REJEITADO
+            elif payment_info['status'] in ['rejected', 'refunded']:
+                app.logger.info(f"Processando pagamento recusado/rejeitado: {payment_id}")
+                processar_pagamento_cancelado_recusado(payment_id, 'R', 'recusado')
+            
+            # OUTROS STATUS (pending, in_process, etc.)
+            else:
+                app.logger.info(f"Status do pagamento não requer processamento: {payment_info['status']} - {payment_id}")
         
         # Sempre retornar 200 OK para o Mercado Pago
         return jsonify({'status': 'ok'}), 200
@@ -2262,9 +2271,152 @@ def webhook():
         return jsonify({'status': 'error', 'message': str(e)}), 200
 
 
+def processar_pagamento_cancelado_recusado(payment_id, novo_status, descricao_status):
+    """
+    Processa pagamentos cancelados ('C') ou recusados ('R')
+    """
+    try:
+        app.logger.info(f"=== PROCESSAMENTO DE PAGAMENTO {descricao_status.upper()} ===")
+        app.logger.info(f"Payment ID: {payment_id}, Novo Status: {novo_status}")
+        
+        # Verificar se existe o registro no banco
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT IDINSCRICAO, STATUS, CPF, EMAIL, NOME, SOBRENOME, IDEVENTO
+            FROM EVENTO_INSCRICAO 
+            WHERE IDPAGAMENTO = %s
+        """, (payment_id,))
+        
+        registro = cur.fetchone()
+        
+        if not registro:
+            app.logger.warning(f"Registro não encontrado para payment_id {descricao_status}: {payment_id}")
+            cur.close()
+            return False
+        
+        idinscricao, status_atual, cpf, email, nome, sobrenome, idevento = registro
+        
+        app.logger.info(f"Registro encontrado - Inscrição: {idinscricao}, Status atual: {status_atual}")
+        
+        # Só atualizar se não estiver já cancelado/recusado
+        if status_atual not in ['C', 'R']:
+            
+            # Data e hora atual para registro do cancelamento/recusa
+            data_e_hora_atual = datetime.now()
+            fuso_horario = timezone('America/Manaus')
+            data_status = data_e_hora_atual.astimezone(fuso_horario)
+            
+            # Se era aprovado, precisamos liberar o número do peito
+            if status_atual == 'A':
+                app.logger.info(f"Pagamento era aprovado, liberando número do peito...")
+                cur.execute("""
+                    UPDATE EVENTO_INSCRICAO SET
+                        STATUS = %s,
+                        DTSTATUSCHANGE = %s,
+                        NUPEITO = NULL,
+                        VLPAGO = NULL,
+                        VLTAXAMP = NULL,
+                        VLLIQUIDO = NULL,
+                        VLCREDITO = NULL
+                    WHERE IDPAGAMENTO = %s
+                """, (novo_status, data_status, payment_id))
+            else:
+                # Se era pendente, apenas mudar o status
+                cur.execute("""
+                    UPDATE EVENTO_INSCRICAO SET
+                        STATUS = %s,
+                        DTSTATUSCHANGE = %s
+                    WHERE IDPAGAMENTO = %s
+                """, (novo_status, data_status, payment_id))
+            
+            linhas_afetadas = cur.rowcount
+            mysql.connection.commit()
+            
+            if linhas_afetadas > 0:
+                app.logger.info(f"Status atualizado para '{novo_status}' - Pagamento {payment_id} {descricao_status}")
+                
+                # OPCIONAL: Enviar email de notificação sobre cancelamento/recusa
+                try:
+                    enviar_email_cancelamento(email, nome, sobrenome, payment_id, novo_status, descricao_status)
+                except Exception as email_error:
+                    app.logger.error(f"Erro ao enviar email de {descricao_status}: {str(email_error)}")
+                
+                cur.close()
+                return True
+            else:
+                app.logger.warning(f"Nenhuma linha foi atualizada para payment_id {descricao_status}: {payment_id}")
+                cur.close()
+                return False
+        
+        else:
+            app.logger.info(f"Pagamento {payment_id} já estava com status {status_atual}")
+            cur.close()
+            return True  # Já estava no status correto
+            
+    except Exception as e:
+        app.logger.error(f"Erro ao processar pagamento {descricao_status}: {str(e)}")
+        import traceback
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
+        if 'cur' in locals():
+            cur.close()
+        return False
+
+
+def enviar_email_cancelamento(email, nome, sobrenome, payment_id, status, descricao):
+    """
+    OPCIONAL: Envia email de notificação sobre cancelamento/recusa
+    """
+    try:
+        nome_completo = f"{nome} {sobrenome}"
+        
+        if status == 'C':
+            assunto = "Pagamento Cancelado - Inscrição"
+            mensagem = f"""
+            Olá {nome_completo},
+
+            Informamos que o pagamento da sua inscrição foi cancelado.
+
+            ID do Pagamento: {payment_id}
+            
+            Se você deseja realizar uma nova tentativa de pagamento, 
+            acesse novamente o link de inscrição.
+
+            Atenciosamente,
+            Equipe de Eventos
+            """
+        else:  # status == 'R'
+            assunto = "Pagamento Recusado - Inscrição"
+            mensagem = f"""
+            Olá {nome_completo},
+
+            Informamos que o pagamento da sua inscrição foi recusado.
+
+            ID do Pagamento: {payment_id}
+            
+            Isso pode acontecer por diversos motivos como:
+            - Dados do cartão incorretos
+            - Limite insuficiente
+            - Problemas na operadora
+
+            Para realizar uma nova tentativa, acesse novamente o link de inscrição.
+
+            Atenciosamente,
+            Equipe de Eventos
+            """
+        
+        # Aqui você pode implementar o envio do email usando sua função existente
+        # send_custom_email(email, assunto, mensagem)
+        
+        app.logger.info(f"Email de {descricao} enviado para: {email}")
+        
+    except Exception as e:
+        app.logger.error(f"Erro ao enviar email de {descricao}: {str(e)}")
+
+
 def pagamento_ja_processado_webhook(payment_id):
     """
     Verifica se o pagamento já foi processado para evitar duplicações
+    (Mantém apenas para pagamentos aprovados)
     """
     try:
         cur = mysql.connection.cursor()
@@ -2281,7 +2433,7 @@ def pagamento_ja_processado_webhook(payment_id):
     except Exception as e:
         app.logger.error(f"Erro ao verificar pagamento processado: {str(e)}")
         return False
-
+    
 
 def processar_pagamento_aprovado_webhook(payment_id, payment_info):
     """
