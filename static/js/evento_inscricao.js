@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function carregarDadosEvento() {
     console.log('=== DEBUG carregarDadosEvento ===');
     console.log('localStorage idevento:', localStorage.getItem('idevento'));
+    console.log('localStorage titulo:', localStorage.getItem('titulo'));
     console.log('localStorage idlote:', localStorage.getItem('lote_idlote'));
     console.log('localStorage lote_vlinscricao:', localStorage.getItem('lote_vlinscricao'));
     console.log('localStorage lote_vltaxa:', localStorage.getItem('lote_vltaxa'));
@@ -975,6 +976,7 @@ function salvarInscricao() {
             
             // Salvar dados do usuário para a página de pagamento
             localStorage.setItem('id_evento', dadosInscricao.idevento);
+            localStorage.setItem('evento_titulo', dadosInscricao.titulo);
             localStorage.setItem('user_name', `${dadosInscricao.nome} ${dadosInscricao.sobrenome}`);
             localStorage.setItem('user_email', dadosInscricao.email);
             localStorage.setItem('user_cpf', dadosInscricao.cpf);
@@ -995,7 +997,7 @@ function salvarInscricao() {
                 console.log('valortotal:', localStorage.getItem('valortotal'));
                 
                 window.location.href = '/pagamento';
-            } else if (formaPagamentoSelecionada === 'CARTAO') {
+            } else if (formaPagamentoSelecionada === 'CARTAO DE CREDITO') {
                 console.log('Dados salvos no localStorage:');
                 console.log('user_name:', localStorage.getItem('user_name'));
                 console.log('user_cpf:', localStorage.getItem('user_cpf'));
