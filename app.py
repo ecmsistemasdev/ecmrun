@@ -5828,7 +5828,7 @@ def verificar_cpf_inscrito(idevento):
         
         # Verificar se existe inscrição pendente (STATUS = 'P')
         cur.execute("""
-            SELECT IDINSCRICAO FROM EVENTO_INSCRICAO WHERE STATUS = 'P' AND CPF = %s AND IDEVENTO = %s
+            SELECT IDINSCRICAO FROM EVENTO_INSCRICAO WHERE STATUS IN ('P','C','R') AND CPF = %s AND IDEVENTO = %s
         """, (cpf, idevento))
         
         result_pendente = cur.fetchone()
@@ -8013,4 +8013,5 @@ def excluir_imagem(imagem_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
