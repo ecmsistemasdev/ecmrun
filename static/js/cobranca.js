@@ -19,9 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const installmentsSelect = document.getElementById('installments');
     const cardBrandIcon = document.getElementById('card-brand-icon');
 
-    // Atualizar display do valor - COM DELAY
-    let amountTimeout;
-    
+    // Atualizar display do valor
     amountInput.addEventListener('input', function(e) {
         const value = parseFloat(e.target.value) || 0;
         amountDisplay.textContent = new Intl.NumberFormat('pt-BR', {
@@ -29,21 +27,13 @@ document.addEventListener('DOMContentLoaded', function() {
             currency: 'BRL'
         }).format(value);
         
-        // Limpar timeout anterior
-        if (amountTimeout) {
-            clearTimeout(amountTimeout);
-        }
-        
         // Limpar parcelas quando valor muda
         installmentsSelect.innerHTML = '<option value="">Informe o número do cartão para ver parcelas</option>';
         
-        // Se tem valor e cartão, recarregar parcelas com delay
+        // Se tem valor e cartão, recarregar parcelas
         const cardNumber = cardNumberInput.value.replace(/\D/g, '');
         if (value > 0 && cardNumber.length >= 6) {
-            installmentsSelect.innerHTML = '<option value="">Processando...</option>';
-            amountTimeout = setTimeout(() => {
-                loadInstallments(value, cardNumber);
-            }, 500); // 500ms de delay
+            loadInstallments(value, cardNumber);
         }
     });
 
@@ -219,137 +209,73 @@ document.addEventListener('DOMContentLoaded', function() {
         return null;
     }
 
-    // Função para carregar parcelas - VERSÃO CORRIGIDA
+    // Função para carregar parcelas
     function loadInstallments(amount, cardNumber) {
-        console.log('Iniciando loadInstallments com:', { amount, cardNumber: cardNumber.substring(0, 6) + '****' });
-        
         const cardTypeInfo = getCardType(cardNumber);
         if (!cardTypeInfo) {
-            console.error('Cartão não reconhecido');
             installmentsSelect.innerHTML = '<option value="">Cartão não reconhecido</option>';
             return;
         }
 
         const bin = cardNumber.substring(0, 6);
         
-        // Validações antes de fazer a requisição
-        if (bin.length < 6) {
-            console.error('BIN muito curto:', bin);
-            installmentsSelect.innerHTML = '<option value="">BIN inválido</option>';
-            return;
-        }
-
-        if (amount <= 0) {
-            console.error('Valor inválido:', amount);
-            installmentsSelect.innerHTML = '<option value="">Valor inválido</option>';
-            return;
-        }
-
-        console.log('Parâmetros para getInstallments:', {
-            amount: String(amount),
+        console.log('Carregando parcelas para:', {
+            amount: amount,
             bin: bin,
             payment_method_id: cardTypeInfo.brand
         });
 
         installmentsSelect.innerHTML = '<option value="">Carregando parcelas...</option>';
 
-        // Usar apenas os parâmetros essenciais
-        const installmentParams = {
+        mp.getInstallments({
             amount: String(amount),
-            bin: bin
-        };
-
-        // Adicionar payment_method_id apenas se necessário
-        if (cardTypeInfo.brand) {
-            installmentParams.payment_method_id = cardTypeInfo.brand;
-        }
-
-        mp.getInstallments(installmentParams)
-        .then((response) => {
-            console.log('Resposta completa do getInstallments:', response);
+            locale: 'pt-BR',
+            bin: bin,
+            payment_method_id: cardTypeInfo.brand
+        }).then((response) => {
+            console.log('Resposta do getInstallments:', response);
             
-            if (!response) {
-                throw new Error('Resposta vazia da API');
-            }
-
-            if (!Array.isArray(response) || response.length === 0) {
-                throw new Error('Resposta não é um array ou está vazia');
-            }
-
-            const installmentData = response[0];
-            console.log('Dados de parcelas:', installmentData);
-
-            if (!installmentData || !installmentData.payer_costs || !Array.isArray(installmentData.payer_costs)) {
-                throw new Error('Estrutura de dados inválida: payer_costs não encontrado');
-            }
-
-            if (installmentData.payer_costs.length === 0) {
-                throw new Error('Nenhuma opção de parcelamento disponível');
-            }
-
-            // Limpar select e popular com as opções
-            installmentsSelect.innerHTML = '';
-            
-            installmentData.payer_costs.forEach((cost, index) => {
-                console.log(`Parcela ${index + 1}:`, cost);
+            if (response && response.length > 0 && response[0].payer_costs) {
+                installmentsSelect.innerHTML = '';
                 
-                if (!cost.installments || !cost.installment_amount) {
-                    console.warn('Dados de parcela incompletos:', cost);
-                    return;
-                }
-
-                const formattedAmount = new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL'
-                }).format(cost.installment_amount);
-
-                let optionText;
-                if (cost.installments === 1) {
-                    optionText = `À vista - ${formattedAmount}`;
-                } else {
-                    const totalAmount = cost.total_amount || (cost.installment_amount * cost.installments);
-                    const totalFormatted = new Intl.NumberFormat('pt-BR', {
+                response[0].payer_costs.forEach((cost) => {
+                    const formattedAmount = new Intl.NumberFormat('pt-BR', {
                         style: 'currency',
                         currency: 'BRL'
-                    }).format(totalAmount);
-                    
-                    // Comparar com uma pequena margem de erro devido a arredondamentos
-                    const hasInterest = totalAmount > (amount + 0.01);
-                    
-                    if (hasInterest) {
-                        optionText = `${cost.installments}x de ${formattedAmount} (Total: ${totalFormatted})`;
+                    }).format(cost.installment_amount);
+
+                    let optionText;
+                    if (cost.installments === 1) {
+                        optionText = `À vista - ${formattedAmount}`;
                     } else {
-                        optionText = `${cost.installments}x de ${formattedAmount} sem juros`;
+                        const totalFormatted = new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        }).format(cost.total_amount);
+                        
+                        if (cost.total_amount > amount) {
+                            optionText = `${cost.installments}x de ${formattedAmount} (Total: ${totalFormatted})`;
+                        } else {
+                            optionText = `${cost.installments}x de ${formattedAmount} sem juros`;
+                        }
                     }
-                }
 
-                const option = document.createElement('option');
-                option.value = cost.installments;
-                option.textContent = optionText;
-                if (cost.total_amount) {
+                    const option = document.createElement('option');
+                    option.value = cost.installments;
+                    option.textContent = optionText;
                     option.dataset.totalAmount = cost.total_amount;
-                }
-                installmentsSelect.appendChild(option);
-            });
-
-            console.log(`Carregadas ${installmentData.payer_costs.length} opções de parcelamento`);
-            
-        }).catch((error) => {
-            console.error('Erro detalhado ao obter parcelas:', error);
-            console.error('Stack trace:', error.stack);
-            
-            let errorMessage = 'Erro ao carregar parcelas';
-            if (error.message) {
-                errorMessage += `: ${error.message}`;
+                    installmentsSelect.appendChild(option);
+                });
+            } else {
+                installmentsSelect.innerHTML = '<option value="">Nenhuma parcela disponível</option>';
             }
-            
-            installmentsSelect.innerHTML = `<option value="">${errorMessage}</option>`;
+        }).catch((error) => {
+            console.error('Erro ao obter parcelas:', error);
+            installmentsSelect.innerHTML = '<option value="">Erro ao carregar parcelas</option>';
         });
     }
 
-    // Event listener para número do cartão - COM DELAY
-    let installmentTimeout;
-    
+    // Event listener para número do cartão
     cardNumberInput.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\D/g, '');
         value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
@@ -357,26 +283,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const cardNumber = value.replace(/\s/g, '');
         
-        // Limpar timeout anterior
-        if (installmentTimeout) {
-            clearTimeout(installmentTimeout);
-        }
-        
         if (cardNumber.length >= 6) {
             const cardTypeInfo = getCardType(cardNumber);
             if (cardTypeInfo) {
                 cardBrandIcon.src = cardTypeInfo.icon;
                 cardBrandIcon.style.display = 'block';
 
-                // Adicionar delay para evitar muitas chamadas à API
+                // Carregar parcelas se tem valor
                 const amount = parseFloat(amountInput.value);
                 if (amount > 0) {
-                    installmentsSelect.innerHTML = '<option value="">Processando...</option>';
-                    installmentTimeout = setTimeout(() => {
-                        loadInstallments(amount, cardNumber);
-                    }, 500); // 500ms de delay
-                } else {
-                    installmentsSelect.innerHTML = '<option value="">Informe o valor primeiro</option>';
+                    loadInstallments(amount, cardNumber);
                 }
             } else {
                 cardBrandIcon.style.display = 'none';
