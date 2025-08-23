@@ -169,6 +169,10 @@ def obter_eventos_ativos():
 def index():
     return render_template("index.html")
 
+@app.route("/cobranca")
+def cobranca():
+    return render_template("cobranca.html")
+
 
 @app.route('/listar-estados', methods=['GET'])
 def listar_estados():
@@ -8013,5 +8017,6 @@ def excluir_imagem(imagem_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
