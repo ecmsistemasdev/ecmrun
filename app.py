@@ -8013,10 +8013,105 @@ def excluir_imagem(imagem_id):
 
 ###############################
 
+###############################
+
+
+# Rota para listar inscrições
+@app.route('/api/inscricoes', methods=['GET'])
+def listar_inscricoes():
+    """API para listar inscrições por status"""
+    try:
+        fl_vlenviado = request.args.get('fl_vlenviado', 'N')
+        
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT ei.IDINSCRICAO, ei.IDITEMEVENTO, i.DESCRICAO AS MODALIDADE, 
+                   CONCAT(ei.NOME,' ' ,ei.SOBRENOME) NOME_COMPLETO, 
+                   ei.IDADE, ei.SEXO, 
+                   ei.DTPAGAMENTO, 
+                   ei.VLINSCRICAO, ei.VLPAGO, ei.VLLIQUIDO, ei.VLCREDITO, ei.FL_VLENVIADO
+            FROM EVENTO_INSCRICAO ei
+            INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
+            WHERE ei.FL_VLENVIADO = %s
+            AND ei.STATUS = 'A'
+            ORDER BY ei.IDINSCRICAO
+        """, (fl_vlenviado,))
+        
+        inscricoes = []
+        for row in cursor.fetchall():
+            # Converter data para string se não for None
+            dtpagamento = row[6].strftime('%Y-%m-%d') if row[6] else None
+            
+            inscricoes.append({
+                'IDINSCRICAO': row[0],
+                'IDITEMEVENTO': row[1],
+                'MODALIDADE': row[2],
+                'NOME_COMPLETO': row[3],
+                'IDADE': row[4],
+                'SEXO': row[5],
+                'DTPAGAMENTO': dtpagamento,
+                'VLINSCRICAO': float(row[7]) if row[7] else 0.0,
+                'VLPAGO': float(row[8]) if row[8] else 0.0,
+                'VLLIQUIDO': float(row[9]) if row[9] else 0.0,
+                'VLCREDITO': float(row[10]) if row[10] else 0.0,
+                'FL_VLENVIADO': row[11]
+            })
+        
+        cursor.close()
+        return jsonify(inscricoes)
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao carregar inscrições: {str(e)}'}), 500
+    
+
+# Rota para confirmar envio de valores
+@app.route('/api/inscricoes/confirmar-envio', methods=['PUT'])
+def confirmar_envio_valores():
+    """API para atualizar FL_VLENVIADO para 'S'"""
+    try:
+        data = request.get_json()
+        ids = data.get('ids', [])
+        
+        if not ids:
+            return jsonify({'error': 'Lista de IDs é obrigatória'}), 400
+        
+        cursor = mysql.connection.cursor()
+        
+        # Construir query para update múltiplo
+        placeholders = ','.join(['%s'] * len(ids))
+        query = f"""
+            UPDATE EVENTO_INSCRICAO 
+            SET FL_VLENVIADO = 'S'
+            WHERE IDINSCRICAO IN ({placeholders})
+        """
+        
+        cursor.execute(query, ids)
+        mysql.connection.commit()
+        
+        rows_affected = cursor.rowcount
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{rows_affected} inscrição(ões) atualizada(s) com sucesso!',
+            'updated_count': rows_affected
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao confirmar envio: {str(e)}'}), 500
+
+
+@app.route("/adm/eventos")
+def adm_eventos():
+    return render_template("adm_eventos.html")
+
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
