@@ -2,7 +2,7 @@
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="/static/css/checkout.css"/>
-    <title>Pagamento com Cartão de Crédito</title>
+    <title>Cobrança - ECM RUN</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
@@ -12,23 +12,27 @@
 <body>
     <div class="logo-container">
         <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
-        <h1 class="header-title">Pagamento com Cartão de Crédito</h1>
+        <h1 class="header-title">Cobrança - Pagamento com Cartão de Crédito</h1>
     </div>
-
-    <!-- <h1 class="title-h1">Pagamento com Cartão de Crédito</h1> -->
 
     <form id="payment-form">
 
         <div class="form-group">
-            <div>Valor do Pagamento:</div>
-            <div class="total-amount" id="transaction-amount">Carregando...</div>
+            <label>Valor da Cobrança</label>
+            <input 
+                type="number" 
+                id="transaction-amount-input" 
+                name="amount"
+                placeholder="0.00" 
+                min="0.01"
+                step="0.01"
+                required
+            >
         </div>
 
         <div class="form-group">
-            <label class="checkbox-container">
-                <input type="checkbox" id="same-user-data" name="same_user_data">
-                <span class="checkbox-text">Utilizar os mesmos dados da inscrição para o pagamento</span>
-            </label>
+            <div>Valor Total:</div>
+            <div class="total-amount" id="transaction-amount-display">R$ 0,00</div>
         </div>
 
         <div class="form-group">
@@ -42,31 +46,11 @@
             >
         </div>
 
-        <!-- <div class="form-group">
-            <label>Número do Cartão</label>
-            <input 
-                type="text" 
-                id="card-number" 
-                placeholder="Número do cartão" 
-                maxlength="19" 
-                pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
-                required
-            >
-        </div> -->
-
         <div class="form-group">
             <label>Número do Cartão</label>
             <div class="card-input-container">
                 <input type="tel" id="card-number" name="card_number" class="form-control" 
                        placeholder="0000 0000 0000 0000" required inputmode="numeric" pattern="[0-9\s]*">                
-                <!-- <input 
-                    type="text" 
-                    id="card-number" 
-                    placeholder="Número do cartão" 
-                    maxlength="19" 
-                    pattern="\d{4}\s\d{4}\s\d{4}\s\d{4}"
-                    required
-                > -->
                 <img id="card-brand-icon" src="" alt="Card brand" class="card-brand-icon">
             </div>
         </div>
@@ -76,28 +60,12 @@
                 <label>Data de Validade</label>
                 <input type="tel" id="expiration-date" name="expiry_date" class="form-control" 
                        placeholder="MM/AA" required maxlength="5" inputmode="numeric" pattern="[0-9/]*">
-                <!-- <input 
-                    type="text" 
-                    id="expiration-date" 
-                    placeholder="MM/AA" 
-                    maxlength="5" 
-                    pattern="\d{2}/\d{2}"
-                    required
-                > -->
             </div>
         
             <div class="form-col cvv-field">
                 <label>CVV</label>
                 <input type="tel" id="security-code" name="security_code" class="form-control" 
                        placeholder="123" required maxlength="4" inputmode="numeric" pattern="[0-9]*">
-                <!-- <input 
-                    type="text" 
-                    id="security-code" 
-                    placeholder="CVV" 
-                    maxlength="4"
-                    pattern="\d{3,4}"
-                    required
-                > -->
             </div>
         </div>
 
@@ -114,7 +82,6 @@
                 <label>Número do Documento</label>
                 <input type="tel" id="doc_number" name="doc_number" class="form-control" 
                        placeholder="000.000.000-00" required inputmode="numeric">                
-                <!-- <input type="text" name="doc_number" id="doc_number" placeholder="Somente números" required> -->
             </div>
         </div>
 
@@ -126,16 +93,15 @@
         <div class="form-group">
             <label>Número de Parcelas</label>
             <select name="installments" id="installments" required>
-                <option value="">Carregando parcelas...</option>
+                <option value="">Informe o valor e número do cartão primeiro</option>
             </select>
         </div>
 
-        <input type="hidden" name="description" value="ECM RUN Inscrição Evento">
-        <input type="hidden" name="item_description" value="Inscrição Corrida">
+        <input type="hidden" name="description" value="ECM RUN Cobrança">
+        <input type="hidden" name="item_description" value="Cobrança">
         <input type="hidden" name="token" id="token">
-        <button type="submit">Finalizar Pagamento</button>
+        <button type="submit" id="submit-button">Finalizar Pagamento</button>
 
-        <!--Início do selo -->
         <div class="selo-container">
             <div class="selo-imagem">
                 <img src="https://ecmrun.com.br/static/img/seloseguro.png" alt="Selo de Segurança">
@@ -154,14 +120,12 @@
         <p class="footer-text">Desenvolvido por: ECM Sistemas Developer</p>
     </footer>
 
-    <!-- Modal de processamento -->
-    <div id="processing-modal" class="processing-modal">
+    <div id="processing-modal" class="processing-modal" style="display: none;">
         <div class="processing-content">
             <div class="processing-spinner"></div>
             <div class="processing-text">Processando Pagamento...</div>
         </div>
     </div>
     
-    <script src="/static/js/checkout.js"></script>
+    <script src="/static/js/cobranca.js"></script>
 </body>
-</html>
