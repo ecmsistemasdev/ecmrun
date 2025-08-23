@@ -717,7 +717,7 @@ def comprovante(payment_id):
             send_email(receipt_data_dict)
         
             # Enviar notificação para o organizador
-            # send_organizer_notification(receipt_data_dict)
+            send_organizer_notification(receipt_data_dict)
 
             cur1 = mysql.connection.cursor()
             cur1.execute('''
@@ -8017,6 +8017,7 @@ def excluir_imagem(imagem_id):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
