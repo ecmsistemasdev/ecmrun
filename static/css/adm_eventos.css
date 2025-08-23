@@ -1,0 +1,437 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding-bottom: 140px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Tela de Login */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.auth-form {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    text-align: center;
+    min-width: 400px;
+}
+
+.logo {
+    max-height: 80px;
+    margin-bottom: 20px;
+}
+
+.auth-form h2 {
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.header h1 {
+    color: #333;
+    font-size: 28px;
+}
+
+/* Botões */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+/* Controles principais */
+.controls-section {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.controls-row {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #667eea;
+}
+
+/* Lista de inscrições */
+.inscricoes-section {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.section-header {
+    background: #f8f9fa;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.section-header h3 {
+    color: #333;
+    margin: 0;
+}
+
+.inscricoes-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px; /* Garante largura mínima para scroll horizontal */
+}
+
+.inscricoes-table th,
+.inscricoes-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.inscricoes-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.inscricoes-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.inscricoes-table tbody tr.selected {
+    background: #e3f2fd;
+}
+
+.select-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #667eea;
+    cursor: pointer;
+}
+
+.valor-cell {
+    font-weight: 600;
+    color: #28a745;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-pendente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-enviado {
+    background: #d1edff;
+    color: #0c5460;
+}
+
+/* Footer fixo */
+.fixed-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 3px solid #667eea;
+    padding: 15px;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.totais-section {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    flex: 1;
+}
+
+.total-item {
+    text-align: center;
+}
+
+.total-label {
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.total-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+}
+
+.total-inscricao { color: #2196f3; }
+.total-pago { color: #4caf50; }
+.total-liquido { color: #ff9800; }
+.total-credito { color: #9c27b0; }
+
+.footer-actions {
+    margin-left: 20px;
+}
+
+.confirmar-btn {
+    background: linear-gradient(45deg, #28a745, #34ce57);
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+}
+
+.confirmar-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+.confirmar-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Botão de envio para valores já enviados */
+.confirmar-btn.enviados {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+.confirmar-btn.enviados:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+}
+
+/* Estados de visibilidade */
+.hidden {
+    display: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* Mensagens */
+.message {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.message-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 160px; /* Mais espaço para o footer em mobile */
+    }
+
+    .auth-form {
+        min-width: 320px;
+        margin: 20px;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .header h1 {
+        font-size: 20px;
+    }
+
+    .controls-section {
+        padding: 20px;
+    }
+
+    .controls-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .totais-section {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .total-label {
+        font-size: 9px;
+    }
+
+    .total-value {
+        font-size: 13px;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .footer-actions {
+        margin-left: 0;
+    }
+
+    .confirmar-btn {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .fixed-footer {
+        padding: 12px;
+    }
+
+    .inscricoes-table {
+        font-size: 12px;
+        min-width: 900px; /* Força scroll horizontal em mobile */
+    }
+
+    .inscricoes-table th,
+    .inscricoes-table td {
+        padding: 8px 6px;
+        white-space: nowrap; /* Evita quebra de linha */
+    }
+
+    /* Remove regra que ocultava colunas */
+}
