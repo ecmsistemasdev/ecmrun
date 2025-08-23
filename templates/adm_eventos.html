@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/static/css/adm_eventos.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Pagamento de Inscrições</title>
+</head>
+<body>
+    <div class="container">
+        <!-- Tela de Login -->
+        <div id="authScreen">
+            <div class="auth-container">
+                <form id="authForm" class="auth-form">
+                    <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+                    <h2>Acesso Restrito</h2>
+                    <div class="form-group">
+                        <input type="password" id="senha" placeholder="Digite a senha" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tela Principal -->
+        <div id="mainScreen" class="hidden">
+            <div class="header">
+                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+                <h1>Sistema de Pagamento de Inscrições</h1>
+                <button type="button" class="btn btn-secondary" onclick="logout()">Sair</button>
+            </div>
+
+            <div id="messages"></div>
+
+            <!-- Controles -->
+            <div class="controls-section">
+                <div class="controls-row">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="filtroEnviado" onchange="loadInscricoes()">
+                        <label for="filtroEnviado">Mostrar valores já enviados</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Inscrições -->
+            <div class="inscricoes-section">
+                <div class="section-header">
+                    <h3 id="inscricoesTitle">Inscrições Pendentes</h3>
+                </div>
+                
+                <div id="inscricoesContent">
+                    <div class="empty-state">
+                        <h4>Carregando...</h4>
+                        <p>Aguarde enquanto carregamos as inscrições</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Fixo com Totais -->
+    <div id="footerTotais" class="fixed-footer hidden">
+        <div class="footer-content">
+            <div class="totais-section">
+                <div class="total-item">
+                    <div class="total-label">Valor Inscrição</div>
+                    <div class="total-value total-inscricao" id="totalInscricao">R$ 0,00</div>
+                </div>
+                <div class="total-item">
+                    <div class="total-label">Valor Pago</div>
+                    <div class="total-value total-pago" id="totalPago">R$ 0,00</div>
+                </div>
+                <div class="total-item">
+                    <div class="total-label">Valor Líquido</div>
+                    <div class="total-value total-liquido" id="totalLiquido">R$ 0,00</div>
+                </div>
+                <div class="total-item">
+                    <div class="total-label">Valor Crédito</div>
+                    <div class="total-value total-credito" id="totalCredito">R$ 0,00</div>
+                </div>
+            </div>
+            
+            <div class="footer-actions">
+                <button id="confirmarBtn" class="confirmar-btn" onclick="confirmarEnvio()" disabled>
+                    <span id="confirmarBtnText">Confirmar Envio do Valor</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/adm_eventos.js"></script>
+</body>
+</html>
