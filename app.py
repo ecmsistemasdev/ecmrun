@@ -5950,14 +5950,17 @@ def get_minhas_inscricoes():
         cursor = mysql.connection.cursor()
         query = """
             SELECT 
-                e.DESCRICAO, 
-                e.LOCAL, 
+                e.TITULO, 
+                e.ENDERECO, 
                 CASE 
-                    WHEN e.DTINICIO = e.DTFIM THEN CONCAT(e.DTINICIO, ' ', e.HRINICIO)
-                    ELSE CONCAT(e.DTINICIO, ' ', e.HRINICIO, ' - ', e.DTFIM)
+                    WHEN e.DATAINICIO = e.DATAFIM THEN CONCAT(e.DATAINICIO, ' ', e.HRINICIO)
+                    ELSE CONCAT(e.DATAINICIO, ' ', e.HRINICIO, ' - ', e.DATAFIM)
                 END AS DTEVENTO,
                 CONCAT(ei.NOME, ' ', ei.SOBRENOME) AS NOME_COMPLETO,
-                i.KM_DESCRICAO, 
+                CASE WHEN i.KM = 0
+                    THEN i.MODALIDADE
+                    ELSE CONCAT(i.KM, ' KM') 
+                END AS KM_DESCRICAO,  
                 ei.VLINSCRICAO, 
                 ei.VLTOTAL, 
                 ei.FORMAPGTO,
@@ -5967,18 +5970,18 @@ def get_minhas_inscricoes():
                 ei.IDINSCRICAO, 
                 e.OBS
             FROM EVENTO_INSCRICAO ei
-            INNER JOIN EVENTO_ITENS i ON i.IDITEM = ei.IDITEMEVENTO
-            INNER JOIN EVENTO_1 e ON e.IDEVENTO = ei.IDEVENTO
+            INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
+            INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
             WHERE ei.STATUS = 'A'
               AND ei.DTNASCIMENTO = %s
               AND ei.CPF = %s
-              AND STR_TO_DATE(e.DTFIM, '%%d/%%m/%%Y') >= CURDATE()
+              AND e.DATAFIM >= CURDATE()
         """
         
         cursor.execute(query, (data_nascimento, cpf_numeros))
         inscricoes = cursor.fetchall()
         cursor.close()
-        
+
         # Converter para lista de dicionários
         inscricoes_list = []
         for inscricao in inscricoes:
@@ -6023,7 +6026,6 @@ def get_minhas_inscricoes():
         }), 500
 
 # Adicione esta nova rota ao seu Flask app:
-
 @app.route('/lista-eventos-direto', methods=['POST'])
 def lista_eventos_direto():
     try:
@@ -8111,6 +8113,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
