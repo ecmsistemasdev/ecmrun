@@ -669,24 +669,27 @@ def comprovante(payment_id):
         data_inicio = receipt_data[3]
         data_fim = receipt_data[4]
         hr_inicio = receipt_data[5]
-        
+
         # Formatar data de pagamento
         if isinstance(data_pagamento, datetime):
             data_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M:%S')
         else:
             data_formatada = str(data_pagamento)
-        
+
+        # Formatar hora de início (já vem como string)
+        hora_formatada = str(hr_inicio)
+
         # Formatar data do evento
-        if isinstance(data_inicio, datetime) and isinstance(data_fim, datetime):
-            if data_inicio.date() == data_fim.date():
+        if hasattr(data_inicio, 'strftime') and hasattr(data_fim, 'strftime'):
+            if data_inicio == data_fim:
                 # Mesmo dia
-                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio}"
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hora_formatada}"
             else:
                 # Dias diferentes
-                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio} - {data_fim.strftime('%d/%m/%Y')}"
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hora_formatada} - {data_fim.strftime('%d/%m/%Y')}"
         else:
-            # Fallback se não for datetime
-            data_evento = f"{data_inicio} {hr_inicio}"
+            # Fallback se não for date/datetime
+            data_evento = f"{data_inicio} {hora_formatada}"
 
         # Estruturar os dados do comprovante
         receipt_data_dict = { 
@@ -773,24 +776,27 @@ def vercomprovante(payment_id):
         data_inicio = receipt_data[3]
         data_fim = receipt_data[4]
         hr_inicio = receipt_data[5]
-        
+
         # Formatar data de pagamento
         if isinstance(data_pagamento, datetime):
             data_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M:%S')
         else:
             data_formatada = str(data_pagamento)
-        
+
+        # Formatar hora de início (já vem como string)
+        hora_formatada = str(hr_inicio)
+
         # Formatar data do evento
-        if isinstance(data_inicio, datetime) and isinstance(data_fim, datetime):
-            if data_inicio.date() == data_fim.date():
+        if hasattr(data_inicio, 'strftime') and hasattr(data_fim, 'strftime'):
+            if data_inicio == data_fim:
                 # Mesmo dia
-                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio}"
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hora_formatada}"
             else:
                 # Dias diferentes
-                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio} - {data_fim.strftime('%d/%m/%Y')}"
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hora_formatada} - {data_fim.strftime('%d/%m/%Y')}"
         else:
-            # Fallback se não for datetime
-            data_evento = f"{data_inicio} {hr_inicio}"
+            # Fallback se não for date/datetime
+            data_evento = f"{data_inicio} {hora_formatada}"
 
         # Estruturar os dados do comprovante
         receipt_data_dict = { 
@@ -857,24 +863,27 @@ def comprovanteemail(payment_id):
         data_inicio = receipt_data[3]
         data_fim = receipt_data[4]
         hr_inicio = receipt_data[5]
-        
+
         # Formatar data de pagamento
         if isinstance(data_pagamento, datetime):
             data_formatada = data_pagamento.strftime('%d/%m/%Y %H:%M:%S')
         else:
             data_formatada = str(data_pagamento)
-        
+
+        # Formatar hora de início (já vem como string)
+        hora_formatada = str(hr_inicio)
+
         # Formatar data do evento
-        if isinstance(data_inicio, datetime) and isinstance(data_fim, datetime):
-            if data_inicio.date() == data_fim.date():
+        if hasattr(data_inicio, 'strftime') and hasattr(data_fim, 'strftime'):
+            if data_inicio == data_fim:
                 # Mesmo dia
-                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio}"
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hora_formatada}"
             else:
                 # Dias diferentes
-                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hr_inicio} - {data_fim.strftime('%d/%m/%Y')}"
+                data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hora_formatada} - {data_fim.strftime('%d/%m/%Y')}"
         else:
-            # Fallback se não for datetime
-            data_evento = f"{data_inicio} {hr_inicio}"
+            # Fallback se não for date/datetime
+            data_evento = f"{data_inicio} {hora_formatada}"
 
         # Estruturar os dados do comprovante
         receipt_data_dict = { 
@@ -5968,7 +5977,10 @@ def get_minhas_inscricoes():
                 ei.DTPAGAMENTO, 
                 ei.FLEMAIL, 
                 ei.IDINSCRICAO, 
-                e.OBS
+                e.OBS, 
+                e.DATAINICIO, 
+                e.DATAFIM, 
+                e.HRINICIO
             FROM EVENTO_INSCRICAO ei
             INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
             INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
@@ -5985,6 +5997,41 @@ def get_minhas_inscricoes():
         # Converter para lista de dicionários
         inscricoes_list = []
         for inscricao in inscricoes:
+            # Os índices corretos baseados na query SELECT:
+            # 0-TITULO, 1-ENDERECO, 2-DTEVENTO, 3-NOME_COMPLETO, 4-KM_DESCRICAO
+            # 5-VLINSCRICAO, 6-VLTOTAL, 7-FORMAPGTO, 8-IDPAGAMENTO, 9-DTPAGAMENTO
+            # 10-FLEMAIL, 11-IDINSCRICAO, 12-OBS, 13-DATAINICIO, 14-DATAFIM, 15-HRINICIO
+            
+            data_inicio = inscricao[13]
+            data_fim = inscricao[14]
+            hr_inicio = inscricao[15]
+
+            # Formatar hora de início
+            if hr_inicio:
+                # Converter timedelta para string se necessário
+                if hasattr(hr_inicio, 'total_seconds'):
+                    # Se for timedelta, converter para HH:MM
+                    total_seconds = int(hr_inicio.total_seconds())
+                    hours = total_seconds // 3600
+                    minutes = (total_seconds % 3600) // 60
+                    hora_formatada = f"{hours:02d}:{minutes:02d}"
+                else:
+                    hora_formatada = str(hr_inicio)
+            else:
+                hora_formatada = ""
+
+            # Formatar data do evento
+            if hasattr(data_inicio, 'strftime') and hasattr(data_fim, 'strftime'):
+                if data_inicio == data_fim:
+                    # Mesmo dia
+                    data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hora_formatada}".strip()
+                else:
+                    # Dias diferentes
+                    data_evento = f"{data_inicio.strftime('%d/%m/%Y')} {hora_formatada} - {data_fim.strftime('%d/%m/%Y')}".strip()
+            else:
+                # Fallback se não for date/datetime
+                data_evento = f"{data_inicio} {hora_formatada}".strip()
+
             # Formatar DTPAGAMENTO se for um objeto datetime
             dt_pagamento = inscricao[9]
             if dt_pagamento:
@@ -5999,7 +6046,7 @@ def get_minhas_inscricoes():
             inscricoes_list.append({
                 'DESCRICAO': inscricao[0],
                 'LOCAL': inscricao[1],
-                'DTEVENTO': inscricao[2],
+                'DTEVENTO': data_evento,
                 'NOME_COMPLETO': inscricao[3],
                 'KM_DESCRICAO': inscricao[4],
                 'VLINSCRICAO': inscricao[5],
@@ -8113,6 +8160,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
