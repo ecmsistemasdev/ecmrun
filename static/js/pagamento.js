@@ -43,15 +43,26 @@ document.addEventListener('DOMContentLoaded', function() {
     console.info('Valor pag', totalValue);
 
     // Função para criar chave única baseada em CPF + ID do evento
-    function createPaymentKey(cpf, eventoId) {
-        return `payment_${cpf}_${eventoId}`;
-    }
+    //function createPaymentKey(cpf, eventoId) {
+    //    return `payment_${cpf}_${eventoId}`;
+    //}
 
     // Função para criar chave única para timer baseada em CPF + ID do evento
-    function createTimerKey(cpf, eventoId) {
-        return `timer_${cpf}_${eventoId}`;
+    //function createTimerKey(cpf, eventoId) {
+    //    return `timer_${cpf}_${eventoId}`;
+    //}
+
+    
+    // Função para criar chave única baseada em CPF + ID do evento + ID do lote
+    function createPaymentKey(cpf, eventoId, loteId) {
+        return `payment_${cpf}_${eventoId}_${loteId}`;
     }
 
+    // Função para criar chave única para timer baseada em CPF + ID do evento + ID do lote
+    function createTimerKey(cpf, eventoId, loteId) {
+        return `timer_${cpf}_${eventoId}_${loteId}`;
+    }
+    
     // Função para formatar moeda
     function formatCurrency(value) {
         return new Intl.NumberFormat('pt-BR', {
@@ -148,7 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Salva o horário de início para recuperação apenas se for um timer novo
         if (startFromFull) {
             const cpf = localStorage.getItem('user_cpf');
-            const timerKey = createTimerKey(cpf, idEvento);
+            const loteId = localStorage.getItem('id_lote'); // NOVO
+            const timerKey = createTimerKey(cpf, idEvento, loteId);
             localStorage.setItem(`${timerKey}_start`, Date.now().toString());
             localStorage.setItem(`${timerKey}_duration`, PIX_EXPIRATION_TIME.toString());
         }
@@ -157,7 +169,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Função para recuperar o timer existente CORRIGIDA
     function recoverCountdownTimer() {
         const cpf = localStorage.getItem('user_cpf');
-        const timerKey = createTimerKey(cpf, idEvento);
+        const loteId = localStorage.getItem('id_lote'); // NOVO
+        const timerKey = createTimerKey(cpf, idEvento, loteId);
         const timerStart = localStorage.getItem(`${timerKey}_start`);
         const expirationDuration = localStorage.getItem(`${timerKey}_duration`);
 
@@ -193,7 +206,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const cpf = localStorage.getItem('user_cpf');
-        const timerKey = createTimerKey(cpf, idEvento);
+        const loteId = localStorage.getItem('id_lote'); // NOVO
+        const timerKey = createTimerKey(cpf, idEvento, loteId);
         localStorage.removeItem(`${timerKey}_start`);
         localStorage.removeItem(`${timerKey}_duration`);
     }
@@ -201,27 +215,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Função para persistir dados do pagamento com verificação - CORRIGIDA
     function persistPaymentData(data) {
         if (!data) return false;
-
+    
         try {
             const cpf = localStorage.getItem('user_cpf');
-            const paymentKey = createPaymentKey(cpf, idEvento);
+            const loteId = localStorage.getItem('id_lote'); // NOVO: Obter ID do lote
+            const paymentKey = createPaymentKey(cpf, idEvento, loteId);
             
             const paymentData = {
                 paymentId: data.payment_id,
                 qrCode: data.qr_code,
                 qrCodeBase64: data.qr_code_base64,
                 idEvento: idEvento,
+                idLote: loteId, // NOVO: Incluir ID do lote
                 timestamp: Date.now()
             };
-
+    
             // Verifica se todos os dados necessários estão presentes
             if (!paymentData.paymentId || !paymentData.qrCode || !paymentData.qrCodeBase64) {
                 console.error('Dados incompletos para persistência');
                 return false;
             }
-
+    
             sessionStorage.setItem(paymentKey, JSON.stringify(paymentData));
-            localStorage.setItem(`${paymentKey}_backup`, data.payment_id); // Backup adicional
+            localStorage.setItem(`${paymentKey}_backup`, data.payment_id);
             return true;
         } catch (error) {
             console.error('Erro ao persistir dados:', error);
@@ -233,24 +249,26 @@ document.addEventListener('DOMContentLoaded', function() {
     function getPersistedPaymentData() {
         try {
             const cpf = localStorage.getItem('user_cpf');
-            const paymentKey = createPaymentKey(cpf, idEvento);
+            const loteId = localStorage.getItem('id_lote'); // NOVO: Obter ID do lote
+            const paymentKey = createPaymentKey(cpf, idEvento, loteId);
             
             const sessionData = sessionStorage.getItem(paymentKey);
             if (sessionData) {
                 const data = JSON.parse(sessionData);
-                // Verifica se os dados são válidos, são do evento correto e não muito antigos (menos de 15 minutos)
+                // Verifica se os dados são válidos, são do evento E lote corretos e não muito antigos
                 if (data && data.timestamp && data.idEvento === idEvento && 
+                    data.idLote === loteId && // NOVO: Verificar também o lote
                     (Date.now() - data.timestamp) < 900000) {
                     return data;
                 }
             }
-
+    
             // Se não encontrou no sessionStorage, tenta recuperar o ID do localStorage
             const lastPaymentId = localStorage.getItem(`${paymentKey}_backup`);
             if (lastPaymentId) {
-                return { paymentId: lastPaymentId, idEvento: idEvento };
+                return { paymentId: lastPaymentId, idEvento: idEvento, idLote: loteId };
             }
-
+    
             return null;
         } catch (error) {
             console.error('Erro ao recuperar dados persistidos:', error);
@@ -298,7 +316,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Função para limpar storage relacionado ao pagamento - CORRIGIDA
     function clearPaymentRelatedStorage() {
         const cpf = localStorage.getItem('user_cpf');
-        const paymentKey = createPaymentKey(cpf, idEvento);
+        const loteId = localStorage.getItem('id_lote'); // NOVO: Obter ID do lote
+        const paymentKey = createPaymentKey(cpf, idEvento, loteId);
         
         sessionStorage.removeItem(paymentKey);
         localStorage.removeItem(`${paymentKey}_backup`);
@@ -455,27 +474,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Função para verificar se já existe um pagamento válido para este evento - NOVA
-    async function checkExistingPayment(cpf, eventoId) {
+    // Função para verificar se já existe um pagamento válido para este evento E lote específico
+    async function checkExistingPayment(cpf, eventoId, loteId) {
         try {
-            console.log('Verificando pagamento existente para:', { cpf, eventoId });
+            console.log('Verificando pagamento existente para:', { cpf, eventoId, loteId });
             
-            const response = await fetch(`${baseURL}/verificar-pagamento-evento/${cpf}/${eventoId}`, {
+            const response = await fetch(`${baseURL}/verificar-pagamento-evento-lote/${cpf}/${eventoId}/${loteId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
-
+    
             if (!response.ok) {
-                console.log('Nenhum pagamento existente encontrado');
+                console.log('Nenhum pagamento existente encontrado para este lote específico');
                 return null;
             }
-
+    
             const data = await response.json();
             
             if (data.success && data.payment_id && data.status !== 'approved') {
-                console.log('Pagamento existente encontrado:', data.payment_id);
+                console.log('Pagamento existente encontrado para este lote:', data.payment_id);
                 return data.payment_id;
             }
             
@@ -485,6 +504,38 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
     }
+
+    
+    // Função para verificar se já existe um pagamento válido para este evento - NOVA
+    // async function checkExistingPayment(cpf, eventoId) {
+    //     try {
+    //         console.log('Verificando pagamento existente para:', { cpf, eventoId });
+    //         
+    //         const response = await fetch(`${baseURL}/verificar-pagamento-evento/${cpf}/${eventoId}`, {
+    //             method: 'GET',
+    //             headers: {
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
+    //
+    //         if (!response.ok) {
+    //             console.log('Nenhum pagamento existente encontrado');
+    //             return null;
+    //         }
+    // 
+    //         const data = await response.json();
+    //         
+    //         if (data.success && data.payment_id && data.status !== 'approved') {
+    //             console.log('Pagamento existente encontrado:', data.payment_id);
+    //             return data.payment_id;
+    //         }
+    //         
+    //         return null;
+    //     } catch (error) {
+    //         console.error('Erro ao verificar pagamento existente:', error);
+    //         return null;
+    //     }
+    // }
 
     // Função principal para gerar pagamento PIX com retry CORRIGIDA
     async function generatePixPayment(totalValue, isRetry = false) {
@@ -499,8 +550,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                // Verifica se existe pagamento no servidor para este evento específico
-                const existingPaymentId = await checkExistingPayment(cpf, idEvento);
+                // Verifica se existe pagamento no servidor para este evento e lote específicos
+                const loteId = localStorage.getItem('id_lote'); // NOVO
+                const existingPaymentId = await checkExistingPayment(cpf, idEvento, loteId);
                 if (existingPaymentId) {
                     console.log('Pagamento existente encontrado no servidor:', existingPaymentId);
                     
@@ -928,3 +980,4 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
 });
+
