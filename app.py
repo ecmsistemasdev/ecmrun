@@ -1637,7 +1637,7 @@ def gerar_pix():
         import time
         external_reference = f"evento_{id_evento}_cpf_{cpf_cleaned}_timestamp_{int(time.time())}"
         print(f"External reference criado: {external_reference}")
-
+		
         # CORREÇÃO: Melhorar preference_data
         preference_data = {
             "items": [{
@@ -1667,11 +1667,16 @@ def gerar_pix():
             print(f"Erro ao criar preference: {str(pref_error)}")
             # Continue mesmo se a preference falhar
 
+		# Calcular data de expiração
+		expiration_date = datetime.now() + timedelta(hours=1)
+		formatted_expiration = expiration_date.strftime('%Y-%m-%dT%H:%M:%S-03:00')
+		
         # CORREÇÃO: Melhorar payment_data com mais informações
         payment_data = {
             "transaction_amount": float(valor_total),
             "description": f"ECM RUN - Inscrição Evento {id_evento}",
             "payment_method_id": "pix",
+			"date_of_expiration": formatted_expiration,
             "payer": {
                 "email": email,
                 "first_name": nome_parts[0] if nome_parts else "",
@@ -8160,6 +8165,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
