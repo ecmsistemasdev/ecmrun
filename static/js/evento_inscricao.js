@@ -976,6 +976,7 @@ function salvarInscricao() {
             
             // Salvar dados do usuário para a página de pagamento
             localStorage.setItem('id_evento', dadosInscricao.idevento);
+            localStorage.setItem('id_lote', dadosInscricao.idlote);            
             localStorage.setItem('evento_titulo', dadosInscricao.titulo);
             localStorage.setItem('user_name', `${dadosInscricao.nome} ${dadosInscricao.sobrenome}`);
             localStorage.setItem('user_email', dadosInscricao.email);
@@ -1180,3 +1181,4 @@ function validarEBuscarCPF(cpf) {
             }
         });
 }
+
