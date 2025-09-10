@@ -6663,7 +6663,7 @@ def visualizar_evento(dslink):
                 FROM EVENTO_INSCRICAO 
                 WHERE IDEVENTO = ei.IDEVENTO) AS QTD_INSCRICOES,
                 CASE 
-                    WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) < eil.DTINICIO THEN
+                    WHEN CURDATE() < eil.DTINICIO THEN
                         CASE 
                             WHEN EXISTS (
                                 SELECT 1 
@@ -6677,12 +6677,12 @@ def visualizar_evento(dslink):
                             ) THEN 'ABERTO'
                             ELSE 'NÃO INICIADO'
                         END
-                    WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) BETWEEN eil.DTINICIO AND eil.DTFIM THEN
+                    WHEN CURDATE() BETWEEN eil.DTINICIO AND eil.DTFIM THEN
                         CASE 
                             WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < eil.NUATLETAS THEN 'ABERTO'
                             ELSE 'ESGOTADO'
                         END
-                    WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) > eil.DTFIM THEN 'ENCERRADO'
+                    WHEN CURDATE() > eil.DTFIM THEN 'ENCERRADO'
                     ELSE 'ENCERRADO'
                 END AS STATUS_LOTE
             FROM EVENTO_ITEM_LOTES eil
@@ -6692,7 +6692,7 @@ def visualizar_evento(dslink):
                 CASE 
                     WHEN (
                         CASE 
-                            WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) < eil.DTINICIO THEN
+                            WHEN CURDATE() < eil.DTINICIO THEN
                                 CASE 
                                     WHEN EXISTS (
                                         SELECT 1 
@@ -6706,12 +6706,12 @@ def visualizar_evento(dslink):
                                     ) THEN 'ABERTO'
                                     ELSE 'NÃO INICIADO'
                                 END
-                            WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) BETWEEN eil.DTINICIO AND eil.DTFIM THEN
+                            WHEN CURDATE() BETWEEN eil.DTINICIO AND eil.DTFIM THEN
                                 CASE 
                                     WHEN (SELECT COUNT(IDINSCRICAO) FROM EVENTO_INSCRICAO WHERE IDEVENTO = ei.IDEVENTO) < eil.NUATLETAS THEN 'ABERTO'
                                     ELSE 'ESGOTADO'
                                 END
-                            WHEN DATE(DATE_SUB(NOW(), INTERVAL 1 HOUR)) > eil.DTFIM THEN 'ENCERRADO'
+                            WHEN CURDATE() > eil.DTFIM THEN 'ENCERRADO'
                             ELSE 'ENCERRADO'
                         END
                     ) = 'ABERTO' THEN 1
@@ -8164,6 +8164,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
