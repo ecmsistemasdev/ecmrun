@@ -180,8 +180,33 @@ function atualizarWidgetsValores(valorInscricao, valorTaxa, valorTotal) {
     }
 }
 
-// Timer countdown
+// Timer countdown - VERSÃO MODIFICADA para persistir entre atualizações
 function iniciarTimer() {
+    const TEMPO_TOTAL = 15 * 60; // 15 minutos em segundos
+    const CHAVE_INICIO = 'timer_inicio_inscricao';
+    
+    // Verificar se já existe um timer em andamento
+    let inicioTimer = localStorage.getItem(CHAVE_INICIO);
+    
+    if (!inicioTimer) {
+        // Primeira vez - salvar timestamp de início
+        inicioTimer = Date.now();
+        localStorage.setItem(CHAVE_INICIO, inicioTimer);
+        tempoRestante = TEMPO_TOTAL;
+    } else {
+        // Calcular tempo decorrido
+        const tempoDecorrido = Math.floor((Date.now() - parseInt(inicioTimer)) / 1000);
+        tempoRestante = TEMPO_TOTAL - tempoDecorrido;
+        
+        // Se o tempo já expirou
+        if (tempoRestante <= 0) {
+            tempoRestante = 0;
+            localStorage.removeItem(CHAVE_INICIO);
+            mostrarModal('expiredModal');
+            return;
+        }
+    }
+    
     function atualizarTimer() {
         const minutos = Math.floor(tempoRestante / 60);
         const segundos = tempoRestante % 60;
@@ -190,6 +215,7 @@ function iniciarTimer() {
         
         if (tempoRestante <= 0) {
             clearInterval(timerInterval);
+            localStorage.removeItem(CHAVE_INICIO);
             mostrarModal('expiredModal');
         } else {
             tempoRestante--;
@@ -199,6 +225,26 @@ function iniciarTimer() {
     atualizarTimer();
     timerInterval = setInterval(atualizarTimer, 1000);
 }
+
+// function iniciarTimer() {
+//     function atualizarTimer() {
+//         const minutos = Math.floor(tempoRestante / 60);
+//         const segundos = tempoRestante % 60;
+//         document.getElementById('timer').textContent = 
+//             `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+        
+//         if (tempoRestante <= 0) {
+//             clearInterval(timerInterval);
+//             mostrarModal('expiredModal');
+//         } else {
+//             tempoRestante--;
+//         }
+//     }
+    
+//     atualizarTimer();
+//     timerInterval = setInterval(atualizarTimer, 1000);
+// }
+
 
 // Configurar máscaras
 function configurarMascaras() {
@@ -1035,6 +1081,8 @@ function salvarInscricao() {
                 
                 window.location.href = '/checkout';
             }
+            // Limpar timer após salvar inscrição com sucesso
+            localStorage.removeItem('timer_inicio_inscricao');            
         } else {
             fecharModal('loadingPagamentoModal'); // Fechar modal de loading em caso de erro
             alert('Erro ao salvar inscrição: ' + (data.mensagem || 'Erro desconhecido'));
@@ -1068,11 +1116,21 @@ function fecharModal(modalId) {
 }
 
 function voltarPaginaAnterior() {
+    // Limpar o timer ao voltar para página anterior
+    localStorage.removeItem('timer_inicio_inscricao');
+    sessionStorage.removeItem('inscricao_token');
     window.history.back();
 }
 
+// function voltarPaginaAnterior() {
+//     window.history.back();
+// }
+
 // Cleanup ao sair da página
 window.addEventListener('beforeunload', function() {
+    
+    sessionStorage.removeItem('inscricao_token');
+    
     if (timerInterval) {
         clearInterval(timerInterval);
     }
@@ -1181,4 +1239,5 @@ function validarEBuscarCPF(cpf) {
             }
         });
 }
+
 
