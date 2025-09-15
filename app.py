@@ -1887,12 +1887,31 @@ def verificar_pagamento(payment_id):
         print(f"Status do pagamento no MP: {payment['status']}")
         print(f"Dados completos do pagamento: {payment}")
         
+        # CORREÇÃO: Usar total_paid_amount para pagamentos parcelados
+        # Valor que o cliente efetivamente pagou (inclui juros de parcelamento)
+        valor_total_pago = float(payment.get("total_paid_amount", 0))
+        
+        # Se total_paid_amount não estiver disponível, usar transaction_amount como fallback
+        if valor_total_pago == 0:
+            valor_total_pago = float(payment.get("transaction_amount", 0))
+        
+        valor_original_transacao = float(payment.get("transaction_amount", 0))
+        
+        print(f"Valor original da transação: R$ {valor_original_transacao:.2f}")
+        print(f"Valor total pago pelo cliente: R$ {valor_total_pago:.2f}")
+        
+        # Verificar se foi parcelado
+        installments = payment.get("installments", 1)
+        if installments > 1:
+            print(f"Pagamento parcelado em {installments}x")
+            if "installment_amount" in payment:
+                print(f"Valor de cada parcela: R$ {payment['installment_amount']:.2f}")
+        else:
+            print("Pagamento à vista")
+        
         # NOVA FUNCIONALIDADE: Extrair valores de taxa e líquido
         valor_taxa_mp = 0.0
         valor_liquido = 0.0
-        
-        # Valor total da transação
-        valor_total_transacao = float(payment.get("transaction_amount", 0))
         
         # Calcular taxa total do Mercado Pago
         if payment.get("fee_details"):
@@ -1901,15 +1920,15 @@ def verificar_pagamento(payment_id):
             
             print(f"Taxas aplicadas pelo MP: R$ {valor_taxa_mp:.2f}")
             
-            # Calcular valor líquido (valor total - taxas)
-            valor_liquido = valor_total_transacao - valor_taxa_mp
+            # Calcular valor líquido (valor TOTAL PAGO - taxas)
+            valor_liquido = valor_total_pago - valor_taxa_mp
             
         else:
             # Se não houver fee_details, assumir que não há taxa (improvável)
-            valor_liquido = valor_total_transacao
+            valor_liquido = valor_total_pago
             print("Nenhuma taxa encontrada nos detalhes do pagamento")
         
-        print(f"Valor da transação: R$ {valor_total_transacao:.2f}")
+        print(f"Valor total pago pelo cliente: R$ {valor_total_pago:.2f}")
         print(f"Taxa total MP: R$ {valor_taxa_mp:.2f}")
         print(f"Valor líquido: R$ {valor_liquido:.2f}")
         
@@ -1952,7 +1971,7 @@ def verificar_pagamento(payment_id):
                 estado = existing_record[13]
                 id_cidade = existing_record[14]
                 idpessoa_atual = existing_record[15]
-                vl_inscricao = existing_record[16]  # CORREÇÃO: Indentação corrigida
+                vl_inscricao = existing_record[16]
                 
                 # CORREÇÃO: Converter vl_inscricao para float para evitar erro de tipo
                 vl_inscricao_float = float(vl_inscricao) if vl_inscricao is not None else 0.0
@@ -2035,14 +2054,15 @@ def verificar_pagamento(payment_id):
                     resultado = cur.fetchone()
                     numero_peito = resultado[0] if resultado and resultado[0] else 1
 
-                    # CORREÇÃO: Calcular vl_credito corretamente usando valores float
-                    # VLCREDITO = Valor líquido (que caiu na conta) - Valor da inscrição
-                    vl_credito = valor_liquido - vl_inscricao_float
+                    # CORREÇÃO: Calcular vl_credito usando valor_total_pago (com juros)
+                    # VLCREDITO = Valor total pago pelo cliente - Valor da inscrição
+                    vl_credito = valor_total_pago - vl_inscricao_float
 
                     print("Atualizando status para aprovado, IDPESSOA e valores das taxas...")
                     print(f"Taxa MP: R$ {valor_taxa_mp:.2f}, Valor Líquido: R$ {valor_liquido:.2f}")
                     print(f"VL Crédito (lucro plataforma): R$ {vl_credito:.2f}")
-                    print(f"Cálculo: R$ {valor_liquido:.2f} (líquido) - R$ {vl_inscricao_float:.2f} (inscrição) = R$ {vl_credito:.2f} (lucro)")
+                    print(f"Cálculo do lucro:")
+                    print(f"R$ {valor_total_pago:.2f} (total pago) - R$ {vl_inscricao_float:.2f} (inscrição) = R$ {vl_credito:.2f} (lucro)")
                     
                     # ATUALIZAÇÃO COM OS NOVOS CAMPOS: VLPAGO e VLCREDITO
                     cur.execute("""
@@ -2061,9 +2081,9 @@ def verificar_pagamento(payment_id):
                         'A',  # APROVADO
                         numero_peito,
                         idpessoa,
-                        valor_total_transacao,  # Valor que o cliente pagou de fato
+                        valor_total_pago,       # Valor TOTAL que o cliente pagou (com juros)
                         valor_taxa_mp,          # Valor da taxa do Mercado Pago
-                        valor_liquido,          # Valor líquido (total - taxas)
+                        valor_liquido,          # Valor líquido (total pago - taxas)
                         vl_credito,             # Lucro da plataforma (valor pago - valor inscrição)
                         payment_id
                     ))
@@ -2107,13 +2127,17 @@ def verificar_pagamento(payment_id):
                 
         print(f"=== VERIFICAÇÃO FINALIZADA ===")
         
-        # RETORNO MELHORADO: incluir as informações de taxa e valor líquido
+        # RETORNO MELHORADO: incluir as informações completas de pagamento
         return jsonify({
             'success': True,
             'status': payment["status"],
             'valor_taxa_mp': round(valor_taxa_mp, 2),
             'valor_liquido': round(valor_liquido, 2),
-            'valor_total': round(valor_total_transacao, 2)
+            'valor_total_pago': round(valor_total_pago, 2),  # Valor efetivamente pago pelo cliente
+            'valor_original': round(valor_original_transacao, 2),  # Valor original da transação
+            'parcelado': installments > 1,
+            'parcelas': installments,
+            'valor_parcela': round(float(payment.get('installment_amount', 0)), 2) if installments > 1 else 0
         })
         
     except Exception as e:
@@ -8164,6 +8188,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
