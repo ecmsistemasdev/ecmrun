@@ -58,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const cardForm = mp.cardForm({
         amount: amountNumber.toFixed(2),
         iframe: true,
-        autoMount: true,
         form: {
             id: "payment-form",
             cardNumber: {
@@ -94,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
         },
         callbacks: {
+            // ... mantenha os callbacks como estão
             onFormMounted: error => {
                 if (error) {
                     console.error("Erro ao montar CardForm:", error);
@@ -150,13 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             },
-            // onInstallmentsReceived: (error, installments) => {
-            //     if (error) {
-            //         console.error("Erro ao receber parcelas:", error);
-            //         return;
-            //     }
-            //     console.log("Parcelas recebidas:", installments);
-            // },
             onInstallmentsReceived: (error, installments) => {
                 if (error) {
                     console.error("Erro ao receber parcelas:", error);
@@ -184,8 +177,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 console.log("Token gerado:", token);
             }
-        },
+        }
     });
+
 
     // Checkbox para usar dados da inscrição
     const checkbox = document.getElementById('same-user-data');
