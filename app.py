@@ -611,8 +611,8 @@ def send_organizer_notification(receipt_data):
         msg = Message(
             f'Nova Inscrição - {receipt_data["evento"]} - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'ecmsistemasdeveloper@gmail.com'),
-            recipients=['kelioesteves@hotmail.com']
-            #recipients=['ecmsistemasdeveloper@gmail.com']
+            #recipients=['kelioesteves@hotmail.com']
+            recipients=['naicm12@gmail.com']
         )
         
         # Render the organizer notification template with receipt data
@@ -8238,6 +8238,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
