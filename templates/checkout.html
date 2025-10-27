@@ -445,30 +445,14 @@
             font-weight: 500;
         }
 
-        /* ========== SECURE FIELDS DO MERCADO PAGO ========== */
-        /* Containers dos Secure Fields */
+        /* ========== CAMPOS DO MERCADO PAGO ========== */
+        /* Containers dos campos do MP */
         #form-checkout__cardNumber,
         #form-checkout__expirationDate,
         #form-checkout__securityCode {
             min-height: 40px;
             height: 40px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: white;
-            position: relative;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        /* Iframes dentro dos Secure Fields */
-        #form-checkout__cardNumber iframe,
-        #form-checkout__expirationDate iframe,
-        #form-checkout__securityCode iframe {
-            border: none !important;
-            height: 100% !important;
-            min-height: 40px !important;
-            width: 100% !important;
-            display: block !important;
+            width: 100%;
         }
 
         /* Container do card com ícone */
@@ -619,4 +603,3 @@
     <script src="/static/js/checkout.js"></script>
 </body>
 </html>
-
