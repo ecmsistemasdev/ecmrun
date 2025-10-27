@@ -39,8 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Inicializando CardForm...');
     
     const cardForm = mp.cardForm({
-        amount: String(storedAmount),
+        amount: parseFloat(storedAmount).toFixed(2),
         iframe: true,
+        autoMount: true,
         form: {
             id: "payment-form",
             cardNumber: {
@@ -496,4 +497,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
