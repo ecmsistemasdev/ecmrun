@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             expirationDate: {
                 id: "form-checkout__expirationDate",
-                placeholder: "MM/AA",
+                placeholder: "MM/YY",
             },
             securityCode: {
                 id: "form-checkout__securityCode",
