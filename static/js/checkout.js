@@ -5,20 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
         locale: 'pt-BR'
     });
 
-    // Gerar ou recuperar device ID
-    // let deviceId = localStorage.getItem('mp_device_id');
-    // if (!deviceId) {
-    //     deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    //     localStorage.setItem('mp_device_id', deviceId);
-    // }
-    // console.log('Device ID:', deviceId);
-
-    //////////////////////////////////////////////
     // Gerar device ID usando o SDK do Mercado Pago
     let deviceId = null;
-
-    // Criar instância do device para fingerprint
-    const mpDeviceInstance = mp.getIdentificationTypes();
 
     // Função para obter o device fingerprint do Mercado Pago
     async function getDeviceId() {
@@ -36,9 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Obter o device ID ao carregar a página
-    getDeviceId();    
-
-    //////////////////////////////////////////////
+    getDeviceId();
 
     // Carregar valor do localStorage
     console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
@@ -49,118 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
         currency: 'BRL'
     }).format(storedAmount);
 
-
-    /////////////////////////////////////////////
-    // // Carregar valor do localStorage ANTES de inicializar o CardForm
-    // console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
-    // const storedAmount = localStorage.getItem('valortotal') || '0.00';
-
-    // Inicializar Secure Fields (CardForm) com o valor correto
-    const cardForm = mp.cardForm({
-        amount: String(storedAmount), // Valor do localStorage
-        iframe: true,
-        form: {
-            id: "payment-form",
-            cardNumber: {
-                id: "form-checkout__cardNumber",
-                placeholder: "0000 0000 0000 0000",
-            },
-            expirationDate: {
-                id: "form-checkout__expirationDate",
-                placeholder: "MM/AA",
-            },
-            securityCode: {
-                id: "form-checkout__securityCode",
-                placeholder: "123",
-            },
-            cardholderName: {
-                id: "card_holder_name",
-                placeholder: "Nome completo",
-            },
-            // REMOVIDO: issuer (não temos esse campo no HTML)
-            installments: {
-                id: "installments",
-                placeholder: "Parcelas",
-            },
-            identificationType: {
-                id: "doc_type",
-                placeholder: "Tipo de documento",
-            },
-            identificationNumber: {
-                id: "doc_number",
-                placeholder: "000.000.000-00",
-            },
-            cardholderEmail: {
-                id: "user_email",
-                placeholder: "email@exemplo.com",
-            },
-        },
-        callbacks: {
-            onFormMounted: error => {
-                if (error) {
-                    console.error("Erro ao montar form:", error);
-                    alert("Erro ao carregar formulário de pagamento. Recarregue a página.");
-                    return;
-                }
-                console.log("Card Form montado com sucesso");
-            },
-            onSubmit: event => {
-                event.preventDefault();
-                // Será tratado pelo listener do formulário
-            },
-            onFetching: (resource) => {
-                console.log("Buscando recurso:", resource);
-                
-                // Mostrar loading nas parcelas
-                if (resource === 'installments') {
-                    const installmentsSelect = document.getElementById('installments');
-                    installmentsSelect.innerHTML = '<option value="">Carregando parcelas...</option>';
-                }
-            },
-            onCardTokenReceived: (error, token) => {
-                if (error) {
-                    console.error("Erro ao gerar token:", error);
-                    return;
-                }
-                console.log("Token recebido com sucesso");
-            },
-            onPaymentMethodsReceived: (error, paymentMethods) => {
-                if (error) {
-                    console.error("Erro ao buscar métodos:", error);
-                    return;
-                }
-                console.log("Métodos de pagamento:", paymentMethods);
-                
-                // Atualizar ícone da bandeira
-                if (paymentMethods && paymentMethods[0]) {
-                    const cardBrandIcon = document.getElementById('card-brand-icon');
-                    if (paymentMethods[0].secure_thumbnail) {
-                        cardBrandIcon.src = paymentMethods[0].secure_thumbnail;
-                        cardBrandIcon.style.display = 'block';
-                    }
-                }
-            },
-            onInstallmentsReceived: (error, installments) => {
-                if (error) {
-                    console.error("Erro ao buscar parcelas:", error);
-                    const installmentsSelect = document.getElementById('installments');
-                    installmentsSelect.innerHTML = '<option value="">Erro ao carregar parcelas</option>';
-                    return;
-                }
-                console.log("Parcelas disponíveis:", installments);
-                
-                // As parcelas já são preenchidas automaticamente pelo CardForm
-                // Mas vamos garantir que tem opções
-                const installmentsSelect = document.getElementById('installments');
-                if (installmentsSelect.options.length === 0 || 
-                    installmentsSelect.options[0].value === '') {
-                    installmentsSelect.innerHTML = '<option value="1">1x sem juros</option>';
-                }
-            }
-        },
-    });
-    ///////////////////////////////////////////////
-    
     // Recuperar e exibir o ID do evento
     const idEvento = localStorage.getItem('id_evento');
     console.log('ID do Evento recuperado:', idEvento);
@@ -173,11 +47,87 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Adicionar listener para o checkbox
+    // Valores da inscrição
     const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
     const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
     const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
 
+    // Inicializar Secure Fields (CardForm) - FORMA SIMPLIFICADA
+    const cardForm = mp.cardForm({
+        amount: String(storedAmount),
+        iframe: true,
+        form: {
+            id: "payment-form",
+            cardNumber: {
+                id: "form-checkout__cardNumber",
+                placeholder: "Número do cartão",
+            },
+            expirationDate: {
+                id: "form-checkout__expirationDate",
+                placeholder: "MM/AA",
+            },
+            securityCode: {
+                id: "form-checkout__securityCode",
+                placeholder: "CVV",
+            },
+            cardholderName: {
+                id: "card_holder_name",
+                placeholder: "Nome completo como no cartão",
+            },
+            installments: {
+                id: "installments",
+                placeholder: "Parcelas",
+            },
+            identificationType: {
+                id: "doc_type",
+            },
+            identificationNumber: {
+                id: "doc_number",
+            },
+            cardholderEmail: {
+                id: "user_email",
+            },
+        },
+        callbacks: {
+            onFormMounted: error => {
+                if (error) {
+                    console.error("Erro ao montar CardForm:", error);
+                    return;
+                }
+                console.log("CardForm montado com sucesso!");
+            },
+            onSubmit: event => {
+                event.preventDefault();
+            },
+            onFetching: (resource) => {
+                console.log("Buscando:", resource);
+            },
+            onPaymentMethodsReceived: (error, paymentMethods) => {
+                if (error) {
+                    console.error("Erro métodos:", error);
+                    return;
+                }
+                
+                // Atualizar ícone da bandeira
+                if (paymentMethods && paymentMethods[0]) {
+                    const cardBrandIcon = document.getElementById('card-brand-icon');
+                    if (paymentMethods[0].secure_thumbnail) {
+                        cardBrandIcon.src = paymentMethods[0].secure_thumbnail;
+                        cardBrandIcon.style.display = 'block';
+                    }
+                }
+            },
+            onInstallmentsReceived: (error, installments) => {
+                if (error) {
+                    console.error("Erro parcelas:", error);
+                    return;
+                }
+                console.log("Parcelas carregadas:", installments);
+            }
+        },
+    });
+
+    // Checkbox para usar dados da inscrição
     const checkbox = document.getElementById('same-user-data');
     const cardHolderName = document.getElementById('card_holder_name');
     const docNumber = document.getElementById('doc_number');
@@ -186,40 +136,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     checkbox.addEventListener('change', function() {
         if (this.checked) {
-            // Preencher com dados do localStorage
             const storedName = localStorage.getItem('user_name');
             const storedCPF = localStorage.getItem('user_cpf');
             const storedEmail = localStorage.getItem('user_email');
-            
-            console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
 
             if (storedName && storedCPF && storedEmail) {
                 cardHolderName.value = storedName;
                 docNumber.value = storedCPF;
                 userEmail.value = storedEmail;
-                
-                // Forçar CPF como tipo de documento
                 docType.value = 'CPF';
                 
-                // Desabilitar campos
-                cardHolderName.disabled = true;
-                docNumber.disabled = true;
-                userEmail.disabled = true;
-                docType.disabled = true;
+                // Disparar eventos para o CardForm reconhecer os valores
+                cardHolderName.dispatchEvent(new Event('input', { bubbles: true }));
+                docNumber.dispatchEvent(new Event('input', { bubbles: true }));
+                userEmail.dispatchEvent(new Event('input', { bubbles: true }));
+                docType.dispatchEvent(new Event('change', { bubbles: true }));
             } else {
                 alert('Dados da inscrição não encontrados. Por favor, preencha os campos manualmente.');
                 this.checked = false;
             }
         } else {
-            // Limpar e habilitar campos
             cardHolderName.value = '';
             docNumber.value = '';
             userEmail.value = '';
-            
-            cardHolderName.disabled = false;
-            docNumber.disabled = false;
-            userEmail.disabled = false;
-            docType.disabled = false;
         }
     });
 
@@ -283,133 +222,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
 
-    ///////////////////////////////////////////
-    // // Máscaras para documentos
-    // function formatCPF(value) {
-    //     value = value.slice(0, 11);
-    //     return value
-    //         .replace(/\D/g, '')
-    //         .replace(/(\d{3})(\d)/, '$1.$2')
-    //         .replace(/(\d{3})(\d)/, '$1.$2')
-    //         .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    // }
-
-    // function formatCNPJ(value) {
-    //     value = value.slice(0, 14);
-    //     return value
-    //         .replace(/\D/g, '')
-    //         .replace(/^(\d{2})(\d)/, '$1.$2')
-    //         .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    //         .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    //         .replace(/(\d{4})(\d)/, '$1-$2');
-    // }
-    ////////////////////////////////////////////
-
-
-    // Event listener para máscara de documento
-    const docNumberInput = document.getElementById('doc_number');
-    const docTypeSelect = document.getElementById('doc_type');
-
-    docNumberInput.addEventListener('input', function(e) {
-        const docType = docTypeSelect.value;
-        let value = e.target.value.replace(/\D/g, '');
-        
-        // Limitar o tamanho do valor baseado no tipo de documento
-        if (docType === 'CPF') {
-            value = value.slice(0, 11);
-        } else {
-            value = value.slice(0, 14);
-        }
-        
-        if (docType === 'CPF') {
-            e.target.value = formatCPF(value);
-        } else {
-            e.target.value = formatCNPJ(value);
-        }
-    });
-
-    docNumberInput.addEventListener('blur', function(e) {
-        const docType = docTypeSelect.value;
-        const value = e.target.value.replace(/\D/g, '');
-        let isValid = false;
-        
-        if (docType === 'CPF') {
-            isValid = validateCPF(value);
-        } else {
-            isValid = validateCNPJ(value);
-        }
-        
-        if (!isValid) {
-            e.target.classList.add('document-error');
-            e.target.setCustomValidity(`${docType} inválido`);
-        } else {
-            e.target.classList.remove('document-error');
-            e.target.setCustomValidity('');
-        }
-    });
-
-    docTypeSelect.addEventListener('change', function() {
-        docNumberInput.value = '';
-        docNumberInput.classList.remove('document-error');
-        docNumberInput.setCustomValidity('');
-    });
-
-    
-    ///////////////////////////////////////////////////
-    // // Função para identificar a bandeira do cartão
-    // function getCardType(cardNumber) {
-    //     // Remover espaços e caracteres não numéricos
-    //     cardNumber = cardNumber.replace(/\D/g, '');
-        
-    //     const patterns = {
-    //         visa: {
-    //             pattern: /^4/,
-    //             icon: 'https://ecmrun.com.br/static/img/visa.png',
-    //             id: 'visa'
-    //         },
-    //         mastercard: {
-    //             pattern: /^(5[1-5]|2[2-7])/,
-    //             icon: 'https://ecmrun.com.br/static/img/mastercard.png',
-    //             id: 'master'
-    //         },
-    //         amex: {
-    //             pattern: /^3[47]/,
-    //             icon: 'https://ecmrun.com.br/static/img/amex.png',
-    //             id: 'amex'
-    //         },
-    //         elo: {
-    //             pattern: /^(401178|401179|431274|438935|451416|457393|457631|457632|504175|627780|636297|636368|636369|(506699|5067[0-6]\d|50677[0-8])|(50900\d|5090[1-9]\d|509[1-9]\d{2})|65003[1-3]|(65003[5-9]|65004\d|65005[0-1])|(65040[5-9]|6504[1-3]\d)|(65048[5-9]|65049\d|6505[0-2]\d|65053[0-8])|(65054[1-9]|6505[5-8]\d|65059[0-8])|(65070\d|65071[0-8])|65072[0-7]|(65090[1-9]|65091\d|650920)|(65165[2-9]|6516[6-7]\d)|(65500\d|65501\d)|(65502[1-9]|6550[3-4]\d|65505[0-8]))/,
-    //             icon: 'https://ecmrun.com.br/static/img/elo.png',
-    //             id: 'elo'
-    //         },
-    //         hipercard: {
-    //             pattern: /^(606282\d{10}(\d{3})?)|(3841\d{15})/,
-    //             icon: 'https://ecmrun.com.br/static/img/hipercard.png',
-    //             id: 'hipercard'
-    //         },
-    //         diners: {
-    //             pattern: /^3(?:0[0-5]|[68][0-9])[0-9]{11}/,
-    //             icon: 'https://ecmrun.com.br/static/img/diners.png',
-    //             id: 'diners'
-    //         }
-    //     };
-        
-    //     for (let [brand, data] of Object.entries(patterns)) {
-    //         if (data.pattern.test(cardNumber)) {
-    //             return {
-    //                 brand: data.id,  // Retorna o ID correto para o Mercado Pago
-    //                 icon: data.icon
-    //             };
-    //         }
-    //     }
-        
-    //     return null;
-    // }
-    //////////////////////////////////////////////////////////////
-
-
     // Validação do nome completo
-    document.querySelector('[name="card_holder_name"]').addEventListener('input', function(e) {
+    document.querySelector('[name="card_holder_name"]').addEventListener('blur', function(e) {
         const fullName = e.target.value.trim();
         const nameParts = fullName.split(' ').filter(part => part.length > 0);
         
@@ -420,11 +234,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Função para redirecionar ao comprovante
     async function redirectToReceipt(paymentId) {
         try {
             console.log('Atualizando ID do pagamento...');
             
-            // Primeiro, atualizar o ID do pagamento no banco
             const cpf = localStorage.getItem('user_cpf');
             const idEvento = localStorage.getItem('id_evento');
             
@@ -451,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const updateData = await updateResponse.json();
             console.log('ID do pagamento atualizado:', updateData);
             
-            // Agora verificar o status do pagamento
             console.log('Verificando status do pagamento...');
             
             const verificationResponse = await fetch(`/verificar-pagamento/${paymentId}`, {
@@ -469,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Resultado da verificação:', verificationData);
             
             if (verificationData.success && verificationData.status === 'approved') {
-                console.log('Pagamento verificado e aprovado. Redirecionando para comprovante...');
+                console.log('Pagamento verificado e aprovado. Redirecionando...');
                 window.location.replace(`/comprovante/${paymentId}`);
             } else {
                 throw new Error('Pagamento não aprovado ou erro na verificação');
@@ -481,20 +294,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
-
-
-    // Manipulador do envio do formulário usando CardForm
+    // Manipulador do envio do formulário
     document.getElementById('payment-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
-        const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
-        const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
-
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        
         try {
-            const submitButton = e.target.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.textContent;
             submitButton.textContent = 'Processando...';
             submitButton.disabled = true;
             
@@ -514,17 +321,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const docType = document.querySelector('[name="doc_type"]').value;
             const email = document.querySelector('[name="email"]').value;
             
+            // Validar documento
+            if (docType === 'CPF' && !validateCPF(docNumber)) {
+                throw new Error('CPF inválido');
+            } else if (docType === 'CNPJ' && !validateCNPJ(docNumber)) {
+                throw new Error('CNPJ inválido');
+            }
+            
             // Garantir device_id
             if (!deviceId) {
                 deviceId = await getDeviceId();
             }
             
-            console.log('Criando token via CardForm...');
+            console.log('Obtendo dados do CardForm...');
             
             // Obter dados do formulário através do CardForm
-            const formData = cardForm.getCardFormData();
+            const formData = await cardForm.getCardFormData();
             
-            console.log('Dados do CardForm obtidos');
+            if (!formData || !formData.token) {
+                throw new Error('Não foi possível gerar o token do cartão. Verifique os dados do cartão.');
+            }
+            
+            console.log('Token gerado com sucesso');
             
             // Buscar dados de parcelas
             const finalAmount = Number(parseFloat(localStorage.getItem('valortotal') || 0).toFixed(2));
@@ -626,8 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erro detalhado:', error);
             alert(`Erro ao processar pagamento: ${error.message}`);
         } finally {
-            const submitButton = document.querySelector('button[type="submit"]');
-            submitButton.textContent = 'Finalizar Pagamento';
+            submitButton.textContent = originalButtonText;
             submitButton.disabled = false;
         }
     });
