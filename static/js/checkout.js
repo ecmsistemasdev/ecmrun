@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const cardForm = mp.cardForm({
         amount: amountNumber.toFixed(2),
-        iframe: true,
+        autoMount: true,
         form: {
             id: "payment-form",
             cardNumber: {
@@ -94,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function() {
             },
         },
         callbacks: {
-            // ... mantenha os callbacks como estão
             onFormMounted: error => {
                 if (error) {
                     console.error("Erro ao montar CardForm:", error);
@@ -102,27 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 console.log("CardForm montado com sucesso!");
-                
-                // Forçar visibilidade dos iframes após montagem
-                setTimeout(() => {
-                    const cardNumberDiv = document.getElementById('form-checkout__cardNumber');
-                    const expirationDiv = document.getElementById('form-checkout__expirationDate');
-                    const securityDiv = document.getElementById('form-checkout__securityCode');
-                    
-                    [cardNumberDiv, expirationDiv, securityDiv].forEach(div => {
-                        if (div) {
-                            const iframe = div.querySelector('iframe');
-                            if (iframe) {
-                                iframe.style.width = '100%';
-                                iframe.style.height = '40px';
-                                iframe.style.border = 'none';
-                                iframe.style.display = 'block';
-                                iframe.style.pointerEvents = 'auto';
-                                console.log('Iframe configurado:', div.id);
-                            }
-                        }
-                    });
-                }, 1000);
             },
             onSubmit: event => {
                 event.preventDefault();
