@@ -89,10 +89,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: "doc_number",
                 placeholder: "Número do documento",
             },
-            issuer: {
-                id: "issuer",
-                placeholder: "Banco emissor",
-            },
+            // issuer: {
+            //     id: "issuer",
+            //     placeholder: "Banco emissor",
+            // },
         },
         callbacks: {
             onFormMounted: error => {
