@@ -40,10 +40,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     //////////////////////////////////////////////
 
+    // Carregar valor do localStorage
+    console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
+    const storedAmount = localStorage.getItem('valortotal') || '0.00';
+    const amountElement = document.getElementById('transaction-amount');
+    amountElement.textContent = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(storedAmount);
+
+
     /////////////////////////////////////////////
-    // Inicializar Secure Fields (CardForm)
+    // // Carregar valor do localStorage ANTES de inicializar o CardForm
+    // console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
+    // const storedAmount = localStorage.getItem('valortotal') || '0.00';
+
+    // Inicializar Secure Fields (CardForm) com o valor correto
     const cardForm = mp.cardForm({
-        amount: "0.00", // Será atualizado dinamicamente
+        amount: String(storedAmount), // Valor do localStorage
         iframe: true,
         form: {
             id: "payment-form",
@@ -63,10 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: "card_holder_name",
                 placeholder: "Nome completo",
             },
-            issuer: {
-                id: "issuer",
-                placeholder: "Banco emissor",
-            },
+            // REMOVIDO: issuer (não temos esse campo no HTML)
             installments: {
                 id: "installments",
                 placeholder: "Parcelas",
@@ -88,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
             onFormMounted: error => {
                 if (error) {
                     console.error("Erro ao montar form:", error);
+                    alert("Erro ao carregar formulário de pagamento. Recarregue a página.");
                     return;
                 }
                 console.log("Card Form montado com sucesso");
@@ -98,13 +110,19 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             onFetching: (resource) => {
                 console.log("Buscando recurso:", resource);
+                
+                // Mostrar loading nas parcelas
+                if (resource === 'installments') {
+                    const installmentsSelect = document.getElementById('installments');
+                    installmentsSelect.innerHTML = '<option value="">Carregando parcelas...</option>';
+                }
             },
             onCardTokenReceived: (error, token) => {
                 if (error) {
                     console.error("Erro ao gerar token:", error);
                     return;
                 }
-                console.log("Token recebido:", token);
+                console.log("Token recebido com sucesso");
             },
             onPaymentMethodsReceived: (error, paymentMethods) => {
                 if (error) {
@@ -116,32 +134,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Atualizar ícone da bandeira
                 if (paymentMethods && paymentMethods[0]) {
                     const cardBrandIcon = document.getElementById('card-brand-icon');
-                    cardBrandIcon.src = paymentMethods[0].secure_thumbnail;
-                    cardBrandIcon.style.display = 'block';
+                    if (paymentMethods[0].secure_thumbnail) {
+                        cardBrandIcon.src = paymentMethods[0].secure_thumbnail;
+                        cardBrandIcon.style.display = 'block';
+                    }
                 }
             },
             onInstallmentsReceived: (error, installments) => {
                 if (error) {
                     console.error("Erro ao buscar parcelas:", error);
+                    const installmentsSelect = document.getElementById('installments');
+                    installmentsSelect.innerHTML = '<option value="">Erro ao carregar parcelas</option>';
                     return;
                 }
                 console.log("Parcelas disponíveis:", installments);
+                
+                // As parcelas já são preenchidas automaticamente pelo CardForm
+                // Mas vamos garantir que tem opções
+                const installmentsSelect = document.getElementById('installments');
+                if (installmentsSelect.options.length === 0 || 
+                    installmentsSelect.options[0].value === '') {
+                    installmentsSelect.innerHTML = '<option value="1">1x sem juros</option>';
+                }
             }
         },
     });
-
     ///////////////////////////////////////////////
-
-
-
-    // Carregar valor do localStorage
-    console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
-    const storedAmount = localStorage.getItem('valortotal') || '0.00';
-    const amountElement = document.getElementById('transaction-amount');
-    amountElement.textContent = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(storedAmount);
     
     // Recuperar e exibir o ID do evento
     const idEvento = localStorage.getItem('id_evento');
@@ -390,131 +408,6 @@ document.addEventListener('DOMContentLoaded', function() {
     //////////////////////////////////////////////////////////////
 
 
-    document.getElementById('installments').addEventListener('change', function(e) {
-        const selectedInstallments = e.target.value;
-        const bin = document.getElementById('card-number').value.replace(/\s/g, '').substring(0, 6);
-        const amount = parseFloat(localStorage.getItem('valortotal'));
-        
-        if (bin.length >= 6 && !isNaN(amount)) {
-            mp.getInstallments({
-                amount: String(amount),
-                locale: 'pt-BR',
-                bin: bin
-            }).then((response) => {
-                if (response && response.length > 0) {
-                    updateTotalAmount(response[0]);
-                }
-            }).catch(error => {
-                console.error('Erro ao atualizar valor com juros:', error);
-            });
-        }
-    });
-
-    // Função para atualizar o valor total com juros
-    function updateTotalAmount(installmentData) {
-        const amountElement = document.getElementById('transaction-amount');
-        const selectedInstallment = document.getElementById('installments').value;
-        
-        // Encontrar os dados da parcela selecionada
-        const selectedOption = installmentData.payer_costs.find(
-            cost => cost.installments === parseInt(selectedInstallment)
-        );
-        
-        if (selectedOption) {
-            // Calcular o valor total com juros
-            const totalWithInterest = selectedOption.total_amount;
-            
-            // Atualizar o display
-            amountElement.textContent = new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            }).format(totalWithInterest);
-            
-            // Atualizar o valor no para uso posterior
-            // PROBLEMA IDENTIFICADO: NÃO PODE USAR localStorage
-            // localStorage.setItem('valorTotalComJuros', totalWithInterest);
-        }
-    }
-
-    /////////////////////////////////////////////////
-    // // Atualização do listener do número do cartão
-    // document.getElementById('card-number').addEventListener('input', function(e) {
-    //     let value = e.target.value.replace(/\D/g, '');
-    //     value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-    //     e.target.value = value.substring(0, 19);
-
-    //     const cardNumber = value.replace(/\s/g, '');
-    //     const cardBrandIcon = document.getElementById('card-brand-icon');
-        
-    //     if (cardNumber.length >= 6) {
-    //         const cardTypeInfo = getCardType(cardNumber);
-    //         if (cardTypeInfo) {
-    //             // Atualizar ícone da bandeira
-    //             cardBrandIcon.src = cardTypeInfo.icon;
-    //             cardBrandIcon.style.display = 'block';
-
-    //             // Processar parcelas
-    //             const bin = cardNumber.substring(0, 6);
-    //             const storedAmount = localStorage.getItem('valortotal');
-                
-    //             if (storedAmount) {
-    //                 const amount = parseFloat(storedAmount);
-    //                 if (!isNaN(amount)) {
-    //                     mp.getInstallments({
-    //                         amount: String(amount),
-    //                         locale: 'pt-BR',
-    //                         payment_method_id: cardTypeInfo.brand,
-    //                         bin: bin
-    //                     }).then((response) => {
-    //                         console.log('Resposta do getInstallments:', response);
-    //                         if (response && response.length > 0) {
-    //                             const installmentSelect = document.getElementById('installments');
-    //                             installmentSelect.innerHTML = '';
-
-    //                             response[0].payer_costs.forEach((cost) => {
-    //                                 const formattedAmount = new Intl.NumberFormat('pt-BR', {
-    //                                     style: 'currency',
-    //                                     currency: 'BRL'
-    //                                 }).format(cost.installment_amount);
-
-    //                                 const optionText = cost.recommended_message || 
-    //                                     `${cost.installments}x de ${formattedAmount}`;
-
-    //                                 const option = document.createElement('option');
-    //                                 option.value = cost.installments;
-    //                                 option.textContent = optionText;
-    //                                 installmentSelect.appendChild(option);
-    //                             });
-    //                         }
-    //                     }).catch((error) => {
-    //                         console.error('Erro ao obter parcelas:', error);
-    //                         document.getElementById('installments').innerHTML = 
-    //                             '<option value="">Erro ao carregar parcelas</option>';
-    //                     });
-    //                 }
-    //             }
-    //         } else {
-    //             cardBrandIcon.style.display = 'none';
-    //             document.getElementById('installments').innerHTML = 
-    //                 '<option value="">Cartão não reconhecido</option>';
-    //         }
-    //     } else {
-    //         cardBrandIcon.style.display = 'none';
-    //         document.getElementById('installments').innerHTML = 
-    //             '<option value="">Digite mais números do cartão...</option>';
-    //     }                 
-    // });
-    ////////////////////////////////////       
-
-    // Máscara para data de validade
-    document.getElementById('expiration-date').addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 2) {
-            value = value.substring(0, 2) + '/' + value.substring(2, 4);
-        }
-        e.target.value = value.substring(0, 5);
-    });
-
     // Validação do nome completo
     document.querySelector('[name="card_holder_name"]').addEventListener('input', function(e) {
         const fullName = e.target.value.trim();
@@ -591,216 +484,151 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
-
-
-
-
-    // // Manipulador do envio do formulário - CORRIGIDO
-    // document.getElementById('payment-form').addEventListener('submit', async (e) => {
-    //     e.preventDefault();
+    // Manipulador do envio do formulário usando CardForm
+    document.getElementById('payment-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-    //     const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
-    //     const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
-    //     const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
+        const vlinscricao = parseFloat(localStorage.getItem('valoratual') || 0);
+        const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
+        const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
 
-    //     try {
-    //         // Display loading state
-    //         const submitButton = e.target.querySelector('button[type="submit"]');
-    //         const originalButtonText = submitButton.textContent;
-    //         submitButton.textContent = 'Processando...';
-    //         submitButton.disabled = true;
+        try {
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.textContent = 'Processando...';
+            submitButton.disabled = true;
             
-    //         // Validate fields
-    //         const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
-    //         const nameParts = fullName.split(' ').filter(part => part.length > 0);
+            // Validar nome completo
+            const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
+            const nameParts = fullName.split(' ').filter(part => part.length > 0);
             
-    //         if (nameParts.length < 2) {
-    //             throw new Error('Por favor, insira nome e sobrenome completos');
-    //         }
+            if (nameParts.length < 2) {
+                throw new Error('Por favor, insira nome e sobrenome completos');
+            }
             
-    //         const firstName = nameParts[0];
-    //         const lastName = nameParts.slice(1).join(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ');
             
-    //         // Card validation
-    //         const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-    //         const cardTypeInfo = getCardType(cardNumber);
+            // Buscar dados do pagador
+            const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
+            const docType = document.querySelector('[name="doc_type"]').value;
+            const email = document.querySelector('[name="email"]').value;
             
-    //         if (!cardTypeInfo) {
-    //             throw new Error('Cartão não reconhecido. Por favor, verifique o número do cartão');
-    //         }
+            // Garantir device_id
+            if (!deviceId) {
+                deviceId = await getDeviceId();
+            }
             
-    //         console.log('Criando token do cartão...');
+            console.log('Criando token via CardForm...');
+            
+            // Obter dados do formulário através do CardForm
+            const formData = cardForm.getCardFormData();
+            
+            console.log('Dados do CardForm obtidos');
+            
+            // Buscar dados de parcelas
+            const finalAmount = Number(parseFloat(localStorage.getItem('valortotal') || 0).toFixed(2));
+            const installments = parseInt(document.querySelector('[name="installments"]').value);
+            
+            if (!installments || installments < 1) {
+                throw new Error('Selecione o número de parcelas');
+            }
+            
+            // Dados do usuário
+            const userData = {
+                CPF: docNumber,
+                valor_atual: vlinscricao,
+                valor_taxa: vltaxa,
+                valor_total: totalValue,
+                device_id: deviceId,
+                inscrito_cpf: localStorage.getItem('user_cpf'),
+                inscrito_name: localStorage.getItem('user_name'),
+                inscrito_email: localStorage.getItem('user_email'),
+                id_evento: localStorage.getItem('id_evento')
+            };
+            
+            console.log('Preparando dados de pagamento...');
+            
+            // Estrutura de pagamento
+            const paymentData = {
+                transaction_amount: finalAmount,
+                token: formData.token,
+                description: "ECM RUN Inscrição",
+                installments: installments,
+                payment_method_id: formData.paymentMethodId,
+                issuer_id: formData.issuerId,
+                payer: {
+                    email: email,
+                    identification: {
+                        type: docType,
+                        number: docNumber
+                    },
+                    first_name: firstName,
+                    last_name: lastName
+                },
+                ...userData
+            };
 
-    //         // CORREÇÃO 1: Buscar CPF do campo de documento do pagador, não do inscrito
-    //         const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
-    //         const docType = document.querySelector('[name="doc_type"]').value;
-    //         const email = document.querySelector('[name="email"]').value || userEmail.value;
+            console.log('Enviando pagamento para o servidor...');
             
-    //         ////////////////////////////
-    //         if (!deviceId) {
-    //             deviceId = await getDeviceId();
-    //         }
-    //         ////////////////////////////
+            // Enviar pagamento
+            const response = await fetch('/process_payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(paymentData)
+            });
 
-    //         // CORREÇÃO 2: Separar dados do pagador e do inscrito
-    //         const userData = {
-    //             CPF: docNumber, // CPF do PAGADOR
-    //             valor_atual: vlinscricao,
-    //             valor_taxa: vltaxa,
-    //             valor_total: totalValue,
-    //             device_id: deviceId,
-    //             // Dados do inscrito (podem ser diferentes do pagador)
-    //             inscrito_cpf: localStorage.getItem('user_cpf'),
-    //             inscrito_name: localStorage.getItem('user_name'),
-    //             inscrito_email: localStorage.getItem('user_email'),
-    //             // ID do evento
-    //             id_evento: idEvento
-    //         };
-                        
-    //         console.log('userData: ', userData);
+            const responseData = await response.json();
+            console.log('Resposta do servidor:', responseData);
 
-    //         // CORREÇÃO 3: Validar campos obrigatórios
-    //         const expirationDate = document.getElementById('expiration-date').value;
-    //         const securityCode = document.getElementById('security-code').value;
-            
-    //         if (!expirationDate || expirationDate.length !== 5) {
-    //             throw new Error('Data de validade inválida. Use o formato MM/AA');
-    //         }
-            
-    //         if (!securityCode || securityCode.length < 3) {
-    //             throw new Error('Código de segurança inválido');
-    //         }
-            
-    //         if (!email) {
-    //             throw new Error('Email é obrigatório');
-    //         }
-
-    //         // Create card token
-    //         const cardFormData = {
-    //             cardNumber: cardNumber,
-    //             cardExpirationMonth: expirationDate.split('/')[0],
-    //             cardExpirationYear: '20' + expirationDate.split('/')[1],
-    //             securityCode: securityCode,
-    //             cardholderName: fullName
-    //         };
-
-    //         console.log('Dados do cartão (sem número completo):', {
-    //             ...cardFormData,
-    //             cardNumber: cardFormData.cardNumber.substring(0, 6) + '******' + cardFormData.cardNumber.slice(-4)
-    //         });
-            
-    //         const cardToken = await mp.createCardToken(cardFormData);
-    //         console.log('Token gerado:', cardToken);
-
-    //         if (!cardToken.id) {
-    //             throw new Error('Não foi possível gerar o token do cartão');
-    //         }
-
-    //         // Calculate correct amount
-    //         const finalAmount = Number(parseFloat(localStorage.getItem('valortotal') || 0).toFixed(2));
-    //         const installments = parseInt(document.querySelector('[name="installments"]').value);
-
-    //         // CORREÇÃO 4: Estrutura de dados correta para a API (SEM device_id duplicado)
-    //         const paymentData = {
-    //             transaction_amount: finalAmount,
-    //             token: cardToken.id,
-    //             description: "ECM RUN Inscrição ",
-    //             installments: installments,
-    //             payment_method_id: cardTypeInfo.brand,
-    //             // REMOVIDO: device_id aqui causa erro na API do Mercado Pago
-    //             payer: {
-    //                 email: email,
-    //                 identification: {
-    //                     type: docType,
-    //                     number: docNumber
-    //                 },
-    //                 first_name: firstName,
-    //                 last_name: lastName
-    //             },
-    //             // Incluir todos os dados extras (que contém device_id interno)
-    //             ...userData
-    //         };
-
-    //         console.log('Enviando dados para o servidor:', {
-    //             ...paymentData,
-    //             token: '***HIDDEN***' // Hide sensitive token
-    //         });
-            
-    //         // Send payment request
-    //         const response = await fetch('/process_payment', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Accept': 'application/json'
-    //             },
-    //             body: JSON.stringify(paymentData)
-    //         });
-
-    //         // Parse response
-    //         const responseData = await response.json();
-    //         console.log('Resposta do servidor:', responseData);
-
-    //         if (!response.ok) {
-    //             // Enhanced error handling
-    //             let errorMessage = 'Erro ao processar pagamento';
+            if (!response.ok) {
+                let errorMessage = 'Erro ao processar pagamento';
                 
-    //             if (responseData.error) {
-    //                 errorMessage = responseData.error;
-    //             }
+                if (responseData.error) {
+                    errorMessage = responseData.error;
+                }
                 
-    //             if (responseData.details) {
-    //                 console.error('Detalhes do erro:', responseData.details);
+                if (responseData.details) {
+                    console.error('Detalhes do erro:', responseData.details);
                     
-    //                 // Try to get more readable error message
-    //                 if (typeof responseData.details === 'object' && responseData.details.cause) {
-    //                     errorMessage += `: ${responseData.details.cause[0].description || responseData.details.cause[0].code}`;
-    //                 }
-    //             }
+                    if (typeof responseData.details === 'object' && responseData.details.cause) {
+                        errorMessage += `: ${responseData.details.cause[0].description || responseData.details.cause[0].code}`;
+                    }
+                }
                 
-    //             throw new Error(errorMessage);
-    //         }
+                throw new Error(errorMessage);
+            }
 
-    //         // Handle successful response
-    //         console.log('Pagamento processado com sucesso:', responseData);
+            console.log('Pagamento processado com sucesso:', responseData);
             
-    //         if (responseData.status === "approved") {
-    //             alert('Pagamento aprovado com sucesso!');
+            if (responseData.status === "approved") {
+                alert('Pagamento aprovado com sucesso!');
+                await redirectToReceipt(responseData.id);
+            } else {
+                let message = 'Pagamento não foi aprovado.';
+                if (responseData.status === 'pending') {
+                    message = 'Pagamento está pendente de aprovação.';
+                } else if (responseData.status === 'rejected') {
+                    message = 'Pagamento foi rejeitado.';
+                }
                 
-    //             console.log('Payment ID:', responseData.id);
+                if (responseData.status_detail) {
+                    message += ` Motivo: ${responseData.status_detail}`;
+                }
                 
-    //             try {
-    //                 // Chama diretamente a função que verifica o pagamento e redireciona
-    //                 await redirectToReceipt(responseData.id);
-    //             } catch (error) {
-    //                 console.error('Erro ao processar redirecionamento:', error);
-    //                 alert('Pagamento aprovado, mas houve um erro no redirecionamento. Por favor, entre em contato com o suporte.');
-    //             }
-    //         } else {
-    //             // CORREÇÃO 5: Tratar outros status
-    //             let message = 'Pagamento não foi aprovado.';
-    //             if (responseData.status === 'pending') {
-    //                 message = 'Pagamento está pendente de aprovação.';
-    //             } else if (responseData.status === 'rejected') {
-    //                 message = 'Pagamento foi rejeitado.';
-    //             }
-                
-    //             if (responseData.status_detail) {
-    //                 message += ` Motivo: ${responseData.status_detail}`;
-    //             }
-                
-    //             alert(message);
-    //         }
+                alert(message);
+            }
 
-    //     } catch (error) {
-    //         console.error('Erro detalhado:', error);
-    //         alert(`Erro ao processar pagamento: ${error.message}`);
-    //     } finally {
-    //         // Reset button state
-    //         const submitButton = document.querySelector('button[type="submit"]');
-    //         submitButton.textContent = 'Finalizar Pagamento';
-    //         submitButton.disabled = false;
-    //     }
-    // });
+        } catch (error) {
+            console.error('Erro detalhado:', error);
+            alert(`Erro ao processar pagamento: ${error.message}`);
+        } finally {
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.textContent = 'Finalizar Pagamento';
+            submitButton.disabled = false;
+        }
+    });
 });
