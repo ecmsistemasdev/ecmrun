@@ -1,8 +1,531 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="/static/css/checkout.css"/>
     <title>Pagamento com Cartão de Crédito</title>
+   <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .logo-container {
+            width: 100%;
+            height: 60px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            margin-right: 15px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+            text-align: left;
+            flex: 1;
+        }
+
+        .title-h1 {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+            margin-bottom: 10px;
+            text-align: center;
+            flex: 1;
+        }
+
+        form {
+            max-width: 500px;
+            margin: 5px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .total-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #d2e3f5;
+            text-align: center;
+        }
+
+        .form-control {
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px;
+            background-color: white;
+            font-size: 14px;
+            width: 100%;
+        }        
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-col {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .form-row.doc-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .form-col.doc-type {
+            flex: 1;
+            min-width: 140px;
+            max-width: 140px;
+        }
+
+        .form-col.doc-number {
+            flex: 3;
+        }
+
+        .form-row.doc-row input,
+        .form-row.doc-row select {
+            width: 100%;
+            height: 40px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            height: 40px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        #card_holder_name {
+            text-transform: uppercase;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .card-fields-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }        
+
+        .card-field-col {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .expiry-field,
+        .cvv-field {
+            flex: 1;
+        }
+
+        /* .card-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        } */
+
+        .card-input-container {
+            position: relative;
+            width: 100%;
+        }
+
+
+        .card-input-container input {
+            width: 100%;
+            padding-right: 50px; /* Espaço para o ícone */
+        }
+
+        .card-brand-icon {
+            position: absolute;
+            right: 10px;
+            height: 24px;
+            width: auto;
+            display: none; /* Inicialmente oculto */
+        }
+
+        /* Assegura que o container mantenha o mesmo alinhamento dos outros campos
+        .card-input-container .form-control {
+            margin: 0;
+        } */
+
+        /* Garante que todos os inputs e selects tenham a mesma altura */
+        .form-group input,
+        .form-group select,
+        input#expiration-date,
+        input#security-code {
+            width: 100%;
+            height: 40px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        } 
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-text {
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* Estilo para inputs desabilitados */
+        input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .selo-container {
+            width: 100%;
+            margin: 20px 0;
+            padding: 0 15px;
+        }
+
+        .selo-imagem {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .selo-imagem img {
+            width: 60%;
+            max-width: 200px;
+        }
+
+        .selo-texto-container {
+            width: 100%;
+        }
+
+        .selo-texto-container p {
+            font-size: 12px;
+            line-height: 1.4;
+            text-align: justify;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+        }
+
+        .form-group input:invalid,
+        .form-group select:invalid {
+            border-color: #dc3545;
+        }
+
+        .document-error {
+            border-color: #dc3545 !important;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .footer {
+            background: linear-gradient(to bottom, #e3f2fd, #bbdefb, #90caf9);
+            padding: 30px 0;
+            margin-top: auto;
+            text-align: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .bible-verse {
+            font-size: 1.1em;
+            font-style: italic;
+            color: #1565c0;
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        }
+
+        .footer-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 15px;
+        }
+
+        .footer-text {
+            font-size: 0.9em;
+            color: #1565c0;
+            margin: 5px 0;
+            font-weight: 500;
+        }        
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .logo-container {
+                padding: 0 15px;
+            }
+            
+            .header-title .title-h1{
+                font-size: 16px;
+            }
+
+            form {
+                padding: 15px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .form-col {
+                width: 100%;
+            }
+
+            .card-fields-row {
+                flex-direction: row;
+                gap: 15px;
+            }
+            
+            .form-row.doc-row {
+                flex-direction: row;
+                width: 100%;
+            }
+
+            .form-col.doc-type {
+                flex: 1;
+                min-width: 120px;
+                max-width: 120px;
+            }           
+
+            .form-col.doc-number {
+                flex: 2;
+            }
+
+            .form-group label {
+                font-size: 16px;
+            }
+
+            .form-group input, 
+            .form-group select,
+            .form-control {
+                font-size: 16px;
+                height: 44px;
+            }
+
+            button {
+                padding: 14px;
+                font-size: 18px;
+            }
+
+            .selo-container {
+                padding: 0 10px;
+            }
+            
+            .selo-texto-container p {
+                font-size: 12px;
+            }
+
+        }
+
+        /* Modal de processamento */
+        .processing-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .processing-content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            max-width: 300px;
+            width: 90%;
+        }
+
+        .processing-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-text {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* ========== SECURE FIELDS DO MERCADO PAGO ========== */
+        /* Containers dos Secure Fields */
+        #form-checkout__cardNumber,
+        #form-checkout__expirationDate,
+        #form-checkout__securityCode {
+            min-height: 40px;
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* Iframes dentro dos Secure Fields */
+        #form-checkout__cardNumber iframe,
+        #form-checkout__expirationDate iframe,
+        #form-checkout__securityCode iframe {
+            border: none !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            width: 100% !important;
+            display: block !important;
+            pointer-events: auto !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            background: transparent !important;
+        }
+
+        /* Iframes dentro dos Secure Fields */
+        #form-checkout__cardNumber iframe,
+        #form-checkout__expirationDate iframe,
+        #form-checkout__securityCode iframe {
+            border: none !important;
+            height: 100% !important;
+            min-height: 40px !important;
+            width: 100% !important;
+            display: block !important;
+        }
+
+        /* Container do card com ícone */
+        .form-group .card-input-container {
+            position: relative;
+            width: 100%;
+        }
+
+        /* .form-group .card-input-container #form-checkout__cardNumber {
+            padding-right: 45px;
+        } */
+
+        .form-group .card-input-container #form-checkout__cardNumber {
+            width: 100%;
+        }        
+
+        .form-group .card-input-container .card-brand-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 25px;
+            width: auto;
+            display: none;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+   </style>    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
@@ -41,30 +564,6 @@
                 required
             >
         </div>
-
-
-        <!-- <div class="form-group">
-            <label>Número do Cartão</label>
-            <div class="card-input-container">
-                <input type="tel" id="card-number" name="card_number" class="form-control" 
-                       placeholder="0000 0000 0000 0000" required inputmode="numeric" pattern="[0-9\s]*">                
-                <img id="card-brand-icon" src="" alt="Card brand" class="card-brand-icon">
-            </div>
-        </div>
-
-        <div class="card-fields-row">
-            <div class="form-col expiry-field">
-                <label>Data de Validade</label>
-                <input type="tel" id="expiration-date" name="expiry_date" class="form-control" 
-                       placeholder="MM/AA" required maxlength="5" inputmode="numeric" pattern="[0-9/]*">
-            </div>
-        
-            <div class="form-col cvv-field">
-                <label>CVV</label>
-                <input type="tel" id="security-code" name="security_code" class="form-control" 
-                       placeholder="123" required maxlength="4" inputmode="numeric" pattern="[0-9]*">
-            </div>
-        </div> -->
 
         <!-- Secure Fields do Mercado Pago -->
         <div class="form-group">
@@ -152,4 +651,3 @@
     <script src="/static/js/checkout.js"></script>
 </body>
 </html>
-
