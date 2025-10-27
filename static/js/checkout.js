@@ -138,6 +138,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 console.log("Parcelas recebidas:", installments);
+                
+                // Popular o select de parcelas
+                const installmentsSelect = document.getElementById('installments');
+                installmentsSelect.innerHTML = '';
+                
+                if (installments && installments.length > 0) {
+                    installments[0].payer_costs.forEach(option => {
+                        const optionElement = document.createElement('option');
+                        optionElement.value = option.installments;
+                        optionElement.textContent = option.recommended_message;
+                        installmentsSelect.appendChild(optionElement);
+                    });
+                }
             },
             onCardTokenReceived: (error, token) => {
                 if (error) {
