@@ -1,9 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
 
+    if (typeof window.MercadoPago === 'undefined') 
+        { console.error('SDK do Mercado Pago não carregou'); 
+            alert('Falha ao carregar o SDK. Verifique a rede/HTTPS.'); 
+            return; }
+
     // Inicializar o Mercado Pago
     const mp = new MercadoPago(window.MP_PUBLIC_KEY, {
         locale: 'pt-BR'
     });
+
 
     // Gerar device ID
     let deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
