@@ -1,22 +1,9 @@
-// document.addEventListener('DOMContentLoaded', function() {
-window.addEventListener('load', function() {
-
-    if (!window.MercadoPago) 
-        { console.error('SDK do Mercado Pago não carregou'); 
-        alert('Falha ao carregar o SDK. Verifique rede/HTTPS e bloqueadores.'); 
-        return; }
-
-
-    // if (typeof window.MercadoPago === 'undefined') 
-    //     { console.error('SDK do Mercado Pago não carregou'); 
-    //         alert('Falha ao carregar o SDK. Verifique a rede/HTTPS.'); 
-    //         return; }
+document.addEventListener('DOMContentLoaded', function() {
 
     // Inicializar o Mercado Pago
     const mp = new MercadoPago(window.MP_PUBLIC_KEY, {
         locale: 'pt-BR'
     });
-
 
     // Gerar device ID
     let deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -24,15 +11,29 @@ window.addEventListener('load', function() {
 
     // Carregar valor do localStorage
     console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
-    const storedAmountRaw = localStorage.getItem('valortotal') || '0'; 
-    const amountNumber = parseFloat(String(storedAmountRaw).replace(/./g, '').replace(',', '.')) || 0;
-    const amountElement = document.getElementById('transaction-amount'); 
-    amountElement.textContent = new Intl.NumberFormat('pt-BR', { 
-        style: 'currency', 
-        currency: 'BRL' 
+    const storedAmountRaw = localStorage.getItem('valortotal') || '0';
+    function normalizeAmount(input) {
+      const s = String(input).trim();
+      if (!s) return '0';
+      const hasComma = s.includes(',');
+      const hasDot = s.includes('.');
+      if (hasComma && hasDot) {
+        // 1.234,56 -> 1234.56
+        return s.replace(/\./g, '').replace(',', '.');
+      }
+      if (hasComma) {
+        // 10,50 -> 10.50
+        return s.replace(',', '.');
+      }
+      // Only dot or digits
+      return s;
+    }
+    const amountNumber = parseFloat(normalizeAmount(storedAmountRaw)) || 0;
+    const amountElement = document.getElementById('transaction-amount');
+    amountElement.textContent = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
     }).format(amountNumber);
-
-
 
     // Recuperar e exibir o ID do evento
     const idEvento = localStorage.getItem('id_evento');
@@ -55,9 +56,9 @@ window.addEventListener('load', function() {
     console.log('Inicializando CardForm...');
     
     const cardForm = mp.cardForm({
-        amount: amountNumber.toFixed(2),  
+        amount: amountNumber.toFixed(2),
         iframe: true,
-        autoMount: true, 
+        autoMount: true,
         form: {
             id: "payment-form",
             cardNumber: {
@@ -407,7 +408,6 @@ window.addEventListener('load', function() {
                 console.log('Token gerado com sucesso');
                 
                 // Buscar dados de parcelas
-                // const finalAmount = Number(parseFloat(storedAmount).toFixed(2));
                 const finalAmount = Number(amountNumber.toFixed(2));
                 const installmentsSelect = document.getElementById('installments');
                 const installmentsValue = parseInt(installmentsSelect.value);
