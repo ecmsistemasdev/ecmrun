@@ -480,13 +480,20 @@ def process_payment():
         except Exception as e:
             app.logger.error(f"EXCEÇÃO NA PREFERÊNCIA - Pagador CPF: {payer_cpf}, Erro: {str(e)}")
             raise ValueError(f"Erro ao criar preferência de pagamento: {str(e)}")
-
-        # CORREÇÃO: Estrutura de pagamento sem device_id duplicado
+		
+		##### adicionado pra teste
+		# Buscar nome do evento do request
+		id_evento = payment_data.get('id_evento')
+		statement_text = f"ECMRUN EVT{id_evento}" if id_evento else "ECMRUN TICKETS"
+		##### fim adicionado pra teste 
+		
+		# CORREÇÃO: Estrutura de pagamento sem device_id duplicado
         payment_info = {
             "transaction_amount": transaction_amount,
             "token": payment_data['token'],
             "description": "Inscrição Corrida",
-            "statement_descriptor": "ECMRUN TICKETS",
+            # "statement_descriptor": "ECMRUN TICKETS", removido pra teste
+			"statement_descriptor": statement_text[:22],  #adicionado pra teste
             "installments": installments,
             "payment_method_id": payment_data['payment_method_id'],
             "external_reference": external_reference,
@@ -8238,6 +8245,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
