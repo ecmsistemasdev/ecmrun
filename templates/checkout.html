@@ -587,9 +587,13 @@
         <input type="hidden" name="description" value="ECM RUN Inscrição Evento">
         <input type="hidden" name="item_description" value="Inscrição Corrida">
         <input type="hidden" name="token" id="token">
-        <select id="issuer" name="issuer">
-            <option value="">Selecione o banco</option>
-        </select>
+        <!-- <select id="issuer" name="issuer" style="display: none;"> -->
+        <div class="form-group">
+            <select id="issuer" name="issuer">
+                <option value="">Selecione o banco</option>
+            </select>
+        </div>
+            
         <button type="submit">Finalizar Pagamento</button>
 
         <!--Início do selo -->
@@ -622,4 +626,3 @@
     <script src="/static/js/checkout.js"></script>
 </body>
 </html>
-
