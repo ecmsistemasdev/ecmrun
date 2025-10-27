@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const iframe = div.querySelector('iframe');
                             if (iframe) {
                                 iframe.style.width = '100%';
-                                iframe.style.height = '40%';
+                                iframe.style.height = '40px';
                                 iframe.style.border = 'none';
                                 iframe.style.display = 'block';
                                 iframe.style.pointerEvents = 'auto';
@@ -496,3 +496,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
