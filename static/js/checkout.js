@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function getDeviceId() {
         try {
             // O SDK do MP gera automaticamente o device_id
-            deviceId = await mp.getDeviceId();
+            deviceId = await mp.getIdentificationTypes();
+            deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             console.log('Device ID do Mercado Pago:', deviceId);
             return deviceId;
         } catch (error) {
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const vltaxa = parseFloat(localStorage.getItem('valortaxa') || 0);
     const totalValue = parseFloat(localStorage.getItem('valortotal') || 0);
 
-    // Inicializar Secure Fields (CardForm) - FORMA SIMPLIFICADA
+    // Inicializar Secure Fields (CardForm) - CORRIGIDO
     const cardForm = mp.cardForm({
         amount: String(storedAmount),
         iframe: true,
@@ -83,9 +84,11 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             identificationNumber: {
                 id: "doc_number",
+                placeholder: "Número do documento",
             },
             cardholderEmail: {
                 id: "user_email",
+                placeholder: "E-mail",
             },
         },
         callbacks: {
@@ -95,17 +98,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 console.log("CardForm montado com sucesso!");
+                
+                // Garantir que os iframes estejam visíveis e clicáveis
+                setTimeout(() => {
+                    const iframes = document.querySelectorAll('iframe[name^="iframe-"]');
+                    iframes.forEach(iframe => {
+                        iframe.style.pointerEvents = 'auto';
+                        iframe.style.display = 'block';
+                        iframe.style.border = 'none';
+                        iframe.style.height = '100%';
+                        iframe.style.width = '100%';
+                    });
+                }, 500);
             },
             onSubmit: event => {
                 event.preventDefault();
             },
             onFetching: (resource) => {
                 console.log("Buscando:", resource);
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'flex';
+                }
             },
             onPaymentMethodsReceived: (error, paymentMethods) => {
                 if (error) {
                     console.error("Erro métodos:", error);
                     return;
+                }
+                
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
                 }
                 
                 // Atualizar ícone da bandeira
@@ -223,16 +247,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Validação do nome completo
-    document.querySelector('[name="card_holder_name"]').addEventListener('blur', function(e) {
-        const fullName = e.target.value.trim();
-        const nameParts = fullName.split(' ').filter(part => part.length > 0);
-        
-        if (nameParts.length < 2) {
-            e.target.setCustomValidity('Por favor, insira nome e sobrenome completos');
-        } else {
-            e.target.setCustomValidity('');
-        }
-    });
+    if (cardHolderName) {
+        cardHolderName.addEventListener('blur', function(e) {
+            const fullName = e.target.value.trim();
+            const nameParts = fullName.split(' ').filter(part => part.length > 0);
+            
+            if (nameParts.length < 2) {
+                e.target.setCustomValidity('Por favor, insira nome e sobrenome completos');
+            } else {
+                e.target.setCustomValidity('');
+            }
+        });
+    }
 
     // Função para redirecionar ao comprovante
     async function redirectToReceipt(paymentId) {
@@ -306,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.disabled = true;
             
             // Validar nome completo
-            const fullName = document.querySelector('[name="card_holder_name"]').value.trim();
+            const fullName = cardHolderName.value.trim();
             const nameParts = fullName.split(' ').filter(part => part.length > 0);
             
             if (nameParts.length < 2) {
@@ -317,14 +343,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const lastName = nameParts.slice(1).join(' ');
             
             // Buscar dados do pagador
-            const docNumber = document.querySelector('[name="doc_number"]').value.replace(/\D/g, '');
-            const docType = document.querySelector('[name="doc_type"]').value;
-            const email = document.querySelector('[name="email"]').value;
+            const docNumberValue = docNumber.value.replace(/\D/g, '');
+            const docTypeValue = docType.value;
+            const email = userEmail.value;
             
             // Validar documento
-            if (docType === 'CPF' && !validateCPF(docNumber)) {
+            if (docTypeValue === 'CPF' && !validateCPF(docNumberValue)) {
                 throw new Error('CPF inválido');
-            } else if (docType === 'CNPJ' && !validateCNPJ(docNumber)) {
+            } else if (docTypeValue === 'CNPJ' && !validateCNPJ(docNumberValue)) {
                 throw new Error('CNPJ inválido');
             }
             
@@ -346,15 +372,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Buscar dados de parcelas
             const finalAmount = Number(parseFloat(localStorage.getItem('valortotal') || 0).toFixed(2));
-            const installments = parseInt(document.querySelector('[name="installments"]').value);
+            const installmentsValue = parseInt(document.querySelector('[name="installments"]').value);
             
-            if (!installments || installments < 1) {
+            if (!installmentsValue || installmentsValue < 1) {
                 throw new Error('Selecione o número de parcelas');
             }
             
             // Dados do usuário
             const userData = {
-                CPF: docNumber,
+                CPF: docNumberValue,
                 valor_atual: vlinscricao,
                 valor_taxa: vltaxa,
                 valor_total: totalValue,
@@ -372,14 +398,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 transaction_amount: finalAmount,
                 token: formData.token,
                 description: "ECM RUN Inscrição",
-                installments: installments,
+                installments: installmentsValue,
                 payment_method_id: formData.paymentMethodId,
                 issuer_id: formData.issuerId,
                 payer: {
                     email: email,
                     identification: {
-                        type: docType,
-                        number: docNumber
+                        type: docTypeValue,
+                        number: docNumberValue
                     },
                     first_name: firstName,
                     last_name: lastName
