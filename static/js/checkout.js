@@ -56,8 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Inicializando CardForm...');
     
     const cardForm = mp.cardForm({
-        amount: amountNumber.toFixed(2),
-        autoMount: true,
+        amount: String(amountNumber.toFixed(2)),
+        iframe: true,
         form: {
             id: "payment-form",
             cardNumber: {
@@ -82,15 +82,14 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             identificationType: {
                 id: "doc_type",
-                placeholder: "Tipo de documento",
             },
             identificationNumber: {
                 id: "doc_number",
                 placeholder: "Número do documento",
             },
-            cardholderEmail: {
-                id: "user_email",
-                placeholder: "Email",
+            issuer: {
+                id: "issuer",
+                placeholder: "Banco emissor",
             },
         },
         callbacks: {
@@ -105,9 +104,26 @@ document.addEventListener('DOMContentLoaded', function() {
             onSubmit: event => {
                 event.preventDefault();
                 console.log('Submit interceptado pelo CardForm');
+                handleFormSubmit(event);
             },
             onFetching: (resource) => {
                 console.log("Buscando recurso:", resource);
+                const submitButton = document.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Carregando...';
+                }
+                return () => {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Finalizar Pagamento';
+                };
+            },
+            onCardTokenReceived: (error, token) => {
+                if (error) {
+                    console.error("Erro ao gerar token:", error);
+                    return;
+                }
+                console.log("Token recebido:", token);
             },
             onPaymentMethodsReceived: (error, paymentMethods) => {
                 if (error) {
@@ -135,30 +151,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 console.log("Parcelas recebidas:", installments);
-                
-                // Popular o select de parcelas
-                const installmentsSelect = document.getElementById('installments');
-                installmentsSelect.innerHTML = '';
-                
-                if (installments && installments.length > 0) {
-                    installments[0].payer_costs.forEach(option => {
-                        const optionElement = document.createElement('option');
-                        optionElement.value = option.installments;
-                        optionElement.textContent = option.recommended_message;
-                        installmentsSelect.appendChild(optionElement);
-                    });
-                }
             },
-            onCardTokenReceived: (error, token) => {
-                if (error) {
-                    console.error("Erro ao gerar token:", error);
-                    return;
-                }
-                console.log("Token gerado:", token);
-            }
         }
     });
-
 
     // Checkbox para usar dados da inscrição
     const checkbox = document.getElementById('same-user-data');
@@ -175,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const storedEmail = localStorage.getItem('user_email');
 
                 if (storedName && storedCPF && storedEmail) {
-                    cardHolderName.value = storedName;
+                    cardHolderName.value = storedName.toUpperCase();
                     docNumber.value = storedCPF;
                     userEmail.value = storedEmail;
                     docType.value = 'CPF';
@@ -332,158 +327,156 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Manipulador do envio do formulário
-    const paymentForm = document.getElementById('payment-form');
-    if (paymentForm) {
-        paymentForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+        
+        const submitButton = document.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        
+        // Mostrar modal de processamento
+        const processingModal = document.getElementById('processing-modal');
+        if (processingModal) {
+            processingModal.style.display = 'flex';
+        }
+        
+        try {
+            submitButton.textContent = 'Processando...';
+            submitButton.disabled = true;
             
-            const submitButton = e.target.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.textContent;
+            // Validar nome completo
+            const fullName = cardHolderName.value.trim();
+            const nameParts = fullName.split(' ').filter(part => part.length > 0);
             
-            try {
-                submitButton.textContent = 'Processando...';
-                submitButton.disabled = true;
-                
-                // Validar nome completo
-                const fullName = cardHolderName.value.trim();
-                const nameParts = fullName.split(' ').filter(part => part.length > 0);
-                
-                if (nameParts.length < 2) {
-                    throw new Error('Por favor, insira nome e sobrenome completos');
-                }
-                
-                const firstName = nameParts[0];
-                const lastName = nameParts.slice(1).join(' ');
-                
-                // Buscar dados do pagador
-                const docNumberValue = docNumber.value.replace(/\D/g, '');
-                const docTypeValue = docType.value;
-                const email = userEmail.value;
-                
-                // Validar documento
-                if (docTypeValue === 'CPF' && !validateCPF(docNumberValue)) {
-                    throw new Error('CPF inválido');
-                } else if (docTypeValue === 'CNPJ' && !validateCNPJ(docNumberValue)) {
-                    throw new Error('CNPJ inválido');
-                }
-                
-                console.log('Obtendo dados do CardForm...');
-                
-                // Obter dados do formulário através do CardForm
-                const formData = await cardForm.getCardFormData();
-                
-                console.log('Dados do CardForm:', formData);
-                
-                if (!formData || !formData.token) {
-                    throw new Error('Não foi possível gerar o token do cartão. Verifique os dados do cartão.');
-                }
-                
-                console.log('Token gerado com sucesso');
-                
-                // Buscar dados de parcelas
-                const finalAmount = Number(amountNumber.toFixed(2));
-                const installmentsSelect = document.getElementById('installments');
-                const installmentsValue = parseInt(installmentsSelect.value);
-                
-                if (!installmentsValue || installmentsValue < 1) {
-                    throw new Error('Selecione o número de parcelas');
-                }
-                
-                // Dados do usuário
-                const userData = {
-                    CPF: docNumberValue,
-                    valor_atual: vlinscricao,
-                    valor_taxa: vltaxa,
-                    valor_total: totalValue,
-                    device_id: deviceId,
-                    inscrito_cpf: localStorage.getItem('user_cpf'),
-                    inscrito_name: localStorage.getItem('user_name'),
-                    inscrito_email: localStorage.getItem('user_email'),
-                    id_evento: localStorage.getItem('id_evento')
-                };
-                
-                console.log('Preparando dados de pagamento...');
-                
-                // Estrutura de pagamento
-                const paymentData = {
-                    transaction_amount: finalAmount,
-                    token: formData.token,
-                    description: "ECM RUN Inscrição",
-                    installments: installmentsValue,
-                    payment_method_id: formData.paymentMethodId,
-                    issuer_id: formData.issuerId,
-                    payer: {
-                        email: email,
-                        identification: {
-                            type: docTypeValue,
-                            number: docNumberValue
-                        },
-                        first_name: firstName,
-                        last_name: lastName
-                    },
-                    ...userData
-                };
-
-                console.log('Enviando pagamento para o servidor...');
-                
-                // Enviar pagamento
-                const response = await fetch('/process_payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-
-                const responseData = await response.json();
-                console.log('Resposta do servidor:', responseData);
-
-                if (!response.ok) {
-                    let errorMessage = 'Erro ao processar pagamento';
-                    
-                    if (responseData.error) {
-                        errorMessage = responseData.error;
-                    }
-                    
-                    if (responseData.details) {
-                        console.error('Detalhes do erro:', responseData.details);
-                        
-                        if (typeof responseData.details === 'object' && responseData.details.cause) {
-                            errorMessage += `: ${responseData.details.cause[0].description || responseData.details.cause[0].code}`;
-                        }
-                    }
-                    
-                    throw new Error(errorMessage);
-                }
-
-                console.log('Pagamento processado com sucesso:', responseData);
-                
-                if (responseData.status === "approved") {
-                    alert('Pagamento aprovado com sucesso!');
-                    await redirectToReceipt(responseData.id);
-                } else {
-                    let message = 'Pagamento não foi aprovado.';
-                    if (responseData.status === 'pending') {
-                        message = 'Pagamento está pendente de aprovação.';
-                    } else if (responseData.status === 'rejected') {
-                        message = 'Pagamento foi rejeitado.';
-                    }
-                    
-                    if (responseData.status_detail) {
-                        message += ` Motivo: ${responseData.status_detail}`;
-                    }
-                    
-                    alert(message);
-                }
-
-            } catch (error) {
-                console.error('Erro detalhado:', error);
-                alert(`Erro ao processar pagamento: ${error.message}`);
-            } finally {
-                submitButton.textContent = originalButtonText;
-                submitButton.disabled = false;
+            if (nameParts.length < 2) {
+                throw new Error('Por favor, insira nome e sobrenome completos');
             }
-        });
+            
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ');
+            
+            // Buscar dados do pagador
+            const docNumberValue = docNumber.value.replace(/\D/g, '');
+            const docTypeValue = docType.value;
+            
+            // Validar documento
+            if (docTypeValue === 'CPF' && !validateCPF(docNumberValue)) {
+                throw new Error('CPF inválido');
+            } else if (docTypeValue === 'CNPJ' && !validateCNPJ(docNumberValue)) {
+                throw new Error('CNPJ inválido');
+            }
+            
+            console.log('Obtendo dados do CardForm...');
+            
+            // Obter dados do formulário através do CardForm
+            const formData = await cardForm.getCardFormData();
+            
+            console.log('Dados do CardForm:', formData);
+            
+            if (!formData || !formData.token) {
+                throw new Error('Não foi possível gerar o token do cartão. Verifique os dados do cartão.');
+            }
+            
+            console.log('Token gerado com sucesso');
+            
+            // Dados do usuário
+            const userData = {
+                CPF: docNumberValue,
+                valor_atual: vlinscricao,
+                valor_taxa: vltaxa,
+                valor_total: totalValue,
+                device_id: deviceId,
+                inscrito_cpf: localStorage.getItem('user_cpf'),
+                inscrito_name: localStorage.getItem('user_name'),
+                inscrito_email: localStorage.getItem('user_email'),
+                id_evento: localStorage.getItem('id_evento')
+            };
+            
+            console.log('Preparando dados de pagamento...');
+            
+            // Estrutura de pagamento
+            const paymentData = {
+                transaction_amount: Number(amountNumber.toFixed(2)),
+                token: formData.token,
+                description: "ECM RUN Inscrição",
+                installments: Number(formData.installments),
+                payment_method_id: formData.paymentMethodId,
+                issuer_id: formData.issuerId,
+                payer: {
+                    email: formData.cardholderEmail || userEmail.value,
+                    identification: {
+                        type: docTypeValue,
+                        number: docNumberValue
+                    },
+                    first_name: firstName,
+                    last_name: lastName
+                },
+                ...userData
+            };
+
+            console.log('Enviando pagamento para o servidor...');
+            
+            // Enviar pagamento
+            const response = await fetch('/process_payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(paymentData)
+            });
+
+            const responseData = await response.json();
+            console.log('Resposta do servidor:', responseData);
+
+            if (!response.ok) {
+                let errorMessage = 'Erro ao processar pagamento';
+                
+                if (responseData.error) {
+                    errorMessage = responseData.error;
+                }
+                
+                if (responseData.details) {
+                    console.error('Detalhes do erro:', responseData.details);
+                    
+                    if (typeof responseData.details === 'object' && responseData.details.cause) {
+                        errorMessage += `: ${responseData.details.cause[0].description || responseData.details.cause[0].code}`;
+                    }
+                }
+                
+                throw new Error(errorMessage);
+            }
+
+            console.log('Pagamento processado com sucesso:', responseData);
+            
+            if (responseData.status === "approved") {
+                alert('Pagamento aprovado com sucesso!');
+                await redirectToReceipt(responseData.id);
+            } else {
+                let message = 'Pagamento não foi aprovado.';
+                if (responseData.status === 'pending') {
+                    message = 'Pagamento está pendente de aprovação.';
+                } else if (responseData.status === 'rejected') {
+                    message = 'Pagamento foi rejeitado.';
+                }
+                
+                if (responseData.status_detail) {
+                    message += ` Motivo: ${responseData.status_detail}`;
+                }
+                
+                alert(message);
+            }
+
+        } catch (error) {
+            console.error('Erro detalhado:', error);
+            alert(`Erro ao processar pagamento: ${error.message}`);
+        } finally {
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
+            
+            // Esconder modal de processamento
+            if (processingModal) {
+                processingModal.style.display = 'none';
+            }
+        }
     }
 });
