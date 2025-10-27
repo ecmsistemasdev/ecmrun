@@ -11,12 +11,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Carregar valor do localStorage
     console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
-    const storedAmount = localStorage.getItem('valortotal') || '0.00';
-    const amountElement = document.getElementById('transaction-amount');
-    amountElement.textContent = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(storedAmount);
+    const storedAmountRaw = localStorage.getItem('valortotal') || '0'; 
+    const amountNumber = parseFloat(String(storedAmountRaw).replace(/./g, '').replace(',', '.')) || 0; 
+    const amountElement = document.getElementById('transaction-amount'); 
+    amountElement.textContent = new Intl.NumberFormat('pt-BR', { 
+        style: 'currency', 
+        currency: 'BRL' 
+    }).format(amountNumber);
+
+
 
     // Recuperar e exibir o ID do evento
     const idEvento = localStorage.getItem('id_evento');
@@ -39,9 +42,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Inicializando CardForm...');
     
     const cardForm = mp.cardForm({
-        amount: parseFloat(storedAmount).toFixed(2),
+        amount: amountNumber.toFixed(2),  
         iframe: true,
-        autoMount: true,
+        autoMount: true, 
         form: {
             id: "payment-form",
             cardNumber: {
