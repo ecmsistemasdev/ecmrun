@@ -55,8 +55,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar CardForm do Mercado Pago
     console.log('Inicializando CardForm...');
     
+    
     const cardForm = mp.cardForm({
-        amount: String(amountNumber.toFixed(2)),
+        amount: amountNumber.toFixed(2),
+        autoMount: true, 
         iframe: true,
         form: {
             id: "payment-form",
