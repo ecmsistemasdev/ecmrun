@@ -1,9 +1,16 @@
-document.addEventListener('DOMContentLoaded', function() {
+// document.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('load', function() {
 
-    if (typeof window.MercadoPago === 'undefined') 
+    if (!window.MercadoPago) 
         { console.error('SDK do Mercado Pago não carregou'); 
-            alert('Falha ao carregar o SDK. Verifique a rede/HTTPS.'); 
-            return; }
+        alert('Falha ao carregar o SDK. Verifique rede/HTTPS e bloqueadores.'); 
+        return; }
+
+
+    // if (typeof window.MercadoPago === 'undefined') 
+    //     { console.error('SDK do Mercado Pago não carregou'); 
+    //         alert('Falha ao carregar o SDK. Verifique a rede/HTTPS.'); 
+    //         return; }
 
     // Inicializar o Mercado Pago
     const mp = new MercadoPago(window.MP_PUBLIC_KEY, {
@@ -18,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Carregar valor do localStorage
     console.log('Valor no localStorage:', localStorage.getItem('valortotal'));
     const storedAmountRaw = localStorage.getItem('valortotal') || '0'; 
-    const amountNumber = parseFloat(String(storedAmountRaw).replace(/./g, '').replace(',', '.')) || 0; 
+    const amountNumber = parseFloat(String(storedAmountRaw).replace(/./g, '').replace(',', '.')) || 0;
     const amountElement = document.getElementById('transaction-amount'); 
     amountElement.textContent = new Intl.NumberFormat('pt-BR', { 
         style: 'currency', 
@@ -400,7 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Token gerado com sucesso');
                 
                 // Buscar dados de parcelas
-                const finalAmount = Number(parseFloat(storedAmount).toFixed(2));
+                // const finalAmount = Number(parseFloat(storedAmount).toFixed(2));
+                const finalAmount = Number(amountNumber.toFixed(2));
                 const installmentsSelect = document.getElementById('installments');
                 const installmentsValue = parseInt(installmentsSelect.value);
                 
