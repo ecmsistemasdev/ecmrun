@@ -72,25 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: "form-checkout__securityCode",
                 placeholder: "CVV",
             },
-            cardholderName: {
-                id: "card_holder_name",
-                placeholder: "Nome completo",
-            },
-            installments: {
-                id: "installments",
-                placeholder: "Parcelas",
-            },
-            identificationType: {
-                id: "doc_type",
-            },
-            identificationNumber: {
-                id: "doc_number",
-                placeholder: "CPF/CNPJ",
-            },
-            cardholderEmail: {
-                id: "user_email",
-                placeholder: "E-mail",
-            },
         },
         callbacks: {
             // ... mantenha os callbacks como estão
