@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
         amount: amountNumber.toFixed(2),
         iframe: true,
         form: {
+            id: "payment-form",
             cardNumber: {
                 id: "form-checkout__cardNumber",
                 placeholder: "Número do cartão",
@@ -70,6 +71,26 @@ document.addEventListener('DOMContentLoaded', function() {
             securityCode: {
                 id: "form-checkout__securityCode",
                 placeholder: "CVV",
+            },
+            cardholderName: {
+                id: "card_holder_name",
+                placeholder: "Nome completo",
+            },
+            installments: {
+                id: "installments",
+                placeholder: "Parcelas",
+            },
+            identificationType: {
+                id: "doc_type",
+                placeholder: "Tipo de documento",
+            },
+            identificationNumber: {
+                id: "doc_number",
+                placeholder: "Número do documento",
+            },
+            cardholderEmail: {
+                id: "user_email",
+                placeholder: "Email",
             },
         },
         callbacks: {
@@ -488,4 +509,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
