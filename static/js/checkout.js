@@ -59,7 +59,6 @@ document.addEventListener('DOMContentLoaded', function() {
         amount: amountNumber.toFixed(2),
         iframe: true,
         form: {
-            id: "payment-form",
             cardNumber: {
                 id: "form-checkout__cardNumber",
                 placeholder: "Número do cartão",
@@ -489,3 +488,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
