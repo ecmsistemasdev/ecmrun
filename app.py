@@ -614,17 +614,45 @@ def process_payment():
 
 def send_organizer_notification(receipt_data):
     try:
+        # Buscar email do organizador do evento
+        idevento = receipt_data.get('idevento')
+        
+        if not idevento:
+            app.logger.warning("IDEVENTO não informado para notificação do organizador")
+            return False
+        
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            SELECT EMAIL 
+            FROM EVENTO1 
+            WHERE IDEVENTO = %s
+        """, (idevento,))
+        
+        resultado = cur.fetchone()
+        cur.close()
+        
+        # Se não encontrou email ou email está vazio, não envia
+        if not resultado or not resultado[0]:
+            app.logger.warning(f"Email do organizador não encontrado para evento {idevento}")
+            return False
+        
+        email_organizador = resultado[0].strip()
+        
+        # Validação adicional do email
+        if not email_organizador or '@' not in email_organizador:
+            app.logger.warning(f"Email inválido para evento {idevento}: {email_organizador}")
+            return False
+        
         msg = Message(
             f'Nova Inscrição - {receipt_data["evento"]} - ID {receipt_data["inscricao"]}',
             sender=('ECM Run', 'ecmsistemasdeveloper@gmail.com'),
-            recipients=['kelioesteves@hotmail.com']
-            #recipients=['naicm12@gmail.com']
+            recipients=[email_organizador]
         )
         
         # Render the organizer notification template with receipt data
         msg.html = render_template('organizer_email.html', **receipt_data)
         mail.send(msg)
-        app.logger.info("Notificação enviada para o organizador")
+        app.logger.info(f"Notificação enviada para o organizador: {email_organizador}")
         return True
         
     except Exception as e:
@@ -655,14 +683,14 @@ def comprovante(payment_id):
                 END AS KM_DESCRICAO, 
                 ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, 
                 ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, 
-                e.OBS, ei.CPF, ei.DTNASCIMENTO 
+                e.OBS, ei.CPF, ei.DTNASCIMENTO, ei.IDEVENTO
             FROM EVENTO_INSCRICAO ei
             INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
             INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
             WHERE ei.STATUS = 'A' 
             AND ei.IDPAGAMENTO = %s 
         ''', (payment_id,))
-        
+
         receipt_data = cur.fetchone()
         cur.close()
 
@@ -709,7 +737,8 @@ def comprovante(payment_id):
             'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
             'formapgto': receipt_data[10],
             'inscricao': str(receipt_data[11]),
-            'obs': receipt_data[14] if receipt_data[14] is not None else ''  # Evita mostrar None
+            'obs': receipt_data[14] if receipt_data[14] is not None else '',  # Evita mostrar None
+            'idevento': receipt_data[17] 
         }
         
         app.logger.info("Dados da Inscrição:")
@@ -762,7 +791,7 @@ def vercomprovante(payment_id):
                 END AS KM_DESCRICAO, 
                 ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, 
                 ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, 
-                e.OBS, ei.CPF, ei.DTNASCIMENTO 
+                e.OBS, ei.CPF, ei.DTNASCIMENTO, ei.IDEVENTO
             FROM EVENTO_INSCRICAO ei
             INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
             INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
@@ -812,11 +841,12 @@ def vercomprovante(payment_id):
             'dataevento': data_evento,
             'participante': receipt_data[6],
             'km': receipt_data[7],
-            'valor': f'R$ {receipt_data[8]:,.2f}',  # Formatar valor
-            'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
+            'valor': f'R$ {receipt_data[8]:,.2f}',
+            'valortotal': f'R$ {receipt_data[9]:,.2f}',
             'formapgto': receipt_data[10],
             'inscricao': str(receipt_data[11]),
-            'obs': receipt_data[14] if receipt_data[14] is not None else ''  # Evita mostrar None
+            'obs': receipt_data[14] if receipt_data[14] is not None else '',
+            'idevento': receipt_data[17]  # ← ADICIONAR ESTA LINHA
         }
         
         app.logger.info("Dados da Inscrição:")
@@ -849,7 +879,7 @@ def comprovanteemail(payment_id):
                 END AS KM_DESCRICAO, 
                 ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, 
                 ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, 
-                e.OBS, ei.CPF, ei.DTNASCIMENTO 
+                e.OBS, ei.CPF, ei.DTNASCIMENTO, ei.IDEVENTO
             FROM EVENTO_INSCRICAO ei
             INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
             INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
@@ -899,11 +929,12 @@ def comprovanteemail(payment_id):
             'dataevento': data_evento,
             'participante': receipt_data[6],
             'km': receipt_data[7],
-            'valor': f'R$ {receipt_data[8]:,.2f}',  # Formatar valor
-            'valortotal': f'R$ {receipt_data[9]:,.2f}',  # Formatar valor
+            'valor': f'R$ {receipt_data[8]:,.2f}',
+            'valortotal': f'R$ {receipt_data[9]:,.2f}',
             'formapgto': receipt_data[10],
             'inscricao': str(receipt_data[11]),
-            'obs': receipt_data[14] if receipt_data[14] is not None else ''  # Evita mostrar None
+            'obs': receipt_data[14] if receipt_data[14] is not None else '',
+            'idevento': receipt_data[17]  # ← ADICIONAR ESTA LINHA
         }
         
         app.logger.info("Dados da Inscrição:")
@@ -2706,7 +2737,7 @@ def enviar_emails_comprovante_webhook(payment_id):
                 END AS KM_DESCRICAO, 
                 ei.VLINSCRICAO, ei.VLTOTAL, ei.FORMAPGTO, 
                 ei.IDPAGAMENTO, ei.FLEMAIL, ei.IDINSCRICAO, 
-                e.OBS, ei.CPF, ei.DTNASCIMENTO 
+                e.OBS, ei.CPF, ei.DTNASCIMENTO, ei.IDEVENTO
             FROM EVENTO_INSCRICAO ei
             INNER JOIN EVENTO1 e ON e.IDEVENTO = ei.IDEVENTO
             INNER JOIN EVENTO_ITEM i ON i.IDITEM = ei.IDITEMEVENTO
@@ -2754,7 +2785,8 @@ def enviar_emails_comprovante_webhook(payment_id):
             'valortotal': f'R$ {receipt_data[9]:,.2f}',
             'formapgto': receipt_data[10],
             'inscricao': str(receipt_data[11]),
-            'obs': receipt_data[14] if receipt_data[14] is not None else ''
+            'obs': receipt_data[14] if receipt_data[14] is not None else '',
+            'idevento': receipt_data[17]  # ← ADICIONAR ESTA LINHA
         }
         
         flemail = receipt_data[12]
@@ -8244,24 +8276,3 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
