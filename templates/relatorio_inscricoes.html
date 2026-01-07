@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=5.0">
     <title>Relatório de Inscrições</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -22,6 +22,9 @@
         }
 
         .container {
+            max-width: 1400px !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
             max-width: 1400px;
             margin: 0 auto;
         }
@@ -423,6 +426,9 @@
 
         /* MOBILE RESPONSIVENESS */
         @media (max-width: 768px) {
+            .container {
+                padding: 10px !important;
+            }
             body {
             overflow-x: hidden;
                 padding: 10px;
@@ -536,7 +542,7 @@
         <!-- MAIN SCREEN -->
         <div id="mainScreen" class="hidden">
             <div class="header">
-                <!-- <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo"> -->
+                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
                 <h1>Relatório de Inscrições</h1>
                 <button type="button" class="btn btn-secondary" onclick="logout()">Sair</button>
             </div>
