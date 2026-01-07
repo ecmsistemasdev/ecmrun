@@ -6230,6 +6230,177 @@ def lista_eventos_direto():
         # Em caso de erro, redireciona para a página normal
         return redirect('/lista-eventos')
 
+# Rota para renderizar a página do relatório
+@app.route("/eventos/organizador")
+def relatorio_inscricoes():
+    """Rota para acessar o relatório de inscrições"""
+    return render_template("relatorio_inscricoes.html")
+
+
+# Rota de autenticação para organizador
+@app.route('/api/auth-org', methods=['POST'])
+def autenticar_org():
+    """API para autenticação de organizador"""
+    try:
+        data = request.get_json()
+        senha = data.get('senha')
+        
+        # IMPORTANTE: Substitua 'senha_organizador' pela senha real do organizador
+        # ou pegue do banco de dados / variável de ambiente
+        senha_correta = os.getenv('SENHA_ORGANIZADOR', 'admin123')
+        
+        if senha == senha_correta:
+            return jsonify({'success': True, 'message': 'Autenticado com sucesso'}), 200
+        else:
+            return jsonify({'success': False, 'message': 'Senha incorreta'}), 401
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# Rota para listar eventos ativos
+@app.route('/api/eventos-ativos', methods=['GET'])
+def listar_eventos_ativos():
+    """API para listar eventos ativos"""
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT IDEVENTO, TITULO 
+            FROM EVENTO1 
+            WHERE ATIVO = 'S'
+            ORDER BY TITULO
+        """)
+        
+        eventos = []
+        for row in cursor.fetchall():
+            eventos.append({
+                'IDEVENTO': row[0],
+                'TITULO': row[1]
+            })
+        
+        cursor.close()
+        return jsonify(eventos)
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao carregar eventos: {str(e)}'}), 500
+
+
+# Rota para listar modalidades de um evento
+@app.route('/api/evento-modalidades/<int:evento_id>', methods=['GET'])
+def listar_modalidades_evento(evento_id):
+    """API para listar modalidades (itens) de um evento específico"""
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT IDITEM, DESCRICAO 
+            FROM EVENTO_ITEM 
+            WHERE IDEVENTO = %s
+            ORDER BY DESCRICAO
+        """, (evento_id,))
+        
+        modalidades = []
+        for row in cursor.fetchall():
+            modalidades.append({
+                'IDITEM': row[0],
+                'DESCRICAO': row[1]
+            })
+        
+        cursor.close()
+        return jsonify(modalidades)
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao carregar modalidades: {str(e)}'}), 500
+
+
+# Rota para listar faixas etárias de um evento
+@app.route('/api/evento-faixas-etarias/<int:evento_id>', methods=['GET'])
+def listar_faixas_etarias_evento(evento_id):
+    """API para listar faixas etárias distintas de um evento"""
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT DISTINCT
+                CASE 
+                    WHEN IDADE <= 35 THEN 'Até 35 anos'
+                    WHEN IDADE BETWEEN 36 AND 45 THEN 'De 36 a 45 anos'
+                    WHEN IDADE BETWEEN 46 AND 55 THEN 'De 46 a 55 anos'
+                    WHEN IDADE >= 56 THEN 'De 56 anos em diante'
+                END AS FAIXA_ETARIA
+            FROM EVENTO_INSCRICAO
+            WHERE STATUS = 'A'
+              AND IDEVENTO = %s
+            ORDER BY 
+                CASE 
+                    WHEN IDADE <= 35 THEN 1
+                    WHEN IDADE BETWEEN 36 AND 45 THEN 2
+                    WHEN IDADE BETWEEN 46 AND 55 THEN 3
+                    WHEN IDADE >= 56 THEN 4
+                END
+        """, (evento_id,))
+        
+        faixas = []
+        for row in cursor.fetchall():
+            if row[0]:  # Apenas se FAIXA_ETARIA não for NULL
+                faixas.append({
+                    'FAIXA_ETARIA': row[0]
+                })
+        
+        cursor.close()
+        return jsonify(faixas)
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao carregar faixas etárias: {str(e)}'}), 500
+
+
+# Rota para listar inscrições de um evento
+@app.route('/api/evento-inscricoes/<int:evento_id>', methods=['GET'])
+def listar_inscricoes_evento(evento_id):
+    """API para listar todas as inscrições de um evento específico"""
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT IDINSCRICAO, IDITEMEVENTO,
+                CONCAT(NOME,' ',SOBRENOME) AS NOME_COMPLETO,
+                SEXO, IDADE, DTNASCIMENTO, CAMISETA, CELULAR,
+                CASE 
+                    WHEN IDADE <= 35 THEN 'Até 35 anos'
+                    WHEN IDADE BETWEEN 36 AND 45 THEN 'De 36 a 45 anos'
+                    WHEN IDADE BETWEEN 46 AND 55 THEN 'De 46 a 55 anos'
+                    WHEN IDADE >= 56 THEN 'De 56 anos em diante'
+                END AS FAIXA_ETARIA
+            FROM EVENTO_INSCRICAO
+            WHERE STATUS = 'A'
+              AND IDEVENTO = %s
+            ORDER BY 
+                IDEVENTO,
+                IDITEMEVENTO,
+                SEXO DESC,
+                NOME,
+                SOBRENOME
+        """, (evento_id,))
+        
+        inscricoes = []
+        for row in cursor.fetchall():
+            # Converter data para string se não for None
+            dtnascimento = row[5].strftime('%Y-%m-%d') if row[5] else None
+            
+            inscricoes.append({
+                'IDINSCRICAO': row[0],
+                'IDITEMEVENTO': row[1],
+                'NOME_COMPLETO': row[2],
+                'SEXO': row[3],
+                'IDADE': row[4],
+                'DTNASCIMENTO': dtnascimento,
+                'CAMISETA': row[6] if row[6] else '',
+                'CELULAR': row[7] if row[7] else '',
+                'FAIXA_ETARIA': row[8]
+            })
+        
+        cursor.close()
+        return jsonify(inscricoes)
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao carregar inscrições: {str(e)}'}), 500
 
 
 #### nova pagina evento ###########################
@@ -8307,4 +8478,5 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
