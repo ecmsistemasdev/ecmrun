@@ -6237,8 +6237,6 @@ def relatorio_inscricoes():
     return render_template("relatorio_inscricoes.html")
 
 
-# Rota de autenticação para organizador
-
 # Rota para listar eventos ativos
 @app.route('/api/eventos-ativos', methods=['GET'])
 def listar_eventos_ativos():
@@ -6382,7 +6380,6 @@ def listar_inscricoes_evento(evento_id):
         
     except Exception as e:
         return jsonify({'error': f'Erro ao carregar inscrições: {str(e)}'}), 500
-
 
 #### nova pagina evento ###########################
 
@@ -8459,6 +8456,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
