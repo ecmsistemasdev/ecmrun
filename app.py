@@ -6238,25 +6238,6 @@ def relatorio_inscricoes():
 
 
 # Rota de autenticação para organizador
-@app.route('/api/auth-org', methods=['POST'])
-def autenticar_org():
-    """API para autenticação de organizador"""
-    try:
-        data = request.get_json()
-        senha = data.get('senha')
-        
-        # IMPORTANTE: Substitua 'senha_organizador' pela senha real do organizador
-        # ou pegue do banco de dados / variável de ambiente
-        senha_correta = os.getenv('SENHA_ORGANIZADOR', 'admin123')
-        
-        if senha == senha_correta:
-            return jsonify({'success': True, 'message': 'Autenticado com sucesso'}), 200
-        else:
-            return jsonify({'success': False, 'message': 'Senha incorreta'}), 401
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
 
 # Rota para listar eventos ativos
 @app.route('/api/eventos-ativos', methods=['GET'])
@@ -8478,5 +8459,6 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
