@@ -505,6 +505,171 @@
                 padding: 8px 5px;
             }
         }
+
+        /* ========== BOTÃO DE COMPARTILHAR ========== */
+        .share-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.5);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .share-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(37, 211, 102, 0.7);
+        }
+
+        .share-fab.show {
+            display: flex;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(37, 211, 102, 0.5); }
+            50% { box-shadow: 0 4px 30px rgba(37, 211, 102, 0.8); }
+        }
+
+        .share-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .share-modal.show {
+            display: flex;
+        }
+
+        .share-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .share-modal h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .share-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .share-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .share-btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .share-btn-whatsapp:hover {
+            background: #20BA5A;
+            transform: translateY(-2px);
+        }
+
+        .share-btn-telegram {
+            background: #0088cc;
+            color: white;
+        }
+
+        .share-btn-telegram:hover {
+            background: #006BA1;
+            transform: translateY(-2px);
+        }
+
+        .share-btn-email {
+            background: #EA4335;
+            color: white;
+        }
+
+        .share-btn-email:hover {
+            background: #CC3829;
+            transform: translateY(-2px);
+        }
+
+        .share-btn-download {
+            background: #667eea;
+            color: white;
+        }
+
+        .share-btn-download:hover {
+            background: #5568D3;
+            transform: translateY(-2px);
+        }
+
+        .share-close {
+            width: 100%;
+            padding: 12px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .share-close:hover {
+            background: #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .share-fab {
+                bottom: 20px;
+                right: 20px;
+                width: 56px;
+                height: 56px;
+                font-size: 24px;
+            }
+            
+            .share-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -526,7 +691,7 @@
         <!-- MAIN SCREEN -->
         <div id="mainScreen" class="hidden">
             <div class="header">
-                <!-- <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo"> -->
+                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
                 <h1>Relatório de Inscrições</h1>
                 <button type="button" class="btn btn-secondary" onclick="logout()">Sair</button>
             </div>
@@ -603,6 +768,8 @@
         let inscricoesFiltered = [];
         let modalidades = [];
         let eventoNome = '';
+        let lastGeneratedPDF = null;
+        let lastPDFFileName = '';
 
         // AUTHENTICATION
         document.getElementById('authForm').addEventListener('submit', async function(e) {
@@ -981,13 +1148,94 @@
                 const nomeArquivo = `Inscricoes_${eventoNome.replace(/\s+/g, '_')}_${dataAtual}.pdf`;
                 doc.save(nomeArquivo);
 
-                showMessage('PDF gerado com sucesso!', 'success');
+                // Armazenar PDF e mostrar botão de compartilhar
+                lastGeneratedPDF = doc;
+                lastPDFFileName = nomeArquivo;
+                document.getElementById('shareFab').classList.add('show');
+                
+                showMessage('PDF gerado! Use o botão verde para compartilhar.', 'success');
 
             } catch (error) {
                 console.error('Erro ao gerar PDF:', error);
                 showMessage('Erro ao gerar PDF. Tente novamente.', 'error');
             }
         }
+
+
+        // ========== FUNÇÕES DE COMPARTILHAMENTO ==========
+        
+        function openShareModal() {
+            document.getElementById('shareModal').classList.add('show');
+        }
+
+        function closeShareModal(event) {
+            if (!event || event.target.id === 'shareModal') {
+                document.getElementById('shareModal').classList.remove('show');
+            }
+        }
+
+        function shareWhatsApp() {
+            if (!lastGeneratedPDF) {
+                showMessage('Gere o PDF primeiro!', 'error');
+                return;
+            }
+            
+            const mensagem = `📊 *Relatório de Inscrições*\n\n` +
+                            `📅 *Evento:* ${eventoNome}\n` +
+                            `📈 *Total:* ${inscricoesFiltered.length} inscrições\n` +
+                            `🗓️ *Data:* ${new Date().toLocaleDateString('pt-BR')}\n\n` +
+                            `PDF gerado com sucesso! ✅`;
+            
+            const mensagemEncoded = encodeURIComponent(mensagem);
+            
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                window.open(`whatsapp://send?text=${mensagemEncoded}`, '_blank');
+            } else {
+                window.open(`https://web.whatsapp.com/send?text=${mensagemEncoded}`, '_blank');
+            }
+            
+            showMessage('Abrindo WhatsApp...', 'success');
+            closeShareModal();
+        }
+
+        function shareTelegram() {
+            if (!lastGeneratedPDF) {
+                showMessage('Gere o PDF primeiro!', 'error');
+                return;
+            }
+            
+            const mensagem = `📊 Relatório - ${eventoNome}\nTotal: ${inscricoesFiltered.length} inscrições`;
+            window.open(`https://t.me/share/url?text=${encodeURIComponent(mensagem)}`, '_blank');
+            
+            showMessage('Abrindo Telegram...', 'success');
+            closeShareModal();
+        }
+
+        function shareEmail() {
+            if (!lastGeneratedPDF) {
+                showMessage('Gere o PDF primeiro!', 'error');
+                return;
+            }
+            
+            const assunto = `Relatório - ${eventoNome}`;
+            const corpo = `Evento: ${eventoNome}\nTotal: ${inscricoesFiltered.length} inscrições`;
+            
+            window.location.href = `mailto:?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+            showMessage('Abrindo e-mail...', 'success');
+            closeShareModal();
+        }
+
+        function downloadPDFAgain() {
+            if (!lastGeneratedPDF) {
+                showMessage('Gere o PDF primeiro!', 'error');
+                return;
+            }
+            
+            lastGeneratedPDF.save(lastPDFFileName);
+            showMessage('Download iniciado!', 'success');
+            closeShareModal();
+        }
+
 
         // UTILITIES
         function showMessage(message, type) {
@@ -1000,5 +1248,37 @@
             }, 5000);
         }
     </script>
+
+    <!-- Botão Flutuante de Compartilhar -->
+    <div class="share-fab" id="shareFab" onclick="openShareModal()">
+        📤
+    </div>
+
+    <!-- Modal de Compartilhamento -->
+    <div class="share-modal" id="shareModal" onclick="closeShareModal(event)">
+        <div class="share-modal-content" onclick="event.stopPropagation()">
+            <h3>📤 Compartilhar Relatório</h3>
+            <div class="share-buttons">
+                <button class="share-btn share-btn-whatsapp" onclick="shareWhatsApp()">
+                    <span style="font-size: 20px;">📱</span>
+                    WhatsApp
+                </button>
+                <button class="share-btn share-btn-telegram" onclick="shareTelegram()">
+                    <span style="font-size: 20px;">✈️</span>
+                    Telegram
+                </button>
+                <button class="share-btn share-btn-email" onclick="shareEmail()">
+                    <span style="font-size: 20px;">📧</span>
+                    E-mail
+                </button>
+                <button class="share-btn share-btn-download" onclick="downloadPDFAgain()">
+                    <span style="font-size: 20px;">💾</span>
+                    Baixar
+                </button>
+            </div>
+            <button class="share-close" onclick="closeShareModal()">Fechar</button>
+        </div>
+    </div>
+
 </body>
 </html>
