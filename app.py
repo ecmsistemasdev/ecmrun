@@ -93,12 +93,13 @@ def after_request(response):
             "https://secure.mlstatic.com "
             "https://sdk.mercadopago.com "
             "https://*.mercadopago.com "
-            "https://cdnjs.cloudflare.com; "  # <- ADICIONE ESTA LINHA
+            "https://cdnjs.cloudflare.com; "
         "connect-src 'self' "
             "https://api.mercadopago.com "
             "https://*.mercadopago.com "
             "https://api.mercadolibre.com "
-            "https://*.mercadolibre.com; "
+            "https://*.mercadolibre.com "
+            "https://cdnjs.cloudflare.com; "  # <- ADICIONE ESTA LINHA
         "frame-src 'self' "
             "https://*.mercadopago.com "
             "https://*.mercadolibre.com; "
@@ -8490,6 +8491,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
