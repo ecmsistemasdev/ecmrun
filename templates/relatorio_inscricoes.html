@@ -737,7 +737,6 @@
                             <th>Nome Completo</th>
                             <th>Sexo</th>
                             <th>Idade</th>
-                            <th>Data Nascimento</th>
                             <th>Camiseta</th>
                         </tr>
                     </thead>
@@ -751,7 +750,6 @@
                         <td>${inscricao.NOME_COMPLETO}</td>
                         <td>${inscricao.SEXO === 'M' ? 'Masculino' : 'Feminino'}</td>
                         <td>${inscricao.IDADE}</td>
-                        <td>${formatDate(inscricao.DTNASCIMENTO)}</td>
                         <td>${inscricao.CAMISETA || '-'}</td>
                     </tr>
                 `;
@@ -773,7 +771,7 @@
             }
 
             // Cabeçalho do CSV
-            let csv = 'Ordem,Nome Completo,Sexo,Idade,Data Nascimento,Camiseta,Celular\n';
+            let csv = 'Ordem,Nome Completo,Sexo,Idade,Camiseta,Celular\n';
 
             // Dados
             inscricoesFiltered.forEach((inscricao, index) => {
@@ -781,7 +779,6 @@
                 csv += `"${inscricao.NOME_COMPLETO}",`;
                 csv += `"${inscricao.SEXO === 'M' ? 'Masculino' : 'Feminino'}",`;
                 csv += `${inscricao.IDADE},`;
-                csv += `"${formatDate(inscricao.DTNASCIMENTO)}",`;
                 csv += `"${inscricao.CAMISETA || '-'}",`;
                 csv += `"${inscricao.CELULAR || '-'}"\n`;
             });
