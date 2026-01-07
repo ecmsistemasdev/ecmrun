@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Inscrições</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -109,13 +111,13 @@
         }
 
         .btn-export {
-            background: #4CAF50;
+            background: #FF5722;
             color: white;
             margin-left: 10px;
         }
 
         .btn-export:hover {
-            background: #45a049;
+            background: #E64A19;
         }
 
         /* MAIN SCREEN */
@@ -236,6 +238,39 @@
             letter-spacing: 0.5px;
         }
 
+        /* MODALIDADE GROUP */
+        .modalidade-group {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .modalidade-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modalidade-header h4 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modalidade-count {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
         /* TABLE */
         .table-section {
             background: white;
@@ -271,7 +306,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
+            min-width: 600px;
         }
 
         thead {
@@ -395,7 +430,8 @@
 
             .event-section,
             .filters-section,
-            .table-section {
+            .table-section,
+            .modalidade-group {
                 padding: 20px 15px;
             }
 
@@ -403,9 +439,10 @@
                 grid-template-columns: 1fr;
             }
 
-            .table-section {
-                padding: 15px 10px;
-                margin-bottom: 20px;
+            .modalidade-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
             }
 
             table {
@@ -473,7 +510,7 @@
         <!-- MAIN SCREEN -->
         <div id="mainScreen" class="hidden">
             <div class="header">
-                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+                <!-- <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo"> -->
                 <h1>Relatório de Inscrições</h1>
                 <button type="button" class="btn btn-secondary" onclick="logout()">Sair</button>
             </div>
@@ -487,8 +524,8 @@
                     <select id="eventoSelect" onchange="onEventoChange()">
                         <option value="">Carregando eventos...</option>
                     </select>
-                    <button type="button" class="btn btn-export" onclick="exportarCSV()" id="btnExportar" disabled>
-                        Exportar CSV
+                    <button type="button" class="btn btn-export" onclick="gerarPDF()" id="btnExportar" disabled>
+                        📄 Gerar PDF
                     </button>
                 </div>
             </div>
@@ -528,10 +565,10 @@
                 </div>
             </div>
 
-            <!-- TABLE -->
-            <div id="tableSection" class="table-section hidden">
+            <!-- GROUPED TABLES BY MODALIDADE -->
+            <div id="tableSection" class="hidden">
                 <div class="section-header">
-                    <h3>Inscrições</h3>
+                    <h3>Inscrições por Modalidade</h3>
                     <span class="total-count" id="totalCount">0 inscrições</span>
                 </div>
                 <div id="tableContent">
@@ -548,6 +585,8 @@
         // GLOBAL VARIABLES
         let inscricoesData = [];
         let inscricoesFiltered = [];
+        let modalidades = [];
+        let eventoNome = '';
 
         // AUTHENTICATION
         document.getElementById('authForm').addEventListener('submit', async function(e) {
@@ -582,6 +621,7 @@
             document.getElementById('senha').value = '';
             inscricoesData = [];
             inscricoesFiltered = [];
+            modalidades = [];
         }
 
         // LOAD EVENTS
@@ -607,6 +647,8 @@
         // EVENT CHANGE
         async function onEventoChange() {
             const eventoId = document.getElementById('eventoSelect').value;
+            const eventoSelect = document.getElementById('eventoSelect');
+            eventoNome = eventoSelect.options[eventoSelect.selectedIndex].text;
             
             if (!eventoId) {
                 document.getElementById('filtersSection').classList.add('hidden');
@@ -628,12 +670,12 @@
         async function carregarModalidades(eventoId) {
             try {
                 const response = await fetch(`/api/evento-modalidades/${eventoId}`);
-                const data = await response.json();
+                modalidades = await response.json();
                 
                 const select = document.getElementById('filtroModalidade');
                 select.innerHTML = '<option value="">Todas</option>';
                 
-                data.forEach(modalidade => {
+                modalidades.forEach(modalidade => {
                     const option = document.createElement('option');
                     option.value = modalidade.IDITEM;
                     option.textContent = modalidade.DESCRICAO;
@@ -693,13 +735,13 @@
 
         // APPLY FILTERS
         function aplicarFiltros() {
-            const modalidade = document.getElementById('filtroModalidade').value;
+            const modalidadeFilter = document.getElementById('filtroModalidade').value;
             const sexo = document.getElementById('filtroSexo').value;
             const faixaEtaria = document.getElementById('filtroFaixaEtaria').value;
             const camiseta = document.getElementById('filtroCamiseta').value;
 
             inscricoesFiltered = inscricoesData.filter(inscricao => {
-                if (modalidade && inscricao.IDITEMEVENTO != modalidade) return false;
+                if (modalidadeFilter && inscricao.IDITEMEVENTO != modalidadeFilter) return false;
                 if (sexo && inscricao.SEXO !== sexo) return false;
                 if (faixaEtaria && inscricao.FAIXA_ETARIA !== faixaEtaria) return false;
                 
@@ -709,11 +751,11 @@
                 return true;
             });
 
-            renderizarTabela();
+            renderizarTabelasAgrupadas();
         }
 
-        // RENDER TABLE
-        function renderizarTabela() {
+        // RENDER GROUPED TABLES
+        function renderizarTabelasAgrupadas() {
             const tableContent = document.getElementById('tableContent');
             const totalCount = document.getElementById('totalCount');
             
@@ -729,86 +771,211 @@
                 return;
             }
 
-            let html = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Ordem</th>
-                            <th>Nome Completo</th>
-                            <th>Sexo</th>
-                            <th>Idade</th>
-                            <th>Camiseta</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            inscricoesFiltered.forEach((inscricao, index) => {
-                html += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${inscricao.NOME_COMPLETO}</td>
-                        <td>${inscricao.SEXO === 'M' ? 'Masculino' : 'Feminino'}</td>
-                        <td>${inscricao.IDADE}</td>
-                        <td>${inscricao.CAMISETA || '-'}</td>
-                    </tr>
-                `;
+            // Agrupar inscrições por modalidade
+            const inscricoesPorModalidade = {};
+            
+            inscricoesFiltered.forEach(inscricao => {
+                const idModalidade = inscricao.IDITEMEVENTO;
+                if (!inscricoesPorModalidade[idModalidade]) {
+                    inscricoesPorModalidade[idModalidade] = [];
+                }
+                inscricoesPorModalidade[idModalidade].push(inscricao);
             });
 
-            html += `
-                    </tbody>
-                </table>
-            `;
+            // Obter nomes das modalidades
+            const modalidadesMap = {};
+            modalidades.forEach(m => {
+                modalidadesMap[m.IDITEM] = m.DESCRICAO;
+            });
+
+            let html = '';
+
+            // Renderizar cada modalidade
+            Object.keys(inscricoesPorModalidade).sort((a, b) => {
+                const nomeA = modalidadesMap[a] || '';
+                const nomeB = modalidadesMap[b] || '';
+                return nomeA.localeCompare(nomeB);
+            }).forEach(idModalidade => {
+                const inscricoesModalidade = inscricoesPorModalidade[idModalidade];
+                const nomeModalidade = modalidadesMap[idModalidade] || `Modalidade ${idModalidade}`;
+                
+                html += `
+                    <div class="modalidade-group">
+                        <div class="modalidade-header">
+                            <h4>${nomeModalidade}</h4>
+                            <span class="modalidade-count">${inscricoesModalidade.length} inscrições</span>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Ordem</th>
+                                        <th>Nome Completo</th>
+                                        <th>Sexo</th>
+                                        <th>Idade</th>
+                                        <th>Camiseta</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                inscricoesModalidade.forEach((inscricao, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${inscricao.NOME_COMPLETO}</td>
+                            <td>${inscricao.SEXO === 'M' ? 'Masculino' : 'Feminino'}</td>
+                            <td>${inscricao.IDADE}</td>
+                            <td>${inscricao.CAMISETA || '-'}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
 
             tableContent.innerHTML = html;
         }
 
-        // EXPORT CSV
-        function exportarCSV() {
+        // GERAR PDF
+        async function gerarPDF() {
             if (inscricoesFiltered.length === 0) {
                 showMessage('Nenhum dado para exportar.', 'error');
                 return;
             }
 
-            // Cabeçalho do CSV
-            let csv = 'Ordem,Nome Completo,Sexo,Idade,Camiseta,Celular\n';
+            try {
+                showMessage('Gerando PDF...', 'success');
 
-            // Dados
-            inscricoesFiltered.forEach((inscricao, index) => {
-                csv += `${index + 1},`;
-                csv += `"${inscricao.NOME_COMPLETO}",`;
-                csv += `"${inscricao.SEXO === 'M' ? 'Masculino' : 'Feminino'}",`;
-                csv += `${inscricao.IDADE},`;
-                csv += `"${inscricao.CAMISETA || '-'}",`;
-                csv += `"${inscricao.CELULAR || '-'}"\n`;
-            });
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                // Configurações
+                const margemEsquerda = 14;
+                const larguraPagina = doc.internal.pageSize.getWidth();
+                const alturaPagina = doc.internal.pageSize.getHeight();
+                let yPosition = 20;
 
-            // Criar arquivo e download
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            const eventoSelect = document.getElementById('eventoSelect');
-            const eventoNome = eventoSelect.options[eventoSelect.selectedIndex].text;
-            const dataAtual = new Date().toISOString().split('T')[0];
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `inscricoes_${eventoNome.replace(/\s+/g, '_')}_${dataAtual}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                // Título
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'bold');
+                doc.text('Relatório de Inscrições', margemEsquerda, yPosition);
+                
+                yPosition += 7;
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'normal');
+                doc.text(eventoNome, margemEsquerda, yPosition);
+                
+                yPosition += 5;
+                doc.setFontSize(10);
+                doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, margemEsquerda, yPosition);
+                doc.text(`Total: ${inscricoesFiltered.length} inscrições`, larguraPagina - 60, yPosition);
+                
+                yPosition += 10;
 
-            showMessage('CSV exportado com sucesso!', 'success');
+                // Agrupar por modalidade
+                const inscricoesPorModalidade = {};
+                inscricoesFiltered.forEach(inscricao => {
+                    const idModalidade = inscricao.IDITEMEVENTO;
+                    if (!inscricoesPorModalidade[idModalidade]) {
+                        inscricoesPorModalidade[idModalidade] = [];
+                    }
+                    inscricoesPorModalidade[idModalidade].push(inscricao);
+                });
+
+                // Obter nomes das modalidades
+                const modalidadesMap = {};
+                modalidades.forEach(m => {
+                    modalidadesMap[m.IDITEM] = m.DESCRICAO;
+                });
+
+                // Renderizar cada modalidade
+                Object.keys(inscricoesPorModalidade).sort((a, b) => {
+                    const nomeA = modalidadesMap[a] || '';
+                    const nomeB = modalidadesMap[b] || '';
+                    return nomeA.localeCompare(nomeB);
+                }).forEach((idModalidade, modalidadeIndex) => {
+                    const inscricoesModalidade = inscricoesPorModalidade[idModalidade];
+                    const nomeModalidade = modalidadesMap[idModalidade] || `Modalidade ${idModalidade}`;
+
+                    // Verificar se precisa de nova página
+                    if (yPosition > alturaPagina - 40) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+
+                    // Cabeçalho da modalidade
+                    doc.setFillColor(102, 126, 234);
+                    doc.rect(margemEsquerda, yPosition - 5, larguraPagina - 28, 8, 'F');
+                    
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`${nomeModalidade} (${inscricoesModalidade.length})`, margemEsquerda + 2, yPosition);
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont(undefined, 'normal');
+                    
+                    yPosition += 10;
+
+                    // Preparar dados da tabela
+                    const tableData = inscricoesModalidade.map((inscricao, index) => [
+                        index + 1,
+                        inscricao.NOME_COMPLETO,
+                        inscricao.SEXO === 'M' ? 'M' : 'F',
+                        inscricao.IDADE,
+                        inscricao.CAMISETA || '-'
+                    ]);
+
+                    // Adicionar tabela
+                    doc.autoTable({
+                        startY: yPosition,
+                        head: [['#', 'Nome Completo', 'Sexo', 'Idade', 'Camiseta']],
+                        body: tableData,
+                        margin: { left: margemEsquerda, right: margemEsquerda },
+                        styles: {
+                            fontSize: 9,
+                            cellPadding: 3,
+                        },
+                        headStyles: {
+                            fillColor: [118, 75, 162],
+                            textColor: 255,
+                            fontStyle: 'bold',
+                            halign: 'center'
+                        },
+                        columnStyles: {
+                            0: { halign: 'center', cellWidth: 10 },
+                            1: { halign: 'left', cellWidth: 'auto' },
+                            2: { halign: 'center', cellWidth: 15 },
+                            3: { halign: 'center', cellWidth: 15 },
+                            4: { halign: 'center', cellWidth: 25 }
+                        },
+                        alternateRowStyles: {
+                            fillColor: [245, 247, 255]
+                        }
+                    });
+
+                    yPosition = doc.lastAutoTable.finalY + 12;
+                });
+
+                // Salvar PDF
+                const dataAtual = new Date().toISOString().split('T')[0];
+                const nomeArquivo = `Inscricoes_${eventoNome.replace(/\s+/g, '_')}_${dataAtual}.pdf`;
+                doc.save(nomeArquivo);
+
+                showMessage('PDF gerado com sucesso!', 'success');
+
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                showMessage('Erro ao gerar PDF. Tente novamente.', 'error');
+            }
         }
 
         // UTILITIES
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('pt-BR');
-        }
-
         function showMessage(message, type) {
             const messagesDiv = document.getElementById('messages');
             const messageClass = type === 'success' ? 'message-success' : 'message-error';
