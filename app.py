@@ -116,7 +116,7 @@ def add_csp_header(f):
         if hasattr(resp, 'headers'):
             csp = (
                 "default-src 'self'; "
-                "connect-src 'self' https://api.mercadopago.com https://*.mercadopago.com https://api.mercadolibre.com https://*.mercadolibre.com; "
+				"connect-src 'self' https://api.mercadopago.com https://*.mercadopago.com https://api.mercadolibre.com https://*.mercadolibre.com https://cdnjs.cloudflare.com; "
                 "frame-src 'self' https://*.mercadopago.com https://*.mercadolibre.com;"
             )
             resp.headers['Content-Security-Policy'] = csp
@@ -8490,6 +8490,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
