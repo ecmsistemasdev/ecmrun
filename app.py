@@ -86,12 +86,22 @@ def fn_email(valor):
 # SOLUÇÃO 1: Middleware para adicionar CSP em todas as rotas
 @app.after_request
 def after_request(response):
-    # CSP corrigida para Mercado Pago
+    # CSP corrigida para Mercado Pago + jsPDF
     csp = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://secure.mlstatic.com https://sdk.mercadopago.com https://*.mercadopago.com; "
-        "connect-src 'self' https://api.mercadopago.com https://*.mercadopago.com https://api.mercadolibre.com https://*.mercadolibre.com; "
-        "frame-src 'self' https://*.mercadopago.com https://*.mercadolibre.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+            "https://secure.mlstatic.com "
+            "https://sdk.mercadopago.com "
+            "https://*.mercadopago.com "
+            "https://cdnjs.cloudflare.com; "  # <- ADICIONE ESTA LINHA
+        "connect-src 'self' "
+            "https://api.mercadopago.com "
+            "https://*.mercadopago.com "
+            "https://api.mercadolibre.com "
+            "https://*.mercadolibre.com; "
+        "frame-src 'self' "
+            "https://*.mercadopago.com "
+            "https://*.mercadolibre.com; "
         "img-src 'self' data: https: http:; "
         "style-src 'self' 'unsafe-inline' https://*.mercadopago.com; "
         "font-src 'self' https: data:;"
@@ -8480,6 +8490,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
