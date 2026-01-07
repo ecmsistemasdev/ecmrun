@@ -2,11 +2,22 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Relatório de Inscrições</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
+        /* Reset e garantias mobile */
+        html {
+            overflow-x: hidden;
+        }
+        
+        body {
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -322,7 +333,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 600px;
+            min-width: 100%;
         }
 
         thead {
@@ -424,6 +435,11 @@
         @media (max-width: 768px) {
             body {
                 padding: 10px;
+                overflow-x: hidden;
+            }
+
+            .container {
+                overflow-x: hidden;
             }
 
             .auth-container {
@@ -462,7 +478,10 @@
             }
 
             table {
-                font-size: 12px;
+                font-size: 11px;
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
             }
 
             thead th,
@@ -522,9 +541,15 @@
             font-size: 28px;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(37, 211, 102, 0.5);
-            z-index: 1000;
+            z-index: 9999;
             transition: all 0.3s ease;
             animation: pulse 2s infinite;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .share-fab:active {
+            transform: scale(0.95);
         }
 
         .share-fab:hover {
@@ -533,7 +558,7 @@
         }
 
         .share-fab.show {
-            display: flex;
+            display: flex !important;
         }
 
         @keyframes pulse {
@@ -691,7 +716,7 @@
         <!-- MAIN SCREEN -->
         <div id="mainScreen" class="hidden">
             <div class="header">
-                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+                <!-- <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo"> -->
                 <h1>Relatório de Inscrições</h1>
                 <button type="button" class="btn btn-secondary" onclick="logout()">Sair</button>
             </div>
