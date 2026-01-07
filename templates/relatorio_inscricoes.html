@@ -510,7 +510,7 @@
         <!-- MAIN SCREEN -->
         <div id="mainScreen" class="hidden">
             <div class="header">
-                <!-- <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo"> -->
+                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
                 <h1>Relatório de Inscrições</h1>
                 <button type="button" class="btn btn-secondary" onclick="logout()">Sair</button>
             </div>
@@ -792,9 +792,8 @@
 
             // Renderizar cada modalidade
             Object.keys(inscricoesPorModalidade).sort((a, b) => {
-                const nomeA = modalidadesMap[a] || '';
-                const nomeB = modalidadesMap[b] || '';
-                return nomeA.localeCompare(nomeB);
+                // Ordenar por IDITEM (numérico)
+                return parseInt(a) - parseInt(b);
             }).forEach(idModalidade => {
                 const inscricoesModalidade = inscricoesPorModalidade[idModalidade];
                 const nomeModalidade = modalidadesMap[idModalidade] || `Modalidade ${idModalidade}`;
@@ -896,9 +895,8 @@
 
                 // Renderizar cada modalidade
                 Object.keys(inscricoesPorModalidade).sort((a, b) => {
-                    const nomeA = modalidadesMap[a] || '';
-                    const nomeB = modalidadesMap[b] || '';
-                    return nomeA.localeCompare(nomeB);
+                    // Ordenar por IDITEM (numérico)
+                    return parseInt(a) - parseInt(b);
                 }).forEach((idModalidade, modalidadeIndex) => {
                     const inscricoesModalidade = inscricoesPorModalidade[idModalidade];
                     const nomeModalidade = modalidadesMap[idModalidade] || `Modalidade ${idModalidade}`;
