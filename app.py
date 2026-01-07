@@ -6335,9 +6335,14 @@ def listar_faixas_etarias_evento(evento_id):
 @app.route('/api/evento-inscricoes/<int:evento_id>', methods=['GET'])
 def listar_inscricoes_evento(evento_id):
     """API para listar todas as inscrições de um evento específico"""
+    print(f"========== INICIANDO LISTAGEM DE INSCRIÇÕES ==========")
+    print(f"Evento ID recebido: {evento_id}")
+    
     try:
         cursor = mysql.connection.cursor()
-        cursor.execute("""
+        print("✓ Cursor criado com sucesso")
+        
+        query = """
             SELECT IDINSCRICAO, IDITEMEVENTO,
                 CONCAT(NOME,' ',SOBRENOME) AS NOME_COMPLETO,
                 SEXO, IDADE, DTNASCIMENTO, CAMISETA, CELULAR,
@@ -6356,31 +6361,104 @@ def listar_inscricoes_evento(evento_id):
                 SEXO DESC,
                 NOME,
                 SOBRENOME
-        """, (evento_id,))
+        """
+        
+        print(f"Executando query para evento_id: {evento_id}")
+        cursor.execute(query, (evento_id,))
+        print("✓ Query executada com sucesso")
+        
+        rows = cursor.fetchall()
+        print(f"✓ Retornadas {len(rows)} linhas do banco")
         
         inscricoes = []
-        for row in cursor.fetchall():
-            # Converter data para string se não for None
-            dtnascimento = row[5].strftime('%Y-%m-%d') if row[5] else None
-            
-            inscricoes.append({
-                'IDINSCRICAO': row[0],
-                'IDITEMEVENTO': row[1],
-                'NOME_COMPLETO': row[2],
-                'SEXO': row[3],
-                'IDADE': row[4],
-                'DTNASCIMENTO': dtnascimento,
-                'CAMISETA': row[6] if row[6] else '',
-                'CELULAR': row[7] if row[7] else '',
-                'FAIXA_ETARIA': row[8]
-            })
+        
+        for idx, row in enumerate(rows):
+            try:
+                print(f"\n--- Processando linha {idx + 1}/{len(rows)} ---")
+                print(f"IDINSCRICAO: {row[0]}")
+                print(f"IDITEMEVENTO: {row[1]}")
+                print(f"NOME_COMPLETO: {row[2]}")
+                print(f"SEXO: {row[3]}")
+                print(f"IDADE: {row[4]}")
+                print(f"DTNASCIMENTO: {row[5]} (tipo: {type(row[5])})")
+                print(f"CAMISETA: {row[6]} (tipo: {type(row[6])})")
+                print(f"CELULAR: {row[7]} (tipo: {type(row[7])})")
+                print(f"FAIXA_ETARIA: {row[8]}")
+                
+                # Converter data para string se não for None
+                print("Convertendo data de nascimento...")
+                dtnascimento = None
+                if row[5]:
+                    try:
+                        dtnascimento = row[5].strftime('%Y-%m-%d')
+                        print(f"✓ Data convertida: {dtnascimento}")
+                    except Exception as date_error:
+                        print(f"✗ ERRO ao converter data: {date_error}")
+                        print(f"  Tentando conversão alternativa...")
+                        dtnascimento = str(row[5])
+                        print(f"✓ Data como string: {dtnascimento}")
+                else:
+                    print("✓ Data é None")
+                
+                print("Criando objeto de inscrição...")
+                inscricao = {
+                    'IDINSCRICAO': row[0],
+                    'IDITEMEVENTO': row[1],
+                    'NOME_COMPLETO': row[2],
+                    'SEXO': row[3],
+                    'IDADE': row[4],
+                    'DTNASCIMENTO': dtnascimento,
+                    'CAMISETA': row[6] if row[6] else '',
+                    'CELULAR': row[7] if row[7] else '',
+                    'FAIXA_ETARIA': row[8]
+                }
+                print(f"✓ Objeto criado: {inscricao}")
+                
+                inscricoes.append(inscricao)
+                print(f"✓ Inscrição adicionada à lista (total: {len(inscricoes)})")
+                
+            except Exception as row_error:
+                print(f"\n✗✗✗ ERRO AO PROCESSAR LINHA {idx + 1} ✗✗✗")
+                print(f"Erro: {str(row_error)}")
+                print(f"Tipo do erro: {type(row_error)}")
+                
+                # Tentar imprimir o conteúdo completo da linha
+                try:
+                    print(f"Conteúdo completo da linha:")
+                    for i, campo in enumerate(row):
+                        print(f"  Campo [{i}]: {campo} (tipo: {type(campo)})")
+                except:
+                    print("  Não foi possível imprimir o conteúdo da linha")
+                
+                import traceback
+                print(f"Traceback completo:")
+                print(traceback.format_exc())
+                
+                # Continuar para a próxima linha em vez de parar
+                continue
         
         cursor.close()
+        print(f"\n✓ Cursor fechado")
+        print(f"========== RETORNANDO {len(inscricoes)} INSCRIÇÕES ==========\n")
+        
         return jsonify(inscricoes)
         
     except Exception as e:
-        return jsonify({'error': f'Erro ao carregar inscrições: {str(e)}'}), 500
-
+        print(f"\n✗✗✗ ERRO GERAL NA FUNÇÃO ✗✗✗")
+        print(f"Erro: {str(e)}")
+        print(f"Tipo do erro: {type(e)}")
+        
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Traceback completo:")
+        print(error_trace)
+        print(f"========================================\n")
+        
+        return jsonify({
+            'error': f'Erro ao carregar inscrições: {str(e)}',
+            'traceback': error_trace
+        }), 500
+		
 #### nova pagina evento ###########################
 
 @app.route('/eventos')
@@ -8456,6 +8534,7 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
