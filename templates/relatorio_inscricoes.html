@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Inscrições</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* AUTH SCREEN */
+        #authScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.5s;
+        }
+
+        .logo {
+            width: 200px;
+            display: block;
+            margin: 0 auto 30px;
+        }
+
+        .auth-form h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="password"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input[type="password"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #d32f2f;
+        }
+
+        .btn-export {
+            background: #4CAF50;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .btn-export:hover {
+            background: #45a049;
+        }
+
+        /* MAIN SCREEN */
+        #mainScreen {
+            animation: fadeIn 0.5s;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .header .logo {
+            width: 150px;
+            margin: 0;
+        }
+
+        /* MESSAGES */
+        #messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            animation: slideDown 0.3s;
+            font-weight: 500;
+        }
+
+        .message-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .message-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        /* EVENT SELECTION */
+        .event-section {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .event-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .event-select-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .event-select-group select {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        /* FILTERS */
+        .filters-section {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .filters-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            display: block;
+            color: #666;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* TABLE */
+        .table-section {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-header h3 {
+            color: #333;
+            font-size: 20px;
+        }
+
+        .total-count {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        thead th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f5f7ff;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        tbody tr:nth-child(even):hover {
+            background: #f5f7ff;
+        }
+
+        tbody td {
+            padding: 12px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state h4 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        /* LOADING */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* MOBILE RESPONSIVENESS */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .auth-container {
+                padding: 30px 20px;
+            }
+
+            .header {
+                text-align: center;
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 20px;
+                text-align: center;
+            }
+
+            .header .logo {
+                width: 120px;
+            }
+
+            .event-section,
+            .filters-section,
+            .table-section {
+                padding: 20px 15px;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-section {
+                padding: 15px 10px;
+                margin-bottom: 20px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            thead th,
+            tbody td {
+                padding: 10px 8px;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .event-select-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .event-select-group select,
+            .event-select-group .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 18px;
+            }
+
+            table {
+                font-size: 11px;
+            }
+
+            thead th,
+            tbody td {
+                padding: 8px 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- AUTHENTICATION SCREEN -->
+        <div id="authScreen">
+            <div class="auth-container">
+                <form id="authForm" class="auth-form">
+                    <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+                    <h2>Acesso Restrito</h2>
+                    <div class="form-group">
+                        <input type="password" id="senha" placeholder="Digite a senha" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Entrar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MAIN SCREEN -->
+        <div id="mainScreen" class="hidden">
+            <div class="header">
+                <img src="https://ecmrun.com.br/static/img/ecmrunlogo1.png" alt="Logo" class="logo">
+                <h1>Relatório de Inscrições</h1>
+                <button type="button" class="btn btn-secondary" onclick="logout()">Sair</button>
+            </div>
+
+            <div id="messages"></div>
+
+            <!-- EVENT SELECTION -->
+            <div class="event-section">
+                <h3>Selecione o Evento</h3>
+                <div class="event-select-group">
+                    <select id="eventoSelect" onchange="onEventoChange()">
+                        <option value="">Carregando eventos...</option>
+                    </select>
+                    <button type="button" class="btn btn-export" onclick="exportarCSV()" id="btnExportar" disabled>
+                        Exportar CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- FILTERS -->
+            <div id="filtersSection" class="filters-section hidden">
+                <h3>Filtros</h3>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Modalidade</label>
+                        <select id="filtroModalidade" onchange="aplicarFiltros()">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Sexo</label>
+                        <select id="filtroSexo" onchange="aplicarFiltros()">
+                            <option value="">Todos</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Feminino</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Faixa Etária</label>
+                        <select id="filtroFaixaEtaria" onchange="aplicarFiltros()">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Camiseta</label>
+                        <select id="filtroCamiseta" onchange="aplicarFiltros()">
+                            <option value="">Ambos</option>
+                            <option value="COM">Com Camiseta</option>
+                            <option value="SEM">Sem Camiseta</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <div id="tableSection" class="table-section hidden">
+                <div class="section-header">
+                    <h3>Inscrições</h3>
+                    <span class="total-count" id="totalCount">0 inscrições</span>
+                </div>
+                <div id="tableContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Carregando dados...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL VARIABLES
+        let inscricoesData = [];
+        let inscricoesFiltered = [];
+
+        // AUTHENTICATION
+        document.getElementById('authForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const senha = document.getElementById('senha').value;
+            
+            try {
+                const response = await fetch('/api/auth-org', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ senha: senha })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('authScreen').classList.add('hidden');
+                    document.getElementById('mainScreen').classList.remove('hidden');
+                    await carregarEventos();
+                } else {
+                    showMessage('Senha incorreta!', 'error');
+                }
+            } catch (error) {
+                showMessage('Erro de conexão. Tente novamente.', 'error');
+            }
+        });
+
+        // LOGOUT
+        function logout() {
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('senha').value = '';
+            inscricoesData = [];
+            inscricoesFiltered = [];
+        }
+
+        // LOAD EVENTS
+        async function carregarEventos() {
+            try {
+                const response = await fetch('/api/eventos-ativos');
+                const data = await response.json();
+                
+                const select = document.getElementById('eventoSelect');
+                select.innerHTML = '<option value="">Selecione um evento...</option>';
+                
+                data.forEach(evento => {
+                    const option = document.createElement('option');
+                    option.value = evento.IDEVENTO;
+                    option.textContent = evento.TITULO;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showMessage('Erro ao carregar eventos.', 'error');
+            }
+        }
+
+        // EVENT CHANGE
+        async function onEventoChange() {
+            const eventoId = document.getElementById('eventoSelect').value;
+            
+            if (!eventoId) {
+                document.getElementById('filtersSection').classList.add('hidden');
+                document.getElementById('tableSection').classList.add('hidden');
+                document.getElementById('btnExportar').disabled = true;
+                return;
+            }
+
+            document.getElementById('btnExportar').disabled = false;
+            await carregarModalidades(eventoId);
+            await carregarFaixasEtarias(eventoId);
+            await carregarInscricoes(eventoId);
+            
+            document.getElementById('filtersSection').classList.remove('hidden');
+            document.getElementById('tableSection').classList.remove('hidden');
+        }
+
+        // LOAD MODALIDADES
+        async function carregarModalidades(eventoId) {
+            try {
+                const response = await fetch(`/api/evento-modalidades/${eventoId}`);
+                const data = await response.json();
+                
+                const select = document.getElementById('filtroModalidade');
+                select.innerHTML = '<option value="">Todas</option>';
+                
+                data.forEach(modalidade => {
+                    const option = document.createElement('option');
+                    option.value = modalidade.IDITEM;
+                    option.textContent = modalidade.DESCRICAO;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar modalidades:', error);
+            }
+        }
+
+        // LOAD FAIXAS ETÁRIAS
+        async function carregarFaixasEtarias(eventoId) {
+            try {
+                const response = await fetch(`/api/evento-faixas-etarias/${eventoId}`);
+                const data = await response.json();
+                
+                const select = document.getElementById('filtroFaixaEtaria');
+                select.innerHTML = '<option value="">Todas</option>';
+                
+                data.forEach(faixa => {
+                    const option = document.createElement('option');
+                    option.value = faixa.FAIXA_ETARIA;
+                    option.textContent = faixa.FAIXA_ETARIA;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar faixas etárias:', error);
+            }
+        }
+
+        // LOAD INSCRICOES
+        async function carregarInscricoes(eventoId) {
+            try {
+                const tableContent = document.getElementById('tableContent');
+                tableContent.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Carregando dados...</p>
+                    </div>
+                `;
+
+                const response = await fetch(`/api/evento-inscricoes/${eventoId}`);
+                inscricoesData = await response.json();
+                inscricoesFiltered = [...inscricoesData];
+                
+                aplicarFiltros();
+            } catch (error) {
+                showMessage('Erro ao carregar inscrições.', 'error');
+                document.getElementById('tableContent').innerHTML = `
+                    <div class="empty-state">
+                        <h4>Erro ao carregar dados</h4>
+                        <p>Tente novamente mais tarde</p>
+                    </div>
+                `;
+            }
+        }
+
+        // APPLY FILTERS
+        function aplicarFiltros() {
+            const modalidade = document.getElementById('filtroModalidade').value;
+            const sexo = document.getElementById('filtroSexo').value;
+            const faixaEtaria = document.getElementById('filtroFaixaEtaria').value;
+            const camiseta = document.getElementById('filtroCamiseta').value;
+
+            inscricoesFiltered = inscricoesData.filter(inscricao => {
+                if (modalidade && inscricao.IDITEMEVENTO != modalidade) return false;
+                if (sexo && inscricao.SEXO !== sexo) return false;
+                if (faixaEtaria && inscricao.FAIXA_ETARIA !== faixaEtaria) return false;
+                
+                if (camiseta === 'COM' && (!inscricao.CAMISETA || inscricao.CAMISETA.trim() === '')) return false;
+                if (camiseta === 'SEM' && inscricao.CAMISETA && inscricao.CAMISETA.trim() !== '') return false;
+                
+                return true;
+            });
+
+            renderizarTabela();
+        }
+
+        // RENDER TABLE
+        function renderizarTabela() {
+            const tableContent = document.getElementById('tableContent');
+            const totalCount = document.getElementById('totalCount');
+            
+            totalCount.textContent = `${inscricoesFiltered.length} inscrições`;
+
+            if (inscricoesFiltered.length === 0) {
+                tableContent.innerHTML = `
+                    <div class="empty-state">
+                        <h4>Nenhuma inscrição encontrada</h4>
+                        <p>Ajuste os filtros para ver os resultados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ordem</th>
+                            <th>Nome Completo</th>
+                            <th>Sexo</th>
+                            <th>Idade</th>
+                            <th>Data Nascimento</th>
+                            <th>Camiseta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            inscricoesFiltered.forEach((inscricao, index) => {
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${inscricao.NOME_COMPLETO}</td>
+                        <td>${inscricao.SEXO === 'M' ? 'Masculino' : 'Feminino'}</td>
+                        <td>${inscricao.IDADE}</td>
+                        <td>${formatDate(inscricao.DTNASCIMENTO)}</td>
+                        <td>${inscricao.CAMISETA || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            tableContent.innerHTML = html;
+        }
+
+        // EXPORT CSV
+        function exportarCSV() {
+            if (inscricoesFiltered.length === 0) {
+                showMessage('Nenhum dado para exportar.', 'error');
+                return;
+            }
+
+            // Cabeçalho do CSV
+            let csv = 'Ordem,Nome Completo,Sexo,Idade,Data Nascimento,Camiseta,Celular\n';
+
+            // Dados
+            inscricoesFiltered.forEach((inscricao, index) => {
+                csv += `${index + 1},`;
+                csv += `"${inscricao.NOME_COMPLETO}",`;
+                csv += `"${inscricao.SEXO === 'M' ? 'Masculino' : 'Feminino'}",`;
+                csv += `${inscricao.IDADE},`;
+                csv += `"${formatDate(inscricao.DTNASCIMENTO)}",`;
+                csv += `"${inscricao.CAMISETA || '-'}",`;
+                csv += `"${inscricao.CELULAR || '-'}"\n`;
+            });
+
+            // Criar arquivo e download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const eventoSelect = document.getElementById('eventoSelect');
+            const eventoNome = eventoSelect.options[eventoSelect.selectedIndex].text;
+            const dataAtual = new Date().toISOString().split('T')[0];
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `inscricoes_${eventoNome.replace(/\s+/g, '_')}_${dataAtual}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showMessage('CSV exportado com sucesso!', 'success');
+        }
+
+        // UTILITIES
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        function showMessage(message, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageClass = type === 'success' ? 'message-success' : 'message-error';
+            messagesDiv.innerHTML = `<div class="message ${messageClass}">${message}</div>`;
+            
+            setTimeout(() => {
+                messagesDiv.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
