@@ -6270,6 +6270,37 @@ def autenticar_admin():
         print(f"Erro na autenticação: {str(e)}")
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
+@app.route('/api/auth_org', methods=['POST'])
+def autenticar_org():
+    """API para autenticação administrativa"""
+    try:
+        data = request.get_json()
+        senha_informada = data.get('senha', '').strip() if data else ''
+        senha_org = os.getenv('SENHA_ORGANIZADOR')
+		
+        # Debug - remover após testar
+        print(f"Senha informada: '{senha_informada}'")
+        print(f"Senha esperada: '{senha_org}'")
+        print(f"Senha Organizador existe: {senha_org is not None}")
+        
+        if not senha_org:
+            print("ERRO: Senha Organizador não configurada no ambiente")
+            return jsonify({'error': 'Senha Organizador não configurada'}), 500
+        
+        if senha_informada == senha_org:
+            print("Autenticação bem-sucedida")
+            return jsonify({
+                'success': True,
+                'message': 'Autenticado com sucesso'
+            }), 200
+        else:
+            print("Senha incorreta")
+            return jsonify({'error': 'Senha incorreta'}), 401
+            
+    except Exception as e:
+        print(f"Erro na autenticação: {str(e)}")
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
 
 @app.route('/api/eventos', methods=['POST'])
 def criar_evento():
@@ -8276,3 +8307,4 @@ def adm_eventos():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
