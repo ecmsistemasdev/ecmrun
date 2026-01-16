@@ -8486,6 +8486,10 @@ def adm_eventos():
     return render_template("adm_eventos.html")
 
 
+import threading
+
+# Adicione estas rotas no seu app.py
+
 @app.route("/enviar-emails-lote")
 def enviar_emails_lote_page():
     """Página para envio de emails em lote"""
@@ -8493,7 +8497,7 @@ def enviar_emails_lote_page():
 
 @app.route("/api/enviar-emails-lote", methods=['POST'])
 def enviar_emails_lote_api():
-    """API para enviar emails em lote para inscritos ativos do evento"""
+    """API para iniciar envio de emails em lote (assíncrono)"""
     try:
         data = request.get_json()
         titulo = data.get('titulo')
@@ -8515,11 +8519,35 @@ def enviar_emails_lote_api():
         if not emails:
             return jsonify({'error': 'Nenhum email encontrado para envio'}), 404
         
+        total_emails = len(emails)
+        
         # Processar imagem base64
         if imagem_base64.startswith('data:image'):
             imagem_base64 = imagem_base64.split(',')[1]
         
-        # Enviar emails em loop
+        # Iniciar envio em thread separada para não bloquear a requisição
+        thread = threading.Thread(
+            target=enviar_emails_background,
+            args=(emails, titulo, imagem_base64, app._get_current_object())
+        )
+        thread.daemon = True
+        thread.start()
+        
+        # Retornar imediatamente
+        return jsonify({
+            'success': True,
+            'message': f'Envio iniciado para {total_emails} emails!',
+            'total_emails': total_emails
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Erro ao iniciar envio em lote: {str(e)}")
+        return jsonify({'error': f'Erro ao iniciar envio: {str(e)}'}), 500
+
+
+def enviar_emails_background(emails, titulo, imagem_base64, app_context):
+    """Função para enviar emails em background"""
+    with app_context.app_context():
         emails_enviados = 0
         emails_com_erro = 0
         
@@ -8553,23 +8581,19 @@ def enviar_emails_lote_api():
                 
                 mail.send(msg)
                 emails_enviados += 1
+                app_context.logger.info(f"Email enviado para {email} ({emails_enviados}/{len(emails)})")
                 
             except Exception as e:
-                app.logger.error(f"Erro ao enviar email para {email}: {str(e)}")
+                app_context.logger.error(f"Erro ao enviar email para {email}: {str(e)}")
                 emails_com_erro += 1
                 continue
         
-        return jsonify({
-            'success': True,
-            'message': f'{emails_enviados} emails enviados com sucesso!',
-            'total_emails': len(emails),
-            'emails_enviados': emails_enviados,
-            'emails_com_erro': emails_com_erro
-        }), 200
-        
-    except Exception as e:
-        app.logger.error(f"Erro no envio em lote: {str(e)}")
-        return jsonify({'error': f'Erro ao enviar emails: {str(e)}'}), 500
+        app_context.logger.info(
+            f"Envio concluído! Total: {len(emails)}, "
+            f"Enviados: {emails_enviados}, Erros: {emails_com_erro}"
+        )
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
