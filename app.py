@@ -18,7 +18,7 @@ import requests
 import hashlib
 import pdfkit
 import os
-import io
+from io import BytesIO
 import base64
 import re
 import random
@@ -8486,9 +8486,8 @@ def confirmar_envio_valores():
 def adm_eventos():
     return render_template("adm_eventos.html")
 
-# Adicione estas rotas no seu app.py
 
-# ROTA DE TESTE - Envia apenas para naicm12@gmail.com
+# SOLUÇÃO DEFINITIVA - Usa imagem como anexo inline (CID)
 
 @app.route("/enviar-emails-lote")
 def enviar_emails_lote_page():
@@ -8512,19 +8511,38 @@ def enviar_emails_lote_api():
         
         # Processar imagem base64 - remover o prefixo se existir
         if imagem_base64.startswith('data:image'):
+            # Extrair o tipo de imagem
+            img_type = imagem_base64.split(';')[0].split('/')[1]  # png, jpeg, etc
             imagem_base64 = imagem_base64.split(',')[1]
+        else:
+            img_type = 'png'
+        
+        # Decodificar base64 para bytes
+        try:
+            imagem_bytes = base64.b64decode(imagem_base64)
+        except Exception as e:
+            return jsonify({'error': f'Erro ao processar imagem: {str(e)}'}), 400
         
         # Criar função decorada com contexto
         @copy_current_request_context
         def enviar_email_teste():
             try:
-                # Criar mensagem com MIME correto
+                # Criar mensagem
                 msg = Message(
                     subject=f"[TESTE] {titulo}",
                     recipients=[email_teste]
                 )
                 
-                # IMPORTANTE: Definir o corpo HTML corretamente
+                # Anexar imagem com CID (Content-ID)
+                msg.attach(
+                    filename=f"imagem.{img_type}",
+                    content_type=f"image/{img_type}",
+                    data=imagem_bytes,
+                    disposition='inline',
+                    headers=[['Content-ID', '<imagem_email>']]
+                )
+                
+                # HTML usando CID para referenciar a imagem
                 msg.html = f"""
                 <!DOCTYPE html>
                 <html>
@@ -8544,9 +8562,9 @@ def enviar_emails_lote_api():
                                                 <p style="margin: 5px 0 0 0; color: #856404; font-size: 12px;">Este é um email de teste. A versão final não terá este aviso.</p>
                                             </div>
                                             <h2 style="color: #333; margin: 0 0 20px 0; font-size: 24px;">{titulo}</h2>
-                                            <div style="margin: 30px 0;">
-                                                <img src="data:image/png;base64,{imagem_base64}" 
-                                                     style="max-width: 100%; height: auto; display: block; border-radius: 8px;" 
+                                            <div style="margin: 30px 0; text-align: center;">
+                                                <img src="cid:imagem_email" 
+                                                     style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 8px;" 
                                                      alt="Imagem do Email">
                                             </div>
                                             <p style="color: #666; font-size: 14px; margin: 30px 0 0 0; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
@@ -8585,9 +8603,7 @@ def enviar_emails_lote_api():
         return jsonify({'error': f'Erro ao enviar: {str(e)}'}), 500
 
 
-# ===== ROTA PARA PRODUÇÃO (COMENTADA) =====
-# Depois de testar e confirmar que está OK, substitua pela rota abaixo:
-
+# ===== VERSÃO PARA PRODUÇÃO (usar depois de testar) =====
 """
 @app.route("/api/enviar-emails-lote", methods=['POST'])
 def enviar_emails_lote_api():
@@ -8600,24 +8616,28 @@ def enviar_emails_lote_api():
         if not titulo or not imagem_base64:
             return jsonify({'error': 'Título e imagem são obrigatórios'}), 400
         
-        # Buscar emails dos inscritos ativos do evento 1
+        # Buscar emails
         cursor = mysql.connection.cursor()
         cursor.execute('''
             SELECT EMAIL FROM EVENTO_INSCRICAO
             WHERE STATUS = 'A' AND IDEVENTO = 1
         ''')
-        
         emails = cursor.fetchall()
         cursor.close()
         
         if not emails:
-            return jsonify({'error': 'Nenhum email encontrado para envio'}), 404
+            return jsonify({'error': 'Nenhum email encontrado'}), 404
         
         total_emails = len(emails)
         
-        # Processar imagem base64
+        # Processar imagem
         if imagem_base64.startswith('data:image'):
+            img_type = imagem_base64.split(';')[0].split('/')[1]
             imagem_base64 = imagem_base64.split(',')[1]
+        else:
+            img_type = 'png'
+        
+        imagem_bytes = base64.b64decode(imagem_base64)
         
         @copy_current_request_context
         def enviar_emails():
@@ -8628,9 +8648,14 @@ def enviar_emails_lote_api():
                 email = email_tuple[0]
                 
                 try:
-                    msg = Message(
-                        subject=titulo,
-                        recipients=[email]
+                    msg = Message(subject=titulo, recipients=[email])
+                    
+                    msg.attach(
+                        filename=f"imagem.{img_type}",
+                        content_type=f"image/{img_type}",
+                        data=imagem_bytes,
+                        disposition='inline',
+                        headers=[['Content-ID', '<imagem_email>']]
                     )
                     
                     msg.html = f'''
@@ -8648,9 +8673,9 @@ def enviar_emails_lote_api():
                                         <tr>
                                             <td style="padding: 40px 30px;">
                                                 <h2 style="color: #333; margin: 0 0 20px 0; font-size: 24px;">{titulo}</h2>
-                                                <div style="margin: 30px 0;">
-                                                    <img src="data:image/png;base64,{imagem_base64}" 
-                                                         style="max-width: 100%; height: auto; display: block; border-radius: 8px;" 
+                                                <div style="margin: 30px 0; text-align: center;">
+                                                    <img src="cid:imagem_email" 
+                                                         style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 8px;" 
                                                          alt="Imagem do Email">
                                                 </div>
                                                 <p style="color: #666; font-size: 14px; margin: 30px 0 0 0; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
@@ -8668,17 +8693,13 @@ def enviar_emails_lote_api():
                     
                     mail.send(msg)
                     emails_enviados += 1
-                    app.logger.info(f"✓ Email enviado para {email} ({emails_enviados}/{len(emails)})")
+                    app.logger.info(f"✓ {emails_enviados}/{len(emails)}")
                     
                 except Exception as e:
-                    app.logger.error(f"✗ Erro ao enviar para {email}: {str(e)}")
+                    app.logger.error(f"✗ Erro: {email}: {str(e)}")
                     emails_com_erro += 1
-                    continue
             
-            app.logger.info(
-                f"🎉 Envio concluído! Total: {len(emails)}, "
-                f"Enviados: {emails_enviados}, Erros: {emails_com_erro}"
-            )
+            app.logger.info(f"🎉 Concluído! Enviados: {emails_enviados}, Erros: {emails_com_erro}")
         
         thread = threading.Thread(target=enviar_emails)
         thread.daemon = True
@@ -8691,9 +8712,9 @@ def enviar_emails_lote_api():
         }), 200
         
     except Exception as e:
-        app.logger.error(f"Erro ao iniciar envio em lote: {str(e)}")
-        return jsonify({'error': f'Erro ao iniciar envio: {str(e)}'}), 500
-""" 
+        return jsonify({'error': str(e)}), 500
+"""
+
 
 
 if __name__ == "__main__":
