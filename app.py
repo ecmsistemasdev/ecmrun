@@ -18,7 +18,7 @@ import requests
 import hashlib
 import pdfkit
 import os
-from io import BytesIO
+import io
 import base64
 import re
 import random
@@ -8487,7 +8487,11 @@ def adm_eventos():
     return render_template("adm_eventos.html")
 
 
-# SOLUÇÃO DEFINITIVA - Usa imagem como anexo inline (CID)
+import threading
+import base64
+from flask import copy_current_request_context
+
+# VERSÃO CORRIGIDA - Erro do headers resolvido
 
 @app.route("/enviar-emails-lote")
 def enviar_emails_lote_page():
@@ -8511,8 +8515,7 @@ def enviar_emails_lote_api():
         
         # Processar imagem base64 - remover o prefixo se existir
         if imagem_base64.startswith('data:image'):
-            # Extrair o tipo de imagem
-            img_type = imagem_base64.split(';')[0].split('/')[1]  # png, jpeg, etc
+            img_type = imagem_base64.split(';')[0].split('/')[1]
             imagem_base64 = imagem_base64.split(',')[1]
         else:
             img_type = 'png'
@@ -8533,13 +8536,13 @@ def enviar_emails_lote_api():
                     recipients=[email_teste]
                 )
                 
-                # Anexar imagem com CID (Content-ID)
+                # Anexar imagem com CID (Content-ID) - FORMATO CORRETO
                 msg.attach(
                     filename=f"imagem.{img_type}",
                     content_type=f"image/{img_type}",
                     data=imagem_bytes,
                     disposition='inline',
-                    headers=[['Content-ID', '<imagem_email>']]
+                    headers={'Content-ID': '<imagem_email>'}  # <-- CORRIGIDO: dict ao invés de list
                 )
                 
                 # HTML usando CID para referenciar a imagem
@@ -8616,7 +8619,6 @@ def enviar_emails_lote_api():
         if not titulo or not imagem_base64:
             return jsonify({'error': 'Título e imagem são obrigatórios'}), 400
         
-        # Buscar emails
         cursor = mysql.connection.cursor()
         cursor.execute('''
             SELECT EMAIL FROM EVENTO_INSCRICAO
@@ -8630,7 +8632,6 @@ def enviar_emails_lote_api():
         
         total_emails = len(emails)
         
-        # Processar imagem
         if imagem_base64.startswith('data:image'):
             img_type = imagem_base64.split(';')[0].split('/')[1]
             imagem_base64 = imagem_base64.split(',')[1]
@@ -8655,7 +8656,7 @@ def enviar_emails_lote_api():
                         content_type=f"image/{img_type}",
                         data=imagem_bytes,
                         disposition='inline',
-                        headers=[['Content-ID', '<imagem_email>']]
+                        headers={'Content-ID': '<imagem_email>'}
                     )
                     
                     msg.html = f'''
@@ -8696,7 +8697,7 @@ def enviar_emails_lote_api():
                     app.logger.info(f"✓ {emails_enviados}/{len(emails)}")
                     
                 except Exception as e:
-                    app.logger.error(f"✗ Erro: {email}: {str(e)}")
+                    app.logger.error(f"✗ {email}: {str(e)}")
                     emails_com_erro += 1
             
             app.logger.info(f"🎉 Concluído! Enviados: {emails_enviados}, Erros: {emails_com_erro}")
