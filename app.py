@@ -8498,6 +8498,7 @@ def enviar_emails_lote_page():
     """Página para envio de emails em lote"""
     return render_template("enviar_emails_lote.html")
 
+"""
 @app.route("/api/enviar-emails-lote", methods=['POST'])
 def enviar_emails_lote_api():
     """API para TESTE - Envia apenas para naicm12@gmail.com"""
@@ -8604,10 +8605,10 @@ def enviar_emails_lote_api():
     except Exception as e:
         app.logger.error(f"Erro ao enviar email de teste: {str(e)}")
         return jsonify({'error': f'Erro ao enviar: {str(e)}'}), 500
-
+"""
 
 # ===== VERSÃO PARA PRODUÇÃO (usar depois de testar) =====
-"""
+
 @app.route("/api/enviar-emails-lote", methods=['POST'])
 def enviar_emails_lote_api():
     '''API para enviar emails em lote para todos os inscritos'''
@@ -8714,7 +8715,6 @@ def enviar_emails_lote_api():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-"""
 
 
 
