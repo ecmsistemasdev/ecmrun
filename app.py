@@ -8494,98 +8494,94 @@ def enviar_emails_lote_page():
     return render_template("enviar_emails_lote.html")
 
 @app.route("/api/enviar-emails-lote", methods=['POST'])
-def enviar_emails_lote_api():
-    """API para iniciar envio de emails em lote (assíncrono)"""
-    try:
-        data = request.get_json()
-        titulo = data.get('titulo')
-        imagem_base64 = data.get('imagem')
-        
-        if not titulo or not imagem_base64:
-            return jsonify({'error': 'Título e imagem são obrigatórios'}), 400
-        
-        # Buscar emails dos inscritos ativos do evento 1
-        cursor = mysql.connection.cursor()
-        cursor.execute("""
-            SELECT EMAIL FROM EVENTO_INSCRICAO
-            WHERE STATUS = 'A' AND IDEVENTO = 1
-        """)
-        
-        emails = cursor.fetchall()
-        cursor.close()
-        
-        if not emails:
-            return jsonify({'error': 'Nenhum email encontrado para envio'}), 404
-        
-        total_emails = len(emails)
-        
-        # Processar imagem base64
-        if imagem_base64.startswith('data:image'):
-            imagem_base64 = imagem_base64.split(',')[1]
-        
-        # Criar função decorada com contexto
-        @copy_current_request_context
-        def enviar_emails():
-            emails_enviados = 0
-            emails_com_erro = 0
-            
-            for email_tuple in emails:
-                email = email_tuple[0]
-                
-                try:
-                    # Criar mensagem HTML com imagem embedded
-                    html_body = f"""
-                    <html>
-                        <body style="font-family: Arial, sans-serif; padding: 20px;">
-                            <h2 style="color: #333;">{titulo}</h2>
-                            <div style="margin: 20px 0;">
-                                <img src="data:image/png;base64,{imagem_base64}" 
-                                     style="max-width: 100%; height: auto; border-radius: 8px;" 
-                                     alt="Imagem do Email">
-                            </div>
-                            <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                                Este email foi enviado automaticamente. Por favor, não responda.
-                            </p>
-                        </body>
-                    </html>
-                    """
-                    
-                    # Criar e enviar mensagem
-                    msg = Message(
-                        subject=titulo,
-                        recipients=[email],
-                        html=html_body
-                    )
-                    
-                    mail.send(msg)
-                    emails_enviados += 1
-                    app.logger.info(f"Email enviado para {email} ({emails_enviados}/{len(emails)})")
-                    
-                except Exception as e:
-                    app.logger.error(f"Erro ao enviar email para {email}: {str(e)}")
-                    emails_com_erro += 1
-                    continue
-            
-            app.logger.info(
-                f"Envio concluído! Total: {len(emails)}, "
-                f"Enviados: {emails_enviados}, Erros: {emails_com_erro}"
-            )
-        
-        # Iniciar thread com a função decorada
-        thread = threading.Thread(target=enviar_emails)
-        thread.daemon = True
-        thread.start()
-        
-        # Retornar imediatamente
-        return jsonify({
-            'success': True,
-            'message': f'Envio iniciado para {total_emails} emails!',
-            'total_emails': total_emails
-        }), 200
-        
-    except Exception as e:
-        app.logger.error(f"Erro ao iniciar envio em lote: {str(e)}")
-        return jsonify({'error': f'Erro ao iniciar envio: {str(e)}'}), 500
+12def enviar_emails_lote_api():
+13    """API para TESTE - Envia apenas para naicm12@gmail.com"""
+14    try:
+15        data = request.get_json()
+16        titulo = data.get('titulo')
+17        imagem_base64 = data.get('imagem')
+18        
+19        if not titulo or not imagem_base64:
+20            return jsonify({'error': 'Título e imagem são obrigatórios'}), 400
+21        
+22        # ===== MODO TESTE: Email fixo =====
+23        email_teste = "naicm12@gmail.com"
+24        app.logger.info(f"🧪 MODO TESTE: Enviando apenas para {email_teste}")
+25        
+26        # Processar imagem base64 - remover o prefixo se existir
+27        if imagem_base64.startswith('data:image'):
+28            imagem_base64 = imagem_base64.split(',')[1]
+29        
+30        # Criar função decorada com contexto
+31        @copy_current_request_context
+32        def enviar_email_teste():
+33            try:
+34                # Criar mensagem com MIME correto
+35                msg = Message(
+36                    subject=f"[TESTE] {titulo}",
+37                    recipients=[email_teste]
+38                )
+39                
+40                # IMPORTANTE: Definir o corpo HTML corretamente
+41                msg.html = f"""
+42                <!DOCTYPE html>
+43                <html>
+44                <head>
+45                    <meta charset="UTF-8">
+46                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+47                </head>
+48                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+49                    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+50                        <tr>
+51                            <td align="center" style="padding: 20px 0;">
+52                                <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+53                                    <tr>
+54                                        <td style="padding: 40px 30px;">
+55                                            <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+56                                                <strong style="color: #856404;">🧪 EMAIL DE TESTE</strong>
+57                                                <p style="margin: 5px 0 0 0; color: #856404; font-size: 12px;">Este é um email de teste. A versão final não terá este aviso.</p>
+58                                            </div>
+59                                            <h2 style="color: #333; margin: 0 0 20px 0; font-size: 24px;">{titulo}</h2>
+60                                            <div style="margin: 30px 0;">
+61                                                <img src="data:image/png;base64,{imagem_base64}" 
+62                                                     style="max-width: 100%; height: auto; display: block; border-radius: 8px;" 
+63                                                     alt="Imagem do Email">
+64                                            </div>
+65                                            <p style="color: #666; font-size: 14px; margin: 30px 0 0 0; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
+66                                                Este email foi enviado automaticamente. Por favor, não responda.
+67                                            </p>
+68                                        </td>
+69                                    </tr>
+70                                </table>
+71                            </td>
+72                        </tr>
+73                    </table>
+74                </body>
+75                </html>
+76                """
+77                
+78                mail.send(msg)
+79                app.logger.info(f"✅ Email de teste enviado com sucesso para {email_teste}")
+80                
+81            except Exception as e:
+82                app.logger.error(f"❌ Erro ao enviar email de teste: {str(e)}")
+83        
+84        # Iniciar thread com a função decorada
+85        thread = threading.Thread(target=enviar_email_teste)
+86        thread.daemon = True
+87        thread.start()
+88        
+89        # Retornar imediatamente
+90        return jsonify({
+91            'success': True,
+92            'message': f'Email de teste enviado para {email_teste}!',
+93            'total_emails': 1
+94        }), 200
+95        
+96    except Exception as e:
+97        app.logger.error(f"Erro ao enviar email de teste: {str(e)}")
+98        return jsonify({'error': f'Erro ao enviar: {str(e)}'}), 500
+99
 
 
 if __name__ == "__main__":
