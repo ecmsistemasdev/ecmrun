@@ -8486,11 +8486,95 @@ def adm_eventos():
     return render_template("adm_eventos.html")
 
 
+@app.route("/enviar-emails-lote")
+def enviar_emails_lote_page():
+    """Página para envio de emails em lote"""
+    return render_template("enviar_emails_lote.html")
 
+@app.route("/api/enviar-emails-lote", methods=['POST'])
+def enviar_emails_lote_api():
+    """API para enviar emails em lote para inscritos ativos do evento"""
+    try:
+        data = request.get_json()
+        titulo = data.get('titulo')
+        imagem_base64 = data.get('imagem')
+        
+        if not titulo or not imagem_base64:
+            return jsonify({'error': 'Título e imagem são obrigatórios'}), 400
+        
+        # Buscar emails dos inscritos ativos do evento 1
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT EMAIL FROM EVENTO_INSCRICAO
+            WHERE STATUS = 'A' AND IDEVENTO = 1
+        """)
+        
+        emails = cursor.fetchall()
+        cursor.close()
+        
+        if not emails:
+            return jsonify({'error': 'Nenhum email encontrado para envio'}), 404
+        
+        # Processar imagem base64
+        if imagem_base64.startswith('data:image'):
+            imagem_base64 = imagem_base64.split(',')[1]
+        
+        # Enviar emails em loop
+        emails_enviados = 0
+        emails_com_erro = 0
+        
+        for email_tuple in emails:
+            email = email_tuple[0]
+            
+            try:
+                # Criar mensagem HTML com imagem embedded
+                html_body = f"""
+                <html>
+                    <body style="font-family: Arial, sans-serif; padding: 20px;">
+                        <h2 style="color: #333;">{titulo}</h2>
+                        <div style="margin: 20px 0;">
+                            <img src="data:image/png;base64,{imagem_base64}" 
+                                 style="max-width: 100%; height: auto; border-radius: 8px;" 
+                                 alt="Imagem do Email">
+                        </div>
+                        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                            Este email foi enviado automaticamente. Por favor, não responda.
+                        </p>
+                    </body>
+                </html>
+                """
+                
+                # Criar e enviar mensagem
+                msg = Message(
+                    subject=titulo,
+                    recipients=[email],
+                    html=html_body
+                )
+                
+                mail.send(msg)
+                emails_enviados += 1
+                
+            except Exception as e:
+                app.logger.error(f"Erro ao enviar email para {email}: {str(e)}")
+                emails_com_erro += 1
+                continue
+        
+        return jsonify({
+            'success': True,
+            'message': f'{emails_enviados} emails enviados com sucesso!',
+            'total_emails': len(emails),
+            'emails_enviados': emails_enviados,
+            'emails_com_erro': emails_com_erro
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Erro no envio em lote: {str(e)}")
+        return jsonify({'error': f'Erro ao enviar emails: {str(e)}'}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
