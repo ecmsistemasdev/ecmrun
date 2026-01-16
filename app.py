@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, send_file, make_response, jsonify, flash, session, url_for
+from flask import Flask, render_template, redirect, request, send_file, make_response, jsonify, flash, session, copy_current_request_context, url_for
 from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 from flask_cors import CORS
@@ -11,6 +11,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.lib.colors import black
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+import threading
 import secrets
 import mercadopago
 import requests
@@ -8485,9 +8486,6 @@ def confirmar_envio_valores():
 def adm_eventos():
     return render_template("adm_eventos.html")
 
-
-import threading
-
 # Adicione estas rotas no seu app.py
 
 @app.route("/enviar-emails-lote")
@@ -8525,11 +8523,56 @@ def enviar_emails_lote_api():
         if imagem_base64.startswith('data:image'):
             imagem_base64 = imagem_base64.split(',')[1]
         
-        # Iniciar envio em thread separada para não bloquear a requisição
-        thread = threading.Thread(
-            target=enviar_emails_background,
-            args=(emails, titulo, imagem_base64, app._get_current_object())
-        )
+        # Criar função decorada com contexto
+        @copy_current_request_context
+        def enviar_emails():
+            emails_enviados = 0
+            emails_com_erro = 0
+            
+            for email_tuple in emails:
+                email = email_tuple[0]
+                
+                try:
+                    # Criar mensagem HTML com imagem embedded
+                    html_body = f"""
+                    <html>
+                        <body style="font-family: Arial, sans-serif; padding: 20px;">
+                            <h2 style="color: #333;">{titulo}</h2>
+                            <div style="margin: 20px 0;">
+                                <img src="data:image/png;base64,{imagem_base64}" 
+                                     style="max-width: 100%; height: auto; border-radius: 8px;" 
+                                     alt="Imagem do Email">
+                            </div>
+                            <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                                Este email foi enviado automaticamente. Por favor, não responda.
+                            </p>
+                        </body>
+                    </html>
+                    """
+                    
+                    # Criar e enviar mensagem
+                    msg = Message(
+                        subject=titulo,
+                        recipients=[email],
+                        html=html_body
+                    )
+                    
+                    mail.send(msg)
+                    emails_enviados += 1
+                    app.logger.info(f"Email enviado para {email} ({emails_enviados}/{len(emails)})")
+                    
+                except Exception as e:
+                    app.logger.error(f"Erro ao enviar email para {email}: {str(e)}")
+                    emails_com_erro += 1
+                    continue
+            
+            app.logger.info(
+                f"Envio concluído! Total: {len(emails)}, "
+                f"Enviados: {emails_enviados}, Erros: {emails_com_erro}"
+            )
+        
+        # Iniciar thread com a função decorada
+        thread = threading.Thread(target=enviar_emails)
         thread.daemon = True
         thread.start()
         
@@ -8543,56 +8586,6 @@ def enviar_emails_lote_api():
     except Exception as e:
         app.logger.error(f"Erro ao iniciar envio em lote: {str(e)}")
         return jsonify({'error': f'Erro ao iniciar envio: {str(e)}'}), 500
-
-
-def enviar_emails_background(emails, titulo, imagem_base64, app_context):
-    """Função para enviar emails em background"""
-    with app_context.app_context():
-        emails_enviados = 0
-        emails_com_erro = 0
-        
-        for email_tuple in emails:
-            email = email_tuple[0]
-            
-            try:
-                # Criar mensagem HTML com imagem embedded
-                html_body = f"""
-                <html>
-                    <body style="font-family: Arial, sans-serif; padding: 20px;">
-                        <h2 style="color: #333;">{titulo}</h2>
-                        <div style="margin: 20px 0;">
-                            <img src="data:image/png;base64,{imagem_base64}" 
-                                 style="max-width: 100%; height: auto; border-radius: 8px;" 
-                                 alt="Imagem do Email">
-                        </div>
-                        <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                            Este email foi enviado automaticamente. Por favor, não responda.
-                        </p>
-                    </body>
-                </html>
-                """
-                
-                # Criar e enviar mensagem
-                msg = Message(
-                    subject=titulo,
-                    recipients=[email],
-                    html=html_body
-                )
-                
-                mail.send(msg)
-                emails_enviados += 1
-                app_context.logger.info(f"Email enviado para {email} ({emails_enviados}/{len(emails)})")
-                
-            except Exception as e:
-                app_context.logger.error(f"Erro ao enviar email para {email}: {str(e)}")
-                emails_com_erro += 1
-                continue
-        
-        app_context.logger.info(
-            f"Envio concluído! Total: {len(emails)}, "
-            f"Enviados: {emails_enviados}, Erros: {emails_com_erro}"
-        )
-
 
 
 if __name__ == "__main__":
